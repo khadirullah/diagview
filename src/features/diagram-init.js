@@ -10,7 +10,7 @@ import { state } from "../core/config.js";
 import { fixIds, generateUniqueId } from "../core/utils.js";
 import { ICONS } from "../ui/icons.js";
 import { LAYOUTS, BUTTON_STYLES } from "../core/constants.js";
-import { createButton, createButtonGroup } from "../ui/button-factory.js";
+import { createButtonGroup } from "../ui/button-factory.js";
 
 /**
  * Check if SVG is valid and renderable

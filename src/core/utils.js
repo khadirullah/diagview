@@ -4,7 +4,7 @@
  * @module core/utils
  */
 
-import { TIMING } from "./constants.js";
+
 
 /**
  * Check if code is running in browser
@@ -257,7 +257,7 @@ export function fixIds(svg, uniqueId) {
 
 /**
  * Generate a unique ID for diagram instances
- * @returns {string}
+ * @returns {string} Unique generated ID
  */
 export function generateUniqueId() {
   return `dv-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
@@ -285,7 +285,7 @@ export function setStyleIfChanged(element, property, value) {
 /**
  * Batch update multiple styles with dirty checking
  * @param {HTMLElement} element - Element to update
- * @param {Object} styles - Object with property: value pairs
+ * @param {object} styles - Object with property: value pairs
  * @returns {number} Number of styles that were changed
  */
 export function batchSetStyles(element, styles) {

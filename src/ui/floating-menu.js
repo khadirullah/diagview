@@ -4,7 +4,7 @@
  * @module ui/floating-menu
  */
 
-import { state, addCleanupFunction } from "../core/config.js";
+import { state } from "../core/config.js";
 import { detectTheme } from "../core/theme.js";
 import { throttle } from "../core/utils.js";
 import { addManagedListener } from "../core/lifecycle.js";

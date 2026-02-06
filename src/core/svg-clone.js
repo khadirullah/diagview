@@ -119,7 +119,7 @@ function copyStyleElements(originalSvg, clonedSvg) {
  * Unified function that replaces modal.js cloneSVGWithTextPreservation and export.js cloneSVGWithStyles
  *
  * @param {SVGElement} svg - Original SVG element to clone
- * @param {Object} options - Cloning options
+ * @param {object} options - Cloning options
  * @param {boolean} options.preserveText - Preserve text attributes and dimensions (default: true)
  * @param {boolean} options.preserveStyles - Copy computed styles to inline (default: false)
  * @param {Array<string>} options.styleProps - Style properties to copy (default: DEFAULT_STYLE_PROPS)

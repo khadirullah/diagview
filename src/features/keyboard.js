@@ -118,11 +118,13 @@ function handleKeyboardShortcut(e) {
     case "f":
     case "F":
       e.preventDefault();
+      {
       // Focus search input
       const searchInput = document.getElementById("diagview-search");
       if (searchInput) {
         searchInput.focus();
       }
+    }
       break;
   }
 }

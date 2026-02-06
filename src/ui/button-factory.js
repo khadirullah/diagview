@@ -9,7 +9,7 @@ import { TIMING } from "../core/constants.js";
 /**
  * Create an action button with consistent styling and behavior
  *
- * @param {Object} config - Button configuration
+ * @param {object} config - Button configuration
  * @param {string} config.action - Action identifier (data-action attribute)
  * @param {string} config.title - Tooltip text
  * @param {string} config.icon - SVG icon HTML
@@ -91,7 +91,7 @@ export function createButton(config) {
 /**
  * Create multiple buttons at once
  *
- * @param {Array<Object>} configs - Array of button configurations
+ * @param {Array<object>} configs - Array of button configurations
  * @returns {Array<HTMLButtonElement>} Array of button elements
  *
  * @example
@@ -108,7 +108,7 @@ export function createButtons(configs) {
 /**
  * Create a button group container with buttons
  *
- * @param {Array<Object>} buttonConfigs - Array of button configurations
+ * @param {Array<object>} buttonConfigs - Array of button configurations
  * @param {string} className - Additional CSS class for the group (optional)
  * @returns {HTMLDivElement} Button group container
  *
@@ -133,7 +133,7 @@ export function createButtonGroup(buttonConfigs, className = "") {
 /**
  * Create a menu item button (for floating menu)
  *
- * @param {Object} config - Menu item configuration
+ * @param {object} config - Menu item configuration
  * @param {string} config.id - Element ID
  * @param {string} config.icon - SVG icon HTML
  * @param {string} config.label - Button label text
@@ -196,7 +196,7 @@ export function createMenuItem(config) {
 /**
  * Create multiple menu items at once
  *
- * @param {Array<Object>} configs - Array of menu item configurations
+ * @param {Array<object>} configs - Array of menu item configurations
  * @returns {Array<HTMLButtonElement>} Array of menu item buttons
  */
 export function createMenuItems(configs) {

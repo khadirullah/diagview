@@ -5,7 +5,7 @@
  */
 
 import { state } from "./config.js";
-import { CONSTANTS, TIMING, COLORS } from "./constants.js";
+import { TIMING, COLORS } from "./constants.js";
 import { debounce } from "./utils.js";
 import { addManagedListener } from "./lifecycle.js";
 
@@ -201,7 +201,7 @@ function detectBackground(isDark) {
 
 /**
  * Enhanced theme detection with caching and robust fallbacks
- * @returns {Object} Theme object with isDark, bg, text, accent
+ * @returns {object} Theme object with isDark, bg, text, accent
  */
 export function detectTheme() {
   if (typeof window === "undefined") {

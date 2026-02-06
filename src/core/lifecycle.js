@@ -10,7 +10,7 @@ import { addCleanupFunction } from "./config.js";
  * Safely destroy an instance with error handling
  * Prevents crashes from failed cleanup operations
  * 
- * @param {Object} instance - Object to destroy
+ * @param {object} instance - Object to destroy
  * @param {string} methodName - Method name to call (default: 'destroy')
  * @returns {boolean} True if destroyed successfully
  * 
@@ -42,7 +42,7 @@ export function safeDestroy(instance, methodName = 'destroy') {
  * @param {EventTarget} target - Element to attach listener to
  * @param {string} event - Event name
  * @param {Function} handler - Event handler function
- * @param {Object|boolean} options - Event listener options
+ * @param {object | boolean} options - Event listener options
  * @returns {Function} Cleanup function to remove listener
  * 
  * @example
@@ -78,8 +78,8 @@ export function addManagedListener(target, event, handler, options) {
  * Add multiple event listeners at once with automatic cleanup
  * 
  * @param {EventTarget} target - Element to attach listeners to
- * @param {Object} events - Object mapping event names to handlers
- * @param {Object|boolean} options - Event listener options
+ * @param {object} events - Object mapping event names to handlers
+ * @param {object | boolean} options - Event listener options
  * @returns {Function} Cleanup function to remove all listeners
  * 
  * @example
@@ -109,7 +109,7 @@ export function addManagedListeners(target, events, options) {
  * 
  * @param {Function} createFn - Function that creates the resource
  * @param {Function} disposeFn - Function that disposes the resource
- * @returns {Object} Resource with dispose method
+ * @returns {object} Resource with dispose method
  * 
  * @example
  * const timer = createDisposable(
@@ -199,7 +199,7 @@ export function batchRemoveElements(elements) {
  * @param {EventTarget} target - Element to attach listener to
  * @param {string} event - Event name
  * @param {Function} handler - Event handler function
- * @param {Object|boolean} options - Event listener options
+ * @param {object | boolean} options - Event listener options
  * 
  * @example
  * onceListener(button, 'click', () => {

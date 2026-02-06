@@ -5,7 +5,7 @@
  */
 
 import { state, addCleanupFunction } from "../core/config.js";
-import { CONSTANTS } from "../core/constants.js";
+
 import { detectTheme, syncTheme } from "../core/theme.js";
 import { throttle } from "../core/utils.js";
 import { addManagedListener } from "../core/lifecycle.js";

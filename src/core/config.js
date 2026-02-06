@@ -5,7 +5,7 @@
  */
 
 // Import constants from new centralized file
-import { CONSTANTS, TIMING, EXPORT, ZOOM, PAN, COLORS, LAYOUTS, BUTTON_STYLES } from "./constants.js";
+import { CONSTANTS, TIMING, EXPORT, ZOOM, LAYOUTS, BUTTON_STYLES } from "./constants.js";
 
 // Re-export for backward compatibility
 export { CONSTANTS };
@@ -270,7 +270,7 @@ function validateConfigValue(key, value) {
 
 /**
  * Update configuration with validation
- * @param {Object} options - New configuration options
+ * @param {object} options - New configuration options
  */
 export function updateConfig(options = {}) {
   const newConfig = { ...state.config };
@@ -347,7 +347,7 @@ function validateConfig() {
 
 /**
  * Get current configuration (immutable copy)
- * @returns {Object} Current configuration
+ * @returns {object} Current configuration
  */
 export function getConfig() {
   return { ...state.config };

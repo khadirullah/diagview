@@ -13,7 +13,6 @@ import {
   getTimestamp,
   isMobileDevice,
   isClipboardAvailable,
-  getClipboardError,
   loadScript,
 } from "../core/utils.js";
 import { cloneSVGForExport } from "../core/svg-clone.js";
