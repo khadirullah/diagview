@@ -1,0 +1,60 @@
+# Source files (we ship dist/ only)
+src/
+tests/
+examples/
+
+# Documentation (keep README.md, LICENSE)
+docs/
+*.md
+!README.md
+!LICENSE
+
+# Build config
+.babelrc
+.eslintrc.json
+.prettierrc.json
+rollup.config.js
+tsconfig.json
+tsconfig.tsbuildinfo
+jest.config.js
+
+# Git
+.git/
+.github/
+.gitignore
+.gitattributes
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Dependencies
+node_modules/
+
+# Test coverage
+coverage/
+.nyc_output/
+
+# Temp files
+*.tmp
+.cache/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Build artifacts (keep dist/)
+*.tgz

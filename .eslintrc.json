@@ -1,0 +1,28 @@
+{
+  "env": {
+    "browser": true,
+    "es2021": true,
+    "node": true
+  },
+  "extends": [
+    "eslint:recommended",
+    "prettier"
+  ],
+  "parserOptions": {
+    "ecmaVersion": 2021,
+    "sourceType": "module"
+  },
+  "plugins": [
+    "jsdoc"
+  ],
+  "rules": {
+    "no-console": ["warn", { "allow": ["warn", "error"] }],
+    "no-unused-vars": ["error", { "argsIgnorePattern": "^_" }],
+    "prefer-const": "error",
+    "no-var": "error",
+    "jsdoc/check-param-names": "warn",
+    "jsdoc/check-types": "warn",
+    "jsdoc/require-param-description": "warn",
+    "jsdoc/require-returns-description": "warn"
+  }
+}

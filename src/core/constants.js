@@ -1,0 +1,137 @@
+/**
+ * DiagView Constants
+ * Centralized constants for the entire library
+ * @module core/constants
+ */
+
+/**
+ * Timing constants (milliseconds)
+ */
+export const TIMING = {
+  // UI Feedback
+  BUTTON_SUCCESS_DURATION: 1000,
+  TOAST_DURATION: 2500,
+  ERROR_TOAST_DURATION: 5000,
+  HELP_FADE_TIMEOUT: 8000, // Auto-close keyboard help (0 to disable)
+
+  // Animations
+  ZOOM_ANIMATION_DURATION: 200,
+  PAN_ANIMATION_DURATION: 200,
+
+  // Debouncing/Throttling
+  THEME_SYNC_DEBOUNCE: 50,
+  SEARCH_THROTTLE: 150,
+  OBSERVER_DEBOUNCE: 100,
+};
+
+/**
+ * Export settings
+ */
+export const EXPORT = {
+  SVG_EXPORT_PADDING: 40,
+  HIGH_RES_SCALE_DEFAULT: 6,
+  MOBILE_SCALE_DEFAULT: 2,
+  PDF_SCALE: 2,
+  MAX_PIXELS_DEFAULT: 25000000,
+};
+
+/**
+ * Zoom limits
+ */
+export const ZOOM = {
+  MAX_SCALE_DEFAULT: 25,
+  MIN_SCALE_DEFAULT: 0.05,
+  MAX_SCALE_LIMIT: 50,
+  MIN_SCALE_LIMIT: 0.01,
+};
+
+/**
+ * Keyboard pan steps (pixels)
+ */
+export const PAN = {
+  STEP_NORMAL: 40,
+  STEP_FAST: 120,
+};
+
+/**
+ * Default colors
+ */
+export const COLORS = {
+  // Light mode
+  ACCENT_LIGHT: "#3b82f6",
+  BG_LIGHT: "#ffffff",
+  TEXT_LIGHT: "#1e293b",
+
+  // Dark mode
+  ACCENT_DARK: "#60a5fa",
+  BG_DARK: "#0f172a",
+  TEXT_DARK: "#f1f5f9",
+};
+
+/**
+ * CSS Selectors
+ */
+export const SELECTORS = {
+  DIAGRAM: ".diagram, .chart, [data-diagram]",
+  SEARCH_NODES: ".node, .cluster, .edgePath, .label, text",
+};
+
+/**
+ * Layout modes
+ */
+export const LAYOUTS = {
+  HEADER: "header",
+  FLOATING: "floating",
+  OFF: "off",
+};
+
+/**
+ * Button styles
+ */
+export const BUTTON_STYLES = {
+  TRANSPARENT: "transparent",
+  ACCENT: "accent",
+  SOLID: "solid",
+  NEUTRAL: "neutral",
+};
+
+/**
+ * All constants combined (for backward compatibility)
+ */
+export const CONSTANTS = {
+  // Timing
+  BUTTON_SUCCESS_DURATION: TIMING.BUTTON_SUCCESS_DURATION,
+  HELP_FADE_TIMEOUT: TIMING.HELP_FADE_TIMEOUT,
+  TOAST_DURATION: TIMING.TOAST_DURATION,
+  ERROR_TOAST_DURATION: TIMING.ERROR_TOAST_DURATION,
+  ZOOM_ANIMATION_DURATION: TIMING.ZOOM_ANIMATION_DURATION,
+  PAN_ANIMATION_DURATION: TIMING.PAN_ANIMATION_DURATION,
+  THEME_SYNC_DEBOUNCE: TIMING.THEME_SYNC_DEBOUNCE,
+  SEARCH_THROTTLE: TIMING.SEARCH_THROTTLE,
+  OBSERVER_DEBOUNCE: TIMING.OBSERVER_DEBOUNCE,
+
+  // Export
+  SVG_EXPORT_PADDING: EXPORT.SVG_EXPORT_PADDING,
+  HIGH_RES_SCALE_DEFAULT: EXPORT.HIGH_RES_SCALE_DEFAULT,
+  MOBILE_SCALE_DEFAULT: EXPORT.MOBILE_SCALE_DEFAULT,
+  PDF_SCALE: EXPORT.PDF_SCALE,
+  MAX_PIXELS_DEFAULT: EXPORT.MAX_PIXELS_DEFAULT,
+
+  // Zoom
+  MAX_ZOOM_SCALE_DEFAULT: ZOOM.MAX_SCALE_DEFAULT,
+  MIN_ZOOM_SCALE_DEFAULT: ZOOM.MIN_SCALE_DEFAULT,
+  MAX_ZOOM_SCALE_LIMIT: ZOOM.MAX_SCALE_LIMIT,
+  MIN_ZOOM_SCALE_LIMIT: ZOOM.MIN_SCALE_LIMIT,
+
+  // Pan
+  PAN_STEP_NORMAL: PAN.STEP_NORMAL,
+  PAN_STEP_FAST: PAN.STEP_FAST,
+
+  // Colors
+  DEFAULT_ACCENT_LIGHT: COLORS.ACCENT_LIGHT,
+  DEFAULT_ACCENT_DARK: COLORS.ACCENT_DARK,
+  DEFAULT_BG_LIGHT: COLORS.BG_LIGHT,
+  DEFAULT_BG_DARK: COLORS.BG_DARK,
+  DEFAULT_TEXT_LIGHT: COLORS.TEXT_LIGHT,
+  DEFAULT_TEXT_DARK: COLORS.TEXT_DARK,
+};

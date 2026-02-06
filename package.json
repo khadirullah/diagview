@@ -1,0 +1,102 @@
+{
+  "name": "diagview",
+  "version": "1.0.0",
+  "description": "A lightweight framework-agnostic viewer for SVG diagrams (Mermaid, Graphviz, etc). Adds interactive Zoom, Pan, Search, Export, and Presentation Mode.",
+  "type": "module",
+  "main": "dist/diagview.umd.js",
+  "module": "dist/esm/index.js",
+  "unpkg": "dist/diagview.umd.min.js",
+  "jsdelivr": "dist/diagview.umd.min.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "dev": "rollup -c -w",
+    "build": "npm run build:lib && npm run build:types",
+    "build:lib": "rollup -c",
+    "build:types": "tsc --declaration --emitDeclarationOnly --outDir dist",
+    "lint": "eslint src/**/*.js",
+    "lint:fix": "eslint src/**/*.js --fix",
+    "size": "size-limit",
+    "clean": "rm -rf dist",
+    "prepublishOnly": "npm run clean && npm run lint && npm run build",
+    "postpublish": "git push && git push --tags"
+  },
+  "keywords": [
+    "diagram",
+    "svg",
+    "viewer",
+    "zoom",
+    "pan",
+    "export",
+    "interactive",
+    "visualization",
+    "flowchart",
+    "chart",
+    "mermaid",
+    "d3",
+    "graphviz",
+    "plantuml",
+    "framework-agnostic"
+  ],
+  "author": "Khadirullah Mohammad <94954931+khadirullah@users.noreply.github.com>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/khadirullah/diagview.git"
+  },
+  "bugs": {
+    "url": "https://github.com/khadirullah/diagview/issues"
+  },
+  "homepage": "https://github.com/khadirullah/diagview#readme",
+  "peerDependencies": {
+    "@panzoom/panzoom": "^4.5.0"
+  },
+  "peerDependenciesMeta": {
+    "@panzoom/panzoom": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@babel/core": "^7.23.0",
+    "@babel/preset-env": "^7.23.0",
+    "@rollup/plugin-babel": "^6.0.4",
+    "@rollup/plugin-node-resolve": "^15.2.3",
+    "@rollup/plugin-terser": "^0.4.4",
+    "@size-limit/preset-small-lib": "^11.0.0",
+    "@types/jest": "^29.5.14",
+    "@types/node": "^20.11.0",
+    "eslint": "^8.54.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-jsdoc": "^46.9.0",
+    "jest": "^29.7.0",
+    "jest-environment-jsdom": "^29.7.0",
+    "prettier": "^3.1.0",
+    "rollup": "^4.57.0",
+    "size-limit": "^11.0.0",
+    "typescript": "^5.3.0"
+  },
+  "size-limit": [
+    {
+      "path": "dist/diagview.umd.min.js",
+      "limit": "25 KB"
+    },
+    {
+      "path": "dist/esm/index.js",
+      "limit": "20 KB"
+    }
+  ],
+  "engines": {
+    "node": ">=16.0.0",
+    "npm": ">=8.0.0"
+  },
+  "browserslist": [
+    "> 1%",
+    "last 2 versions",
+    "not dead",
+    "not ie 11"
+  ]
+}
