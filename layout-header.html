@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DiagView - Header Layout</title>
+
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script src="https://unpkg.com/@panzoom/panzoom@4.5.1/dist/panzoom.min.js"></script>
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="demo-styles.css">
+
+    <!-- Primary: CDN (Online) -->
+    <!-- <script src="https://cdn.jsdelivr.net/npm/diagview/dist/diagview.umd.min.js"></script> -->
+
+    <!-- Offline Mode: Uncomment below to use local file -->
+    <script src="../dist/diagview.umd.min.js"></script>
+
+    <style>
+        :root {
+            --diagram-accent: #3b82f6;
+        }
+
+        body {
+            padding-top: 100px;
+        }
+
+        .mermaid {
+            display: flex;
+            justify-content: center;
+        }
+
+        /* Specific tweak for header layout context */
+        .controls {
+            padding: 10px 30px;
+        }
+    </style>
+
+    <script>
+        (function () {
+            const savedTheme = localStorage.getItem('dv-theme');
+            const savedColor = localStorage.getItem('dv-accent');
+
+            if (savedTheme === 'dark') {
+                document.documentElement.classList.add('dark');
+            }
+
+            if (savedColor) {
+                document.documentElement.style.setProperty('--diagram-accent', savedColor);
+                // Also set the library variable just in case
+                document.documentElement.style.setProperty('--dv-accent', savedColor);
+            }
+        })();
+    </script>
+</head>
+
+<body>
+
+    <div class="controls">
+        <div class="brand">
+            <a href="index.html"
+                style="text-decoration: none; color: inherit; display: flex; align-items: center; gap: 8px;">
+                <span style="font-size: 1.5rem;">🏠</span>
+                <div style="display: flex; flex-direction: column; line-height: 1.2;">
+                    <span
+                        style="font-size: 0.7rem; color: var(--diagram-accent); text-transform: uppercase; letter-spacing: 1px;">DiagView</span>
+                    <span>Header Layout</span>
+                </div>
+            </a>
+        </div>
+        <div class="toggles">
+            <label style="display:flex; align-items:center; gap:8px; font-size: 0.9rem; font-weight: 600;">
+                Accent:
+                <input type="color" id="accentPicker" value="#3b82f6">
+            </label>
+            <button class="toggle-btn" onclick="toggleTheme()" title="Toggle Dark/Light Mode">
+                🌓
+            </button>
+            <a href="index.html" class="toggle-btn"
+                style="text-decoration: none; background: var(--diagram-accent); color: white; border: none;">
+                Back to Hub
+            </a>
+        </div>
+    </div>
+
+    <div style="max-width: 1200px; margin: 0 auto 40px; text-align: center;">
+        <h1 style="font-size: 2.5rem; margin-bottom: 10px;">Mermaid & SVG Integration</h1>
+        <p style="color: var(--muted); font-size: 1.1rem;">Combining dynamic Mermaid.js rendering with static SVG
+            diagrams. DiagView handles both seamlessly.</p>
+    </div>
+
+    <div class="grid">
+        <!-- Infrastructure (Mermaid) -->
+        <div class="card">
+            <h2>Core Infrastructure</h2>
+            <div class="mermaid" data-title="System Architecture">
+                graph TD
+                subgraph "Core System"
+                LB[Load Balancer] --> Web1[Web Server 01]
+                LB --> Web2[Web Server 02]
+                LB --> Web3[Web Server 03]
+                end
+
+                subgraph "Data Layer"
+                Web1 --> Cache[Redis Cluster]
+                Web2 --> Cache
+                Web3 --> Cache
+                Cache --> DB_Master[(Postgres Master)]
+                DB_Master --> DB_Slave1[(Postgres Replica 1)]
+                DB_Master --> DB_Slave2[(Postgres Replica 2)]
+                end
+
+                style LB fill:#f9f,stroke:#333,stroke-width:2px
+                style DB_Master fill:#bbf,stroke:#333,stroke-width:2px
+                style Cache fill:#ff9,stroke:#333,stroke-width:2px
+            </div>
+        </div>
+
+        <!-- Sequence (Mermaid) -->
+        <div class="card">
+            <h2>API Report Flow</h2>
+            <div class="mermaid" data-title="Sequence Diagram">
+                sequenceDiagram
+                participant User
+                participant UI as Client Application
+                participant API as Backend Service
+
+                User->>UI: Clicks "Generate Report"
+                UI->>API: POST /api/v1/reports/pdf
+                Note right of API: API processes data...
+                API-->>UI: Returns 200 OK (Report ID: 12345)
+                UI-->>User: Shows "Download Ready" Notification
+            </div>
+        </div>
+
+        <!-- State Machine (SVG) -->
+        <div class="card">
+            <h2>State Transition</h2>
+            <div class="diagram" data-title="Auth Flowchart">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 550 300">
+                    <defs>
+                        <style>
+                            .state {
+                                fill: #805ad5;
+                                stroke: #6b46c1;
+                                stroke-width: 2;
+                            }
+
+                            .start {
+                                fill: #38b2ac;
+                            }
+
+                            .end {
+                                fill: #f56565;
+                            }
+
+                            .label {
+                                fill: white;
+                                font-family: sans-serif;
+                                font-size: 12px;
+                                text-anchor: middle;
+                            }
+
+                            .transition {
+                                stroke: #4a5568;
+                                stroke-width: 2;
+                                fill: none;
+                                marker-end: url(#arrow);
+                            }
+
+                            .transition-label {
+                                fill: #4a5568;
+                                font-family: sans-serif;
+                                font-size: 10px;
+                                text-anchor: middle;
+                            }
+                        </style>
+                        <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+                            <polygon points="0 0, 10 3, 0 6" fill="#4a5568" />
+                        </marker>
+                    </defs>
+                    <circle class="state start" cx="50" cy="150" r="30" />
+                    <text class="label" x="50" y="155">Start</text>
+                    <rect class="state" x="120" y="120" width="80" height="60" rx="8" />
+                    <text class="label" x="160" y="145">Pending</text>
+                    <rect class="state" x="250" y="50" width="80" height="60" rx="8" />
+                    <text class="label" x="290" y="85">Processing</text>
+                    <rect class="state" x="380" y="120" width="80" height="60" rx="8" />
+                    <text class="label" x="420" y="155">Shipped</text>
+                    <circle class="state end" cx="500" cy="150" r="30" />
+                    <text class="label" x="500" y="155">Done</text>
+                    <path class="transition" d="M 80 150 L 120 150" />
+                    <path class="transition" d="M 200 140 L 250 90" />
+                    <path class="transition" d="M 330 80 L 380 140" />
+                    <path class="transition" d="M 460 150 L 470 150" />
+                </svg>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>Analytics</h2>
+            <div class="mermaid">
+                pie title Language Usage
+                "JavaScript" : 70
+                "CSS" : 20
+                "HTML" : 10
+            </div>
+        </div>
+
+        <!-- Performance Stress Test (SVG) -->
+        <div class="card">
+            <h2>Performance Stress Test</h2>
+            <div class="stress-test" data-title="2,500 Nodes Test">
+                <svg id="stress-svg" width="3000" height="3000" viewBox="0 0 3000 3000"
+                    xmlns="http://www.w3.org/2000/svg">
+                    <rect width="100%" height="100%" fill="transparent" />
+                    <g id="stress-node-layer"></g>
+                </svg>
+            </div>
+            <p style="text-align: center; margin-top: 10px; color: var(--muted); font-size: 0.8rem;">Click to open the
+                2,500 node grid</p>
+        </div>
+    </div>
+
+    <script>
+        // 1. Initialize Picker State
+        const picker = document.getElementById('accentPicker');
+        const savedColor = localStorage.getItem('dv-accent');
+        if (savedColor) picker.value = savedColor;
+
+        // 2. Initialize Mermaid
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'default',
+            securityLevel: 'loose'
+        });
+
+        // 3. Initialize DiagView
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Generate Stress Test Nodes
+            const stressLayer = document.getElementById('stress-node-layer');
+            if (stressLayer) {
+                for (let r = 0; r < 50; r++) {
+                    for (let c = 0; c < 50; c++) {
+                        const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+                        g.setAttribute("class", "node");
+                        const x = c * 60;
+                        const y = r * 60;
+                        g.innerHTML = `<rect x="${x}" y="${y}" width="40" height="30" rx="4" fill="#6366f1" fill-opacity="0.1" stroke="#6366f1" stroke-width="1"/>`;
+                        stressLayer.appendChild(g);
+                    }
+                }
+            }
+
+            await mermaid.run();
+
+            DiagView.init({
+                diagramSelector: '.mermaid, .diagram, .chart, .stress-test, [data-diagram]',
+                showKeyboardHelp: true,
+                highResScale: 4,
+                // Ensure DiagView picks up the initial color
+                accentColor: localStorage.getItem('dv-accent') || null,
+                layout: 'header',
+            });
+
+            console.log("DiagView Test Suite Ready");
+        });
+
+        // 4. Persistence Logic
+
+        function toggleTheme() {
+            const isDark = document.documentElement.classList.toggle('dark');
+            localStorage.setItem('dv-theme', isDark ? 'dark' : 'light');
+        }
+
+        picker.addEventListener('input', (e) => {
+            const color = e.target.value;
+            // Apply
+            document.documentElement.style.setProperty('--diagram-accent', color);
+            document.documentElement.style.setProperty('--dv-accent', color);
+            // Save
+            localStorage.setItem('dv-accent', color);
+        });
+
+    </script>
+</body>
+
+</html>

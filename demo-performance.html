@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DiagView - Performance Stress Test</title>
+
+    <script src="https://unpkg.com/@panzoom/panzoom@4.5.1/dist/panzoom.min.js"></script>
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="demo-styles.css">
+
+    <!-- Primary: CDN (Online) -->
+    <!-- <script src="https://cdn.jsdelivr.net/npm/diagview/dist/diagview.umd.min.js"></script> -->
+
+    <!-- Offline Mode: Uncomment below to use local file -->
+    <script src="../dist/diagview.umd.min.js"></script>
+
+    <style>
+        :root {
+            --diagram-accent: #f59e0b;
+        }
+
+        body {
+            padding-top: 100px;
+        }
+
+        .stress-container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+    </style>
+
+    <script>
+        (function () {
+            const savedTheme = localStorage.getItem('dv-theme');
+            if (savedTheme === 'dark') document.documentElement.classList.add('dark');
+        })();
+    </script>
+</head>
+
+<body>
+
+    <div class="controls">
+        <div class="brand">
+            <a href="index.html"
+                style="text-decoration: none; color: inherit; display: flex; align-items: center; gap: 8px;">
+                <span style="font-size: 1.5rem;">🚀</span>
+                <div style="display: flex; flex-direction: column; line-height: 1.2;">
+                    <span
+                        style="font-size: 0.7rem; color: var(--diagram-accent); text-transform: uppercase; letter-spacing: 1px;">DiagView</span>
+                    <span>Performance Test</span>
+                </div>
+            </a>
+        </div>
+        <div class="toggles">
+            <button class="toggle-btn" onclick="toggleTheme()" title="Toggle Dark/Light Mode">
+                🌓
+            </button>
+            <a href="index.html" class="toggle-btn"
+                style="text-decoration: none; background: var(--diagram-accent); color: white; border: none;">
+                Back to Hub
+            </a>
+        </div>
+    </div>
+
+    <div class="container text-center" style="margin-bottom: 40px;">
+        <h1 style="font-size: 2.5rem; margin-bottom: 10px;">Hardware Acceleration Test</h1>
+        <p class="muted" style="font-size: 1.1rem;">Rendering 2,500 interactive nodes in a single SVG.
+            DiagView uses CSS transforms for smooth 60FPS performance.</p>
+    </div>
+
+    <div class="stress-container">
+        <div class="card" style="padding: 0; overflow: hidden; height: 70vh;">
+            <div class="stress-test" data-title="2,500 Node Performance Grid"
+                style="height: 100%; border: none; background: var(--card-bg);">
+                <svg id="stress-svg" width="3000" height="3000" viewBox="0 0 3000 3000"
+                    xmlns="http://www.w3.org/2000/svg">
+                    <rect width="100%" height="100%" fill="transparent" />
+                    <g id="stress-node-layer"></g>
+                </svg>
+            </div>
+        </div>
+        <p class="text-center muted" style="margin-top: 20px;">Use mouse wheel to zoom, click and drag to pan.</p>
+    </div>
+
+    <script>
+        // 1. Generate Nodes
+        document.addEventListener('DOMContentLoaded', () => {
+            const stressLayer = document.getElementById('stress-node-layer');
+            if (stressLayer) {
+                for (let r = 0; r < 50; r++) {
+                    for (let c = 0; c < 50; c++) {
+                        const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+                        g.setAttribute("class", "node");
+                        const x = c * 60;
+                        const y = r * 60;
+                        g.innerHTML = `<rect x="${x}" y="${y}" width="40" height="30" rx="4" fill="#f59e0b" fill-opacity="0.1" stroke="#f59e0b" stroke-width="1"/>
+                                       <text x="${x + 20}" y="${y + 20}" font-size="8" text-anchor="middle" font-family="sans-serif" fill="#92400e">N-${r}-${c}</text>`;
+                        stressLayer.appendChild(g);
+                    }
+                }
+            }
+
+            // 2. Initialize DiagView
+            DiagView.init({
+                diagramSelector: '.stress-test',
+                showKeyboardHelp: true,
+                highResScale: 4,
+                layout: 'floating',
+            });
+        });
+
+        function toggleTheme() {
+            const isDark = document.documentElement.classList.toggle('dark');
+            localStorage.setItem('dv-theme', isDark ? 'dark' : 'light');
+        }
+    </script>
+</body>
+
+</html>

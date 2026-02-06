@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DiagView - Floating Layout</title>
+
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script src="https://unpkg.com/@panzoom/panzoom@4.5.1/dist/panzoom.min.js"></script>
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="demo-styles.css">
+
+    <!-- Primary: CDN (Online) -->
+    <!-- <script src="https://cdn.jsdelivr.net/npm/diagview/dist/diagview.umd.min.js"></script> -->
+
+    <!-- Offline Mode: Uncomment below to use local file -->
+    <script src="../dist/diagview.umd.min.js"></script>
+
+    <style>
+        :root {
+            --diagram-accent: #3b82f6;
+        }
+
+        body {
+            padding-top: 100px;
+        }
+
+        /* Specific tweak for floating layout */
+        /* diagview internal UI fixes for floating mode can go here if needed */
+    </style>
+
+    <script>
+        (function () {
+            const savedTheme = localStorage.getItem('dv-theme');
+            const savedColor = localStorage.getItem('dv-accent');
+
+            if (savedTheme === 'dark') {
+                document.documentElement.classList.add('dark');
+            }
+
+            if (savedColor) {
+                document.documentElement.style.setProperty('--diagram-accent', savedColor);
+                // Also set the library variable just in case
+                document.documentElement.style.setProperty('--dv-accent', savedColor);
+            }
+        })();
+    </script>
+</head>
+
+<body>
+
+    <div class="controls">
+        <div class="brand">
+            <a href="index.html"
+                style="text-decoration: none; color: inherit; display: flex; align-items: center; gap: 8px;">
+                <span style="font-size: 1.5rem;">🏠</span>
+                <div style="display: flex; flex-direction: column; line-height: 1.2;">
+                    <span
+                        style="font-size: 0.7rem; color: var(--diagram-accent); text-transform: uppercase; letter-spacing: 1px;">DiagView</span>
+                    <span>Floating Layout</span>
+                </div>
+            </a>
+        </div>
+        <div class="toggles">
+            <label style="display:flex; align-items:center; gap:8px; font-size: 0.9rem; font-weight: 600;">
+                Accent:
+                <input type="color" id="accentPicker" value="#3b82f6">
+            </label>
+            <button class="toggle-btn" onclick="toggleTheme()" title="Toggle Dark/Light Mode">
+                🌓
+            </button>
+            <a href="index.html" class="toggle-btn"
+                style="text-decoration: none; background: var(--diagram-accent); color: white; border: none;">
+                Back to Hub
+            </a>
+        </div>
+    </div>
+
+    <div style="max-width: 1200px; margin: 0 auto 40px; text-align: center;">
+        <h1 style="font-size: 2.5rem; margin-bottom: 10px;">Static SVG & HUD UI</h1>
+        <p style="color: var(--muted); font-size: 1.1rem;">Clean, non-intrusive floating controls combined with
+            high-performance static SVG rendering.</p>
+    </div>
+
+    <div class="grid">
+        <!-- Flowchart (SVG) -->
+        <div class="card">
+            <h2>User Login Flow</h2>
+            <div class="diagram" data-title="Auth Flowchart">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+                    <defs>
+                        <style>
+                            .f-node {
+                                fill: #4299e1;
+                                stroke: #2b6cb0;
+                                stroke-width: 2;
+                            }
+
+                            .f-decision {
+                                fill: #48bb78;
+                                stroke: #2f855a;
+                                stroke-width: 2;
+                            }
+
+                            .f-text {
+                                fill: white;
+                                font-family: sans-serif;
+                                font-size: 14px;
+                                text-anchor: middle;
+                            }
+
+                            .f-edge {
+                                stroke: #2d3748;
+                                stroke-width: 2;
+                                fill: none;
+                                marker-end: url(#arrow-f);
+                            }
+                        </style>
+                        <marker id="arrow-f" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+                            <polygon points="0 0, 10 3, 0 6" fill="#2d3748" />
+                        </marker>
+                    </defs>
+                    <rect class="f-node" x="150" y="10" width="100" height="40" rx="20" />
+                    <text class="f-text" x="200" y="35">Start</text>
+                    <polygon class="f-decision" points="200,100 250,125 200,150 150,125" />
+                    <text class="f-text" x="200" y="130" font-size="12">Valid?</text>
+                    <rect class="f-node" x="280" y="105" width="100" height="40" rx="20" />
+                    <text class="f-text" x="330" y="130">Success</text>
+                    <rect class="f-node" x="20" y="105" width="100" height="40" rx="20" />
+                    <text class="f-text" x="70" y="130">Error</text>
+                    <rect class="f-node" x="150" y="200" width="100" height="40" rx="20" />
+                    <text class="f-text" x="200" y="225">End</text>
+                    <path class="f-edge" d="M 200 50 L 200 100" />
+                    <path class="f-edge" d="M 250 125 L 280 125" />
+                    <path class="f-edge" d="M 150 125 L 120 125" />
+                    <path class="f-edge" d="M 330 145 L 330 180 L 200 180 L 200 200" />
+                    <path class="f-edge" d="M 70 145 L 70 180 L 200 180 L 200 200" />
+                </svg>
+            </div>
+        </div>
+
+        <!-- Network (SVG) -->
+        <div class="card">
+            <h2>Network Topology</h2>
+            <div class="diagram" data-title="Cloud Network">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 350">
+                    <defs>
+                        <style>
+                            .n-server {
+                                fill: #f56565;
+                                stroke: #c53030;
+                                stroke-width: 2;
+                            }
+
+                            .n-router {
+                                fill: #48bb78;
+                                stroke: #2f855a;
+                                stroke-width: 2;
+                            }
+
+                            .n-text {
+                                fill: white;
+                                font-family: sans-serif;
+                                font-size: 11px;
+                                text-anchor: middle;
+                            }
+
+                            .n-conn {
+                                stroke: #a0aec0;
+                                stroke-width: 2;
+                                stroke-dasharray: 5, 5;
+                            }
+                        </style>
+                    </defs>
+                    <ellipse class="n-router" cx="250" cy="50" rx="60" ry="30" />
+                    <text class="n-text" x="250" y="55">Internet</text>
+                    <rect class="n-router" x="200" y="120" width="100" height="40" rx="5" />
+                    <text class="n-text" x="250" y="145">Firewall</text>
+                    <rect class="n-server" x="100" y="250" width="80" height="50" rx="5" />
+                    <text class="n-text" x="140" y="280">Web Server</text>
+                    <rect class="n-server" x="320" y="250" width="80" height="50" rx="5" />
+                    <text class="n-text" x="360" y="280">Database</text>
+                    <line class="n-conn" x1="250" y1="80" x2="250" y2="120" />
+                    <line class="n-conn" x1="250" y1="160" x2="140" y2="250" />
+                    <line class="n-conn" x1="250" y1="160" x2="360" y2="250" />
+                </svg>
+            </div>
+        </div>
+
+        <!-- Mini (Mermaid) -->
+        <div class="card">
+            <h2>Logic Flow (Mermaid)</h2>
+            <div class="mermaid">
+                graph LR
+                A[Request] --> B{Valid?}
+                B -->|Yes| C[Process]
+                B -->|No| D[Reject]
+            </div>
+        </div>
+
+        <!-- Performance Stress Test (SVG) -->
+        <div class="card">
+            <h2>Performance Stress Test</h2>
+            <div class="stress-test" data-title="2,500 Nodes Test">
+                <svg id="stress-svg" width="3000" height="3000" viewBox="0 0 3000 3000"
+                    xmlns="http://www.w3.org/2000/svg">
+                    <rect width="100%" height="100%" fill="transparent" />
+                    <g id="stress-node-layer"></g>
+                </svg>
+            </div>
+            <p style="text-align: center; margin-top: 10px; color: var(--muted); font-size: 0.8rem;">Click to open
+                the 2,500 node grid</p>
+        </div>
+    </div>
+
+    <script>
+        // 1. Initialize Picker State
+        const picker = document.getElementById('accentPicker');
+        const savedColor = localStorage.getItem('dv-accent');
+        if (savedColor) picker.value = savedColor;
+
+        // 2. Initialize Mermaid (Optional if using Mermaid)
+        mermaid.initialize({ startOnLoad: true, theme: 'default' });
+
+        // 3. Initialize DiagView
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Generate Stress Test Nodes
+            const stressLayer = document.getElementById('stress-node-layer');
+            if (stressLayer) {
+                for (let r = 0; r < 50; r++) {
+                    for (let c = 0; c < 50; c++) {
+                        const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+                        g.setAttribute("class", "node");
+                        const x = c * 60;
+                        const y = r * 60;
+                        g.innerHTML = `<rect x="${x}" y="${y}" width="40" height="30" rx="4" fill="#f59e0b" fill-opacity="0.1" stroke="#f59e0b" stroke-width="1"/>`;
+                        stressLayer.appendChild(g);
+                    }
+                }
+            }
+
+            if (window.mermaid) await mermaid.run();
+
+            DiagView.init({
+                diagramSelector: '.diagram, .chart, .mermaid, .stress-test, [data-diagram]',
+                showKeyboardHelp: true,
+                highResScale: 4,
+                accentColor: localStorage.getItem('dv-accent') || null,
+                layout: 'floating',
+            });
+        });
+
+        // 4. Persistence Logic
+
+        function toggleTheme() {
+            const isDark = document.documentElement.classList.toggle('dark');
+            localStorage.setItem('dv-theme', isDark ? 'dark' : 'light');
+        }
+
+        picker.addEventListener('input', (e) => {
+            const color = e.target.value;
+            // Apply
+            document.documentElement.style.setProperty('--diagram-accent', color);
+            document.documentElement.style.setProperty('--dv-accent', color);
+            // Save
+            localStorage.setItem('dv-accent', color);
+        });
+
+    </script>
+</body>
+
+</html>
