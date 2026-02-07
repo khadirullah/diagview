@@ -16,17 +16,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono&display=swap"
         rel="stylesheet">
 
-    <!-- Dependencies -->
-    <script src="https://cdn.jsdelivr.net/npm/@panzoom/panzoom@4.5.1/dist/panzoom.min.js"></script>
-
     <!-- Styles -->
     <link rel="stylesheet" href="demo-styles.css">
-
-    <!-- Primary: CDN (Online) -->
-    <script src="https://cdn.jsdelivr.net/npm/diagview/dist/diagview.umd.min.js"></script>
-
-    <!-- Offline Mode: Uncomment below to use local file -->
-    <!-- <script src="../dist/diagview.umd.min.js"></script> -->
 
     <style>
         /* Specific overrides for Hub landing page */
@@ -223,7 +214,7 @@
             </div>
 
             <div
-                style="margin-top: 40px; display: flex; justify-content: center; gap: 30px; font-size: 0.8rem; color: var(--muted); border-top: 1px solid rgba(255,255,255,0.05); padding-top: 20px; animation: fadeInUp 1s ease-out 0.5s backwards;">
+                style="margin-top: 40px; display: flex; justify-content: center; gap: 30px; font-size: 0.8rem; color: var(--muted); border-top: 1px solid var(--border); padding-top: 20px; animation: fadeInUp 1s ease-out 0.5s backwards;">
                 <span title="Plus Key"><code>+</code> Zoom In</span>
                 <span title="Minus Key"><code>-</code> Zoom Out</span>
                 <span title="Arrow Keys"><code>arrows</code> Pan</span>
@@ -444,7 +435,7 @@
         </div>
 
         <div
-            style="background: rgba(0,0,0,0.3); padding: 30px; border-radius: 20px; border: 1px solid var(--border); position: relative; overflow-x: auto;">
+            style="background: #1e293b; color: #f8fafc; padding: 30px; border-radius: 20px; border: 1px solid var(--border); position: relative; overflow-x: auto;">
             <pre style="color: #60a5fa; margin: 0;"><code>&lt;!-- 1. Add Dependencies --&gt;
 &lt;script src="https://cdn.jsdelivr.net/npm/@panzoom/panzoom@4.5.1/dist/panzoom.min.js"&gt;&lt;/script&gt;
 &lt;script src="https://cdn.jsdelivr.net/npm/diagview/dist/diagview.umd.min.js"&gt;&lt;/script&gt;
@@ -476,16 +467,6 @@
             const isDark = document.documentElement.classList.toggle('dark');
             localStorage.setItem('dv-theme', isDark ? 'dark' : 'light');
         }
-
-        document.addEventListener('DOMContentLoaded', () => {
-            if (typeof DiagView !== 'undefined') {
-                DiagView.init({
-                    diagramSelector: '.layout-demo',
-                    showKeyboardHelp: true,
-                    layout: 'floating'
-                });
-            }
-        });
     </script>
 </body>
 

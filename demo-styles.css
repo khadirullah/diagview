@@ -180,9 +180,14 @@ code {
 }
 
 .btn-secondary {
-    background: rgba(255, 255, 255, 0.05);
-    color: white;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: transparent;
+    color: var(--text);
+    border: 1px solid var(--border);
+}
+
+.btn-secondary:hover {
+    background: var(--hub-btn-bg);
+    border-color: var(--muted);
 }
 
 /* Diagram Containers & Responsiveness */
