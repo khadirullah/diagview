@@ -7,7 +7,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 
 > [!TIP]
-> **Check out the Live Demo:** [View Demo Hub](./demo/index.html)
+> **Check out the Live Demo:** [View Demo Hub](https://khadirullah.github.io/diagview/)
 
 ---
 
