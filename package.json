@@ -21,7 +21,7 @@
     "lint": "eslint src/**/*.js",
     "lint:fix": "eslint src/**/*.js --fix",
     "size": "size-limit",
-    "clean": "rm -rf dist",
+    "clean": "rm -rf dist tsconfig.tsbuildinfo",
     "prepublishOnly": "npm run clean && npm run lint && npm run build",
     "postpublish": "git push && git push --tags"
   },

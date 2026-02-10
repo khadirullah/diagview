@@ -2,7 +2,10 @@
   "compilerOptions": {
     "target": "ES2020",
     "module": "ESNext",
-    "lib": ["ES2020", "DOM"],
+    "lib": [
+      "ES2020",
+      "DOM"
+    ],
     "moduleResolution": "node",
     "resolveJsonModule": true,
     "declaration": true,
@@ -18,8 +21,9 @@
     "allowJs": true,
     "checkJs": false,
     "noEmit": false,
-    "incremental": true,
-    "types": ["node"]
+    "types": [
+      "node"
+    ]
   },
   "include": [
     "src/**/*"

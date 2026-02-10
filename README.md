@@ -35,7 +35,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@panzoom/panzoom@4.5.0/dist/panzoom.min.js"></script>
 
 <!-- DiagramView -->
-<script src="https://cdn.jsdelivr.net/npm/diagview@1.0.0/dist/diagview.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/diagview@1/dist/diagview.umd.min.js"></script>
 
 <script>
   DiagView.init();
@@ -86,6 +86,9 @@ DiagView automatically adds:
 ---
 
 ## 📸 Screenshots
+
+### Demo
+![DiagView Demo](media/demo.gif)
 
 ### Floating Layout (Default)
 Buttons appear on hover (desktop) or always visible (mobile).
@@ -307,6 +310,7 @@ onUnmounted(() => DiagView.destroy());
 - [FAQ](./docs/FAQ.md) - Common questions
 - [API Reference](./docs/API.md) - Full API docs
 - [Examples](./demo/) - Live demos
+  
 ---
 
 ## 🔧 Development
@@ -360,13 +364,6 @@ I built **DiagView** to fix that specific frustration—turning static SVGs into
 
 ---
 
-## 🤖 Authenticity Statement
-
-This library was conceptually designed and specified by the author to solve real-world documentation needs. The implementation was generated using AI assistance under strict human supervision, ensuring the final result meets professional standards for performance, security, and build quality.
-
-
----
-
 ## 📊 Browser Support
 
 | Browser | Version |
@@ -391,8 +388,9 @@ Give a ⭐️ if this project helped you!
 - GitHub: [@khadirullah](https://github.com/khadirullah)
 - X (Twitter): [@KhadirullahM](https://x.com/KhadirullahM)
 - LinkedIn: [in/khadirullah](https://linkedin.com/in/khadirullah)
+
 ---
 
-**Made with ❤️ by [Khadirullah Mohammad](https://khadirullah.com)**
+## 🤖 Authenticity Statement
 
-
+This library was conceptually designed and specified by the author to solve real-world documentation needs. The implementation was generated using AI assistance under strict human supervision, ensuring the final result meets professional standards for performance, security, and build quality.
