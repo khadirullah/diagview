@@ -1,6 +1,6 @@
 {
   "name": "diagview",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A lightweight framework-agnostic viewer for SVG diagrams (Mermaid, Graphviz, etc). Adds interactive Zoom, Pan, Search, Export, and Presentation Mode.",
   "type": "module",
   "main": "dist/diagview.umd.js",
