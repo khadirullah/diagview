@@ -1,6 +1,6 @@
 /**
  * DiagView - Universal Interactive Diagram Viewer
- * @version 1.0.2
+ * @version 1.0.3
  * @license MIT
  *
  * A lightweight, framework-agnostic library for displaying interactive
@@ -166,7 +166,7 @@ const DiagView = {
   closeModal,
 
   // Version
-  version: "1.0.2",
+  version: "1.0.3",
 };
 
 // Auto-bootstrap (optional)

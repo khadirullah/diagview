@@ -362,7 +362,7 @@ DiagView.init(config);
 
 ## Version
 
-Current version: **1.0.2**
+Current version: **1.0.3**
 ```javascript
-console.log(DiagView.version); // "1.0.2"
+console.log(DiagView.version); // "1.0.3"
 ```
