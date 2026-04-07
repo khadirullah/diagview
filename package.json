@@ -1,6 +1,6 @@
 {
   "name": "diagview",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "A lightweight framework-agnostic viewer for SVG diagrams (Mermaid, Graphviz, etc). Adds interactive Zoom, Pan, Search, Export, and Presentation Mode.",
   "type": "module",
   "main": "dist/diagview.umd.js",
@@ -14,16 +14,18 @@
     "LICENSE"
   ],
   "scripts": {
+    "test": "NODE_OPTIONS=--experimental-vm-modules jest --env=jsdom",
+    "test:coverage": "NODE_OPTIONS=--experimental-vm-modules jest --env=jsdom --coverage",
     "dev": "rollup -c -w",
-    "build": "npm run build:lib && npm run build:types",
+    "build": "npm run clean && npm run build:lib && npm run build:types",
     "build:lib": "rollup -c",
     "build:types": "tsc --declaration --emitDeclarationOnly --outDir dist",
+    "format": "prettier --write \"src/**/*.js\"",
     "lint": "eslint src/**/*.js",
     "lint:fix": "eslint src/**/*.js --fix",
     "size": "size-limit",
     "clean": "rm -rf dist tsconfig.tsbuildinfo",
-    "prepublishOnly": "npm run clean && npm run lint && npm run build",
-    "postpublish": "git push && git push --tags"
+    "prepublishOnly": "npm run lint && npm run test && npm run build"
   },
   "keywords": [
     "diagram",
@@ -54,11 +56,6 @@
   "homepage": "https://github.com/khadirullah/diagview#readme",
   "peerDependencies": {
     "@panzoom/panzoom": "^4.5.0"
-  },
-  "peerDependenciesMeta": {
-    "@panzoom/panzoom": {
-      "optional": true
-    }
   },
   "devDependencies": {
     "@babel/core": "^7.23.0",

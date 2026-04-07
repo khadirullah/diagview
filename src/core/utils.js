@@ -4,8 +4,6 @@
  * @module core/utils
  */
 
-
-
 /**
  * Check if code is running in browser
  */
@@ -17,8 +15,9 @@ export function isBrowser() {
  * Detect if device is mobile/touch-capable
  */
 export function isMobileDevice() {
+  if (!isBrowser()) return false;
   return (
-    /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) ||
+    window.matchMedia?.("(pointer: coarse)").matches ||
     window.matchMedia?.("(max-width: 768px)").matches
   );
 }
@@ -79,11 +78,7 @@ export function throttle(func, limit) {
  * Check if clipboard API is available
  */
 export function isClipboardAvailable() {
-  return (
-    isBrowser() &&
-    navigator.clipboard &&
-    typeof navigator.clipboard.write === "function"
-  );
+  return isBrowser() && navigator.clipboard && typeof navigator.clipboard.write === "function";
 }
 
 /**
@@ -156,11 +151,7 @@ export function isElementVisible(element) {
   if (!element) return false;
 
   const style = window.getComputedStyle(element);
-  return (
-    style.display !== "none" &&
-    style.visibility !== "hidden" &&
-    style.opacity !== "0"
-  );
+  return style.display !== "none" && style.visibility !== "hidden" && style.opacity !== "0";
 }
 
 /**
@@ -233,13 +224,16 @@ export function fixIds(svg, uniqueId) {
 
   // Replace all URL references and href references
   let html = svg.outerHTML;
+  const escapeRegExp = (string) => string.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
   idMap.forEach((newId, oldId) => {
+    const safeOldId = escapeRegExp(oldId);
     // Replace url(#oldId) with url(#newId)
-    html = html.replace(new RegExp(`url\\(#${oldId}\\)`, "g"), `url(#${newId})`);
+    html = html.replace(new RegExp(`url\\(#${safeOldId}\\)`, "g"), `url(#${newId})`);
     // Replace href="#oldId" with href="#newId"
-    html = html.replace(new RegExp(`href="#${oldId}"`, "g"), `href="#${newId}"`);
+    html = html.replace(new RegExp(`href="#${safeOldId}"`, "g"), `href="#${newId}"`);
     // Replace xlink:href="#oldId" (older SVG spec)
-    html = html.replace(new RegExp(`xlink:href="#${oldId}"`, "g"), `xlink:href="#${newId}"`);
+    html = html.replace(new RegExp(`xlink:href="#${safeOldId}"`, "g"), `xlink:href="#${newId}"`);
   });
 
   // Create new SVG from modified HTML

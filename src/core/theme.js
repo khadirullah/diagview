@@ -130,10 +130,7 @@ function isDarkMode() {
   }
 
   // Check CSS media query
-  if (
-    window.matchMedia &&
-    window.matchMedia("(prefers-color-scheme: dark)").matches
-  ) {
+  if (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) {
     return true;
   }
 
@@ -154,9 +151,7 @@ function getCSSVariable(varName, fallbackLight, fallbackDark, isDark) {
   // Try without dashes (some frameworks)
   if (!value || !value.trim()) {
     const altName = varName.replace(/^--/, "");
-    value =
-      root.getPropertyValue(`--${altName}`) ||
-      body.getPropertyValue(`--${altName}`);
+    value = root.getPropertyValue(`--${altName}`) || body.getPropertyValue(`--${altName}`);
   }
 
   // Use fallback
@@ -223,59 +218,29 @@ export function detectTheme() {
   const bg = detectBackground(isDark);
 
   // Detect text color with multiple fallbacks
-  let text = getCSSVariable(
-    "--diagram-text",
-    COLORS.TEXT_LIGHT,
-    COLORS.TEXT_DARK,
-    isDark,
-  );
+  let text = getCSSVariable("--diagram-text", COLORS.TEXT_LIGHT, COLORS.TEXT_DARK, isDark);
 
   // Fallback to other common variable names
   if (!text || text === "inherit") {
     text =
-      getCSSVariable(
-        "--text-color",
-        COLORS.TEXT_LIGHT,
-        COLORS.TEXT_DARK,
-        isDark,
-      ) ||
-      getCSSVariable(
-        "--foreground",
-        COLORS.TEXT_LIGHT,
-        COLORS.TEXT_DARK,
-        isDark,
-      );
+      getCSSVariable("--text-color", COLORS.TEXT_LIGHT, COLORS.TEXT_DARK, isDark) ||
+      getCSSVariable("--foreground", COLORS.TEXT_LIGHT, COLORS.TEXT_DARK, isDark);
   }
 
   // Ensure sufficient contrast (WCAG AA: 4.5:1)
   const contrast = getContrastRatio(bg, text);
   if (contrast < 4.5) {
     console.warn(
-      `DiagView: Low contrast detected (${contrast.toFixed(2)}:1), using high-contrast fallback`,
+      `DiagView: Low contrast detected (${contrast.toFixed(2)}:1), using high-contrast fallback`
     );
     text = ensureContrast(text, bg);
   }
 
   // Detect accent color
   const accent =
-    getCSSVariable(
-      "--diagram-accent",
-      COLORS.ACCENT_LIGHT,
-      COLORS.ACCENT_DARK,
-      isDark,
-    ) ||
-    getCSSVariable(
-      "--primary",
-      COLORS.ACCENT_LIGHT,
-      COLORS.ACCENT_DARK,
-      isDark,
-    ) ||
-    getCSSVariable(
-      "--accent-color",
-      COLORS.ACCENT_LIGHT,
-      COLORS.ACCENT_DARK,
-      isDark,
-    );
+    getCSSVariable("--diagram-accent", COLORS.ACCENT_LIGHT, COLORS.ACCENT_DARK, isDark) ||
+    getCSSVariable("--primary", COLORS.ACCENT_LIGHT, COLORS.ACCENT_DARK, isDark) ||
+    getCSSVariable("--accent-color", COLORS.ACCENT_LIGHT, COLORS.ACCENT_DARK, isDark);
 
   const theme = { isDark, bg, text, accent };
 

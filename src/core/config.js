@@ -5,10 +5,7 @@
  */
 
 // Import constants from new centralized file
-import { CONSTANTS, TIMING, EXPORT, ZOOM, LAYOUTS, BUTTON_STYLES } from "./constants.js";
-
-// Re-export for backward compatibility
-export { CONSTANTS };
+import { TIMING, EXPORT, ZOOM, LAYOUTS, BUTTON_STYLES } from "./constants.js";
 
 export const DEFAULT_CONFIG = {
   // Theme colors (null = auto-detect)
@@ -45,17 +42,17 @@ export const DEFAULT_CONFIG = {
   diagramSelector: ".diagram, .chart, [data-diagram]",
 
   // Feature toggles
-  rememberZoom: false,    // Remember zoom/pan state per diagram (session-based)
-  animateOpen: true,      // Animate fullscreen open with scale effect
-  printFriendly: true,    // Enable print-friendly export mode
+  rememberZoom: false, // Remember zoom/pan state per diagram (session-based)
+  animateOpen: true, // Animate fullscreen open with scale effect
+  printFriendly: true, // Enable print-friendly export mode
+  showBranding: true, // Show "DiagView" branding link in modal
 
   // Toast settings
   toastDuration: TIMING.TOAST_DURATION,
   errorToastDuration: TIMING.ERROR_TOAST_DURATION,
 
   // CDN URL for PDF library (configurable for intranet users)
-  pdfLibraryUrl:
-    "https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js",
+  pdfLibraryUrl: "https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js",
 
   // Zoom/Pan settings
   maxZoomScale: ZOOM.MAX_SCALE_DEFAULT,
@@ -112,133 +109,16 @@ const _state = {
 };
 
 // State getters and setters (prevent direct mutation)
-export const state = {
-  get config() {
-    return _state.config;
-  },
-  set config(val) {
-    _state.config = val;
-  },
-
-  get activePanzoom() {
-    return _state.activePanzoom;
-  },
-  set activePanzoom(val) {
-    _state.activePanzoom = val;
-  },
-
-  get observer() {
-    return _state.observer;
-  },
-  set observer(val) {
-    _state.observer = val;
-  },
-
-  get themeObserver() {
-    return _state.themeObserver;
-  },
-  set themeObserver(val) {
-    _state.themeObserver = val;
-  },
-
-  get mediaQueryList() {
-    return _state.mediaQueryList;
-  },
-  set mediaQueryList(val) {
-    _state.mediaQueryList = val;
-  },
-
-  get isInitialized() {
-    return _state.isInitialized;
-  },
-  set isInitialized(val) {
-    _state.isInitialized = val;
-  },
-
-  get toastTimer() {
-    return _state.toastTimer;
-  },
-  set toastTimer(val) {
-    _state.toastTimer = val;
-  },
-
-  get touchState() {
-    return _state.touchState;
-  },
-  set touchState(val) {
-    _state.touchState = val;
-  },
-
-  get lastActiveElement() {
-    return _state.lastActiveElement;
-  },
-  set lastActiveElement(val) {
-    _state.lastActiveElement = val;
-  },
-
-  get isModalOpen() {
-    return _state.isModalOpen;
-  },
-  set isModalOpen(val) {
-    _state.isModalOpen = val;
-  },
-
-  get cleanupFunctions() {
-    return _state.cleanupFunctions;
-  },
-  set cleanupFunctions(val) {
-    _state.cleanupFunctions = val;
-  },
-
-  get meetingMode() {
-    return _state.meetingMode;
-  },
-  set meetingMode(val) {
-    _state.meetingMode = val;
-  },
-
-  get laserPointer() {
-    return _state.laserPointer;
-  },
-  set laserPointer(val) {
-    _state.laserPointer = val;
-  },
-
-  get minimapSvg() {
-    return _state.minimapSvg;
-  },
-  set minimapSvg(val) {
-    _state.minimapSvg = val;
-  },
-
-  get searchMatches() {
-    return _state.searchMatches;
-  },
-  set searchMatches(val) {
-    _state.searchMatches = val;
-  },
-
-  get searchIndex() {
-    return _state.searchIndex;
-  },
-  set searchIndex(val) {
-    _state.searchIndex = val;
-  },
-
-  get rotationAngle() {
-    return _state.rotationAngle;
-  },
-  set rotationAngle(val) {
-    _state.rotationAngle = val;
-  },
-
-  get currentDiagramIndex() {
-    return _state.currentDiagramIndex;
-  },
-  set currentDiagramIndex(val) {
-    _state.currentDiagramIndex = val;
-  },
-};
+export const state = {};
+Object.keys(_state).forEach((key) => {
+  Object.defineProperty(state, key, {
+    get: () => _state[key],
+    set: (val) => {
+      _state[key] = val;
+    },
+    enumerable: true,
+  });
+});
 
 /**
  * Validate a single config value
@@ -318,29 +198,17 @@ function validateConfig() {
   }
 
   if (![LAYOUTS.HEADER, LAYOUTS.FLOATING, LAYOUTS.OFF].includes(config.layout)) {
-    console.warn(
-      `DiagView: Invalid layout "${config.layout}", using default`,
-    );
+    console.warn(`DiagView: Invalid layout "${config.layout}", using default`);
     config.layout = DEFAULT_CONFIG.layout;
   }
 
-  if (
-    config.maxZoomScale < 1 ||
-    config.maxZoomScale > ZOOM.MAX_SCALE_LIMIT
-  ) {
-    console.warn(
-      `DiagView: maxZoomScale should be between 1 and ${ZOOM.MAX_SCALE_LIMIT}`,
-    );
+  if (config.maxZoomScale < 1 || config.maxZoomScale > ZOOM.MAX_SCALE_LIMIT) {
+    console.warn(`DiagView: maxZoomScale should be between 1 and ${ZOOM.MAX_SCALE_LIMIT}`);
     config.maxZoomScale = DEFAULT_CONFIG.maxZoomScale;
   }
 
-  if (
-    config.minZoomScale < ZOOM.MIN_SCALE_LIMIT ||
-    config.minZoomScale > 1
-  ) {
-    console.warn(
-      `DiagView: minZoomScale should be between ${ZOOM.MIN_SCALE_LIMIT} and 1`,
-    );
+  if (config.minZoomScale < ZOOM.MIN_SCALE_LIMIT || config.minZoomScale > 1) {
+    console.warn(`DiagView: minZoomScale should be between ${ZOOM.MIN_SCALE_LIMIT} and 1`);
     config.minZoomScale = DEFAULT_CONFIG.minZoomScale;
   }
 }

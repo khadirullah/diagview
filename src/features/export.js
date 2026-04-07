@@ -16,11 +16,7 @@ import {
   loadScript,
 } from "../core/utils.js";
 import { cloneSVGForExport } from "../core/svg-clone.js";
-import {
-  showSuccessToast,
-  showErrorToast,
-  showInfoToast,
-} from "../ui/toast.js";
+import { showSuccessToast, showErrorToast, showInfoToast } from "../ui/toast.js";
 
 /**
  * Robust dimension calculator
@@ -88,8 +84,8 @@ function prepareSvgForExport(svg, modalClone) {
   // Center: x - padding, y - padding
   const vx = d.x - padding;
   const vy = d.y - padding;
-  const vw = d.w + (padding * 2);
-  const vh = d.h + (padding * 2);
+  const vw = d.w + padding * 2;
+  const vh = d.h + padding * 2;
 
   const width = vw;
   const height = vh;
@@ -106,8 +102,7 @@ function prepareSvgForExport(svg, modalClone) {
   exportSvg.setAttribute("height", height);
   exportSvg.setAttribute("xmlns", "http://www.w3.org/2000/svg");
 
-  // Apply theme background for consistent appearance
-  exportSvg.style.background = theme.bg;
+  // (Background color relies dynamically on canvas rendering for PNG-T support)
 
   // CRITICAL FIX: Reset Zoom/Pan Transforms
   // We must strip any zoom/pan transforms to export the "clean" full diagram.
@@ -127,9 +122,9 @@ function prepareSvgForExport(svg, modalClone) {
 
   // If the diagram uses an internal group for panning, reset that too.
   const rootGroups = exportSvg.querySelectorAll(":scope > g[transform]");
-  rootGroups.forEach(g => {
-    if (g.classList.contains('svg-pan-zoom_viewport')) {
-      g.setAttribute('transform', 'matrix(1,0,0,1,0,0)');
+  rootGroups.forEach((g) => {
+    if (g.classList.contains("svg-pan-zoom_viewport")) {
+      g.setAttribute("transform", "matrix(1,0,0,1,0,0)");
     }
   });
 
@@ -149,11 +144,11 @@ async function renderToCanvas(sourceElement, modalClone, transparent = false) {
   const isMobile = isMobileDevice();
   // FORCE 2x MINIMUM for desktop to avoid blurriness, unless config says otherwise
   let scale = isMobile
-    ? (state.config.mobileScale || EXPORT.MOBILE_SCALE_DEFAULT)
-    : (state.config.highResScale || EXPORT.HIGH_RES_SCALE_DEFAULT);
+    ? state.config.mobileScale || EXPORT.MOBILE_SCALE_DEFAULT
+    : state.config.highResScale || EXPORT.HIGH_RES_SCALE_DEFAULT;
 
   // Cap pixels to prevent crash
-  const targetPixels = (width * scale) * (height * scale);
+  const targetPixels = width * scale * (height * scale);
   if (targetPixels > state.config.maxPixels) {
     scale = Math.sqrt(state.config.maxPixels / (width * height));
     console.warn(`DiagView: Auto-scaled to ${scale.toFixed(2)}x for safety`);
@@ -194,19 +189,21 @@ async function renderToCanvas(sourceElement, modalClone, transparent = false) {
 /**
  * EXPORT: SVG
  */
-async function exportSVG(sourceElement, filename, modalClone) {
+async function exportSVG(sourceElement, filename, isTransparent = false, modalClone = null) {
   try {
     const originalSvg = sourceElement.querySelector("svg");
     const { bg, svg } = prepareSvgForExport(originalSvg, modalClone);
 
-    // Add bg rect for non-transparent SVG 
-    const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
-    rect.setAttribute("x", svg.getAttribute("viewBox").split(" ")[0]); // Match viewBox origin
-    rect.setAttribute("y", svg.getAttribute("viewBox").split(" ")[1]);
-    rect.setAttribute("width", "100%");
-    rect.setAttribute("height", "100%");
-    rect.setAttribute("fill", bg);
-    svg.insertBefore(rect, svg.firstChild);
+    // Add bg rect for non-transparent SVG
+    if (!isTransparent) {
+      const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+      rect.setAttribute("x", svg.getAttribute("viewBox").split(" ")[0]); // Match viewBox origin
+      rect.setAttribute("y", svg.getAttribute("viewBox").split(" ")[1]);
+      rect.setAttribute("width", "100%");
+      rect.setAttribute("height", "100%");
+      rect.setAttribute("fill", bg);
+      svg.insertBefore(rect, svg.firstChild);
+    }
 
     const data = new XMLSerializer().serializeToString(svg);
     const blob = new Blob([data], { type: "image/svg+xml;charset=utf-8" });
@@ -218,39 +215,55 @@ async function exportSVG(sourceElement, filename, modalClone) {
 }
 
 /**
- * EXPORT: PNG / WebP
+ * EXPORT: PNG / WebP / JPEG
  */
 async function exportImage(sourceElement, filename, format, transparent, copy, modalClone) {
   try {
-    // Determine mime type and extension
     const isWebP = format === "webp";
-    const mime = isWebP ? "image/webp" : "image/png";
-    const ext = isWebP ? "webp" : "png";
-    const label = (transparent ? "Transparent " : "") + (isWebP ? "WebP" : "PNG");
+    const isJpeg = format === "jpeg" || format === "jpg";
+
+    // JPEG doesn't support transparency, force off
+    if (isJpeg) transparent = false;
+
+    // Determine mime type and extension
+    let mime = "image/png",
+      ext = "png";
+    if (isWebP) {
+      mime = "image/webp";
+      ext = "webp";
+    } else if (isJpeg) {
+      mime = "image/jpeg";
+      ext = "jpeg";
+    }
+
+    const label = (transparent ? "Transparent " : "") + (isWebP ? "WebP" : isJpeg ? "JPEG" : "PNG");
 
     showInfoToast(`Processing ${label}...`);
 
     const { canvas, scale } = await renderToCanvas(sourceElement, modalClone, transparent);
 
-    canvas.toBlob(async (blob) => {
-      if (!blob) throw new Error("Encoding failed");
+    canvas.toBlob(
+      async (blob) => {
+        if (!blob) throw new Error("Encoding failed");
 
-      if (copy) {
-        // Clipboard (PNG only usually)
-        if (!isClipboardAvailable() || isWebP) {
-          downloadFile(canvas.toDataURL(mime), `${filename}.${ext}`);
-          showSuccessToast(`${label} downloaded (Clipboard unavailable)`);
+        if (copy) {
+          // Clipboard (PNG only usually)
+          if (!isClipboardAvailable() || isWebP) {
+            downloadFile(canvas.toDataURL(mime), `${filename}.${ext}`);
+            showSuccessToast(`${label} downloaded (Clipboard unavailable)`);
+          } else {
+            await navigator.clipboard.write([new ClipboardItem({ [mime]: blob })]);
+            showSuccessToast("Copied to clipboard!");
+          }
         } else {
-          await navigator.clipboard.write([new ClipboardItem({ [mime]: blob })]);
-          showSuccessToast("Copied to clipboard!");
+          // Download
+          downloadFile(URL.createObjectURL(blob), `${filename}.${ext}`);
+          showSuccessToast(`${scale.toFixed(1)}x ${label} saved`);
         }
-      } else {
-        // Download
-        downloadFile(URL.createObjectURL(blob), `${filename}.${ext}`);
-        showSuccessToast(`${scale.toFixed(1)}x ${label} saved`);
-      }
-    }, mime, isWebP ? 0.95 : undefined);
-
+      },
+      mime,
+      isWebP ? 0.95 : undefined
+    );
   } catch (e) {
     console.error(e);
     showErrorToast("Export Failed", e.message);
@@ -281,7 +294,6 @@ async function exportPDF(sourceElement, filename, modalClone) {
     pdf.addImage(imgData, "PNG", 0, 0, width, height, undefined, "FAST");
     pdf.save(`${filename}.pdf`);
     showSuccessToast("PDF saved");
-
   } catch (e) {
     showErrorToast("PDF Failed", e.message);
   }
@@ -290,21 +302,47 @@ async function exportPDF(sourceElement, filename, modalClone) {
 /**
  * Main Export Handler
  */
-export async function exportDiagram(sourceElement, mode, modalClone = null) {
+export async function exportDiagram(sourceElement, mode, options = {}) {
+  // Support legacy signature (element, mode, modalClone)
+  if ((options && typeof options !== "object") || options?.nodeType === 1) {
+    options = { modalClone: options };
+  }
+
+  const modalClone = options.modalClone || null;
+  let isTransparent = options.transparent || false;
+
   const svg = sourceElement.querySelector("svg");
   if (!svg) return showErrorToast("No diagram found");
 
   const filename = generateFilename(svg);
 
+  // Parse legacy modes mapping
+  if (mode === "png-transparent") {
+    mode = "png";
+    isTransparent = true;
+  }
+  if (mode === "webp-transparent") {
+    mode = "webp";
+    isTransparent = true;
+  }
+  if (mode === "download") {
+    mode = "png";
+  }
+
   switch (mode) {
-    case "svg": return exportSVG(sourceElement, filename, modalClone);
-    case "copy": return exportImage(sourceElement, filename, "png", false, true, modalClone);
+    case "svg":
+      return exportSVG(sourceElement, filename, isTransparent, modalClone);
+    case "copy":
+      return exportImage(sourceElement, filename, "png", false, true, modalClone);
+    case "jpeg":
+      return exportImage(sourceElement, filename, "jpeg", false, false, modalClone);
     case "png":
-    case "download": return exportImage(sourceElement, filename, "png", false, false, modalClone);
-    case "png-transparent": return exportImage(sourceElement, filename, "png", true, false, modalClone);
-    case "webp": return exportImage(sourceElement, filename, "webp", false, false, modalClone);
-    case "webp-transparent": return exportImage(sourceElement, filename, "webp", true, false, modalClone);
-    case "pdf": return exportPDF(sourceElement, filename, modalClone);
-    default: return exportImage(sourceElement, filename, "png", false, false, modalClone);
+      return exportImage(sourceElement, filename, "png", isTransparent, false, modalClone);
+    case "webp":
+      return exportImage(sourceElement, filename, "webp", isTransparent, false, modalClone);
+    case "pdf":
+      return exportPDF(sourceElement, filename, modalClone);
+    default:
+      return exportImage(sourceElement, filename, "png", false, false, modalClone);
   }
 }

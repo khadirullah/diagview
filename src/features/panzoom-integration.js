@@ -79,7 +79,7 @@ export function initializePanzoom(element, options = {}) {
  * Setup viewport interactions for pan/zoom
  */
 export function setupViewportInteractions(viewport, element, panzoom) {
-  if (!panzoom) return () => { };
+  if (!panzoom) return () => {};
 
   let lastTapTime = 0;
 
@@ -101,10 +101,7 @@ export function setupViewportInteractions(viewport, element, panzoom) {
 
   // Mobile touch handlers
   const getDist = (touches) =>
-    Math.hypot(
-      touches[0].clientX - touches[1].clientX,
-      touches[0].clientY - touches[1].clientY,
-    );
+    Math.hypot(touches[0].clientX - touches[1].clientX, touches[0].clientY - touches[1].clientY);
 
   const handleTouchStart = (e) => {
     blurIfInput();
@@ -143,12 +140,7 @@ export function setupViewportInteractions(viewport, element, panzoom) {
     const gap = now - lastTapTime;
 
     // Double tap to reset
-    if (
-      !state.touchState.isPinching &&
-      gap < 300 &&
-      gap > 0 &&
-      e.touches.length === 0
-    ) {
+    if (!state.touchState.isPinching && gap < 300 && gap > 0 && e.touches.length === 0) {
       panzoom.reset({ animate: true, duration: 250 });
       lastTapTime = 0;
     } else if (e.touches.length === 0) {
@@ -223,7 +215,7 @@ export function saveZoomState(diagramId, panzoom) {
     const zoomState = {
       scale: panzoom.getScale(),
       pan: panzoom.getPan(),
-      timestamp: Date.now()
+      timestamp: Date.now(),
     };
     sessionStorage.setItem(getZoomKey(diagramId), JSON.stringify(zoomState));
   } catch (e) {
@@ -272,7 +264,7 @@ export function clearZoomState(diagramId) {
 export function clearAllZoomStates() {
   try {
     const keys = Object.keys(sessionStorage);
-    keys.forEach(key => {
+    keys.forEach((key) => {
       if (key.startsWith(ZOOM_STATE_KEY)) {
         sessionStorage.removeItem(key);
       }

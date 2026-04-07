@@ -42,10 +42,16 @@ export function createFloatingMenu(sourceElement, clonedSvg) {
 
       <!-- Section 2: Export -->
       <div class="dv-menu-sec">
-        <div class="dv-menu-lbl">Export</div>
+        <div class="dv-menu-lbl" style="display:flex; justify-content:space-between; align-items:center;">
+          Export
+          <label style="display:flex; align-items:center; gap:4px; font-size:10px; cursor:pointer; text-transform:none; letter-spacing:normal;">
+            <input type="checkbox" id="dv-exp-trans" style="margin:0; width:auto; cursor:pointer; accent-color: var(--dv-accent);">
+            Transparent <span style="opacity:0.5; font-size:8px;">(PNG/WebP/SVG)</span>
+          </label>
+        </div>
         <div class="dv-exp">
           <button data-action="png">PNG</button>
-          <button data-action="png-t">PNG-T</button>
+          <button data-action="jpeg">JPEG</button>
           <button data-action="svg">SVG</button>
           <button data-action="webp">WebP</button>
           <button data-action="pdf">PDF</button>
@@ -57,6 +63,13 @@ export function createFloatingMenu(sourceElement, clonedSvg) {
       <div class="dv-menu-sec">
         <div class="dv-menu-lbl">Tools</div>
         <div id="dv-tools-container"></div>
+      </div>
+
+      <!-- Section 4: Branding -->
+      <div class="dv-menu-footer">
+        <a href="https://github.com/khadirullah/diagview" target="_blank">DiagView</a> 
+        by 
+        <a href="https://khadirullah.com" target="_blank">Khadirullah</a>
       </div>
     </div>
 
@@ -169,6 +182,8 @@ export function createFloatingMenu(sourceElement, clonedSvg) {
 
   // Export Grid Delegation
   const expGrid = container.querySelector(".dv-exp");
+  const transChk = container.querySelector("#dv-exp-trans");
+
   expGrid.onclick = (e) => {
     e.stopPropagation();
     const btn = e.target.closest("button");
@@ -178,20 +193,9 @@ export function createFloatingMenu(sourceElement, clonedSvg) {
     btn.classList.add("active");
     setTimeout(() => btn.classList.remove("active"), 200);
 
-    // Call export
-    switch (type) {
-      case "copy":
-        exportDiagram(sourceElement, "copy", clonedSvg);
-        break;
-      case "png-t":
-        exportDiagram(sourceElement, "png-transparent", clonedSvg);
-        break;
-      case "png":
-        exportDiagram(sourceElement, "download", clonedSvg);
-        break;
-      default:
-        exportDiagram(sourceElement, type, clonedSvg);
-    }
+    const isTrans = transChk ? transChk.checked : false;
+
+    exportDiagram(sourceElement, type, { transparent: isTrans, modalClone: clonedSvg });
 
     toggleMenu();
   };

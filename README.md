@@ -22,7 +22,7 @@
 - 🔗 **Share Links** - Share exact zoom/pan view
 - 🎨 **3 Layout Modes** - Header, Floating, Click-to-open
 - 🔄 **Lazy Loading** - Features load on-demand
-- 📦 **Zero Dependencies** - Only Panzoom (optional)
+- 📦 **Minimal Dependencies** - Only requires @panzoom/panzoom
 - 🚀 **Framework Agnostic** - Works with React, Vue, Svelte, vanilla JS
 
 ---
@@ -31,8 +31,8 @@
 
 ### CDN (Quickest)
 ```html
-<!-- Panzoom (optional) -->
-<script src="https://cdn.jsdelivr.net/npm/@panzoom/panzoom@4.5.0/dist/panzoom.min.js"></script>
+<!-- Panzoom (Required core module) -->
+<script src="https://cdn.jsdelivr.net/npm/@panzoom/panzoom@4.5.1/dist/panzoom.min.js"></script>
 
 <!-- DiagramView -->
 <script src="https://cdn.jsdelivr.net/npm/diagview@1/dist/diagview.umd.min.js"></script>
@@ -91,7 +91,7 @@ DiagView automatically adds:
 ![DiagView Demo](media/demo.gif)
 
 ### Floating Layout (Default)
-Buttons appear on hover (desktop) or always visible (mobile).
+Buttons appear on hover (desktop) or always visible (mobile). *Test it out in the [Interactive Demo](https://khadirullah.github.io/diagview/).*
 
 ### Header Layout
 Classic layout with title bar and buttons at top.
@@ -128,7 +128,8 @@ No buttons, click diagram to open fullscreen.
 - **PNG** - High-resolution raster (configurable DPI)
 - **PNG-T** - Transparent background
 - **SVG** - Vector format (scalable)
-- **WebP** - Modern compressed format
+- **WebP / WebP-T** - Modern compressed format (optional transparency)
+- **JPEG** - Standard compressed format (no transparency)
 - **PDF** - Print-ready document
 - **Copy** - Copy to clipboard
 
@@ -202,7 +203,8 @@ DiagView.init();
 DiagView.init({
   accentColor: '#ff6b6b',
   backgroundColor: '#1a1a1a',
-  textColor: '#ffffff'
+  textColor: '#ffffff',
+  showBranding: true
 });
 ```
 

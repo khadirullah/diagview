@@ -14,9 +14,7 @@ export function blurIfInput() {
   const active = document.activeElement;
   if (
     active &&
-    (active.tagName === "INPUT" ||
-      active.tagName === "TEXTAREA" ||
-      active.isContentEditable)
+    (active.tagName === "INPUT" || active.tagName === "TEXTAREA" || active.isContentEditable)
   ) {
     active.blur();
   }
@@ -29,9 +27,7 @@ export function isInputFocused() {
   const active = document.activeElement;
   return (
     active &&
-    (active.tagName === "INPUT" ||
-      active.tagName === "TEXTAREA" ||
-      active.isContentEditable)
+    (active.tagName === "INPUT" || active.tagName === "TEXTAREA" || active.isContentEditable)
   );
 }
 
@@ -71,7 +67,7 @@ export function setupModalFocusManagement() {
     () => {
       blurIfInput();
     },
-    { passive: true },
+    { passive: true }
   );
 
   // When viewport receives wheel event, blur inputs
@@ -80,7 +76,7 @@ export function setupModalFocusManagement() {
     () => {
       blurIfInput();
     },
-    { passive: true },
+    { passive: true }
   );
 
   // When viewport starts touch, blur inputs
@@ -89,7 +85,7 @@ export function setupModalFocusManagement() {
     () => {
       blurIfInput();
     },
-    { passive: true },
+    { passive: true }
   );
 
   // Setup focus trap immediately
@@ -108,11 +104,7 @@ export function shouldHandleKeyboardEvent(event) {
 
   // Don't handle if event is from input
   const target = event.target;
-  if (
-    target.tagName === "INPUT" ||
-    target.tagName === "TEXTAREA" ||
-    target.isContentEditable
-  ) {
+  if (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable) {
     return false;
   }
 

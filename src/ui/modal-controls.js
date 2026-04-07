@@ -19,9 +19,7 @@ export function closeModal() {
   const menu = document.getElementById("diagview-temp-menu");
 
   // Clear search (lazy import to avoid circular dependency)
-  import("../features/lazy/search.js")
-    .then((m) => m.clearSearch())
-    .catch(() => { });
+  import("../features/lazy/search.js").then((m) => m.clearSearch()).catch(() => {});
 
   // Clear viewport
   if (viewport) {
@@ -43,7 +41,7 @@ export function closeModal() {
     import("../features/lazy/minimap.js").then((m) => m.cleanupMinimap()),
     import("../features/lazy/meeting-mode.js").then((m) => m.cleanupMeetingMode()),
     import("../features/lazy/rotate.js").then((m) => m.cleanupRotation()),
-  ]).catch(() => { });
+  ]).catch(() => {});
 
   // Destroy panzoom safely
   if (state.activePanzoom) {
@@ -70,7 +68,7 @@ export function closeModal() {
 
     // Exit fullscreen if active
     if (document.fullscreenElement) {
-      document.exitFullscreen().catch(() => { });
+      document.exitFullscreen().catch(() => {});
     }
   }
 
@@ -88,4 +86,26 @@ export function closeModal() {
       console.error("DiagView: onClose callback error:", e);
     }
   }
+}
+
+/**
+ * Sync branding visibility based on current configuration
+ * Reactive to runtime config changes
+ */
+export function syncBrandingVisibility() {
+  const modal = document.getElementById("diagview-modal");
+  const menu = document.getElementById("diagview-temp-menu");
+
+  const elements = [modal, menu].filter((el) => !!el);
+  if (elements.length === 0) return;
+
+  const shouldHide = state.config.showBranding === false;
+
+  elements.forEach((el) => {
+    if (shouldHide) {
+      el.classList.add("dv-hide-branding");
+    } else {
+      el.classList.remove("dv-hide-branding");
+    }
+  });
 }

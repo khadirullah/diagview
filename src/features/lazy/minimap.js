@@ -25,8 +25,7 @@ export function updateMinimap(clone, viewport, panzoom) {
 
   // Calculate if minimap is needed (diagram is larger than viewport)
   const needsMinimap =
-    d.width * scale > viewportRect.width * 1.1 ||
-    d.height * scale > viewportRect.height * 1.1;
+    d.width * scale > viewportRect.width * 1.1 || d.height * scale > viewportRect.height * 1.1;
 
   minimap.classList.toggle("show", needsMinimap);
   if (!needsMinimap) return;
@@ -42,16 +41,11 @@ export function updateMinimap(clone, viewport, panzoom) {
 
   // Calculate minimap scale
   const minimapRect = minimap.getBoundingClientRect();
-  const minimapScale =
-    Math.min(minimapRect.width / d.width, minimapRect.height / d.height) * 0.9;
+  const minimapScale = Math.min(minimapRect.width / d.width, minimapRect.height / d.height) * 0.9;
 
   // Calculate viewport indicator position
-  const vx =
-    (-pan.x / scale + d.width / 2 - viewportRect.width / 2 / scale) *
-    minimapScale;
-  const vy =
-    (-pan.y / scale + d.height / 2 - viewportRect.height / 2 / scale) *
-    minimapScale;
+  const vx = (-pan.x / scale + d.width / 2 - viewportRect.width / 2 / scale) * minimapScale;
+  const vy = (-pan.y / scale + d.height / 2 - viewportRect.height / 2 / scale) * minimapScale;
   const vw = (viewportRect.width / scale) * minimapScale;
   const vh = (viewportRect.height / scale) * minimapScale;
 

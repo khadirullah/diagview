@@ -12,7 +12,7 @@ Frequently Asked Questions
 
 ### Q: Do I need to install anything?
 
-**A:** Just DiagView! Panzoom is optional (for zoom/pan) and can be loaded via CDN.
+**A:** DiagView is extremely lightweight and relies on a single external module (`@panzoom/panzoom`) to drive its core coordinate physics.
 
 ### Q: What browsers are supported?
 
@@ -28,8 +28,8 @@ Frequently Asked Questions
 
 ### Q: How do I install via CDN?
 ```html
-<script src="https://cdn.jsdelivr.net/npm/@panzoom/panzoom@4.5.0/dist/panzoom.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/diagview@1.0.0/dist/diagview.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@panzoom/panzoom@4.5.1/dist/panzoom.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/diagview@1/dist/diagview.umd.min.js"></script>
 ```
 
 ### Q: How do I install via npm?
@@ -64,6 +64,15 @@ DiagView.init({
 DiagView.init({
   diagramSelector: '.my-custom-class'
 });
+```
+
+### Q: How do I hide the "DiagView" attribution link?
+```javascript
+DiagView.init({
+  showBranding: false
+});
+// Or change it at runtime:
+DiagView.configure({ showBranding: false });
 ```
 
 ### Q: How do I disable keyboard shortcuts?
@@ -270,7 +279,7 @@ Yes! MIT license allows commercial use.
 
 ### Q: Do I need to credit you?
 
-Not required, but appreciated! 😊
+**A:** Not required, but appreciated! 😊 By default, a small "DiagView" link appears in the viewer. You can hide it using `showBranding: false`.
 
 ### Q: Can I modify the code?
 
@@ -297,5 +306,5 @@ Not yet! For now, use GitHub Discussions.
 ## Still have questions?
 
 - 📖 [Read Usage Guide](./USAGE.md)
-- 💻 [Browse Examples](../examples/)
+- 💻 [Browse Examples](../demo/)
 - 🐛 [Report Issue](https://github.com/khadirullah/diagview/issues)

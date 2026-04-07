@@ -18,7 +18,7 @@ import {
   restoreZoomState,
 } from "../features/panzoom-integration.js";
 import { setupModalFocusManagement, saveFocus } from "./focus-manager.js";
-import { closeModal } from "./modal-controls.js";
+import { closeModal, syncBrandingVisibility } from "./modal-controls.js";
 import { createFloatingMenu } from "./floating-menu.js";
 
 /**
@@ -43,6 +43,9 @@ export function createModal() {
     </div>
     <div class="diagview-modal-content">
       <div class="diagview-topbar">
+        <a href="https://github.com/khadirullah/diagview" target="_blank" class="diagview-branding" title="DiagView by Khadirullah">
+          DiagView
+        </a>
         <div class="diagview-search-container">
           <div class="diagview-search-wrapper">
             <svg class="diagview-search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -161,11 +164,7 @@ export function openFullscreen(element) {
 
   // Setup viewport interactions and STORE cleanup function
   if (state.activePanzoom) {
-    const cleanup = setupViewportInteractions(
-      viewport,
-      clone,
-      state.activePanzoom,
-    );
+    const cleanup = setupViewportInteractions(viewport, clone, state.activePanzoom);
     addCleanupFunction(cleanup);
 
     // Save zoom state on changes (for remember zoom feature)
@@ -176,9 +175,7 @@ export function openFullscreen(element) {
   }
 
   // Setup search (lazy loaded)
-  import("../features/lazy/search.js")
-    .then((m) => m.setupSearch(clone))
-    .catch(() => { });
+  import("../features/lazy/search.js").then((m) => m.setupSearch(clone)).catch(() => {});
 
   // Create floating menu
   createFloatingMenu(element, clone);
@@ -196,7 +193,7 @@ export function openFullscreen(element) {
         // Initial update
         setTimeout(() => m.updateMinimap(clone, viewport, state.activePanzoom), 100);
       })
-      .catch(() => { });
+      .catch(() => {});
   }
 
   // Zoom percentage display
@@ -244,5 +241,5 @@ export function openFullscreen(element) {
   }
 }
 
-// Re-export closeModal from modal-controls
-export { closeModal };
+// Re-export closeModal and syncBrandingVisibility from modal-controls
+export { closeModal, syncBrandingVisibility };

@@ -91,7 +91,7 @@ Export a diagram programmatically.
 
 **Parameters:**
 - `element` (HTMLElement) - Diagram container element
-- `format` (string) - Export format: `'png'`, `'svg'`, `'pdf'`, `'copy'`, `'png-transparent'`, `'webp'`, `'webp-transparent'`
+- `format` (string) - Export format: `'png'`, `'svg'`, `'pdf'`, `'copy'`, `'png-transparent'`, `'webp'`, `'webp-transparent'`, `'jpeg'`
 - `modalClone` (SVGElement, optional) - Cloned SVG from modal (internal use)
 
 **Returns:** `Promise<void>`
@@ -161,6 +161,11 @@ DiagView.closeModal();
   - `download` (string | null) - Custom download icon SVG
   - `fullscreen` (string | null) - Custom fullscreen icon SVG
 - **Default:** `{ copy: null, download: null, fullscreen: null }`
+
+#### `showBranding`
+- **Type:** `boolean`
+- **Default:** `true`
+- **Description:** Toggle the "DiagView" branding links in the Topbar and Hamburger menu.
 
 ---
 
@@ -357,7 +362,7 @@ DiagView.init(config);
 
 ## Version
 
-Current version: **1.0.0**
+Current version: **1.0.2**
 ```javascript
-console.log(DiagView.version); // "1.0.0"
+console.log(DiagView.version); // "1.0.2"
 ```

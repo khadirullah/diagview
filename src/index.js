@@ -1,6 +1,6 @@
 /**
  * DiagView - Universal Interactive Diagram Viewer
- * @version 1.0.0
+ * @version 1.0.2
  * @license MIT
  *
  * A lightweight, framework-agnostic library for displaying interactive
@@ -10,22 +10,11 @@
 import { state, updateConfig, resetConfig, getConfig } from "./core/config.js";
 import { isBrowser } from "./core/utils.js";
 import { safeDestroy } from "./core/lifecycle.js";
-import {
-  setupThemeWatchers,
-  teardownThemeWatchers,
-  syncTheme,
-} from "./core/theme.js";
+import { setupThemeWatchers, teardownThemeWatchers, syncTheme } from "./core/theme.js";
 import { injectStyles, removeStyles } from "./ui/styles.js";
-import { createModal, closeModal } from "./ui/modal.js";
-import {
-  setupKeyboardShortcuts,
-  teardownKeyboardShortcuts,
-} from "./features/keyboard.js";
-import {
-  observeDiagrams,
-  stopObserving,
-  refreshDiagrams,
-} from "./core/observer.js";
+import { createModal, closeModal, syncBrandingVisibility } from "./ui/modal.js";
+import { setupKeyboardShortcuts, teardownKeyboardShortcuts } from "./features/keyboard.js";
+import { observeDiagrams, stopObserving, refreshDiagrams } from "./core/observer.js";
 import { exportDiagram } from "./features/export.js";
 import { deinitializeDiagram } from "./features/diagram-init.js";
 
@@ -53,6 +42,7 @@ function init(options = {}) {
   // Initialize components
   injectStyles();
   createModal();
+  syncBrandingVisibility();
   setupKeyboardShortcuts();
   setupThemeWatchers();
   observeDiagrams();
@@ -149,6 +139,7 @@ function configure(options = {}) {
 
   updateConfig(options);
   syncTheme();
+  syncBrandingVisibility();
 }
 
 /**
@@ -175,7 +166,7 @@ const DiagView = {
   closeModal,
 
   // Version
-  version: "1.0.0",
+  version: "1.0.2",
 };
 
 // Auto-bootstrap (optional)
@@ -188,10 +179,7 @@ if (typeof window !== "undefined") {
 
     // Check for auto-init attribute
     const autoInitEl = document.querySelector("[data-diagview-auto-init]");
-    if (
-      autoInitEl ||
-      document.querySelector(".diagram, .chart, [data-diagram]")
-    ) {
+    if (autoInitEl || document.querySelector(".diagram, .chart, [data-diagram]")) {
       setTimeout(() => {
         DiagView.init();
       }, 100);
@@ -207,12 +195,4 @@ if (typeof window !== "undefined") {
 
 // Export for module systems
 export default DiagView;
-export {
-  init,
-  destroy,
-  refresh,
-  configure,
-  getConfiguration,
-  exportDiagram,
-  closeModal,
-};
+export { init, destroy, refresh, configure, getConfiguration, exportDiagram, closeModal };

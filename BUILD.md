@@ -36,7 +36,7 @@ npm run size
 ### Output Files
 - `dist/diagview.umd.js` - UMD build (browser `<script>`)
 - `dist/diagview.umd.min.js` - UMD minified (production)
-- `dist/diagview.esm.js` - ES Module (bundlers)
+- `dist/esm/index.js` - ES Module (bundlers)
 - `dist/index.d.ts` - TypeScript definitions
 
 ### Bundle Sizes

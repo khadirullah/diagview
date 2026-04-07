@@ -152,14 +152,7 @@ export function createButtonGroup(buttonConfigs, className = "") {
  * });
  */
 export function createMenuItem(config) {
-  const {
-    id,
-    icon,
-    label,
-    shortcut = null,
-    onClick = null,
-    className = "",
-  } = config;
+  const { id, icon, label, shortcut = null, onClick = null, className = "" } = config;
 
   if (!id || !icon || !label) {
     console.warn("DiagView: Menu item requires id, icon, and label");
@@ -214,10 +207,7 @@ export function createMenuItems(configs) {
  * setButtonActive(button, false); // Deactivate button
  */
 export function setButtonActive(buttonOrId, active) {
-  const btn =
-    typeof buttonOrId === "string"
-      ? document.getElementById(buttonOrId)
-      : buttonOrId;
+  const btn = typeof buttonOrId === "string" ? document.getElementById(buttonOrId) : buttonOrId;
 
   if (!btn) return;
 
@@ -236,10 +226,7 @@ export function setButtonActive(buttonOrId, active) {
  * setButtonDisabled(button, false); // Enable button
  */
 export function setButtonDisabled(buttonOrId, disabled) {
-  const btn =
-    typeof buttonOrId === "string"
-      ? document.getElementById(buttonOrId)
-      : buttonOrId;
+  const btn = typeof buttonOrId === "string" ? document.getElementById(buttonOrId) : buttonOrId;
 
   if (!btn) return;
 
@@ -256,10 +243,7 @@ export function setButtonDisabled(buttonOrId, disabled) {
  * triggerButtonSuccess("copy-btn"); // Show checkmark animation
  */
 export function triggerButtonSuccess(buttonOrId) {
-  const btn =
-    typeof buttonOrId === "string"
-      ? document.getElementById(buttonOrId)
-      : buttonOrId;
+  const btn = typeof buttonOrId === "string" ? document.getElementById(buttonOrId) : buttonOrId;
 
   if (!btn) return;
 

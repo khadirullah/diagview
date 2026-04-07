@@ -30,7 +30,7 @@ function isValidSvg(svg) {
   // Check for common error indicators in text
   const textContent = svg.textContent?.toLowerCase() || "";
   const errorKeywords = ["syntax error", "parse error", "invalid", "error in diagram"];
-  if (errorKeywords.some(keyword => textContent.includes(keyword))) {
+  if (errorKeywords.some((keyword) => textContent.includes(keyword))) {
     return false;
   }
 

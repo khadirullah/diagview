@@ -87,7 +87,7 @@ function createHelpModal() {
 
     const keyEl = document.createElement("div");
     keyEl.className = "diagview-help-key";
-    keyEl.innerHTML = keys.map(k => `<kbd>${k}</kbd>`).join(" ");
+    keyEl.innerHTML = keys.map((k) => `<kbd>${k}</kbd>`).join(" ");
 
     const descEl = document.createElement("div");
     descEl.className = "diagview-help-desc";

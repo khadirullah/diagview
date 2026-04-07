@@ -1,7 +1,7 @@
 # Source files (we ship dist/ only)
 src/
 tests/
-examples/
+demo/
 
 # Documentation (keep README.md, LICENSE)
 docs/

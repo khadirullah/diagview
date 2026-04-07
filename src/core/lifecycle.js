@@ -9,19 +9,19 @@ import { addCleanupFunction } from "./config.js";
 /**
  * Safely destroy an instance with error handling
  * Prevents crashes from failed cleanup operations
- * 
+ *
  * @param {object} instance - Object to destroy
  * @param {string} methodName - Method name to call (default: 'destroy')
  * @returns {boolean} True if destroyed successfully
- * 
+ *
  * @example
  * safeDestroy(panzoomInstance);
  * safeDestroy(observer, 'disconnect');
  */
-export function safeDestroy(instance, methodName = 'destroy') {
+export function safeDestroy(instance, methodName = "destroy") {
   if (!instance) return false;
 
-  if (typeof instance[methodName] !== 'function') {
+  if (typeof instance[methodName] !== "function") {
     // console.warn(`DiagView: Instance doesn't have method "${methodName}"`);
     return false;
   }
@@ -38,25 +38,25 @@ export function safeDestroy(instance, methodName = 'destroy') {
 /**
  * Add event listener with automatic cleanup on destroy
  * Prevents memory leaks from forgotten event listeners
- * 
+ *
  * @param {EventTarget} target - Element to attach listener to
  * @param {string} event - Event name
  * @param {Function} handler - Event handler function
  * @param {object | boolean} options - Event listener options
  * @returns {Function} Cleanup function to remove listener
- * 
+ *
  * @example
  * // Automatically cleaned up on destroy
  * addManagedListener(window, 'resize', handleResize);
- * 
+ *
  * // Manual cleanup if needed
  * const cleanup = addManagedListener(button, 'click', handleClick);
  * cleanup(); // Remove listener manually
  */
 export function addManagedListener(target, event, handler, options) {
   if (!target || !event || !handler) {
-    console.warn('DiagView: Invalid arguments for addManagedListener');
-    return () => { };
+    console.warn("DiagView: Invalid arguments for addManagedListener");
+    return () => {};
   }
 
   // Attach listener
@@ -76,12 +76,12 @@ export function addManagedListener(target, event, handler, options) {
 
 /**
  * Add multiple event listeners at once with automatic cleanup
- * 
+ *
  * @param {EventTarget} target - Element to attach listeners to
  * @param {object} events - Object mapping event names to handlers
  * @param {object | boolean} options - Event listener options
  * @returns {Function} Cleanup function to remove all listeners
- * 
+ *
  * @example
  * addManagedListeners(viewport, {
  *   wheel: handleWheel,
@@ -99,18 +99,18 @@ export function addManagedListeners(target, events, options) {
 
   // Return function that cleans up all listeners
   return () => {
-    cleanups.forEach(cleanup => cleanup());
+    cleanups.forEach((cleanup) => cleanup());
   };
 }
 
 /**
  * Create a disposable resource with cleanup tracking
  * Useful for complex resources that need guaranteed cleanup
- * 
+ *
  * @param {Function} createFn - Function that creates the resource
  * @param {Function} disposeFn - Function that disposes the resource
  * @returns {object} Resource with dispose method
- * 
+ *
  * @example
  * const timer = createDisposable(
  *   () => setInterval(update, 1000),
@@ -127,7 +127,7 @@ export function createDisposable(createFn, disposeFn) {
       try {
         disposeFn(resource);
       } catch (error) {
-        console.warn('DiagView: Dispose failed', error);
+        console.warn("DiagView: Dispose failed", error);
       }
     }
   };
@@ -137,25 +137,24 @@ export function createDisposable(createFn, disposeFn) {
 
   return {
     resource,
-    dispose
+    dispose,
   };
 }
 
 /**
  * Safely remove DOM element with cleanup
  * Removes element and clears any associated data
- * 
+ *
  * @param {HTMLElement|string} elementOrId - Element or element ID to remove
  * @returns {boolean} True if removed successfully
- * 
+ *
  * @example
  * safeRemoveElement('diagview-modal');
  * safeRemoveElement(modalElement);
  */
 export function safeRemoveElement(elementOrId) {
-  const element = typeof elementOrId === 'string'
-    ? document.getElementById(elementOrId)
-    : elementOrId;
+  const element =
+    typeof elementOrId === "string" ? document.getElementById(elementOrId) : elementOrId;
 
   if (!element) return false;
 
@@ -163,17 +162,17 @@ export function safeRemoveElement(elementOrId) {
     element.remove();
     return true;
   } catch (error) {
-    console.warn('DiagView: Element removal failed', error);
+    console.warn("DiagView: Element removal failed", error);
     return false;
   }
 }
 
 /**
  * Batch cleanup of multiple DOM elements
- * 
+ *
  * @param {Array<string|HTMLElement>} elements - Array of elements or IDs
  * @returns {number} Number of elements successfully removed
- * 
+ *
  * @example
  * batchRemoveElements([
  *   'diagview-modal',
@@ -184,33 +183,11 @@ export function safeRemoveElement(elementOrId) {
 export function batchRemoveElements(elements) {
   let removed = 0;
 
-  elements.forEach(element => {
+  elements.forEach((element) => {
     if (safeRemoveElement(element)) {
       removed++;
     }
   });
 
   return removed;
-}
-
-/**
- * Create a one-time event listener that auto-removes
- * 
- * @param {EventTarget} target - Element to attach listener to
- * @param {string} event - Event name
- * @param {Function} handler - Event handler function
- * @param {object | boolean} options - Event listener options
- * 
- * @example
- * onceListener(button, 'click', () => {
- *   console.log('Clicked once, listener removed');
- * });
- */
-export function onceListener(target, event, handler, options) {
-  const wrappedHandler = (e) => {
-    handler(e);
-    target.removeEventListener(event, wrappedHandler, options);
-  };
-
-  target.addEventListener(event, wrappedHandler, options);
 }

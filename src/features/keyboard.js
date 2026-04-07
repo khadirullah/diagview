@@ -119,12 +119,12 @@ function handleKeyboardShortcut(e) {
     case "F":
       e.preventDefault();
       {
-      // Focus search input
-      const searchInput = document.getElementById("diagview-search");
-      if (searchInput) {
-        searchInput.focus();
+        // Focus search input
+        const searchInput = document.getElementById("diagview-search");
+        if (searchInput) {
+          searchInput.focus();
+        }
       }
-    }
       break;
   }
 }

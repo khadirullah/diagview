@@ -29,8 +29,8 @@ function getSearchCandidates(clone) {
     const el = elements[i];
     cache.push({
       el: el,
-      text: (el.textContent || '').toLowerCase(),
-      isPath: el.classList.contains("edgePath")
+      text: (el.textContent || "").toLowerCase(),
+      isPath: el.classList.contains("edgePath"),
     });
   }
 
@@ -44,35 +44,13 @@ function getSearchCandidates(clone) {
 function clearHighlights(clone) {
   if (!clone) return;
 
-  // Clear classes and inline styles
-  // We use the cache if available for faster iteration, otherwise query selector
-  const cache = searchCache.get(clone);
-
-  if (cache) {
-    requestAnimationFrame(() => {
-      for (let i = 0; i < cache.length; i++) {
-        const item = cache[i];
-        // Dirty check before strict clearing
-        if (item.el.style.opacity !== "") item.el.style.opacity = "";
-        if (item.el.style.pointerEvents !== "") item.el.style.pointerEvents = "";
-        if (item.el.classList.contains("dv-search-match")) item.el.classList.remove("dv-search-match");
-        if (item.el.classList.contains("dv-cur")) item.el.classList.remove("dv-cur");
-      }
-    });
-  } else {
-    // Fallback if no cache
-    clone.querySelectorAll(".dv-search-match, .dv-cur").forEach((el) => {
-      el.classList.remove("dv-search-match", "dv-cur");
-      el.style.opacity = "";
-      el.style.pointerEvents = "";
-    });
-    if (clone.classList.contains("dv-searching")) {
-      clone.querySelectorAll(SELECTORS.SEARCH_NODES).forEach(el => {
-        el.style.opacity = "";
-        el.style.pointerEvents = "";
-      });
+  requestAnimationFrame(() => {
+    // Only touch nodes that actively have our search classes
+    const activeNodes = clone.querySelectorAll(".dv-search-match, .dv-cur");
+    for (let i = 0; i < activeNodes.length; i++) {
+      activeNodes[i].classList.remove("dv-search-match", "dv-cur");
     }
-  }
+  });
 }
 
 /**
@@ -113,7 +91,7 @@ export function performSearch(clone, query) {
   // If query is empty, clear everything immediately
   if (!query || !clone) {
     clearHighlights(clone);
-    clone.classList.remove('dv-searching');
+    clone.classList.remove("dv-searching");
     state.searchMatches = [];
     state.searchIndex = -1;
     updateSearchCounter(document.querySelector(".dv-src-cnt"));
@@ -126,42 +104,28 @@ export function performSearch(clone, query) {
 
   // Batch DOM updates in next frame
   searchRafId = raf(() => {
-    clone.classList.add('dv-searching');
+    clone.classList.add("dv-searching");
 
-    // Single loop for calculation AND update (since we have cached reads)
-    // Writing styles to 2500 elements is still heavy, but checking first helps.
+    // Single loop for O(1) DOM updates utilizing CSS fading architecture
     for (let i = 0; i < candidates.length; i++) {
       const item = candidates[i];
       const isMatch = item.text.includes(lq);
-
-      // Edges stay visible if there is a query, even if they don't match text directly
-      const isVisible = isMatch || (item.isPath && lq !== "");
-
-      const targetOpacity = isVisible ? "1" : "0.15";
-      const targetPointer = isMatch ? "auto" : "none";
-
-      // Dirty Checking: Only touch DOM if changed
-      if (item.el.style.opacity !== targetOpacity) {
-        item.el.style.opacity = targetOpacity;
-      }
-
-      if (item.el.style.pointerEvents !== targetPointer) {
-        item.el.style.pointerEvents = targetPointer;
-      }
+      const isCur = item.el.classList.contains("dv-cur");
+      const isSearchMatch = item.el.classList.contains("dv-search-match");
 
       // Explicitly clear .dv-cur from all nodes to prevent stale highlights
-      if (item.el.classList.contains("dv-cur")) {
+      if (isCur) {
         item.el.classList.remove("dv-cur");
       }
 
       if (isMatch) {
-        if (!item.el.classList.contains('dv-search-match')) {
-          item.el.classList.add('dv-search-match');
+        if (!isSearchMatch) {
+          item.el.classList.add("dv-search-match");
         }
         newMatches.push(item.el);
       } else {
-        if (item.el.classList.contains('dv-search-match')) {
-          item.el.classList.remove('dv-search-match');
+        if (isSearchMatch) {
+          item.el.classList.remove("dv-search-match");
         }
       }
     }
@@ -196,7 +160,7 @@ export function clearSearch() {
   const clone = viewport?.querySelector("svg");
 
   if (clone) {
-    clone.classList.remove('dv-searching');
+    clone.classList.remove("dv-searching");
     clearHighlights(clone);
   }
 
@@ -254,7 +218,7 @@ export function setupSearch(clone) {
   const handleKeydown = (e) => {
     if (e.key === "Enter") {
       e.preventDefault();
-      // "Next Match" behavior on Enter is currently disabled 
+      // "Next Match" behavior on Enter is currently disabled
     } else if (e.key === "Escape") {
       e.stopPropagation();
       clearSearch();

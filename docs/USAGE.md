@@ -6,10 +6,10 @@ Complete guide to using DiagView in your projects.
 
 ### Via CDN (Quickest)
 ```html
-<!-- Add Panzoom (optional, for zoom/pan) -->
-<script src="https://cdn.jsdelivr.net/npm/@panzoom/panzoom@4.5.0/dist/panzoom.min.js"></script>
+<!-- Add Panzoom (Required core module) -->
+<script src="https://cdn.jsdelivr.net/npm/@panzoom/panzoom@4.5.1/dist/panzoom.min.js"></script>
 
-<script src="https://cdn.jsdelivr.net/npm/diagview@1.0.0/dist/diagview.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/diagview@1/dist/diagview.umd.min.js"></script>
 
 <script>
   // Auto-initializes if you have .diagram, .chart, or [data-diagram] elements
@@ -55,6 +55,7 @@ DiagView.init({
   accentColor: '#3b82f6',      // Your brand color
   showKeyboardHelp: true,       // Show keyboard shortcuts
   highResScale: 6,              // Export resolution (1-10)
+  showBranding: true,           // Toggle branding links
 });
 ```
 
@@ -140,6 +141,12 @@ DiagView.exportDiagram(diagram, 'png-transparent');
 
 // WebP format
 DiagView.exportDiagram(diagram, 'webp');
+
+// WebP with transparency
+DiagView.exportDiagram(diagram, 'webp-transparent');
+
+// JPEG format (flat background)
+DiagView.exportDiagram(diagram, 'jpeg');
 ```
 
 ### Export Settings
@@ -479,5 +486,5 @@ DiagView.init({
 
 - [FAQ](./FAQ.md)
 - [API Reference](./API.md)
-- [Examples](../examples/)
+- [Examples](../demo/)
 - [GitHub Issues](https://github.com/khadirullah/diagview/issues)

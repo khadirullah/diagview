@@ -26,7 +26,7 @@ If applicable, add screenshots to help explain your problem.
  - OS: [e.g. Windows, macOS, Linux]
  - Browser [e.g. chrome, safari]
  - Version [e.g. 22]
- - DiagView version [e.g. 1.0.0]
+ - DiagView version [e.g. 1.0.2]
 
 **Additional context**
 Add any other context about the problem here.
