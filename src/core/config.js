@@ -24,11 +24,12 @@ export const DEFAULT_CONFIG = {
   mobileScale: EXPORT.MOBILE_SCALE_DEFAULT,
   maxPixels: EXPORT.MAX_PIXELS_DEFAULT,
 
-  // UI Customization
+  // UI Customization (set at init() time — not deep-merged by configure())
   ui: {
     buttons: {
       style: BUTTON_STYLES.ACCENT, // options: 'transparent', 'accent', 'solid', 'neutral'
       icons: {
+        // Custom SVG icon overrides (null = use built-in icons)
         copy: null,
         download: null,
         fullscreen: null,

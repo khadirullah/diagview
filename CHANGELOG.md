@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.3] - 2026-04-07
+
+### Fixed
+- Resolved "Exit Code 128" issue in automated NPM publish workflow
+- Stabilized CI/CD pipeline for fully automated releases
+
+### Changed
+- Upgraded GitHub Actions build environment to Node.js 24
+- All feature enhancements from v1.0.2 are included (no functional changes)
+
+---
+
 ## [1.0.2] - 2026-04-07
 
 ### Added
@@ -58,6 +70,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Button factory for DRY code
 - ~85% code optimization vs initial version
 
+[1.0.3]: https://github.com/khadirullah/diagview/compare/v1.0.2...v1.0.3
 [1.0.2]: https://github.com/khadirullah/diagview/compare/v1.0.1...v1.0.2
 [1.0.1]: https://github.com/khadirullah/diagview/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/khadirullah/diagview/releases/tag/v1.0.0
