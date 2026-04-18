@@ -173,7 +173,7 @@ DiagView.init({
 
 ### Q: Can I disable the minimap?
 
-Minimap only shows when diagram is larger than viewport. It auto-hides for small diagrams.
+**A:** Minimap only shows when the diagram is larger than the viewport. As of v1.0.4, it features **Intelligent Aspect Ratio Scaling**, meaning it will accurately represent both portrait and landscape diagrams without clipping. It auto-hides for small diagrams.
 
 ### Q: How do I change auto-close time for keyboard help?
 ```javascript
@@ -190,7 +190,7 @@ DiagView.init({
 
 1. Check layout: `layout: 'floating'` (default)
 2. On desktop, hover over diagram
-3. On mobile, buttons always visible
+3. On mobile, buttons are always visible and pinned securely to the view using **Visual Viewport Synchronization**.
 
 ### Q: Search not highlighting anything?
 

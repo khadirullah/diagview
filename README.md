@@ -17,7 +17,8 @@
 - 🔍 **Fast Search** - Highlight nodes with instant search
 - 📤 **Multi-format Export** - PNG, SVG, PDF, WebP, Clipboard
 - ⌨️ **Keyboard Shortcuts** - Full keyboard navigation
-- 📱 **Mobile Optimized** - Touch gestures, pinch-to-zoom
+- 📱 **Mobile Optimized** - Touch gestures, pinch-to-zoom, and Viewport Locking for stability
+- 🏗️ **Smart Minimap** - Accurate scaling for both portrait and landscape diagrams
 - 🎯 **Meeting Mode** - Laser pointer for presentations
 - 🔗 **Share Links** - Share exact zoom/pan view
 - 🎨 **3 Layout Modes** - Header, Floating, Click-to-open
@@ -89,15 +90,27 @@ DiagView automatically adds:
 
 ### Demo
 ![DiagView Demo](media/demo.gif)
+*Now with intelligent minimap scaling and mobile viewport synchronization.*
 
 ### Floating Layout (Default)
-Buttons appear on hover (desktop) or always visible (mobile). *Test it out in the [Interactive Demo](https://khadirullah.github.io/diagview/).*
+![Floating Layout](media/layout-floating.png)
+*Clean HUD-style buttons that appear on hover. Ideal for minimal UIs.*
 
 ### Header Layout
-Classic layout with title bar and buttons at top.
+![Header Layout](media/layout-header.png)
+*Classic top-bar controls. Best for documentation and dashboards.*
 
 ### Fullscreen Mode
-Interactive viewer with search, zoom, pan, and more.
+![Fullscreen Mode](media/fullscreen-view.png)
+*Professional viewing experience with specialized tools, sidebar search, and high-res export.*
+
+### Smart Minimap
+![Minimap View](media/minimap-view.png)
+*Intelligent scaling for both portrait and landscape diagrams. Dynamic frame shows exactly what part of the diagram you are viewing.*
+
+### Mobile Optimized
+![Mobile View](media/mobile-view.png)
+*Responsive hub and viewport locking ensure rock-solid stability even when pinch-zooming.*
 
 ---
 

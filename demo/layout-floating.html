@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DiagView - Floating Layout</title>
 
+    <!-- Dependencies -->
     <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@panzoom/panzoom@4.5.1/dist/panzoom.min.js"></script>
 
@@ -13,6 +14,7 @@
     <link rel="stylesheet" href="demo-styles.css">
 
     <!-- Primary: CDN (Online) -->
+    <!-- DiagView Core -->
     <script src="https://cdn.jsdelivr.net/npm/diagview@1/dist/diagview.umd.min.js"></script>
 
     <!-- Offline Mode: Uncomment below to use local file -->
@@ -27,7 +29,7 @@
         }
 
         body {
-            padding-top: 100px;
+            padding-top: clamp(80px, 12vw, 120px);
         }
 
         /* Specific tweak for floating layout */
@@ -36,16 +38,11 @@
 
     <script>
         (function () {
-            const savedTheme = localStorage.getItem('dv-theme');
+            const savedTheme = localStorage.getItem('dv-theme') || 'dark';
             const savedColor = localStorage.getItem('dv-accent');
-
-            if (savedTheme === 'dark') {
-                document.documentElement.classList.add('dark');
-            }
-
+            document.documentElement.classList.toggle('dark', savedTheme === 'dark');
             if (savedColor) {
                 document.documentElement.style.setProperty('--diagram-accent', savedColor);
-                // Also set the library variable just in case
                 document.documentElement.style.setProperty('--dv-accent', savedColor);
             }
         })();
@@ -81,8 +78,8 @@
         </div>
     </div>
 
-    <div style="max-width: 1200px; margin: 0 auto 40px; text-align: center;">
-        <h1 style="font-size: 2.5rem; margin-bottom: 10px;">Static SVG & HUD UI</h1>
+    <div style="max-width: clamp(800px, 90vw, 1400px); margin: 0 auto 40px; text-align: center;">
+        <h1 style="font-size: clamp(1.8rem, 6vw, 2.5rem); margin-bottom: 10px;">Static SVG & HUD UI</h1>
         <p style="color: var(--muted); font-size: 1.1rem;">Clean, non-intrusive floating controls combined with
             high-performance static SVG rendering.</p>
     </div>
@@ -262,6 +259,18 @@
             const isDark = document.documentElement.classList.toggle('dark');
             localStorage.setItem('dv-theme', isDark ? 'dark' : 'light');
         }
+
+        // Live Sync across tabs
+        window.addEventListener('storage', (e) => {
+            if (e.key === 'dv-theme') {
+                document.documentElement.classList.toggle('dark', e.newValue === 'dark');
+            }
+            if (e.key === 'dv-accent') {
+                document.documentElement.style.setProperty('--diagram-accent', e.newValue);
+                document.documentElement.style.setProperty('--dv-accent', e.newValue);
+                if (picker) picker.value = e.newValue;
+            }
+        });
 
         picker.addEventListener('input', (e) => {
             const color = e.target.value;

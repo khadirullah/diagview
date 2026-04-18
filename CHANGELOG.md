@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.4] - 2026-04-18
+
+### Fixed
+- **Minimap Clipping**: Resolved bug where tall portrait-oriented diagrams (e.g., Mermaid TD) were partially clipped in the minimap.
+- **Minimap Stability**: Ensured minimap background remains static by stripping inherited panzoom transforms from the clone.
+- **Viewport Layout**: Fixed UI elements (Search, FAB, Minimap) drifting on mobile when the browser is pinch-zoomed by using Visual Viewport synchronization.
+
+### Changed
+- **Mobile Responsiveness**: Minimap is now hidden on viewports < 768px to preserve screen space on mobile and small tablets.
+- **UI Units**: Switched key UI components to responsive CSS units (`clamp`, `dvh`, `min`) for better cross-browser stability.
+
+### Added
+- **Mobile Viewport Lock**: Implemented industry-standard meta-tag locking when models are active to prevent broken layouts on mobile.
+- **Enhanced Testing**: Added 16 new unit tests covering minimap logic, history state management, and modal lifecycles.
+
+---
+
 ## [1.0.3] - 2026-04-07
 
 ### Fixed
@@ -70,6 +87,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Button factory for DRY code
 - ~85% code optimization vs initial version
 
+[1.0.4]: https://github.com/khadirullah/diagview/compare/v1.0.3...v1.0.4
 [1.0.3]: https://github.com/khadirullah/diagview/compare/v1.0.2...v1.0.3
 [1.0.2]: https://github.com/khadirullah/diagview/compare/v1.0.1...v1.0.2
 [1.0.1]: https://github.com/khadirullah/diagview/compare/v1.0.0...v1.0.1

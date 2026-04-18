@@ -116,6 +116,26 @@ DiagView.init({
 
 ---
 
+## 🎨 Custom Icons
+
+You can override any of the built-in action icons by providing your own SVG string. Setting an icon to `null` will reset it to the DiagView default.
+
+```javascript
+DiagView.init({
+  ui: {
+    buttons: {
+      icons: {
+        copy: '<svg>...</svg>', // Your custom SVG string
+        download: null,         // Use default download icon
+        fullscreen: null        // Use default fullscreen icon
+      }
+    }
+  }
+});
+```
+
+---
+
 ## 📤 Export Formats
 
 DiagView supports multiple export formats:
@@ -381,6 +401,9 @@ DiagView is fully mobile-optimized:
 - **Pinch** - Zoom in/out
 - **Drag** - Pan diagram
 - **Double-tap** - Reset zoom
+
+> [!TIP]
+> **Mobile Stability (v1.0.4+):** DiagView uses **Visual Viewport Synchronization** and **Zoom Locking** to ensure that UI controls (Top bar, Minimap, Search) remain perfectly pinned and accessible even when the browser is pinch-zoomed.
 
 ### Mobile Exports:
 - Lower resolution by default (`mobileScale: 2`)

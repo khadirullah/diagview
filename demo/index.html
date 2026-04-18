@@ -26,14 +26,14 @@
             top: 0;
             left: 0;
             right: 0;
-            height: 70px;
+            height: clamp(60px, 10vw, 70px);
             background: rgba(15, 23, 42, 0.8);
             backdrop-filter: blur(8px);
             border-bottom: 1px solid var(--border);
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 0 40px;
+            padding: 0 clamp(15px, 5vw, 40px);
             z-index: 1000;
         }
 
@@ -48,10 +48,11 @@
         }
 
         h1 {
-            font-size: 4.5rem;
+            font-size: clamp(2.2rem, 10vw, 5.5rem);
             font-weight: 800;
             margin-bottom: 20px;
             letter-spacing: -2px;
+            line-height: 1;
         }
 
         .hero .subtitle {
@@ -65,13 +66,14 @@
             display: flex;
             gap: 15px;
             justify-content: center;
+            flex-wrap: wrap;
         }
 
         /* --- Layout Grid --- */
         .layout-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-            gap: 40px;
+            grid-template-columns: repeat(auto-fit, minmax(clamp(300px, 30vw, 420px), 1fr));
+            gap: clamp(25px, 5vw, 50px);
             margin-bottom: 100px;
         }
 
@@ -174,12 +176,12 @@
     </style>
     <script>
         (function () {
-            const savedTheme = localStorage.getItem('dv-theme');
-            if (savedTheme === 'dark') {
-                document.documentElement.classList.add('dark');
-            } else if (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-                // Default to dark for premium aesthetic if no preference
-                document.documentElement.classList.add('dark');
+            const savedTheme = localStorage.getItem('dv-theme') || 'dark';
+            const savedColor = localStorage.getItem('dv-accent');
+            document.documentElement.classList.toggle('dark', savedTheme === 'dark');
+            if (savedColor) {
+                document.documentElement.style.setProperty('--diagram-accent', savedColor);
+                document.documentElement.style.setProperty('--dv-accent', savedColor);
             }
         })();
     </script>
@@ -201,9 +203,10 @@
 
     <section class="hero">
         <div class="container">
-            <span class="badge">v1.0.2 Now Available</span>
+            <span class="badge">v1.0.4 Now Available</span>
             <h1>DiagView</h1>
-            <p class="subtitle">Transform static SVGs into interactive tools. Zero dependencies. Framework agnostic.</p>
+            <p class="subtitle">Transform static SVGs into interactive tools. Lightweight & Powerful. Framework
+                agnostic.</p>
 
             <div class="btn-group">
                 <a href="https://github.com/khadirullah/diagview" class="btn btn-primary" target="_blank">Star on
@@ -436,17 +439,17 @@
 
         <div
             style="background: #1e293b; color: #f8fafc; padding: 30px; border-radius: 20px; border: 1px solid var(--border); position: relative; overflow-x: auto;">
-            <pre style="color: #60a5fa; margin: 0;"><code>&lt;!-- 1. Add Dependencies --&gt;
+            <pre style="color: #60a5fa; margin: 0;"><code>&lt;!-- 1. Required Dependencies --&gt;
 &lt;script src="https://cdn.jsdelivr.net/npm/@panzoom/panzoom@4.5.1/dist/panzoom.min.js"&gt;&lt;/script&gt;
 &lt;script src="https://cdn.jsdelivr.net/npm/diagview@1/dist/diagview.umd.min.js"&gt;&lt;/script&gt;
 
 &lt;!-- 2. Initialize --&gt;
 &lt;script&gt;
+  // See API.md for full configuration options
   DiagView.init({
     diagramSelector: '.my-diagrams',
     layout: 'floating',
-    accentColor: '#3b82f6',
-    showBranding: true
+    accentColor: localStorage.getItem('dv-accent') || '#3b82f6'
   });
 &lt;/script&gt;</code></pre>
         </div>
@@ -459,7 +462,7 @@
                 <a href="https://www.npmjs.com/package/diagview" target="_blank">NPM</a>
                 <a href="https://github.com/khadirullah/diagview/blob/main/LICENSE" target="_blank">MIT License</a>
             </div>
-            <p class="copyright">DiagView &bull; v1.0.3 &bull; Built with ❤️</p>
+            <p class="copyright">DiagView &bull; v1.0.4 &bull; Built with ❤️</p>
         </div>
     </footer>
 
@@ -468,6 +471,17 @@
             const isDark = document.documentElement.classList.toggle('dark');
             localStorage.setItem('dv-theme', isDark ? 'dark' : 'light');
         }
+
+        // Live Sync across tabs
+        window.addEventListener('storage', (e) => {
+            if (e.key === 'dv-theme') {
+                document.documentElement.classList.toggle('dark', e.newValue === 'dark');
+            }
+            if (e.key === 'dv-accent') {
+                document.documentElement.style.setProperty('--diagram-accent', e.newValue);
+                document.documentElement.style.setProperty('--dv-accent', e.newValue);
+            }
+        });
     </script>
 </body>
 

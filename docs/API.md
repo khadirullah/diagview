@@ -160,7 +160,7 @@ DiagView.closeModal();
   - `copy` (string | null) - Custom copy icon SVG
   - `download` (string | null) - Custom download icon SVG
   - `fullscreen` (string | null) - Custom fullscreen icon SVG
-- **Default:** `{ copy: null, download: null, fullscreen: null }`
+- **Default:** `{ copy: null, download: null, fullscreen: null }` (null = use built-in icons)
 
 #### `showBranding`
 - **Type:** `boolean`
@@ -362,7 +362,7 @@ DiagView.init(config);
 
 ## Version
 
-Current version: **1.0.3**
+Current version: **1.0.4**
 ```javascript
-console.log(DiagView.version); // "1.0.3"
+console.log(DiagView.version); // "1.0.4"
 ```
