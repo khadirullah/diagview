@@ -7,6 +7,10 @@
 import { state, runCleanupFunctions } from "../core/config.js";
 import { safeDestroy } from "../core/lifecycle.js";
 import { restoreFocus } from "./focus-manager.js";
+import {
+  cleanupModalHistoryState,
+  stopVisualViewportSync,
+} from "./viewport.js";
 
 /**
  * Close fullscreen modal
@@ -17,6 +21,9 @@ export function closeModal() {
   const viewport = document.getElementById("diagview-modal-viewport");
   const help = document.getElementById("diagview-help-modal");
   const menu = document.getElementById("diagview-temp-menu");
+
+  // Stop visual viewport sync before teardown
+  stopVisualViewportSync();
 
   // Clear search (lazy import to avoid circular dependency)
   import("../features/lazy/search.js").then((m) => m.clearSearch()).catch(() => {});
@@ -74,6 +81,9 @@ export function closeModal() {
 
   // Restore body scroll
   document.body.style.overflow = "";
+
+  // Clean up history state (mobile back button support)
+  cleanupModalHistoryState();
 
   // Restore focus
   restoreFocus();

@@ -74,7 +74,7 @@
     "prettier": "^3.1.0",
     "rollup": "^4.57.0",
     "size-limit": "^11.0.0",
-    "typescript": "^5.3.0"
+    "typescript": "^5.9.3"
   },
   "size-limit": [
     {

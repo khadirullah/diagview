@@ -20,6 +20,11 @@ import {
 import { setupModalFocusManagement, saveFocus } from "./focus-manager.js";
 import { closeModal, syncBrandingVisibility } from "./modal-controls.js";
 import { createFloatingMenu } from "./floating-menu.js";
+import {
+  pushModalHistoryState,
+  startVisualViewportSync,
+  triggerVisualViewportSync,
+} from "./viewport.js";
 
 /**
  * Create modal structure
@@ -133,6 +138,23 @@ export function openFullscreen(element) {
   document.body.style.overflow = "hidden";
   state.isModalOpen = true;
 
+  // Sync UI elements to visual viewport (handles pinch-zoomed browsers).
+  // Must run after modal is visible (display:flex) so dimensions are valid.
+  startVisualViewportSync();
+
+  // Push history state so mobile back button closes modal
+  // instead of navigating away from the page.
+  pushModalHistoryState(() => closeModal());
+
+  // Sync modal with native fullscreen exits (e.g. user presses Escape
+  // while in browser fullscreen, or exits via browser UI). Without this,
+  // the modal state becomes desynchronized from the viewport.
+  addManagedListener(document, "fullscreenchange", () => {
+    if (!document.fullscreenElement && state.isModalOpen) {
+      closeModal();
+    }
+  });
+
   // Show loading indicator
   const loading = document.getElementById("diagview-loading");
   if (loading) loading.classList.remove("hide");
@@ -180,6 +202,9 @@ export function openFullscreen(element) {
   // Create floating menu
   createFloatingMenu(element, clone);
 
+  // Re-sync visual viewport now that FAB exists in the DOM
+  triggerVisualViewportSync();
+
   // Setup minimap with throttled updates (lazy loaded)
   if (state.activePanzoom) {
     import("../features/lazy/minimap.js")
@@ -190,8 +215,8 @@ export function openFullscreen(element) {
 
         addManagedListener(clone, "panzoomchange", throttledUpdate);
 
-        // Initial update
-        setTimeout(() => m.updateMinimap(clone, viewport, state.activePanzoom), 100);
+        // Initial update — use rAF to ensure layout is settled
+        requestAnimationFrame(() => m.updateMinimap(clone, viewport, state.activePanzoom));
       })
       .catch(() => {});
   }
@@ -213,17 +238,30 @@ export function openFullscreen(element) {
     updateZoomDisplay();
   }
 
-  // Auto-fit on orientation change (mobile)
-  const handleOrientationChange = () => {
-    if (state.activePanzoom && state.isModalOpen) {
-      // Small delay to let the viewport resize
-      setTimeout(() => {
-        state.activePanzoom.reset({ animate: true, duration: 300 });
-      }, 150);
-    }
-  };
+  // Auto-fit on significant viewport resize (orientation change, fullscreen transitions).
+  // Uses a 20% size-change threshold to avoid resetting diagram zoom when
+  // mobile address bars show/hide (~5-10% height change).
+  let lastWidth = window.innerWidth;
+  let lastHeight = window.innerHeight;
 
-  addManagedListener(window, "orientationchange", handleOrientationChange);
+  const handleResize = throttle(() => {
+    if (!state.activePanzoom || !state.isModalOpen) return;
+
+    const w = window.innerWidth;
+    const h = window.innerHeight;
+    const widthChange = Math.abs(w - lastWidth) / lastWidth;
+    const heightChange = Math.abs(h - lastHeight) / lastHeight;
+
+    if (widthChange > 0.2 || heightChange > 0.2) {
+      lastWidth = w;
+      lastHeight = h;
+      requestAnimationFrame(() => {
+        state.activePanzoom.reset({ animate: true, duration: 300 });
+      });
+    }
+  }, 300);
+
+  addManagedListener(window, "resize", handleResize);
 
   // Hide loading indicator after everything is ready
   requestAnimationFrame(() => {

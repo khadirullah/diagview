@@ -293,7 +293,9 @@
   justify-content: space-between;
   gap: 10px;
   padding: 0 8px;
-  min-height: 52px;
+  min-height: clamp(40px, 7vh, 52px);
+  flex-shrink: 0;
+  overflow: hidden;
   background: var(--dv-header-bg);
   border-bottom: 1px solid var(--dv-border-color);
   backdrop-filter: blur(12px);
@@ -303,7 +305,6 @@
 @media (min-width: 640px) {
   .diagview-topbar {
     padding: 0 60px 0 20px;
-    min-height: 56px;
     justify-content: center;
   }
 }
@@ -369,30 +370,7 @@
   opacity: 0.8;
 }
 
-/* Branding Link */
-.diagview-branding {
-  font-size: 13px;
-  font-weight: 800;
-  color: var(--dv-text-color);
-  text-decoration: none !important;
-  opacity: 0.5;
-  transition: opacity 0.2s ease;
-  white-space: nowrap;
-  letter-spacing: 0.05em;
-  margin-right: 15px;
-  display: none;
-}
-
-@media (min-width: 480px) {
-  .diagview-branding {
-    display: block;
-  }
-}
-
-.diagview-branding:hover {
-  opacity: 1;
-  color: var(--dv-primary, var(--dv-accent, #3b82f6));
-}
+/* NOTE: Duplicate .diagview-branding block removed — see lines 312-340 */
 
 /* Search Container */
 .diagview-search-container {
@@ -641,8 +619,8 @@
 /* Floating Menu Container */
 .diagview-fab-container {
   position: fixed;
-  bottom: 24px;
-  right: 24px;
+  bottom: clamp(12px, 3vh, 24px);
+  right: clamp(12px, 3vw, 24px);
   z-index: 1000010;
   display: flex;
   flex-direction: column-reverse;
@@ -657,8 +635,8 @@
 /* FAB Button */
 .diagview-fab-btn {
   all: unset;
-  width: 56px;
-  height: 56px;
+  width: clamp(44px, 8vw, 56px);
+  height: clamp(44px, 8vw, 56px);
   background: var(--dv-accent);
   color: white !important;
   border-radius: 16px;
@@ -703,7 +681,9 @@
   position: absolute;
   bottom: 70px;
   right: 0;
-  width: 260px !important;
+  width: min(260px, calc(100vw - 80px));
+  max-height: min(70vh, calc(100vh - 120px));
+  overflow-y: auto;
   background: var(--dv-bg) !important;
   backdrop-filter: blur(24px) saturate(180%);
   -webkit-backdrop-filter: blur(24px) saturate(180%);
@@ -879,10 +859,13 @@
 /* Minimap */
 .diagview-minimap {
   position: fixed;
-  left: 24px;
-  bottom: 24px;
-  width: 160px;
-  height: 100px;
+  left: clamp(12px, 3vw, 24px);
+  bottom: clamp(12px, 3vh, 24px);
+  width: min(160px, 40vw);
+  height: min(100px, 25vh);
+  display: flex;
+  align-items: center;
+  justify-content: center;
   background: var(--dv-bg);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
@@ -894,6 +877,12 @@
   visibility: hidden;
   transition: all 0.3s;
   z-index: 1000005;
+}
+
+@media (max-width: 768px) {
+  .diagview-minimap {
+    display: none !important;
+  }
 }
 
 .diagview-minimap.show {
