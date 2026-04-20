@@ -5,12 +5,7 @@
  */
 
 import { jest } from "@jest/globals";
-import {
-  state,
-  resetConfig,
-  addCleanupFunction,
-  runCleanupFunctions,
-} from "../src/core/config.js";
+import { state, resetConfig, addCleanupFunction, runCleanupFunctions } from "../src/core/config.js";
 import { addManagedListener } from "../src/core/lifecycle.js";
 
 describe("Managed Event Listeners", () => {

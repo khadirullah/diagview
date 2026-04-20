@@ -3,7 +3,7 @@
  * Handles browser history state and viewport layout locking.
  *
  * NOTE: For mobile stability, we use the "Viewport Meta Hack".
- * While this temporarily restricts browser-level zoom (WCAG 1.4.4), 
+ * While this temporarily restricts browser-level zoom (WCAG 1.4.4),
  * it is the industry standard for immersive Full-Screen Lightbox
  * applications (like Google Photos, Instagram Web, PhotoSwipe).
  * The user can dynamically zoom the diagram itself via Panzoom,

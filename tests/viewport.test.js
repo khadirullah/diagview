@@ -4,10 +4,7 @@
  */
 
 import { jest } from "@jest/globals";
-import {
-  pushModalHistoryState,
-  cleanupModalHistoryState,
-} from "../src/ui/viewport.js";
+import { pushModalHistoryState, cleanupModalHistoryState } from "../src/ui/viewport.js";
 import { state, resetConfig } from "../src/core/config.js";
 
 describe("History State Management", () => {

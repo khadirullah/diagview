@@ -8,9 +8,9 @@ describe("DiagView Lifecycle", () => {
   beforeAll(() => {
     jest.useFakeTimers();
 
-    Object.defineProperty(window, 'matchMedia', {
+    Object.defineProperty(window, "matchMedia", {
       writable: true,
-      value: jest.fn().mockImplementation(query => ({
+      value: jest.fn().mockImplementation((query) => ({
         matches: false,
         media: query,
         onchange: null,
@@ -31,11 +31,11 @@ describe("DiagView Lifecycle", () => {
     // Reset any state
     resetConfig();
     state.isInitialized = false;
-    
+
     // Clear DOM
     document.body.innerHTML = "";
     document.head.innerHTML = "";
-    
+
     // Spy on console warnings
     warnSpy = jest.spyOn(console, "warn").mockImplementation(() => {});
   });
@@ -67,16 +67,16 @@ describe("DiagView Lifecycle", () => {
 
     expect(state.isInitialized).toBe(false);
     expect(document.getElementById("diagview-modal")).toBeNull();
-    
+
     // Check other dynamic elements
     const elementsToCheck = [
       "diagview-toast",
       "diagview-temp-menu",
       "diagview-help",
       "diagview-minimap",
-      "diagview-laser"
+      "diagview-laser",
     ];
-    elementsToCheck.forEach(id => {
+    elementsToCheck.forEach((id) => {
       expect(document.getElementById(id)).toBeNull();
     });
   });
@@ -87,18 +87,14 @@ describe("DiagView Lifecycle", () => {
     expect(warnSpy).not.toHaveBeenCalled();
 
     init(); // Second time
-    expect(warnSpy).toHaveBeenCalledWith(
-      expect.stringContaining("Already initialized")
-    );
+    expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining("Already initialized"));
   });
 
   test("destroy() before init() warns and returns early", () => {
     expect(state.isInitialized).toBe(false);
-    
+
     destroy(); // Destory without init
-    
-    expect(warnSpy).toHaveBeenCalledWith(
-      expect.stringContaining("Not initialized")
-    );
+
+    expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining("Not initialized"));
   });
 });

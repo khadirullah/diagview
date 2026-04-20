@@ -43,10 +43,11 @@ export function updateMinimap(clone, viewport, panzoom) {
   // Create minimap SVG if not exists
   if (!state.minimapSvg) {
     state.minimapSvg = clone.cloneNode(true);
-    state.minimapSvg.style.cssText = "max-width:100%; max-height:100%; width:auto; height:auto; display:block; object-fit:contain; transform:none !important;";
-    
+    state.minimapSvg.style.cssText =
+      "max-width:100%; max-height:100%; width:auto; height:auto; display:block; object-fit:contain; transform:none !important;";
+
     if (!state.minimapSvg.getAttribute("viewBox") && d.width && d.height) {
-        state.minimapSvg.setAttribute("viewBox", `0 0 ${d.width} ${d.height}`);
+      state.minimapSvg.setAttribute("viewBox", `0 0 ${d.width} ${d.height}`);
     }
     state.minimapSvg.setAttribute("preserveAspectRatio", "xMidYMid meet");
     state.minimapSvg.removeAttribute("width");

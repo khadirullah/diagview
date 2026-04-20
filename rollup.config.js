@@ -75,8 +75,7 @@ export default [
       globals: {
         "@panzoom/panzoom": "Panzoom",
       },
-      banner:
-        `/*! DiagView v${pkg.version} | MIT License | github.com/khadirullah/diagview */`,
+      banner: `/*! DiagView v${pkg.version} | MIT License | github.com/khadirullah/diagview */`,
       inlineDynamicImports: true, // FIX: Inline dynamic imports for UMD
     },
     external: ["@panzoom/panzoom"],

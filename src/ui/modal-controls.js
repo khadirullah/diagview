@@ -7,10 +7,7 @@
 import { state, runCleanupFunctions } from "../core/config.js";
 import { safeDestroy } from "../core/lifecycle.js";
 import { restoreFocus } from "./focus-manager.js";
-import {
-  cleanupModalHistoryState,
-  stopVisualViewportSync,
-} from "./viewport.js";
+import { cleanupModalHistoryState, stopVisualViewportSync } from "./viewport.js";
 
 /**
  * Close fullscreen modal

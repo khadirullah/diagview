@@ -70,10 +70,7 @@ describe("Minimap Visibility Logic", () => {
 
   test("hidden when diagram fits viewport (scale 1, no browser zoom)", () => {
     // SVG fills viewport at scale 1: both rects are equal
-    const clone = mockElement(
-      { width: 1200, height: 700 },
-      { width: 800, height: 600 }
-    );
+    const clone = mockElement({ width: 1200, height: 700 }, { width: 800, height: 600 });
     const viewport = mockElement({ width: 1200, height: 700 });
 
     updateMinimap(clone, viewport, mockPanzoom(1));
@@ -83,10 +80,7 @@ describe("Minimap Visibility Logic", () => {
 
   test("visible when diagram is zoomed past viewport (scale 2)", () => {
     // SVG at scale 2: GBCR returns 2x viewport dimensions (includes CSS transform)
-    const clone = mockElement(
-      { width: 2400, height: 1400 },
-      { width: 800, height: 600 }
-    );
+    const clone = mockElement({ width: 2400, height: 1400 }, { width: 800, height: 600 });
     const viewport = mockElement({ width: 1200, height: 700 });
 
     updateMinimap(clone, viewport, mockPanzoom(2));
@@ -101,10 +95,7 @@ describe("Minimap Visibility Logic", () => {
     //
     // OLD BUG: used baseVal (800) vs GBCR (600) → 800*1 > 600*1.1 → true (WRONG)
     // FIX:     uses GBCR for both → 600 > 600*1.05 = 630 → false (CORRECT)
-    const clone = mockElement(
-      { width: 600, height: 350 },
-      { width: 800, height: 600 }
-    );
+    const clone = mockElement({ width: 600, height: 350 }, { width: 800, height: 600 });
     const viewport = mockElement({ width: 600, height: 350 });
 
     updateMinimap(clone, viewport, mockPanzoom(1));
