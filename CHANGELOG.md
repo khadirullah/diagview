@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.0.4] - 2026-04-18
+## [1.0.4] - 2026-04-20
 
 ### Fixed
 - **Minimap Clipping**: Resolved bug where tall portrait-oriented diagrams (e.g., Mermaid TD) were partially clipped in the minimap.
@@ -15,10 +15,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - **Mobile Responsiveness**: Minimap is now hidden on viewports < 768px to preserve screen space on mobile and small tablets.
 - **UI Units**: Switched key UI components to responsive CSS units (`clamp`, `dvh`, `min`) for better cross-browser stability.
+- **Formatting Script**: Widened Prettier script to cover `tests/` and root configuration files.
+- **Size Limit**: Relaxed ESM bundle size limit to 25KB for CI pipeline stability.
 
 ### Added
 - **Mobile Viewport Lock**: Implemented industry-standard meta-tag locking when models are active to prevent broken layouts on mobile.
-- **Enhanced Testing**: Added 16 new unit tests covering minimap logic, history state management, and modal lifecycles.
+- **Lifecycle Testing**: Added comprehensive Jest-based lifecycle tests to ensure robust initialization and teardown (SPA-safe).
+- **Maintenance**: Removed legacy `raf`/`cancelRaf` polyfills to streamline the codebase for modern evergreen browsers.
 
 ---
 
