@@ -308,30 +308,18 @@ export function toggleClass(element, className, force) {
 }
 
 /**
- * Request animation frame with fallback
+ * Request animation frame
  * @param {Function} callback - Callback function
  * @returns {number} RAF ID
  */
 export function raf(callback) {
-  return (
-    window.requestAnimationFrame ||
-    window.webkitRequestAnimationFrame ||
-    window.mozRequestAnimationFrame ||
-    function (cb) {
-      return setTimeout(cb, 16);
-    }
-  )(callback);
+  return window.requestAnimationFrame(callback);
 }
 
 /**
- * Cancel animation frame with fallback
+ * Cancel animation frame
  * @param {number} id - RAF ID to cancel
  */
 export function cancelRaf(id) {
-  return (
-    window.cancelAnimationFrame ||
-    window.webkitCancelAnimationFrame ||
-    window.mozCancelAnimationFrame ||
-    clearTimeout
-  )(id);
+  return window.cancelAnimationFrame(id);
 }
