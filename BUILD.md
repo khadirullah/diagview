@@ -39,6 +39,4 @@ npm run size
 - `dist/esm/index.js` - ES Module (bundlers)
 - `dist/index.d.ts` - TypeScript definitions
 
-### Bundle Sizes
-- UMD Minified: ~17.4KB (Brotli compressed)
-- ESM: ~19.1KB (Brotli compressed)
+

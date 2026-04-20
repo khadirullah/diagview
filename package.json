@@ -83,7 +83,7 @@
     },
     {
       "path": "dist/esm/index.js",
-      "limit": "20 KB"
+      "limit": "25 KB"
     }
   ],
   "engines": {

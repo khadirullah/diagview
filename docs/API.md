@@ -339,13 +339,7 @@ DiagView.init(config);
 
 ---
 
-## Bundle Size
 
-- **UMD (minified):** ~18KB
-- **ESM:** ~16KB
-- **Gzipped:** ~6KB
-
----
 
 ## Dependencies
 
