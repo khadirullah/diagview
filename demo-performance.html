@@ -6,13 +6,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DiagView - Performance Stress Test</title>
 
-    <script src="https://unpkg.com/@panzoom/panzoom@4.5.1/dist/panzoom.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@panzoom/panzoom@4.5.1/dist/panzoom.min.js"></script>
 
     <!-- Styles -->
     <link rel="stylesheet" href="demo-styles.css">
 
     <!-- Primary: CDN (Online) -->
-    <script src="https://cdn.jsdelivr.net/npm/diagview/dist/diagview.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/diagview@1/dist/diagview.umd.min.js"></script>
 
     <!-- Offline Mode: Uncomment below to use local file -->
     <!-- <script src="../dist/diagview.umd.min.js"></script> -->
@@ -34,8 +34,13 @@
 
     <script>
         (function () {
-            const savedTheme = localStorage.getItem('dv-theme');
-            if (savedTheme === 'dark') document.documentElement.classList.add('dark');
+            const savedTheme = localStorage.getItem('dv-theme') || 'dark';
+            const savedColor = localStorage.getItem('dv-accent');
+            document.documentElement.classList.toggle('dark', savedTheme === 'dark');
+            if (savedColor) {
+                document.documentElement.style.setProperty('--diagram-accent', savedColor);
+                document.documentElement.style.setProperty('--dv-accent', savedColor);
+            }
         })();
     </script>
 </head>
@@ -108,7 +113,9 @@
                 diagramSelector: '.stress-test',
                 showKeyboardHelp: true,
                 highResScale: 4,
+                accentColor: localStorage.getItem('dv-accent') || null,
                 layout: 'floating',
+                showBranding: true
             });
         });
 
@@ -116,6 +123,17 @@
             const isDark = document.documentElement.classList.toggle('dark');
             localStorage.setItem('dv-theme', isDark ? 'dark' : 'light');
         }
+
+        // Live Sync across tabs
+        window.addEventListener('storage', (e) => {
+            if (e.key === 'dv-theme') {
+                document.documentElement.classList.toggle('dark', e.newValue === 'dark');
+            }
+            if (e.key === 'dv-accent') {
+                document.documentElement.style.setProperty('--diagram-accent', e.newValue);
+                document.documentElement.style.setProperty('--dv-accent', e.newValue);
+            }
+        });
     </script>
 </body>
 

@@ -6,14 +6,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DiagView - Header Layout</title>
 
+    <!-- Dependencies -->
     <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
-    <script src="https://unpkg.com/@panzoom/panzoom@4.5.1/dist/panzoom.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@panzoom/panzoom@4.5.1/dist/panzoom.min.js"></script>
 
     <!-- Styles -->
     <link rel="stylesheet" href="demo-styles.css">
 
     <!-- Primary: CDN (Online) -->
-    <script src="https://cdn.jsdelivr.net/npm/diagview/dist/diagview.umd.min.js"></script>
+    <!-- DiagView Core -->
+    <script src="https://cdn.jsdelivr.net/npm/diagview@1/dist/diagview.umd.min.js"></script>
 
     <!-- Offline Mode: Uncomment below to use local file -->
     <!-- <script src="../dist/diagview.umd.min.js"></script> -->
@@ -24,7 +26,7 @@
         }
 
         body {
-            padding-top: 100px;
+            padding-top: clamp(140px, 20vw, 100px);
         }
 
         .mermaid {
@@ -40,16 +42,11 @@
 
     <script>
         (function () {
-            const savedTheme = localStorage.getItem('dv-theme');
+            const savedTheme = localStorage.getItem('dv-theme') || 'dark';
             const savedColor = localStorage.getItem('dv-accent');
-
-            if (savedTheme === 'dark') {
-                document.documentElement.classList.add('dark');
-            }
-
+            document.documentElement.classList.toggle('dark', savedTheme === 'dark');
             if (savedColor) {
                 document.documentElement.style.setProperty('--diagram-accent', savedColor);
-                // Also set the library variable just in case
                 document.documentElement.style.setProperty('--dv-accent', savedColor);
             }
         })();
@@ -85,8 +82,8 @@
         </div>
     </div>
 
-    <div style="max-width: 1200px; margin: 0 auto 40px; text-align: center;">
-        <h1 style="font-size: 2.5rem; margin-bottom: 10px;">Mermaid & SVG Integration</h1>
+    <div style="max-width: clamp(800px, 90vw, 1400px); margin: 0 auto 40px; text-align: center;">
+        <h1 style="font-size: clamp(1.8rem, 6vw, 2.5rem); margin-bottom: 10px;">Mermaid & SVG Integration</h1>
         <p style="color: var(--muted); font-size: 1.1rem;">Combining dynamic Mermaid.js rendering with static SVG
             diagrams. DiagView handles both seamlessly.</p>
     </div>
@@ -260,9 +257,9 @@
                 diagramSelector: '.mermaid, .diagram, .chart, .stress-test, [data-diagram]',
                 showKeyboardHelp: true,
                 highResScale: 4,
-                // Ensure DiagView picks up the initial color
                 accentColor: localStorage.getItem('dv-accent') || null,
                 layout: 'header',
+                showBranding: true
             });
 
             console.log("DiagView Test Suite Ready");
@@ -274,6 +271,18 @@
             const isDark = document.documentElement.classList.toggle('dark');
             localStorage.setItem('dv-theme', isDark ? 'dark' : 'light');
         }
+
+        // Live Sync across tabs
+        window.addEventListener('storage', (e) => {
+            if (e.key === 'dv-theme') {
+                document.documentElement.classList.toggle('dark', e.newValue === 'dark');
+            }
+            if (e.key === 'dv-accent') {
+                document.documentElement.style.setProperty('--diagram-accent', e.newValue);
+                document.documentElement.style.setProperty('--dv-accent', e.newValue);
+                if (picker) picker.value = e.newValue;
+            }
+        });
 
         picker.addEventListener('input', (e) => {
             const color = e.target.value;
