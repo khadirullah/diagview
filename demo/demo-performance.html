@@ -6,6 +6,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DiagView - Performance Stress Test</title>
 
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono&display=swap"
+        rel="stylesheet">
+
     <script src="https://cdn.jsdelivr.net/npm/@panzoom/panzoom@4.5.1/dist/panzoom.min.js"></script>
 
     <!-- Styles -->
@@ -32,17 +38,7 @@
         }
     </style>
 
-    <script>
-        (function () {
-            const savedTheme = localStorage.getItem('dv-theme') || 'dark';
-            const savedColor = localStorage.getItem('dv-accent');
-            document.documentElement.classList.toggle('dark', savedTheme === 'dark');
-            if (savedColor) {
-                document.documentElement.style.setProperty('--diagram-accent', savedColor);
-                document.documentElement.style.setProperty('--dv-accent', savedColor);
-            }
-        })();
-    </script>
+    <script src="demo-runtime.js"></script>
 </head>
 
 <body>
@@ -90,8 +86,19 @@
         <p class="text-center muted" style="margin-top: 20px;">Use mouse wheel to zoom, click and drag to pan.</p>
     </div>
 
+    <footer>
+        <div class="container">
+            <div class="footer-links">
+                <a href="index.html">← Back to Hub</a>
+                <a href="https://github.com/khadirullah/diagview" target="_blank">GitHub</a>
+                <a href="https://www.npmjs.com/package/diagview" target="_blank">NPM</a>
+            </div>
+            <p class="copyright">DiagView &bull; <span data-version></span> &bull; Built with ❤️</p>
+        </div>
+    </footer>
+
     <script>
-        // 1. Generate Nodes
+        // Page-specific: Generate stress nodes + init DiagView
         document.addEventListener('DOMContentLoaded', () => {
             const stressLayer = document.getElementById('stress-node-layer');
             if (stressLayer) {
@@ -108,7 +115,6 @@
                 }
             }
 
-            // 2. Initialize DiagView
             DiagView.init({
                 diagramSelector: '.stress-test',
                 showKeyboardHelp: true,
@@ -117,22 +123,6 @@
                 layout: 'floating',
                 showBranding: true
             });
-        });
-
-        function toggleTheme() {
-            const isDark = document.documentElement.classList.toggle('dark');
-            localStorage.setItem('dv-theme', isDark ? 'dark' : 'light');
-        }
-
-        // Live Sync across tabs
-        window.addEventListener('storage', (e) => {
-            if (e.key === 'dv-theme') {
-                document.documentElement.classList.toggle('dark', e.newValue === 'dark');
-            }
-            if (e.key === 'dv-accent') {
-                document.documentElement.style.setProperty('--diagram-accent', e.newValue);
-                document.documentElement.style.setProperty('--dv-accent', e.newValue);
-            }
         });
     </script>
 </body>

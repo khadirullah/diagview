@@ -27,8 +27,7 @@
             left: 0;
             right: 0;
             height: clamp(60px, 10vw, 70px);
-            background: rgba(15, 23, 42, 0.8);
-            backdrop-filter: blur(8px);
+            background: rgba(15, 23, 42, 0.95);
             border-bottom: 1px solid var(--border);
             display: flex;
             align-items: center;
@@ -37,8 +36,16 @@
             z-index: 1000;
         }
 
+        @supports (backdrop-filter: blur(8px)) {
+            .header {
+                background: rgba(15, 23, 42, 0.8);
+                backdrop-filter: blur(12px);
+                -webkit-backdrop-filter: blur(12px);
+            }
+        }
+
         .dark .header {
-            background: rgba(15, 23, 42, 0.9);
+            background: rgba(15, 23, 42, 0.92);
         }
 
         .hero {
@@ -72,9 +79,12 @@
         /* --- Layout Grid --- */
         .layout-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(clamp(300px, 30vw, 420px), 1fr));
-            gap: clamp(25px, 5vw, 50px);
-            margin-bottom: 100px;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 320px));
+            justify-content: center;
+            gap: clamp(16px, 3vw, 28px);
+            max-width: 1100px;
+            margin: 0 auto 80px;
+            padding: 0 clamp(12px, 4vw, 24px);
         }
 
         .layout-card {
@@ -84,9 +94,10 @@
             overflow: hidden;
             display: flex;
             flex-direction: column;
-            transition: transform 0.3s;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
             text-decoration: none;
             color: inherit;
+            box-shadow: var(--card-shadow);
         }
 
         .layout-card:hover {
@@ -130,21 +141,30 @@
         /* --- Features --- */
         .features {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 30px;
-            margin-bottom: 100px;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 300px));
+            justify-content: center;
+            gap: 24px;
+            max-width: 1100px;
+            margin: 0 auto 80px;
+            padding: 0 clamp(12px, 4vw, 24px);
         }
 
         .feature-item {
-            padding: 35px;
-            background: rgba(255, 255, 255, 0.02);
+            padding: 30px;
+            background: var(--feature-bg);
             border: 1px solid var(--border);
-            border-radius: 20px;
-            transition: transform 0.3s;
+            border-radius: 16px;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            box-shadow: var(--card-shadow);
         }
 
         .feature-item:hover {
-            transform: translateY(-5px);
+            transform: translateY(-4px);
+            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1);
+        }
+
+        .dark .feature-item:hover {
+            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.3);
         }
 
         .feature-icon {
@@ -155,9 +175,9 @@
 
         footer {
             text-align: center;
-            padding: 80px 20px;
+            padding: 60px 20px;
             border-top: 1px solid var(--border);
-            background: rgba(0, 0, 0, 0.1);
+            background: var(--footer-bg);
         }
 
         @media (max-width: 768px) {
@@ -166,25 +186,41 @@
             }
 
             .layout-grid {
-                grid-template-columns: 1fr;
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .features {
+                grid-template-columns: repeat(2, 1fr);
             }
 
             .header {
                 padding: 0 20px;
             }
         }
-    </style>
-    <script>
-        (function () {
-            const savedTheme = localStorage.getItem('dv-theme') || 'dark';
-            const savedColor = localStorage.getItem('dv-accent');
-            document.documentElement.classList.toggle('dark', savedTheme === 'dark');
-            if (savedColor) {
-                document.documentElement.style.setProperty('--diagram-accent', savedColor);
-                document.documentElement.style.setProperty('--dv-accent', savedColor);
+
+        @media (max-width: 540px) {
+            .layout-grid,
+            .features {
+                grid-template-columns: 1fr;
             }
-        })();
-    </script>
+        }
+
+        @media (max-width: 400px) {
+            h1 {
+                font-size: 2.2rem;
+                letter-spacing: -1px;
+            }
+
+            .hero {
+                padding: 120px 12px 60px;
+            }
+
+            .hero .subtitle {
+                font-size: 1.1rem;
+            }
+        }
+    </style>
+    <script src="demo-runtime.js"></script>
 </head>
 
 <body>
@@ -195,6 +231,10 @@
             <span>DiagView Hub</span>
         </div>
         <div class="toggles">
+            <label class="accent-label">
+                Accent:
+                <input type="color" id="accentPicker" value="#3b82f6">
+            </label>
             <button class="toggle-btn" onclick="toggleTheme()" title="Toggle Dark/Light Mode">
                 🌓
             </button>
@@ -203,7 +243,7 @@
 
     <section class="hero">
         <div class="container">
-            <span class="badge">v1.0.4 Now Available</span>
+            <span class="badge"><span data-version></span> Now Available</span>
             <h1>DiagView</h1>
             <p class="subtitle">Transform static SVGs into interactive tools. Lightweight & Powerful. Framework
                 agnostic.</p>
@@ -217,7 +257,7 @@
             </div>
 
             <div
-                style="margin-top: 40px; display: flex; justify-content: center; gap: 30px; font-size: 0.8rem; color: var(--muted); border-top: 1px solid var(--border); padding-top: 20px; animation: fadeInUp 1s ease-out 0.5s backwards;">
+                style="margin-top: 40px; display: flex; justify-content: center; gap: 16px 30px; flex-wrap: wrap; font-size: 0.8rem; color: var(--muted); border-top: 1px solid var(--border); padding-top: 20px; animation: fadeInUp 1s ease-out 0.5s backwards;">
                 <span title="Plus Key"><code>+</code> Zoom In</span>
                 <span title="Minus Key"><code>-</code> Zoom Out</span>
                 <span title="Arrow Keys"><code>arrows</code> Pan</span>
@@ -462,27 +502,11 @@
                 <a href="https://www.npmjs.com/package/diagview" target="_blank">NPM</a>
                 <a href="https://github.com/khadirullah/diagview/blob/main/LICENSE" target="_blank">MIT License</a>
             </div>
-            <p class="copyright">DiagView &bull; v1.0.4 &bull; Built with ❤️</p>
+            <p class="copyright">DiagView &bull; <span data-version></span> &bull; Built with ❤️</p>
         </div>
     </footer>
 
-    <script>
-        function toggleTheme() {
-            const isDark = document.documentElement.classList.toggle('dark');
-            localStorage.setItem('dv-theme', isDark ? 'dark' : 'light');
-        }
-
-        // Live Sync across tabs
-        window.addEventListener('storage', (e) => {
-            if (e.key === 'dv-theme') {
-                document.documentElement.classList.toggle('dark', e.newValue === 'dark');
-            }
-            if (e.key === 'dv-accent') {
-                document.documentElement.style.setProperty('--diagram-accent', e.newValue);
-                document.documentElement.style.setProperty('--dv-accent', e.newValue);
-            }
-        });
-    </script>
+    <!-- Theme toggle + sync handled by demo-runtime.js -->
 </body>
 
 </html>

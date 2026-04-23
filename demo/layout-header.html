@@ -6,6 +6,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DiagView - Header Layout</title>
 
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono&display=swap"
+        rel="stylesheet">
+
     <!-- Dependencies -->
     <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@panzoom/panzoom@4.5.1/dist/panzoom.min.js"></script>
@@ -40,17 +46,7 @@
         }
     </style>
 
-    <script>
-        (function () {
-            const savedTheme = localStorage.getItem('dv-theme') || 'dark';
-            const savedColor = localStorage.getItem('dv-accent');
-            document.documentElement.classList.toggle('dark', savedTheme === 'dark');
-            if (savedColor) {
-                document.documentElement.style.setProperty('--diagram-accent', savedColor);
-                document.documentElement.style.setProperty('--dv-accent', savedColor);
-            }
-        })();
-    </script>
+    <script src="demo-runtime.js"></script>
 </head>
 
 <body>
@@ -68,7 +64,7 @@
             </a>
         </div>
         <div class="toggles">
-            <label style="display:flex; align-items:center; gap:8px; font-size: 0.9rem; font-weight: 600;">
+            <label class="accent-label">
                 Accent:
                 <input type="color" id="accentPicker" value="#3b82f6">
             </label>
@@ -221,22 +217,27 @@
         </div>
     </div>
 
-    <script>
-        // 1. Initialize Picker State
-        const picker = document.getElementById('accentPicker');
-        const savedColor = localStorage.getItem('dv-accent');
-        if (savedColor) picker.value = savedColor;
+    <footer>
+        <div class="container">
+            <div class="footer-links">
+                <a href="index.html">← Back to Hub</a>
+                <a href="https://github.com/khadirullah/diagview" target="_blank">GitHub</a>
+                <a href="https://www.npmjs.com/package/diagview" target="_blank">NPM</a>
+            </div>
+            <p class="copyright">DiagView &bull; <span data-version></span> &bull; Built with ❤️</p>
+        </div>
+    </footer>
 
-        // 2. Initialize Mermaid
+    <script>
+        // Mermaid init
         mermaid.initialize({
             startOnLoad: true,
             theme: 'default',
             securityLevel: 'loose'
         });
 
-        // 3. Initialize DiagView
+        // Page-specific: Generate stress nodes + init DiagView
         document.addEventListener('DOMContentLoaded', async () => {
-            // Generate Stress Test Nodes
             const stressLayer = document.getElementById('stress-node-layer');
             if (stressLayer) {
                 for (let r = 0; r < 50; r++) {
@@ -264,35 +265,6 @@
 
             console.log("DiagView Test Suite Ready");
         });
-
-        // 4. Persistence Logic
-
-        function toggleTheme() {
-            const isDark = document.documentElement.classList.toggle('dark');
-            localStorage.setItem('dv-theme', isDark ? 'dark' : 'light');
-        }
-
-        // Live Sync across tabs
-        window.addEventListener('storage', (e) => {
-            if (e.key === 'dv-theme') {
-                document.documentElement.classList.toggle('dark', e.newValue === 'dark');
-            }
-            if (e.key === 'dv-accent') {
-                document.documentElement.style.setProperty('--diagram-accent', e.newValue);
-                document.documentElement.style.setProperty('--dv-accent', e.newValue);
-                if (picker) picker.value = e.newValue;
-            }
-        });
-
-        picker.addEventListener('input', (e) => {
-            const color = e.target.value;
-            // Apply
-            document.documentElement.style.setProperty('--diagram-accent', color);
-            document.documentElement.style.setProperty('--dv-accent', color);
-            // Save
-            localStorage.setItem('dv-accent', color);
-        });
-
     </script>
 </body>
 

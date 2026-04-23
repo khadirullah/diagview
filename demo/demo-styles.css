@@ -3,14 +3,22 @@
   Centralized styles for all demo pages
 */
 
+/* ── Overflow failsafe ── */
+html {
+    overflow-x: hidden;
+}
+
 :root {
     --accent: #3b82f6;
     --bg: #f8fafc;
     --card-bg: #ffffff;
     --text: #0f172a;
     --muted: #64748b;
-    --border: #e2e8f0;
+    --border: #d1d5db;
     --hub-btn-bg: #f1f5f9;
+    --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 4px 12px rgba(0, 0, 0, 0.05);
+    --feature-bg: rgba(0, 0, 0, 0.02);
+    --footer-bg: rgba(0, 0, 0, 0.03);
 }
 
 .dark {
@@ -18,8 +26,11 @@
     --card-bg: #1e293b;
     --text: #f8fafc;
     --muted: #94a3b8;
-    --border: rgba(255, 255, 255, 0.05);
-    --hub-btn-bg: rgba(255, 255, 255, 0.1);
+    --border: rgba(255, 255, 255, 0.06);
+    --hub-btn-bg: rgba(255, 255, 255, 0.08);
+    --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.3), 0 4px 12px rgba(0, 0, 0, 0.2);
+    --feature-bg: rgba(255, 255, 255, 0.02);
+    --footer-bg: rgba(0, 0, 0, 0.15);
 }
 
 /* Base Styles */
@@ -35,11 +46,17 @@ body {
     color: var(--text);
     line-height: 1.6;
     overflow-x: hidden;
-    padding: clamp(12px, 4vw, 30px);
-    transition: background 0.3s, color 0.3s;
+    padding: 0;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
 }
 
-/* Navigation & Controls */
+/* Enable transitions only after first paint (set by demo-runtime.js) */
+body.ready {
+    transition: background-color 0.3s, color 0.3s;
+}
+
+/* ── Navigation & Controls ── */
 .controls {
     position: fixed;
     top: 0;
@@ -53,6 +70,12 @@ body {
     justify-content: space-between;
     z-index: 1000;
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+}
+
+.dark .controls {
+    background: rgba(15, 23, 42, 0.85);
 }
 
 @media (max-width: 600px) {
@@ -80,7 +103,7 @@ body {
 
 .toggles {
     display: flex;
-    gap: 20px;
+    gap: 12px;
     align-items: center;
 }
 
@@ -89,19 +112,23 @@ body {
     border: 1px solid var(--border);
     color: var(--text);
     padding: 8px 16px;
-    border-radius: 8px;
+    border-radius: 10px;
     cursor: pointer;
     font-weight: 600;
+    font-family: inherit;
+    font-size: 0.9rem;
     text-decoration: none;
-    transition: all 0.2s;
+    transition: all 0.2s ease;
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    gap: 6px;
 }
 
 .toggle-btn:hover {
-    background: rgba(255, 255, 255, 0.1);
+    background: var(--hub-btn-bg);
     transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .btn-accent {
@@ -110,20 +137,34 @@ body {
     border: none;
 }
 
-/* Grid & Cards */
-.grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(clamp(320px, 25vw, 450px), 1fr));
-    gap: clamp(20px, 4vw, 40px);
-    max-width: 1440px;
-    margin: 0 auto;
+/* ── Badge ── */
+.badge {
+    display: inline-block;
+    padding: 6px 16px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    border-radius: 100px;
+    background: rgba(59, 130, 246, 0.1);
+    color: var(--accent);
+    border: 1px solid rgba(59, 130, 246, 0.2);
+    margin-bottom: 20px;
 }
 
-@media (max-width: 480px) {
-    .grid {
-        grid-template-columns: 1fr;
-        gap: 20px;
-    }
+.dark .badge {
+    background: rgba(59, 130, 246, 0.15);
+    border-color: rgba(59, 130, 246, 0.25);
+}
+
+/* ── Grid & Cards — Centered, Max 3 Columns ── */
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 360px));
+    justify-content: center;
+    gap: clamp(16px, 3vw, 28px);
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 clamp(16px, 4vw, 24px);
 }
 
 .card {
@@ -131,21 +172,31 @@ body {
     border: 1px solid var(--border);
     border-radius: 16px;
     padding: 25px;
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    box-shadow: var(--card-shadow);
     display: flex;
     flex-direction: column;
+    min-width: 0;
+    transition: box-shadow 0.3s ease, transform 0.3s ease;
+}
+
+.card:hover {
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+}
+
+.dark .card:hover {
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.35);
 }
 
 .card h2 {
-    font-size: 1.1rem;
+    font-size: 1.05rem;
     margin-bottom: 15px;
-    opacity: 0.8;
-    font-weight: 600;
+    opacity: 0.7;
+    font-weight: 700;
     letter-spacing: 0.5px;
     text-transform: uppercase;
 }
 
-/* Typography Helpers */
+/* ── Typography Helpers ── */
 .text-center {
     text-align: center;
 }
@@ -154,24 +205,36 @@ body {
     color: var(--muted);
 }
 
-/* Code Blocks */
+.section-subtitle {
+    color: var(--muted);
+    font-size: 1.1rem;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+/* ── Code Blocks ── */
 pre,
 code {
     font-family: 'JetBrains Mono', monospace;
 }
 
 code {
-    background: rgba(255, 255, 255, 0.1);
-    padding: 2px 6px;
-    border-radius: 4px;
-    font-size: 0.9em;
+    background: var(--hub-btn-bg);
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-size: 0.85em;
+    border: 1px solid var(--border);
 }
 
-/* Layout Utilities */
+.dark code {
+    background: rgba(255, 255, 255, 0.08);
+}
+
+/* ── Layout Utilities ── */
 .container {
     max-width: 1440px;
     margin: 0 auto;
-    padding: 0 clamp(15px, 5vw, 40px);
+    padding: 0 clamp(16px, 5vw, 40px);
 }
 
 .section-header {
@@ -185,20 +248,32 @@ code {
     margin-bottom: 10px;
 }
 
-/* Buttons */
+/* ── Buttons ── */
 .btn {
-    padding: 12px 24px;
-    border-radius: 10px;
+    padding: 12px 28px;
+    border-radius: 12px;
     text-decoration: none;
     font-weight: 600;
-    transition: all 0.2s;
+    font-family: inherit;
+    font-size: 0.95rem;
+    transition: all 0.25s ease;
     cursor: pointer;
     display: inline-block;
+}
+
+.btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
 }
 
 .btn-primary {
     background: var(--accent);
     color: white;
+    border: none;
+}
+
+.btn-primary:hover {
+    filter: brightness(1.1);
 }
 
 .btn-secondary {
@@ -212,7 +287,7 @@ code {
     border-color: var(--muted);
 }
 
-/* Diagram Containers & Responsiveness */
+/* ── Diagram Containers ── */
 .diagram,
 .chart,
 .mermaid,
@@ -224,20 +299,142 @@ code {
     justify-content: center;
     align-items: center;
     min-height: 300px;
-    background: rgba(0, 0, 0, 0.02);
+    background: var(--feature-bg);
     border-radius: 12px;
     border: 1px solid var(--border);
     cursor: zoom-in;
+    min-width: 0;
+    transition: border-color 0.2s;
 }
 
-.dark .diagram,
-.dark .chart,
-.dark .mermaid,
-.dark .stress-test {
-    background: rgba(255, 255, 255, 0.02);
+.diagram:hover,
+.chart:hover,
+.mermaid:hover,
+.stress-test:hover {
+    border-color: var(--accent);
 }
 
-svg {
+/* SVG sizing — scoped to diagram containers only (not global) */
+.diagram svg,
+.chart svg,
+.mermaid svg,
+.stress-test svg {
     max-width: 100%;
-    height: auto !important;
+    height: auto;
+}
+
+/* ── Footer ── */
+footer {
+    text-align: center;
+    padding: 60px 20px;
+    border-top: 1px solid var(--border);
+    background: var(--footer-bg);
+    margin-top: 80px;
+}
+
+.footer-links {
+    display: flex;
+    gap: 24px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+}
+
+.footer-links a {
+    color: var(--muted);
+    text-decoration: none;
+    font-weight: 500;
+    font-size: 0.9rem;
+    transition: color 0.2s;
+}
+
+.footer-links a:hover {
+    color: var(--accent);
+}
+
+.copyright {
+    color: var(--muted);
+    font-size: 0.85rem;
+    opacity: 0.7;
+}
+
+/* ── Accent Color Picker ── */
+.accent-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.accent-label input[type="color"] {
+    width: 28px;
+    height: 28px;
+    border: 2px solid var(--border);
+    border-radius: 8px;
+    cursor: pointer;
+    padding: 0;
+    background: transparent;
+    -webkit-appearance: none;
+}
+
+.accent-label input[type="color"]::-webkit-color-swatch-wrapper {
+    padding: 2px;
+}
+
+.accent-label input[type="color"]::-webkit-color-swatch {
+    border: none;
+    border-radius: 4px;
+}
+
+/* ── Responsive: Any-Scale Breakpoints ── */
+
+/* Tablets & small laptops */
+@media (max-width: 768px) {
+    .grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .toggles {
+        gap: 8px;
+    }
+}
+
+/* Mobile */
+@media (max-width: 540px) {
+    .grid {
+        grid-template-columns: 1fr;
+        padding-left: 16px;
+        padding-right: 16px;
+    }
+
+    .toggles {
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 8px;
+    }
+}
+
+/* Tiny screens (Galaxy Fold, etc.) */
+@media (max-width: 400px) {
+    .grid {
+        grid-template-columns: 1fr;
+        padding-left: 12px;
+        padding-right: 12px;
+    }
+
+    .controls {
+        padding: 10px;
+        gap: 8px;
+    }
+
+    .toggle-btn {
+        padding: 6px 12px;
+        font-size: 0.8rem;
+    }
+
+    .accent-label {
+        font-size: 0.8rem;
+    }
 }
