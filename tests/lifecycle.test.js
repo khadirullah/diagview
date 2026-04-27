@@ -40,9 +40,9 @@ describe("DiagView Lifecycle", () => {
     warnSpy = jest.spyOn(console, "warn").mockImplementation(() => {});
   });
 
-  afterEach(() => {
+  afterEach(async () => {
     // Ensure cleanup
-    destroy();
+    await destroy();
     // Flush any pending async tasks from the observer module (e.g. debounced functions)
     jest.runAllTimers();
     warnSpy.mockRestore();
@@ -58,12 +58,12 @@ describe("DiagView Lifecycle", () => {
     expect(document.getElementById("diagview-modal")).not.toBeNull();
   });
 
-  test("destroy() removes DOM elements and resets state", () => {
+  test("destroy() removes DOM elements and resets state", async () => {
     init();
     expect(state.isInitialized).toBe(true);
     expect(document.getElementById("diagview-modal")).not.toBeNull();
 
-    destroy();
+    await destroy();
 
     expect(state.isInitialized).toBe(false);
     expect(document.getElementById("diagview-modal")).toBeNull();
@@ -90,10 +90,10 @@ describe("DiagView Lifecycle", () => {
     expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining("Already initialized"));
   });
 
-  test("destroy() before init() warns and returns early", () => {
+  test("destroy() before init() warns and returns early", async () => {
     expect(state.isInitialized).toBe(false);
 
-    destroy(); // Destory without init
+    await destroy(); // Destory without init
 
     expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining("Not initialized"));
   });

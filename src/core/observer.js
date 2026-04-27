@@ -11,17 +11,22 @@ import { initializeDiagram } from "../features/diagram-init.js";
 import { createModal, openFullscreen } from "../ui/modal.js";
 import { restoreViewFromURL } from "../features/lazy/share.js";
 
-// Share Link Handling
-let hasCheckedShareLink = false;
+// Share Link Handling (State managed via config.js)
 
 /**
- * Check for share link and open if needed
- * Runs only once per session
+ * Check for share link and open if needed.
+ * This MUST use a global query of the document to ensure the 'dvIdx'
+ * parameter correctly matches the diagram's index on the whole page.
  */
-function checkShareLink(diagrams) {
-  if (hasCheckedShareLink || diagrams.length === 0) return;
+function checkShareLink() {
+  if (state.hasCheckedShareLink) return;
 
-  const result = restoreViewFromURL(diagrams);
+  const selector = state.config.diagramSelector;
+  const allDiagrams = safeQuerySelectorAll(selector, document);
+
+  if (allDiagrams.length === 0) return;
+
+  const result = restoreViewFromURL(allDiagrams);
   if (result) {
     // Found a target diagram! Open it.
     // Use timeout to ensure UI is ready
@@ -30,20 +35,30 @@ function checkShareLink(diagrams) {
     }, 100);
   }
 
-  hasCheckedShareLink = true;
+  state.hasCheckedShareLink = true;
 }
 
 /**
- * Process diagrams in batch
+ * Process diagrams within a specific root
  */
-function processDiagrams() {
+function processDiagrams(root = document) {
   // Ensure modal exists
   if (!document.getElementById("diagview-modal")) {
     createModal();
   }
 
-  // Find and initialize diagrams
-  const diagrams = safeQuerySelectorAll(state.config.diagramSelector);
+  const selector = state.config.diagramSelector;
+  const diagrams = [];
+
+  // If root itself matches, add it
+  if (root.nodeType === 1 && root.matches?.(selector)) {
+    diagrams.push(root);
+  }
+
+  // Find all diagrams within root
+  if (root.querySelectorAll) {
+    diagrams.push(...safeQuerySelectorAll(selector, root));
+  }
 
   diagrams.forEach((diagram) => {
     // Check if diagram is ready (has SVG or is processed)
@@ -56,9 +71,12 @@ function processDiagrams() {
     }
   });
 
-  // Check for share link (Deep linking)
-  checkShareLink(diagrams);
+  // Check for share link (Deep linking) - Always check globally
+  checkShareLink();
 }
+
+// Internal queue for debounced processing
+const nodesToProcess = new Set();
 
 /**
  * Start observing for new diagrams
@@ -66,48 +84,56 @@ function processDiagrams() {
 export function observeDiagrams() {
   if (state.observer) return;
 
-  // Debounced processor for performance
-  const debouncedProcess = debounce(processDiagrams, TIMING.OBSERVER_DEBOUNCE);
+  // Process existing diagrams immediately
+  if (!state.isInitialProcessDone) {
+    processDiagrams(document.body);
+    state.isInitialProcessDone = true;
+  }
+
+  // Define debounced processor
+  const debouncedProcess = debounce(() => {
+    if (nodesToProcess.size === 0) return;
+
+    nodesToProcess.forEach((node) => {
+      // Check if node is still in the document
+      if (document.body.contains(node)) {
+        processDiagrams(node);
+      }
+    });
+
+    nodesToProcess.clear();
+  }, TIMING.OBSERVER_DEBOUNCE);
 
   state.observer = new MutationObserver((mutations) => {
-    let hasNewDiagrams = false;
+    let addedAny = false;
 
-    // Only process childList mutations
     for (const mutation of mutations) {
       if (mutation.type !== "childList") continue;
 
       for (const node of mutation.addedNodes) {
-        if (node.nodeType !== 1) continue; // Element nodes only
-
-        // Check if node is a diagram or contains diagrams
-        const selector = state.config.diagramSelector;
-        try {
-          if (node.matches?.(selector) || node.querySelector?.(selector)) {
-            hasNewDiagrams = true;
-            break;
-          }
-        } catch (e) {
-          // Invalid selector
-          console.warn("DiagView: Invalid selector", e);
+        if (node.nodeType === 1) {
+          nodesToProcess.add(node);
+          addedAny = true;
         }
       }
-
-      if (hasNewDiagrams) break;
     }
 
-    if (hasNewDiagrams) {
+    if (addedAny) {
       debouncedProcess();
     }
   });
 
-  // Only observe childList to prevent performance issues
   state.observer.observe(document.body, {
     childList: true,
     subtree: true,
   });
+}
 
-  // Process existing diagrams
-  processDiagrams();
+/**
+ * Reset share link check flag
+ */
+export function resetShareLinkCheck() {
+  state.hasCheckedShareLink = false;
 }
 
 /**
@@ -118,6 +144,8 @@ export function stopObserving() {
     state.observer.disconnect();
     state.observer = null;
   }
+  nodesToProcess.clear();
+  state.isInitialProcessDone = false;
 }
 
 /**

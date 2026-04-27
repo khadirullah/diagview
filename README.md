@@ -22,7 +22,7 @@
 - 🎯 **Meeting Mode** - Laser pointer for presentations
 - 🔗 **Share Links** - Share exact zoom/pan view
 - 🎨 **3 Layout Modes** - Header, Floating, Click-to-open
-- 🔄 **Lazy Loading** - Features load on-demand
+- 🔄 **Lazy Loading** - Features load on-demand (NPM/ESM only)
 - 📦 **Minimal Dependencies** - Only requires @panzoom/panzoom
 - 🚀 **Framework Agnostic** - Works with React, Vue, Svelte, vanilla JS
 
@@ -42,6 +42,9 @@
   DiagView.init();
 </script>
 ```
+
+> [!NOTE]
+> **Bundle Performance**: The UMD build (CDN) includes all features (Search, Minimap, Export) in a single bundle for maximum compatibility. For the smallest possible footprint with tree-shaking and true dynamic lazy loading, use the **NPM** version with a modern bundler.
 
 ### NPM
 ```bash
@@ -74,6 +77,12 @@ DiagView.init({
   showKeyboardHelp: true   // Show keyboard shortcuts
 });
 ```
+
+> [!IMPORTANT]
+> **Preventing Auto-Init Race Conditions:** DiagView automatically initializes on `DOMContentLoaded` if it finds `.diagram` elements. If you are using the `<script>` tag and want to pass custom options like `layout: 'header'` via Javascript, you **must** add `data-diagview-no-auto-init` to the library's script tag to prevent the default auto-initialization from overriding your custom settings:
+> ```html
+> <script src="https://cdn.jsdelivr.net/npm/diagview@1/dist/diagview.umd.min.js" data-diagview-no-auto-init></script>
+> ```
 
 ### 3. Done! 🎉
 
@@ -254,9 +263,15 @@ DiagView.init({
   rememberZoom: false,         // Remember zoom per diagram
   animateOpen: true,
 
-  // Zoom/Pan
+  // Interaction
+  naturalPanning: false,        // (Default) If false, arrows move view. If true, arrows move diagram.
   maxZoomScale: 25,
   minZoomScale: 0.05,
+
+  // Feature toggles
+  showMinimap: true,            // Toggle minimap visibility
+  rememberZoom: false,         // Remember zoom per diagram
+  animateOpen: true,
 
   // Callbacks
   onOpen: () => {},
@@ -408,4 +423,4 @@ Give a ⭐️ if this project helped you!
 
 ## 🤖 Authenticity Statement
 
-This library was conceptually designed and specified by the author to solve real-world documentation needs. The implementation was generated using AI assistance under strict human supervision, ensuring the final result meets professional standards for performance, security, and build quality.
+This library was born from a personal need to make technical diagrams more interactive on my own documentation site. While the code was generated using AI, the project has since undergone a rigorous audit to close security gaps, remove technical debt, and ensure professional build quality. I believe in transparency: AI helped me write the code, but my vision, real-world testing, and insistence on quality are what make this a tool you can trust.

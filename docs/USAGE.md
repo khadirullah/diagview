@@ -9,9 +9,11 @@ Complete guide to using DiagView in your projects.
 <!-- Add Panzoom (Required core module) -->
 <script src="https://cdn.jsdelivr.net/npm/@panzoom/panzoom@4.5.1/dist/panzoom.min.js"></script>
 
-<script src="https://cdn.jsdelivr.net/npm/diagview@1/dist/diagview.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/diagview@1/dist/diagview.umd.min.js" data-diagview-no-auto-init></script>
 
 <script>
+  // Note: data-diagview-no-auto-init is only required if you want to pass 
+  // custom options to DiagView.init() when using the CDN script tag.
   // Auto-initializes if you have .diagram, .chart, or [data-diagram] elements
   // Or manually initialize:
   DiagView.init();
@@ -58,6 +60,9 @@ DiagView.init({
   showBranding: true,           // Toggle branding links
 });
 ```
+
+> [!IMPORTANT]
+> **Preventing Auto-Init Race Conditions:** DiagView automatically initializes on `DOMContentLoaded` if it finds `.diagram` elements. If you are using the `<script>` tag and want to pass custom options via Javascript as shown above, you **must** add `data-diagview-no-auto-init` to the library's script tag to prevent the default auto-initialization from overriding your custom settings.
 
 ---
 
@@ -334,11 +339,13 @@ DiagView.init({
   rememberZoom: false,         // Remember zoom per diagram
   animateOpen: true,           // Animate fullscreen open
   printFriendly: true,         // Enable print mode
+  showMinimap: true,           // Toggle minimap visibility
 
   // Selectors
   diagramSelector: '.diagram, .chart, [data-diagram]',
 
   // Zoom/Pan
+  naturalPanning: false,        // (Default) false = Traditional, true = Natural
   maxZoomScale: 25,            // Max zoom (1-50)
   minZoomScale: 0.05,          // Min zoom (0.01-1)
   zoomAnimationDuration: 200,  // Animation time (ms)
@@ -377,6 +384,13 @@ DiagView.configure({
 ```javascript
 // Scan for new diagrams
 DiagView.refresh();
+```
+
+### Get Current State (Debug):
+```javascript
+// Inspect current rotation, config, and more
+console.log(DiagView.state);
+console.log(DiagView.state.rotationAngle);
 ```
 
 ### Get Current Config:

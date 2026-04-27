@@ -63,42 +63,49 @@ export function cleanupModalHistoryState() {
 // ==========================================
 
 let _originalViewportMeta = null;
+let _didInjectViewportMeta = false;
 
 /**
- * Lock the viewport to 100% scale.
- * Forces the mobile browser to snap out of pinch-zoom, locking the
- * layout viewport perfectly to the physical screen bounds.
+ * Lock the viewport to 100% scale (Opt-in only).
+ * If immersiveMode is enabled, forces the mobile browser to snap out of
+ * pinch-zoom, locking the layout viewport perfectly to screen bounds.
  */
 export function startVisualViewportSync() {
   stopVisualViewportSync(); // ensure clean state
 
+  // If not in immersive mode, we don't hijack the meta viewport at all.
+  // This is better for WCAG 1.4.4 compliance and host-page integration.
+  if (!state.config.immersiveMode) return;
+
   const meta = document.querySelector('meta[name="viewport"]');
   if (meta) {
     _originalViewportMeta = meta.content;
+    _didInjectViewportMeta = false;
     // Force scale reset and disable user scaling
     meta.content = "width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no";
   } else {
     // Inject if doesn't exist
     const newMeta = document.createElement("meta");
     newMeta.name = "viewport";
+    newMeta.id = "diagview-injected-viewport";
     newMeta.content = "width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no";
     document.head.appendChild(newMeta);
+    _didInjectViewportMeta = true;
+    _originalViewportMeta = null;
   }
 }
 
-/**
- * No-op. Preserved for backward compatibility with modal.js imports.
- */
-export function triggerVisualViewportSync() {
-  // Layout is naturally constrained by the meta tag lock.
-}
 
 /**
  * Restore the original viewport settings so the user can
  * resume zooming the background website text.
  */
 export function stopVisualViewportSync() {
-  if (_originalViewportMeta !== null) {
+  if (_didInjectViewportMeta) {
+    const injected = document.getElementById("diagview-injected-viewport");
+    if (injected) injected.remove();
+    _didInjectViewportMeta = false;
+  } else if (_originalViewportMeta !== null) {
     const meta = document.querySelector('meta[name="viewport"]');
     if (meta) {
       meta.content = _originalViewportMeta;

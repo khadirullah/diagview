@@ -4,7 +4,17 @@
  * @module core/lifecycle
  */
 
-import { addCleanupFunction } from "./config.js";
+import { state, addCleanupFunction } from "./config.js";
+
+/**
+ * Add cleanup function to be called specifically when the modal closes
+ * @param {Function} fn - Cleanup function
+ */
+export function addModalCleanupFunction(fn) {
+  if (typeof fn === "function") {
+    state.modalCleanupFunctions.push(fn);
+  }
+}
 
 /**
  * Safely destroy an instance with error handling
@@ -65,6 +75,9 @@ export function addManagedListener(target, event, handler, options) {
   // Create cleanup function
   const cleanup = () => {
     target.removeEventListener(event, handler, options);
+    // Unregister from auto-cleanup to prevent double-firing and memory leaks
+    const idx = state.cleanupFunctions.indexOf(cleanup);
+    if (idx !== -1) state.cleanupFunctions.splice(idx, 1);
   };
 
   // Register for automatic cleanup on destroy
@@ -75,119 +88,29 @@ export function addManagedListener(target, event, handler, options) {
 }
 
 /**
- * Add multiple event listeners at once with automatic cleanup
+ * Add event listener with automatic cleanup on modal close
+ * Used for focus traps and modal-specific interactions
  *
- * @param {EventTarget} target - Element to attach listeners to
- * @param {object} events - Object mapping event names to handlers
+ * @param {EventTarget} target - Element to attach listener to
+ * @param {string} event - Event name
+ * @param {Function} handler - Event handler function
  * @param {object | boolean} options - Event listener options
- * @returns {Function} Cleanup function to remove all listeners
- *
- * @example
- * addManagedListeners(viewport, {
- *   wheel: handleWheel,
- *   mousedown: handleMouseDown,
- *   touchstart: handleTouchStart
- * }, { passive: false });
+ * @returns {Function} Cleanup function to remove listener
  */
-export function addManagedListeners(target, events, options) {
-  const cleanups = [];
+export function addModalListener(target, event, handler, options) {
+  if (!target || !event || !handler) return () => {};
 
-  for (const [event, handler] of Object.entries(events)) {
-    const cleanup = addManagedListener(target, event, handler, options);
-    cleanups.push(cleanup);
-  }
-
-  // Return function that cleans up all listeners
-  return () => {
-    cleanups.forEach((cleanup) => cleanup());
-  };
-}
-
-/**
- * Create a disposable resource with cleanup tracking
- * Useful for complex resources that need guaranteed cleanup
- *
- * @param {Function} createFn - Function that creates the resource
- * @param {Function} disposeFn - Function that disposes the resource
- * @returns {object} Resource with dispose method
- *
- * @example
- * const timer = createDisposable(
- *   () => setInterval(update, 1000),
- *   (id) => clearInterval(id)
- * );
- * // ... later
- * timer.dispose(); // Automatically called on destroy too
- */
-export function createDisposable(createFn, disposeFn) {
-  const resource = createFn();
-
-  const dispose = () => {
-    if (disposeFn) {
-      try {
-        disposeFn(resource);
-      } catch (error) {
-        console.warn("DiagView: Dispose failed", error);
-      }
-    }
+  target.addEventListener(event, handler, options);
+  const cleanup = () => {
+    target.removeEventListener(event, handler, options);
+    // Unregister from modal auto-cleanup
+    const idx = state.modalCleanupFunctions.indexOf(cleanup);
+    if (idx !== -1) state.modalCleanupFunctions.splice(idx, 1);
   };
 
-  // Auto-cleanup on destroy
-  addCleanupFunction(dispose);
-
-  return {
-    resource,
-    dispose,
-  };
+  addModalCleanupFunction(cleanup);
+  return cleanup;
 }
 
-/**
- * Safely remove DOM element with cleanup
- * Removes element and clears any associated data
- *
- * @param {HTMLElement|string} elementOrId - Element or element ID to remove
- * @returns {boolean} True if removed successfully
- *
- * @example
- * safeRemoveElement('diagview-modal');
- * safeRemoveElement(modalElement);
- */
-export function safeRemoveElement(elementOrId) {
-  const element =
-    typeof elementOrId === "string" ? document.getElementById(elementOrId) : elementOrId;
 
-  if (!element) return false;
 
-  try {
-    element.remove();
-    return true;
-  } catch (error) {
-    console.warn("DiagView: Element removal failed", error);
-    return false;
-  }
-}
-
-/**
- * Batch cleanup of multiple DOM elements
- *
- * @param {Array<string|HTMLElement>} elements - Array of elements or IDs
- * @returns {number} Number of elements successfully removed
- *
- * @example
- * batchRemoveElements([
- *   'diagview-modal',
- *   'diagview-toast',
- *   modalElement
- * ]);
- */
-export function batchRemoveElements(elements) {
-  let removed = 0;
-
-  elements.forEach((element) => {
-    if (safeRemoveElement(element)) {
-      removed++;
-    }
-  });
-
-  return removed;
-}

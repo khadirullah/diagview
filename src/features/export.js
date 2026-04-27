@@ -52,7 +52,7 @@ function getRobustDimensions(svg) {
  * Generate filename
  */
 export function generateFilename(svg) {
-  const titleEl = svg.querySelector("title, text[class*='title']");
+  const titleEl = svg.querySelector("title, text.title, text.titleText, text.diagview-title");
   let rawTitle = titleEl ? titleEl.textContent : "";
 
   if (!rawTitle) {
@@ -120,11 +120,17 @@ function prepareSvgForExport(svg, modalClone) {
   exportSvg.style.minWidth = "0";
   exportSvg.style.minHeight = "0";
 
-  // If the diagram uses an internal group for panning, reset that too.
-  const rootGroups = exportSvg.querySelectorAll(":scope > g[transform]");
-  rootGroups.forEach((g) => {
-    if (g.classList.contains("svg-pan-zoom_viewport")) {
-      g.setAttribute("transform", "matrix(1,0,0,1,0,0)");
+  // CRITICAL FIX (Bug #20): Do NOT reset internal group transforms.
+  // We rely on getRobustDimensions (BBox) and the viewBox to frame the content.
+  // Resetting group transforms here would break diagrams (like Mermaid) that
+  // use root groups for internal positioning/padding.
+
+  // Fix for potential canvas tainting from external images
+  const images = exportSvg.querySelectorAll("image");
+  images.forEach((img) => {
+    const href = img.getAttribute("href") || img.getAttribute("xlink:href");
+    if (href && (href.startsWith("http") || href.startsWith("//"))) {
+      img.setAttribute("crossorigin", "anonymous");
     }
   });
 
@@ -134,7 +140,7 @@ function prepareSvgForExport(svg, modalClone) {
 /**
  * Generic Canvas renderer
  */
-async function renderToCanvas(sourceElement, modalClone, transparent = false) {
+export async function renderToCanvas(sourceElement, modalClone, transparent = false) {
   const originalSvg = sourceElement.querySelector("svg");
   if (!originalSvg) throw new Error("No SVG found");
 
@@ -159,16 +165,38 @@ async function renderToCanvas(sourceElement, modalClone, transparent = false) {
   canvas.height = Math.round(height * scale);
   const ctx = canvas.getContext("2d");
 
-  // Serialization
+  // Serialization Logic: Smart Hybrid Approach
+  // We use Data URLs for small diagrams to bypass 'file://' origin restrictions (Maximum Compatibility)
+  // We use Blob URLs for large diagrams to avoid URL length limits and browser crashes (Maximum Performance)
   const svgStr = new XMLSerializer().serializeToString(finalSvg);
+  const isSmall = svgStr.length < 1000000; // ~1MB Threshold
+
+  let url;
+  let isBlob = false;
+
+  if (isSmall || typeof URL.createObjectURL !== "function") {
+    url = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svgStr);
+  } else {
+    const blob = new Blob([svgStr], { type: "image/svg+xml;charset=utf-8" });
+    url = URL.createObjectURL(blob);
+    isBlob = true;
+  }
+
   const img = new Image();
+  // setting crossOrigin is important for external images within the SVG
   img.crossOrigin = "anonymous";
 
   // Promise wrapper for loading
   await new Promise((resolve, reject) => {
-    img.onload = () => resolve();
-    img.onerror = () => reject(new Error("Image load failed"));
-    img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svgStr);
+    img.onload = () => {
+      if (isBlob) URL.revokeObjectURL(url);
+      resolve();
+    };
+    img.onerror = (err) => {
+      if (isBlob) URL.revokeObjectURL(url);
+      reject(new Error("Image load failed. The SVG may be too large or contain invalid data."));
+    };
+    img.src = url;
   });
 
   // Draw
@@ -197,8 +225,10 @@ async function exportSVG(sourceElement, filename, isTransparent = false, modalCl
     // Add bg rect for non-transparent SVG
     if (!isTransparent) {
       const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
-      rect.setAttribute("x", svg.getAttribute("viewBox").split(" ")[0]); // Match viewBox origin
-      rect.setAttribute("y", svg.getAttribute("viewBox").split(" ")[1]);
+      const vb = svg.getAttribute("viewBox");
+      const vbParts = vb ? vb.split(/\s+|,/).map(parseFloat) : [0, 0];
+      rect.setAttribute("x", vbParts[0] || 0);
+      rect.setAttribute("y", vbParts[1] || 0);
       rect.setAttribute("width", "100%");
       rect.setAttribute("height", "100%");
       rect.setAttribute("fill", bg);
@@ -206,8 +236,14 @@ async function exportSVG(sourceElement, filename, isTransparent = false, modalCl
     }
 
     const data = new XMLSerializer().serializeToString(svg);
-    const blob = new Blob([data], { type: "image/svg+xml;charset=utf-8" });
-    downloadFile(URL.createObjectURL(blob), `${filename}.svg`);
+
+    // Use DataURL for small SVGs to ensure filename compatibility on file://
+    const isSmall = data.length < 1000000;
+    const downloadUrl = isSmall
+      ? "data:image/svg+xml;charset=utf-8," + encodeURIComponent(data)
+      : URL.createObjectURL(new Blob([data], { type: "image/svg+xml;charset=utf-8" }));
+
+    downloadFile(downloadUrl, `${filename}.svg`);
     showSuccessToast("SVG saved");
   } catch (e) {
     showErrorToast("SVG Failed", e.message);
@@ -242,31 +278,41 @@ async function exportImage(sourceElement, filename, format, transparent, copy, m
 
     const { canvas, scale } = await renderToCanvas(sourceElement, modalClone, transparent);
 
-    canvas.toBlob(
-      async (blob) => {
-        if (!blob) throw new Error("Encoding failed");
+    const quality = isWebP ? 0.95 : undefined;
+    const blob = await new Promise((resolve, reject) => {
+      canvas.toBlob((b) => (b ? resolve(b) : reject(new Error("Encoding failed"))), mime, quality);
+    });
 
-        if (copy) {
-          // Clipboard (PNG only usually)
-          if (!isClipboardAvailable() || isWebP) {
-            downloadFile(canvas.toDataURL(mime), `${filename}.${ext}`);
-            showSuccessToast(`${label} downloaded (Clipboard unavailable)`);
-          } else {
-            await navigator.clipboard.write([new ClipboardItem({ [mime]: blob })]);
-            showSuccessToast("Copied to clipboard!");
-          }
-        } else {
-          // Download
-          downloadFile(URL.createObjectURL(blob), `${filename}.${ext}`);
-          showSuccessToast(`${scale.toFixed(1)}x ${label} saved`);
-        }
-      },
-      mime,
-      isWebP ? 0.95 : undefined
-    );
+    if (copy) {
+      // Clipboard (PNG only usually)
+      if (!isClipboardAvailable() || isWebP) {
+        downloadFile(canvas.toDataURL(mime), `${filename}.${ext}`);
+        showSuccessToast(`${label} downloaded (Clipboard unavailable)`);
+      } else {
+        await navigator.clipboard.write([new ClipboardItem({ [mime]: blob })]);
+        showSuccessToast("Copied to clipboard!");
+      }
+    } else {
+      // Download: Use DataURL for small images to ensure filename compatibility on file://
+      // Use BlobURL only for massive images that would crash DataURL strings.
+      const isMassive = canvas.width * canvas.height > 4000000; // ~4MP threshold
+      const downloadUrl = isMassive ? URL.createObjectURL(blob) : canvas.toDataURL(mime);
+
+      downloadFile(downloadUrl, `${filename}.${ext}`);
+      showSuccessToast(`${scale.toFixed(1)}x ${label} saved`);
+    }
   } catch (e) {
-    console.error(e);
-    showErrorToast("Export Failed", e.message);
+    console.error("DiagView Export Error:", e);
+
+    // Handle "Tainted Canvas" security error specifically
+    if (e.name === "SecurityError" || e.message?.includes("tainted")) {
+      showErrorToast(
+        "Export Restricted",
+        "External fonts or images are blocking PNG export. Try 'SVG' export instead, or run from a web server."
+      );
+    } else {
+      showErrorToast("Export Failed", e.message);
+    }
   }
 }
 
@@ -277,11 +323,18 @@ async function exportPDF(sourceElement, filename, modalClone) {
   try {
     showInfoToast("Generating PDF...");
     const pdfUrl = state.config.pdfLibraryUrl;
-    if (!window.jspdf) await loadScript(pdfUrl).catch(() => null);
+    if (!window.jspdf) {
+      await loadScript(pdfUrl, state.config.pdfLibraryIntegrity).catch((err) => {
+        console.error("DiagView PDF Load Error:", err);
+        // Integrity failure is a common cause for script load failure when hardcoded hashes are used
+        showErrorToast("PDF Library Failed", "Possible Security Integrity (SRI) mismatch or Network Error.");
+      });
+    }
 
     // Fallback: If no jsPDF, save as PNG
     if (!window.jspdf) {
-      console.warn("jsPDF missing, falling back to PNG-as-PDF");
+      console.warn("jsPDF missing, falling back to PNG");
+      showInfoToast("Falling back to PNG export...");
       await exportImage(sourceElement, filename, "png", false, false, modalClone);
       return;
     }

@@ -9,13 +9,13 @@ import { TIMING } from "../core/constants.js";
 
 const SHORTCUTS = [
   { keys: ["Esc"], desc: "Close fullscreen" },
-  { keys: ["Space"], desc: "Fit diagram to screen" },
+  { keys: ["Space", "0"], desc: "Reset / Fit to screen" },
   { keys: ["F"], desc: "Focus search" },
   { keys: ["R"], desc: "Rotate 90°" },
   { keys: ["M"], desc: "Meeting mode (laser pointer)" },
   { keys: ["L"], desc: "Share link" },
   { keys: ["+", "="], desc: "Zoom in" },
-  { keys: ["-"], desc: "Zoom out" },
+  { keys: ["-", "_"], desc: "Zoom out" },
   { keys: ["↑", "↓", "←", "→"], desc: "Pan diagram" },
   { keys: ["Shift", "+", "Arrows"], desc: "Fast pan" },
   { keys: ["?"], desc: "Show this help" },
@@ -30,7 +30,7 @@ let autoCloseTimer = null;
  */
 function startAutoCloseTimer() {
   clearAutoCloseTimer();
-  const timeout = state.config.helpTimeout || TIMING.HELP_FADE_TIMEOUT;
+  const timeout = state.config.helpTimeout ?? TIMING.HELP_FADE_TIMEOUT;
   if (timeout <= 0) return; // Disabled if 0 or negative
 
   autoCloseTimer = setTimeout(() => {
@@ -68,14 +68,14 @@ function createHelpModal() {
   const title = document.createElement("div");
   title.className = "diagview-help-title";
   title.id = "dv-help-title";
-  title.innerHTML = `
+  title.insertAdjacentHTML("afterbegin", `
     <span>Keyboard Shortcuts</span>
     <button class="diagview-help-close" aria-label="Close help">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <path d="M18 6L6 18M6 6l12 12"/>
       </svg>
     </button>
-  `;
+  `);
 
   // Shortcuts grid
   const grid = document.createElement("div");
@@ -87,7 +87,7 @@ function createHelpModal() {
 
     const keyEl = document.createElement("div");
     keyEl.className = "diagview-help-key";
-    keyEl.innerHTML = keys.map((k) => `<kbd>${k}</kbd>`).join(" ");
+    keyEl.insertAdjacentHTML("afterbegin", keys.map((k) => `<kbd>${k}</kbd>`).join(" "));
 
     const descEl = document.createElement("div");
     descEl.className = "diagview-help-desc";

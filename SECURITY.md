@@ -11,7 +11,7 @@ Currently only the latest version of DiagView is supported for security updates.
 
 ## Reporting a Vulnerability
 
-Security issues and bugs should be reported privately by opening a [Security Advisory draft](https://github.com/khadirullah/diagview/security/advisories) on GitHub, or by emailing the project authors if that is not possible.
+Security issues and bugs should be reported privately by opening a [Security Advisory draft](https://github.com/khadirullah/diagview/security/advisories) on GitHub. If that is not possible, please contact the maintainer via direct message on [X @KhadirullahM](https://x.com/KhadirullahM) or use the contact form at [khadirullah.com](https://khadirullah.com).
 
 Please provide:
 * A description of the vulnerability.

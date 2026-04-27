@@ -18,7 +18,7 @@ function stringPlugin() {
       if (id.endsWith(".css")) {
         return {
           code: `export default ${JSON.stringify(code)};`,
-          map: { mappings: "" },
+          map: null,
         };
       }
     },
@@ -47,10 +47,11 @@ const babelConfig = {
 const terserConfig = {
   compress: {
     pure_getters: true,
-    unsafe: true,
-    unsafe_comps: true,
     warnings: false,
-    drop_console: production,
+    // SECURITY/DX: We surgically remove only 'console.log' to keep the bundle clean.
+    // We MUST preserve 'console.warn' and 'console.error' so that users get
+    // immediate feedback on misconfigurations in production (Resolves Bug #8).
+    pure_funcs: production ? ["console.log"] : [],
     passes: 2,
   },
   mangle: {

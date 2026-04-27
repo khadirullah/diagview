@@ -42,13 +42,22 @@ export function showToast(message, type = "success", duration = null) {
   const theme = detectTheme();
   const toastConfig = TOAST_TYPES[type] || TOAST_TYPES.info;
 
-  // Set colors
-  if (type === "success") {
-    toast.style.backgroundColor = theme.accent;
-    toast.style.color = theme.isDark ? "#ffffff" : theme.text;
-  } else {
+  // Set colors and ARIA roles
+  if (type === "error") {
+    toast.setAttribute("role", "alert");
+    toast.setAttribute("aria-live", "assertive");
     toast.style.backgroundColor = toastConfig.bg;
     toast.style.color = toastConfig.text;
+  } else {
+    toast.setAttribute("role", "status");
+    toast.setAttribute("aria-live", "polite");
+    if (type === "success") {
+      toast.style.backgroundColor = theme.accent;
+      toast.style.color = theme.isDark ? "#ffffff" : theme.text;
+    } else {
+      toast.style.backgroundColor = toastConfig.bg;
+      toast.style.color = toastConfig.text;
+    }
   }
 
   toast.textContent = message;

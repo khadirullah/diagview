@@ -4,7 +4,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
     <title>DiagView - Floating Layout</title>
+    <meta name="description" content="DiagView floating layout demo — HUD-style hover controls with static SVG rendering.">
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -21,10 +23,10 @@
 
     <!-- Primary: CDN (Online) -->
     <!-- DiagView Core -->
-    <script src="https://cdn.jsdelivr.net/npm/diagview@1/dist/diagview.umd.min.js"></script>
+    <!-- <script src="https://unpkg.com/diagview@1/dist/diagview.umd.js" data-diagview-no-auto-init></script> -->
 
-    <!-- Offline Mode: Uncomment below to use local file -->
-    <!-- <script src="../dist/diagview.umd.min.js"></script> -->
+    <!-- Development Mode: Uncomment below to use local file -->
+    <script src="../dist/diagview.umd.js" data-diagview-no-auto-init></script>
 
 
 
@@ -251,21 +253,21 @@
                     <!-- Users entity -->
                     <rect class="er-box" x="20" y="40" width="120" height="35" rx="6" />
                     <text class="er-text" x="80" y="63">Users</text>
-                    <rect class="er-field" x="20" y="75" width="120" height="70" rx="0 0 6 6" />
+                    <rect class="er-field" x="20" y="75" width="120" height="70" rx="6" />
                     <text class="er-fname" x="30" y="93">🔑 id</text>
                     <text class="er-fname" x="30" y="110">name</text>
                     <text class="er-fname" x="30" y="127">email</text>
                     <!-- Orders entity -->
                     <rect class="er-box" x="190" y="40" width="120" height="35" rx="6" />
                     <text class="er-text" x="250" y="63">Orders</text>
-                    <rect class="er-field" x="190" y="75" width="120" height="70" rx="0 0 6 6" />
+                    <rect class="er-field" x="190" y="75" width="120" height="70" rx="6" />
                     <text class="er-fname" x="200" y="93">🔑 id</text>
                     <text class="er-fname" x="200" y="110">user_id →</text>
                     <text class="er-fname" x="200" y="127">total</text>
                     <!-- Products entity -->
                     <rect class="er-box" x="360" y="40" width="110" height="35" rx="6" />
                     <text class="er-text" x="415" y="63">Products</text>
-                    <rect class="er-field" x="360" y="75" width="110" height="70" rx="0 0 6 6" />
+                    <rect class="er-field" x="360" y="75" width="110" height="70" rx="6" />
                     <text class="er-fname" x="370" y="93">🔑 id</text>
                     <text class="er-fname" x="370" y="110">name</text>
                     <text class="er-fname" x="370" y="127">price</text>

@@ -5,18 +5,19 @@
  */
 
 // Import constants from new centralized file
-import { TIMING, EXPORT, ZOOM, LAYOUTS, BUTTON_STYLES } from "./constants.js";
+import { TIMING, EXPORT, ZOOM, LAYOUTS, BUTTON_STYLES, SELECTORS } from "./constants.js";
 
-export const DEFAULT_CONFIG = {
+/**
+ * Initial configuration template.
+ * Private to prevent accidental mutation.
+ */
+const INITIAL_CONFIG = {
   // Theme colors (null = auto-detect)
   accentColor: null,
   backgroundColor: null,
   textColor: null,
 
-  // Layout settings:
-  // 'header'   - Title bar at top with buttons
-  // 'floating' - Buttons overlay on diagram (low center on hover)
-  // 'off'      - No buttons, clicking diagram opens fullscreen directly
+  // Layout settings
   layout: LAYOUTS.FLOATING,
 
   // Export settings
@@ -24,12 +25,11 @@ export const DEFAULT_CONFIG = {
   mobileScale: EXPORT.MOBILE_SCALE_DEFAULT,
   maxPixels: EXPORT.MAX_PIXELS_DEFAULT,
 
-  // UI Customization (set at init() time — not deep-merged by configure())
+  // UI Customization
   ui: {
     buttons: {
-      style: BUTTON_STYLES.ACCENT, // options: 'transparent', 'accent', 'solid', 'neutral'
+      style: BUTTON_STYLES.ACCENT,
       icons: {
-        // Custom SVG icon overrides (null = use built-in icons)
         copy: null,
         download: null,
         fullscreen: null,
@@ -40,20 +40,29 @@ export const DEFAULT_CONFIG = {
   // UI behavior
   showKeyboardHelp: true,
   helpTimeout: TIMING.HELP_FADE_TIMEOUT,
-  diagramSelector: ".diagram, .chart, [data-diagram]",
+  diagramSelector: SELECTORS.DIAGRAM,
+
+  // Interaction options
+  naturalPanning: false,
 
   // Feature toggles
-  rememberZoom: false, // Remember zoom/pan state per diagram (session-based)
-  animateOpen: true, // Animate fullscreen open with scale effect
-  printFriendly: true, // Enable print-friendly export mode
-  showBranding: true, // Show "DiagView" branding link in modal
+  showMinimap: true,
+  rememberZoom: false,
+  animateOpen: true,
+  printFriendly: true,
+  showBranding: true,
+  immersiveMode: false,
 
-  // Toast settings
+  /** Duration (ms) for notifications */
   toastDuration: TIMING.TOAST_DURATION,
   errorToastDuration: TIMING.ERROR_TOAST_DURATION,
 
-  // CDN URL for PDF library (configurable for intranet users)
+  // CDN URL for PDF library
+  // WARNING: If you change this URL, you must also update pdfLibraryIntegrity
+  // or set it to null, otherwise the browser will block the script (SRI).
   pdfLibraryUrl: "https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js",
+  pdfLibraryIntegrity:
+    "sha512-qZvrmS2ekKPF2mSznTQsxqPgnpkI4DNTlrdUmTzrDgektczlKNRRhy5X5AAOnx5S09ydFYWWNSfcEqDTTHgtNA==",
 
   // Zoom/Pan settings
   maxZoomScale: ZOOM.MAX_SCALE_DEFAULT,
@@ -69,84 +78,122 @@ export const DEFAULT_CONFIG = {
   onClose: null,
 };
 
-// Internal state (mutable, use setters for safety)
-const _state = {
-  config: { ...DEFAULT_CONFIG },
-  activePanzoom: null,
-  observer: null,
-  themeObserver: null,
-  mediaQueryList: null,
-  isInitialized: false,
-  toastTimer: null,
-  cleanupFunctions: [],
-
-  // Touch state for mobile handling
-  touchState: {
-    isPinching: false,
-    lastTouchCount: 0,
-    initialDistance: 0,
-  },
-
-  // Focus management
-  lastActiveElement: null,
-  isModalOpen: false,
-
-  // Meeting mode
-  meetingMode: false,
-  laserPointer: null,
-
-  // Minimap
-  minimapSvg: null,
-
-  // Search
-  searchMatches: [],
-  searchIndex: -1,
-
-  // Rotation
-  rotationAngle: 0,
-
-  // Current diagram index (for share links)
-  currentDiagramIndex: 0,
-};
-
-// State getters and setters (prevent direct mutation)
-export const state = {};
-Object.keys(_state).forEach((key) => {
-  Object.defineProperty(state, key, {
-    get: () => _state[key],
-    set: (val) => {
-      _state[key] = val;
-    },
-    enumerable: true,
-  });
-});
+/**
+ * Public reference for key-checking and defaults.
+ * Frozen to prevent mutation.
+ */
+export const DEFAULT_CONFIG = Object.freeze(JSON.parse(JSON.stringify(INITIAL_CONFIG)));
 
 /**
- * Validate a single config value
+ * Creates a fresh, deep-cloned copy of the initial state.
+ * This is the heart of the Factory Pattern.
+ * @returns {DiagViewState}
+ */
+function createInitialState() {
+  return {
+    config: deepMerge({}, INITIAL_CONFIG),
+    activePanzoom: null,
+    observer: null,
+    themeObserver: null,
+    mediaQueryList: null,
+    isInitialized: false,
+    toastTimer: null,
+    cleanupFunctions: [],
+    modalCleanupFunctions: [],
+    hasCheckedShareLink: false,
+    isInitialProcessDone: false,
+
+    // Touch state for mobile handling
+    touchState: {
+      isPinching: false,
+      lastTouchCount: 0,
+      initialDistance: 0,
+    },
+
+    // Focus management
+    lastActiveElement: null,
+    isModalOpen: false,
+
+    // Meeting mode
+    meetingMode: false,
+    laserPointer: null,
+
+    // Minimap
+    minimapSvg: null,
+
+    // Search
+    searchMatches: [],
+    searchIndex: -1,
+    searchRafId: null,
+
+    // UI Lifecycle State
+    focusManagementSetup: false,
+    activeMeetingHandlers: null,
+
+    // Theme State
+    themeCache: null,
+    themeCacheTimestamp: 0,
+    colorParserEl: null,
+    themeChangeHandler: null,
+    themeObserver: null,
+    mediaQueryList: null,
+
+    // Rotation
+    rotationAngle: 0,
+
+    // Current diagram index (for share links)
+    currentDiagramIndex: 0,
+  };
+}
+
+/**
+ * @typedef {Object} DiagViewState
+ * @property {object} config - Current effective configuration
+ * @property {object|null} activePanzoom - Active Panzoom instance
+ * @property {boolean} isInitialized - Whether DiagView has been initialised
+ * @property {boolean} isModalOpen - Whether fullscreen modal is open
+ * @property {number} rotationAngle - Current diagram rotation (0/90/180/270)
+ * @property {boolean} meetingMode - Whether laser pointer is active
+ * @property {number} currentDiagramIndex - Index of currently open diagram
+ * @property {Array} searchMatches - Current search match elements
+ * @property {number} searchIndex - Index of highlighted search match
+ */
+
+/** @type {DiagViewState} */
+const _state = createInitialState();
+
+/**
+ * Internal state singleton.
+ * We use Object.seal to prevent external scripts from adding or deleting properties,
+ * ensuring the integrity of the library's internal brain.
+ *
+ * NOTE: This is a mutable singleton for internal use. Direct mutation is deprecated
+ * and will be replaced by private class fields (#state) in Phase 2.
+ *
+ * @type {DiagViewState}
+ */
+export const state = _state;
+Object.seal(state);
+
+/**
+ * Deep merge two objects
  * @private
  */
-function validateConfigValue(key, value) {
-  const validators = {
-    highResScale: (v) => v >= 1 && v <= 10,
-    mobileScale: (v) => v >= 1 && v <= 5,
-    maxZoomScale: (v) => v >= 1 && v <= ZOOM.MAX_SCALE_LIMIT,
-    minZoomScale: (v) => v >= ZOOM.MIN_SCALE_LIMIT && v <= 1,
-    maxPixels: (v) => v > 0,
-    helpTimeout: (v) => v >= 0,
-    toastDuration: (v) => v >= 0,
-    errorToastDuration: (v) => v >= 0,
-    zoomAnimationDuration: (v) => v >= 0,
-    panAnimationDuration: (v) => v >= 0,
-    diagramSelector: (v) => typeof v === "string" && v.length > 0,
-    pdfLibraryUrl: (v) => typeof v === "string" && v.length > 0,
-    layout: (v) => [LAYOUTS.HEADER, LAYOUTS.FLOATING, LAYOUTS.OFF].includes(v),
-    "ui.buttons.style": (v) => Object.values(BUTTON_STYLES).includes(v),
-  };
-
-  if (validators[key]) {
-    return validators[key](value);
+function deepMerge(target, source) {
+  for (const key in source) {
+    if (source[key] && typeof source[key] === "object") {
+      if (Array.isArray(source[key])) {
+        // Fix for Bug #12: Clone arrays to prevent shared references
+        target[key] = [...source[key]];
+      } else {
+        if (!target[key] || typeof target[key] !== "object") target[key] = {};
+        deepMerge(target[key], source[key]);
+      }
+    } else {
+      target[key] = source[key];
+    }
   }
-  return true;
+  return target;
 }
 
 /**
@@ -154,31 +201,43 @@ function validateConfigValue(key, value) {
  * @param {object} options - New configuration options
  */
 export function updateConfig(options = {}) {
-  const newConfig = { ...state.config };
+  const sanitized = {};
 
-  for (const [key, value] of Object.entries(options)) {
-    if (!(key in DEFAULT_CONFIG)) {
-      console.warn(`DiagView: Unknown config key "${key}"`);
-      continue;
+  // Validate and sanitize known keys
+  for (const key in options) {
+    if (key in DEFAULT_CONFIG) {
+      sanitized[key] = options[key];
+    } else {
+      console.warn(`DiagView: Unknown config key "${key}" ignored.`);
     }
-
-    if (!validateConfigValue(key, value)) {
-      console.warn(`DiagView: Invalid value for "${key}": ${value}`);
-      continue;
-    }
-
-    newConfig[key] = value;
   }
 
-  state.config = newConfig;
+  // Ensure PDF integrity hash is synchronized with the URL (Bug #25)
+  if (sanitized.pdfLibraryUrl) {
+    if (sanitized.pdfLibraryUrl === DEFAULT_CONFIG.pdfLibraryUrl) {
+      // If switching back to default URL, also restore default integrity
+      sanitized.pdfLibraryIntegrity = DEFAULT_CONFIG.pdfLibraryIntegrity;
+    } else if (!sanitized.pdfLibraryIntegrity) {
+      // If switching to custom URL without providing a hash, clear the old default
+      sanitized.pdfLibraryIntegrity = null;
+    }
+  }
+
+  // Perform deep merge into current config
+  deepMerge(state.config, sanitized);
+
   validateConfig();
 }
 
 /**
- * Reset configuration to defaults
+ * Reset configuration and state to defaults
  */
 export function resetConfig() {
-  state.config = { ...DEFAULT_CONFIG };
+  const freshState = createInitialState();
+
+  // Clear current state and replace with fresh values
+  // We use Object.assign to keep the 'state' reference the same for other modules
+  Object.assign(_state, freshState);
 }
 
 /**
@@ -188,30 +247,37 @@ export function resetConfig() {
 function validateConfig() {
   const { config } = state;
 
-  if (config.highResScale < 1 || config.highResScale > 10) {
-    console.warn("DiagView: highResScale should be between 1 and 10");
-    config.highResScale = DEFAULT_CONFIG.highResScale;
-  }
+  const checkRange = (key, min, max) => {
+    if (config[key] < min || config[key] > max) {
+      console.warn(`DiagView: ${key} should be between ${min} and ${max}`);
+      config[key] = DEFAULT_CONFIG[key];
+    }
+  };
 
-  if (config.mobileScale < 1 || config.mobileScale > 5) {
-    console.warn("DiagView: mobileScale should be between 1 and 5");
-    config.mobileScale = DEFAULT_CONFIG.mobileScale;
-  }
+  checkRange("highResScale", 1, 10);
+  checkRange("mobileScale", 1, 5);
+  checkRange("maxZoomScale", 1, ZOOM.MAX_SCALE_LIMIT);
+  checkRange("minZoomScale", ZOOM.MIN_SCALE_LIMIT, 1);
+  checkRange("maxPixels", 1000000, 100000000);
 
   if (![LAYOUTS.HEADER, LAYOUTS.FLOATING, LAYOUTS.OFF].includes(config.layout)) {
     console.warn(`DiagView: Invalid layout "${config.layout}", using default`);
     config.layout = DEFAULT_CONFIG.layout;
   }
 
-  if (config.maxZoomScale < 1 || config.maxZoomScale > ZOOM.MAX_SCALE_LIMIT) {
-    console.warn(`DiagView: maxZoomScale should be between 1 and ${ZOOM.MAX_SCALE_LIMIT}`);
-    config.maxZoomScale = DEFAULT_CONFIG.maxZoomScale;
-  }
-
-  if (config.minZoomScale < ZOOM.MIN_SCALE_LIMIT || config.minZoomScale > 1) {
-    console.warn(`DiagView: minZoomScale should be between ${ZOOM.MIN_SCALE_LIMIT} and 1`);
-    config.minZoomScale = DEFAULT_CONFIG.minZoomScale;
-  }
+  // Ensure positive values for timings
+  [
+    "helpTimeout",
+    "toastDuration",
+    "errorToastDuration",
+    "zoomAnimationDuration",
+    "panAnimationDuration",
+  ].forEach((key) => {
+    if (config[key] < 0) {
+      console.warn(`DiagView: ${key} must be positive`);
+      config[key] = DEFAULT_CONFIG[key];
+    }
+  });
 }
 
 /**
@@ -219,7 +285,7 @@ function validateConfig() {
  * @returns {object} Current configuration
  */
 export function getConfig() {
-  return { ...state.config };
+  return deepMerge({}, state.config);
 }
 
 /**
@@ -236,12 +302,26 @@ export function addCleanupFunction(fn) {
  * Run all cleanup functions and clear
  */
 export function runCleanupFunctions() {
-  state.cleanupFunctions.forEach((fn) => {
+  while (state.cleanupFunctions.length > 0) {
+    const fn = state.cleanupFunctions.pop();
     try {
       fn();
     } catch (e) {
       console.error("DiagView: Cleanup function error:", e);
     }
-  });
-  state.cleanupFunctions = [];
+  }
+}
+
+/**
+ * Run only modal-specific cleanup functions and clear
+ */
+export function runModalCleanupFunctions() {
+  while (state.modalCleanupFunctions.length > 0) {
+    const fn = state.modalCleanupFunctions.pop();
+    try {
+      fn();
+    } catch (e) {
+      console.error("DiagView: Modal cleanup function error:", e);
+    }
+  }
 }

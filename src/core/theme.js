@@ -6,12 +6,10 @@
 
 import { state } from "./config.js";
 import { TIMING, COLORS } from "./constants.js";
-import { debounce } from "./utils.js";
+import { debounce, isSessionStorageAvailable } from "./utils.js";
 import { addManagedListener } from "./lifecycle.js";
 
-// Theme cache for performance
-let themeCache = null;
-let cacheTimestamp = 0;
+// Theme State handled via state in config.js
 const CACHE_DURATION = 1000; // 1 second
 
 /**
@@ -26,6 +24,8 @@ function getLuminance(r, g, b) {
   return 0.2126 * rs + 0.7152 * gs + 0.0722 * bs;
 }
 
+// Singleton element for parsing named colors via CSS (Handled via state.colorParserEl)
+
 /**
  * Parse color string to RGB array
  * @private
@@ -33,9 +33,11 @@ function getLuminance(r, g, b) {
 function parseColor(color) {
   if (!color) return null;
 
-  // Hex color
-  if (color.startsWith("#")) {
-    const hex = color.slice(1);
+  const trimmed = color.trim().toLowerCase();
+
+  // 1. Hex color (Fast path)
+  if (trimmed.startsWith("#")) {
+    const hex = trimmed.slice(1);
     if (hex.length === 3) {
       return [
         parseInt(hex[0] + hex[0], 16),
@@ -50,18 +52,25 @@ function parseColor(color) {
     ];
   }
 
-  // RGB/RGBA color
-  if (color.startsWith("rgb")) {
-    const match = color.match(/\d+/g);
+  // 2. RGB/RGBA color (Fast path)
+  if (trimmed.startsWith("rgb")) {
+    const match = trimmed.match(/\d+/g);
     return match ? match.slice(0, 3).map(Number) : null;
   }
 
-  // Named colors - convert via canvas
-  const ctx = document.createElement("canvas").getContext("2d");
-  ctx.fillStyle = color;
-  const computed = ctx.fillStyle;
-  if (computed.startsWith("#")) {
-    return parseColor(computed);
+  // 3. Named colors - convert via CSS computed style (Faster than Canvas)
+  if (!state.colorParserEl && typeof document !== "undefined") {
+    state.colorParserEl = document.createElement("div");
+    state.colorParserEl.style.cssText = "display:none !important;visibility:hidden !important;";
+    document.body.appendChild(state.colorParserEl);
+  }
+
+  if (state.colorParserEl) {
+    state.colorParserEl.style.color = trimmed;
+    const computed = getComputedStyle(state.colorParserEl).color;
+    // Returns "rgb(r, g, b)"
+    const match = computed.match(/\d+/g);
+    return match ? match.slice(0, 3).map(Number) : null;
   }
 
   return null;
@@ -210,8 +219,8 @@ export function detectTheme() {
 
   // Return cached theme if fresh
   const now = Date.now();
-  if (themeCache && now - cacheTimestamp < CACHE_DURATION) {
-    return themeCache;
+  if (state.themeCache && now - state.themeCacheTimestamp < CACHE_DURATION) {
+    return state.themeCache;
   }
 
   const isDark = isDarkMode();
@@ -231,7 +240,7 @@ export function detectTheme() {
   const contrast = getContrastRatio(bg, text);
   if (contrast < 4.5) {
     console.warn(
-      `DiagView: Low contrast detected (${contrast.toFixed(2)}:1), using high-contrast fallback`
+      `DiagView: Low contrast detected (${contrast.toFixed(2)}:1), using high-contrast fallback`,
     );
     text = ensureContrast(text, bg);
   }
@@ -245,15 +254,21 @@ export function detectTheme() {
   const theme = { isDark, bg, text, accent };
 
   // Cache theme
-  themeCache = theme;
-  cacheTimestamp = now;
+  state.themeCache = theme;
+  state.themeCacheTimestamp = now;
 
   // Store in sessionStorage for persistence
-  if (window.sessionStorage) {
+  if (isSessionStorageAvailable()) {
     try {
-      sessionStorage.setItem("diagview-theme", JSON.stringify(theme));
+      const safe = {
+        isDark: !!theme.isDark,
+        bg: String(theme.bg || ""),
+        text: String(theme.text || ""),
+        accent: String(theme.accent || ""),
+      };
+      sessionStorage.setItem("diagview-theme", JSON.stringify(safe));
     } catch (e) {
-      // Ignore storage errors
+      // Ignore storage errors (safety fallback)
     }
   }
 
@@ -269,7 +284,7 @@ export function syncTheme() {
 
   // Update CSS variables
   root.style.setProperty("--dv-bg", theme.bg);
-  root.style.setProperty("--dv-text", theme.text);
+  root.style.setProperty("--dv-text-color", theme.text);
   root.style.setProperty("--dv-accent", theme.accent);
 
   // Update modal if exists
@@ -293,14 +308,13 @@ export function syncTheme() {
  * Clear theme cache (useful when theme changes)
  */
 export function clearThemeCache() {
-  themeCache = null;
-  cacheTimestamp = 0;
+  state.themeCache = null;
+  state.themeCacheTimestamp = 0;
 }
 
 /**
  * Setup theme watchers with debouncing
  */
-let themeChangeHandler = null; // Store handler for cleanup
 
 export function setupThemeWatchers() {
   if (state.themeObserver) return;
@@ -326,15 +340,15 @@ export function setupThemeWatchers() {
   // Watch system theme preference
   const mql = window.matchMedia("(prefers-color-scheme: dark)");
 
-  themeChangeHandler = () => {
+  state.themeChangeHandler = () => {
     clearThemeCache();
     debouncedSync();
   };
 
   if (mql.addEventListener) {
-    addManagedListener(mql, "change", themeChangeHandler);
+    addManagedListener(mql, "change", state.themeChangeHandler);
   } else {
-    mql.addListener(themeChangeHandler);
+    mql.addListener(state.themeChangeHandler);
   }
 
   state.mediaQueryList = mql;
@@ -349,16 +363,22 @@ export function teardownThemeWatchers() {
     state.themeObserver = null;
   }
 
-  if (state.mediaQueryList && themeChangeHandler) {
+  if (state.mediaQueryList && state.themeChangeHandler) {
     const mql = state.mediaQueryList;
 
     if (mql.removeEventListener) {
-      mql.removeEventListener("change", themeChangeHandler);
+      mql.removeEventListener("change", state.themeChangeHandler);
     } else {
-      mql.removeListener(themeChangeHandler);
+      mql.removeListener(state.themeChangeHandler);
     }
     state.mediaQueryList = null;
-    themeChangeHandler = null;
+    state.themeChangeHandler = null;
+  }
+
+  // BUG FIX: Remove the color parser element to prevent DOM leaking in SPAs
+  if (state.colorParserEl) {
+    state.colorParserEl.remove();
+    state.colorParserEl = null;
   }
 
   clearThemeCache();

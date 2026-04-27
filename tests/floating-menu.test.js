@@ -1,0 +1,98 @@
+/**
+ * Floating Menu Tests
+ * Tests the FAB toggle, outside-click dismissal, and control wiring.
+ */
+
+import { jest } from "@jest/globals";
+import { state, resetConfig } from "../src/core/config.js";
+import { createFloatingMenu } from "../src/ui/floating-menu.js";
+
+describe("Floating Menu UI", () => {
+  let sourceElement, clonedSvg;
+
+  beforeEach(() => {
+    resetConfig();
+    document.body.innerHTML = "";
+
+    // Create mock diagram structure
+    sourceElement = document.createElement("div");
+    sourceElement.className = "diagram";
+    clonedSvg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    sourceElement.appendChild(clonedSvg);
+    document.body.appendChild(sourceElement);
+
+    // Mock getComputedStyle for theme detection
+    window.getComputedStyle = jest.fn().mockReturnValue({
+      getPropertyValue: jest.fn().mockReturnValue("#ffffff"),
+      display: "block",
+      visibility: "visible",
+      opacity: "1",
+    });
+  });
+
+  test("createFloatingMenu creates the FAB and panel in the DOM", () => {
+    createFloatingMenu(sourceElement, clonedSvg);
+
+    const container = document.getElementById("diagview-temp-menu");
+    const toggle = document.getElementById("dv-toggle");
+    const panel = document.getElementById("dv-menu-panel");
+
+    expect(container).not.toBeNull();
+    expect(toggle).not.toBeNull();
+    expect(panel).not.toBeNull();
+  });
+
+  test("FAB toggle button opens and closes the menu", () => {
+    createFloatingMenu(sourceElement, clonedSvg);
+    const toggle = document.getElementById("dv-toggle");
+    const panel = document.getElementById("dv-menu-panel");
+
+    // Initially closed
+    expect(panel.classList.contains("active")).toBe(false);
+
+    // First click -> open
+    toggle.click();
+    expect(panel.classList.contains("active")).toBe(true);
+
+    // Second click -> close
+    toggle.click();
+    expect(panel.classList.contains("active")).toBe(false);
+  });
+
+  test("Clicking outside the menu closes it", () => {
+    jest.useFakeTimers();
+    // Must set isModalOpen to true because of the M8 safety check
+    state.isModalOpen = true;
+    createFloatingMenu(sourceElement, clonedSvg);
+    const toggle = document.getElementById("dv-toggle");
+    const panel = document.getElementById("dv-menu-panel");
+    const container = document.getElementById("diagview-temp-menu");
+
+    // Open menu
+    toggle.click();
+    expect(panel.classList.contains("active")).toBe(true);
+
+    // Advance timers so the outside-click listener is attached (M8 fix)
+    jest.advanceTimersByTime(100);
+
+    // Click on a separate element outside the container
+    const outsideElement = document.createElement("div");
+    document.body.appendChild(outsideElement);
+    outsideElement.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+
+    expect(panel.classList.contains("active")).toBe(false);
+    jest.useRealTimers();
+  });
+
+  test("Menu items are rendered correctly", () => {
+    createFloatingMenu(sourceElement, clonedSvg);
+    const panel = document.getElementById("dv-menu-panel");
+
+    // Check for core sections (using correct dv- classes)
+    expect(panel.querySelector(".dv-menu-sec")).not.toBeNull();
+    expect(panel.querySelector(".dv-exp")).not.toBeNull();
+
+    // Check for branding (footer)
+    expect(panel.querySelector(".dv-menu-footer")).not.toBeNull();
+  });
+});

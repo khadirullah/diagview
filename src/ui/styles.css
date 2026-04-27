@@ -8,7 +8,12 @@
   --dv-header-bg: rgba(128, 128, 128, 0.05);
   --dv-text-color: inherit;
   --dv-border-color: rgba(128, 128, 128, 0.2);
-  --dv-accent: #3b82f6; /* Default Fallback */
+  --dv-accent: #3b82f6;
+  /* Default Fallback */
+  --dv-primary: var(--dv-accent);
+  --dv-popover-bg: rgba(128, 128, 128, 0.08);
+  --dv-btn-bg: rgba(128, 128, 128, 0.12);
+  --dv-radius-sm: 8px;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -23,12 +28,25 @@
 .diagview-modal *,
 .diagview-menu * {
   text-decoration: none !important;
-  box-shadow: none !important;
-  border: none !important;
-  outline: none !important;
   box-sizing: border-box;
   font-family: inherit;
   -webkit-tap-highlight-color: transparent;
+}
+
+/* Premium Focus Indicators */
+.diagview-modal *:focus-visible,
+.diagview-wrapper *:focus-visible,
+.diagview-menu *:focus-visible {
+  outline: none !important;
+  box-shadow: 0 0 0 2px var(--dv-bg), 0 0 0 4px var(--dv-accent) !important;
+  border-radius: inherit !important;
+  transition: box-shadow 0.2s ease;
+}
+
+/* Specific override for Search Input (Wrapper handles the focus style) */
+.diagview-search-input:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
 }
 
 /* SVG Text Integrity */
@@ -81,7 +99,7 @@
   contain: layout style;
 }
 
-.diagview-viewport > * {
+.diagview-viewport>* {
   width: 100% !important;
   display: flex;
   justify-content: center;
@@ -136,7 +154,8 @@
     transform: translateY(-5px);
   }
 
-  .diagview-wrapper:hover .diagview-controls {
+  .diagview-wrapper:hover .diagview-controls,
+  .diagview-wrapper:focus-within .diagview-controls {
     opacity: 1;
     pointer-events: auto;
     transform: translateY(0);
@@ -188,7 +207,7 @@
   height: 36px;
   opacity: 1;
   box-shadow: none !important;
-  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
 }
 
 .diagview-controls-floating .diagview-btn:hover {
@@ -249,9 +268,20 @@
 }
 
 @keyframes checkmark {
-  0% { opacity: 0; transform: scale(0.5); }
-  50% { opacity: 1; transform: scale(1.2); }
-  100% { opacity: 1; transform: scale(1); }
+  0% {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+
+  50% {
+    opacity: 1;
+    transform: scale(1.2);
+  }
+
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
 /* Fullscreen Modal */
@@ -264,6 +294,8 @@
   overflow: hidden;
   background-color: var(--dv-bg);
   color: var(--dv-text-color);
+  outline: none !important;
+  /* Ensure silent startup focus */
 }
 
 .diagview-modal.open {
@@ -272,8 +304,13 @@
 }
 
 @keyframes dv-fade-in {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
 }
 
 /* Modal Content Wrapper */
@@ -370,7 +407,7 @@
   opacity: 0.8;
 }
 
-/* NOTE: Duplicate .diagview-branding block removed — see lines 312-340 */
+
 
 /* Search Container */
 .diagview-search-container {
@@ -380,6 +417,7 @@
   flex: 1;
   max-width: 600px;
   min-width: 0;
+  overflow: hidden;
 }
 
 .diagview-search-wrapper {
@@ -395,9 +433,15 @@
   transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.diagview-search-wrapper:focus-within {
-  border-color: var(--dv-accent-color, #3b82f6);
+.diagview-search-wrapper:has(.diagview-search-input:focus-visible) {
+  border-color: var(--dv-accent);
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
+  background: var(--dv-bg);
+}
+
+/* Subtle border for active interaction (no shadow box) */
+.diagview-search-wrapper:focus-within {
+  border-color: var(--dv-accent);
   background: var(--dv-bg);
 }
 
@@ -408,10 +452,25 @@
 }
 
 .diagview-search-input {
-  all: unset;
+  appearance: none;
+  background: transparent;
+  border: none;
+  outline: none;
   flex: 1;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  padding: 0 6px;
+  margin: 0;
   font-size: 14px;
+  line-height: normal;
   color: var(--dv-text-color);
+  box-sizing: border-box;
+  border-radius: 0;
+}
+
+.diagview-search-input:focus::placeholder {
+  color: transparent;
 }
 
 .diagview-search-clear {
@@ -434,26 +493,7 @@
   color: #ff4444;
 }
 
-/* Search Counter */
-.diagview-src-cnt {
-  display: none;
-  min-width: 3.5rem;
-  font-size: 0.8125rem;
-  font-weight: 600;
-  color: var(--dv-text-color);
-  opacity: 0.7;
-  white-space: nowrap;
-  padding: 0.25rem 0.5rem;
-  background: var(--dv-header-bg);
-  border-radius: 6px;
-  flex-shrink: 0;
-  text-align: center;
-  visibility: hidden;
-}
 
-.diagview-src-cnt.show {
-  visibility: visible;
-}
 
 /* Zoom Display */
 .diagview-zoom-display {
@@ -493,12 +533,11 @@
 }
 
 @media (min-width: 640px) {
-  .diagview-src-cnt {
-    display: block;
-  }
+
   .diagview-zoom-display {
     display: block;
   }
+
   .diagview-shortcut-hint {
     display: flex;
   }
@@ -576,14 +615,14 @@
 /* Match Highlighting - Force Visibility + Stroke */
 .dv-searching .dv-search-match {
   opacity: 1 !important;
-  stroke: var(--dv-ac) !important;
+  stroke: var(--dv-accent) !important;
   stroke-width: 3px !important;
   filter: none !important;
 }
 
 /* Specific fix for edge paths that are matches (lines need color) */
 .dv-searching .edgePath.dv-search-match path {
-  stroke: var(--dv-ac) !important;
+  stroke: var(--dv-accent) !important;
   stroke-width: 3px !important;
   opacity: 1 !important;
 }
@@ -628,7 +667,7 @@
   pointer-events: none;
 }
 
-.diagview-fab-container > * {
+.diagview-fab-container>* {
   pointer-events: auto;
 }
 
@@ -689,7 +728,7 @@
   -webkit-backdrop-filter: blur(24px) saturate(180%);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 20px;
-  box-shadow: 
+  box-shadow:
     0 24px 48px -12px rgba(0, 0, 0, 0.25),
     0 0 0 1px rgba(255, 255, 255, 0.05) inset;
   padding: 12px;
@@ -898,7 +937,7 @@
 
 .dv-mm-v {
   position: absolute;
-  border: 2px solid var(--dv-accent-color, #3b82f6) !important;
+  border: 2px solid var(--dv-accent, #3b82f6) !important;
   background: rgba(59, 130, 246, 0.1);
   pointer-events: none;
 }
@@ -936,10 +975,13 @@
 }
 
 @keyframes dv-laser {
-  0%, 100% {
+
+  0%,
+  100% {
     opacity: 1;
     transform: scale(1);
   }
+
   50% {
     opacity: 0.7;
     transform: scale(1.3);
@@ -963,20 +1005,22 @@
   opacity: 0;
   transition: opacity 0.3s;
   pointer-events: none;
-  background: var(--dv-text);
+  background: var(--dv-text-color);
   color: var(--dv-bg);
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
 }
 
 /* Accessibility */
 @media (prefers-reduced-motion: reduce) {
-  * {
+  .diagview-modal *,
+  .diagview-wrapper * {
     animation-duration: 0.01ms !important;
     transition-duration: 0.01ms !important;
   }
 }
 
 @media print {
+
   .diagview-controls,
   .diagview-menu,
   .diagview-modal {
@@ -994,6 +1038,7 @@
   box-shadow: none !important;
   filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.15));
 }
+
 .dv-btn-transparent:hover {
   transform: scale(1.1);
   filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2));
@@ -1001,205 +1046,239 @@
 
 /* Style: accent (Icon Only) */
 .dv-btn-accent {
-background: transparent !important;
-border: 1px solid color-mix(in srgb, var(--dv-accent) 40%, transparent) !important;
-color: var(--dv-accent) !important;
+  background: transparent !important;
+  border: 1px solid color-mix(in srgb, var(--dv-accent) 40%, transparent) !important;
+  color: var(--dv-accent) !important;
 }
+
 .dv-btn-accent svg {
-fill: var(--dv-accent) !important;
-stroke: var(--dv-accent) !important;
+  fill: var(--dv-accent) !important;
+  stroke: var(--dv-accent) !important;
 }
+
 .dv-btn-accent:hover {
-background: color-mix(in srgb, var(--dv-accent) 10%, transparent) !important;
-color: var(--dv-accent) !important;
-border-color: var(--dv-accent) !important;
+  background: color-mix(in srgb, var(--dv-accent) 10%, transparent) !important;
+  color: var(--dv-accent) !important;
+  border-color: var(--dv-accent) !important;
 }
+
 .dv-btn-accent:hover svg {
-fill: var(--dv-accent) !important;
-stroke: var(--dv-accent) !important;
+  fill: var(--dv-accent) !important;
+  stroke: var(--dv-accent) !important;
 }
+
 /* Style: solid (High Contrast) */
 .dv-btn-solid {
-background: var(--dv-accent) !important;
-color: #fff !important;
-border: 1px solid transparent !important;
-box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+  background: var(--dv-accent) !important;
+  color: #fff !important;
+  border: 1px solid transparent !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
 }
+
 .dv-btn-solid:hover {
-filter: brightness(1.1);
-transform: translateY(-1px);
+  filter: brightness(1.1);
+  transform: translateY(-1px);
 }
+
 /* Style: neutral (Classic/Grey) */
 .dv-btn-neutral {
-background: rgba(128, 128, 128, 0.15) !important;
-border: 1px solid rgba(128, 128, 128, 0.2) !important;
-color: var(--dv-text-color) !important;
+  background: rgba(128, 128, 128, 0.15) !important;
+  border: 1px solid rgba(128, 128, 128, 0.2) !important;
+  color: var(--dv-text-color) !important;
 }
+
 .dv-btn-neutral:hover {
-background: rgba(128, 128, 128, 0.25) !important;
-color: var(--dv-text-color) !important;
+  background: rgba(128, 128, 128, 0.25) !important;
+  color: var(--dv-text-color) !important;
 }
+
 /* === Loading Indicator === */
 .diagview-loading {
-position: absolute;
-inset: 0;
-display: flex;
-align-items: center;
-justify-content: center;
-background: var(--dv-bg);
-z-index: 1000010;
-transition: opacity 0.3s ease;
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--dv-bg);
+  z-index: 1000010;
+  transition: opacity 0.3s ease;
 }
+
 .diagview-loading.hide {
-opacity: 0;
-pointer-events: none;
+  opacity: 0;
+  pointer-events: none;
 }
+
 .diagview-spinner {
-width: 48px;
-height: 48px;
-border: 3px solid var(--dv-border-color);
-border-top-color: var(--dv-accent);
-border-radius: 50%;
-animation: dv-spin 0.8s linear infinite;
+  width: 48px;
+  height: 48px;
+  border: 3px solid var(--dv-border-color);
+  border-top-color: var(--dv-accent);
+  border-radius: 50%;
+  animation: dv-spin 0.8s linear infinite;
 }
+
 @keyframes dv-spin {
-to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
+
 /* === Error Boundary === */
 .diagview-error {
-display: flex;
-flex-direction: column;
-align-items: center;
-justify-content: center;
-padding: 2rem;
-text-align: center;
-color: var(--dv-text-color);
-background: var(--dv-bg);
-border: 1px dashed var(--dv-border-color);
-border-radius: 12px;
-min-height: 120px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  text-align: center;
+  color: var(--dv-text-color);
+  background: var(--dv-bg);
+  border: 1px dashed var(--dv-border-color);
+  border-radius: 12px;
+  min-height: 120px;
 }
+
 .diagview-error-icon {
-width: 48px;
-height: 48px;
-margin-bottom: 1rem;
-color: #ef4444;
+  width: 48px;
+  height: 48px;
+  margin-bottom: 1rem;
+  color: #ef4444;
 }
+
 .diagview-error-title {
-font-size: 1rem;
-font-weight: 600;
-margin-bottom: 0.5rem;
-color: #ef4444;
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  color: #ef4444;
 }
+
 .diagview-error-message {
-font-size: 0.875rem;
-opacity: 0.7;
-max-width: 300px;
+  font-size: 0.875rem;
+  opacity: 0.7;
+  max-width: 300px;
 }
+
 /* === Keyboard Help Modal === */
 .diagview-help-modal {
-position: fixed;
-inset: 0;
-display: flex;
-align-items: center;
-justify-content: center;
-background: rgba(0, 0, 0, 0.6);
-backdrop-filter: blur(4px);
-z-index: 2147483648;
-opacity: 0;
-visibility: hidden;
-transition: all 0.2s ease;
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  z-index: 2147483648;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.2s ease;
 }
+
 .diagview-help-modal.show {
-opacity: 1;
-visibility: visible;
+  opacity: 1;
+  visibility: visible;
 }
+
 .diagview-help-content {
-background: var(--dv-bg);
-border: 1px solid var(--dv-border-color);
-border-radius: 16px;
-padding: 1.5rem;
-max-width: 400px;
-width: 90%;
-max-height: 80vh;
-overflow-y: auto;
-box-shadow: 0 24px 48px rgba(0, 0, 0, 0.3);
+  background: var(--dv-bg);
+  border: 1px solid var(--dv-border-color);
+  border-radius: 16px;
+  padding: 1.5rem;
+  max-width: 400px;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.3);
 }
+
 .diagview-help-title {
-font-size: 1.25rem;
-font-weight: 700;
-margin-bottom: 1rem;
-color: var(--dv-text-color);
-display: flex;
-align-items: center;
-justify-content: space-between;
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+  color: var(--dv-text-color);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
+
 .diagview-help-close {
-background: none;
-border: none;
-cursor: pointer;
-padding: 0.5rem;
-color: var(--dv-text-color);
-opacity: 0.6;
-transition: opacity 0.2s;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.5rem;
+  color: var(--dv-text-color);
+  opacity: 0.6;
+  transition: opacity 0.2s;
 }
+
 .diagview-help-close:hover {
-opacity: 1;
+  opacity: 1;
 }
+
 .diagview-help-grid {
-display: grid;
-gap: 0.75rem;
+  display: grid;
+  gap: 0.75rem;
 }
+
 .diagview-help-row {
-display: flex;
-align-items: center;
-justify-content: space-between;
-padding: 0.5rem 0;
-border-bottom: 1px solid rgba(128, 128, 128, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid rgba(128, 128, 128, 0.35);
 }
+
 .diagview-help-row:last-child {
-border-bottom: none;
+  border-bottom: none;
 }
+
 .diagview-help-key {
-display: inline-flex;
-align-items: center;
-gap: 0.25rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
 }
+
 .diagview-help-key kbd {
-background: var(--dv-header-bg);
-border: 1px solid var(--dv-border-color);
-border-radius: 4px;
-padding: 0.25rem 0.5rem;
-font-family: inherit;
-font-size: 0.75rem;
-font-weight: 600;
-color: var(--dv-text-color);
+  background: var(--dv-header-bg);
+  border: 1px solid var(--dv-border-color);
+  border-radius: 4px;
+  padding: 0.25rem 0.5rem;
+  font-family: inherit;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--dv-text-color);
 }
+
 .diagview-help-desc {
-font-size: 0.875rem;
-color: var(--dv-text-color);
-opacity: 0.8;
+  font-size: 0.875rem;
+  color: var(--dv-text-color);
+  opacity: 0.8;
 }
+
 /* === Open Animation === */
 .diagview-modal.animate-open .diagview-modal-content {
-animation: dv-modal-open 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  animation: dv-modal-open 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
+
 @keyframes dv-modal-open {
-from {
-opacity: 0;
-transform: scale(0.95);
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
-to {
-opacity: 1;
-transform: scale(1);
-}
-}
+
 /* Respect reduced motion preference */
 @media (prefers-reduced-motion: reduce) {
-.diagview-modal.animate-open .diagview-modal-content {
-animation: none;
-}
-.diagview-spinner {
-animation-duration: 1.5s;
-}
+  .diagview-modal.animate-open .diagview-modal-content {
+    animation: none;
+  }
+
+  .diagview-spinner {
+    animation-duration: 1.5s;
+  }
 }

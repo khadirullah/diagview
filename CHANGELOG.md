@@ -21,16 +21,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - **Mobile Viewport Lock**: Implemented industry-standard meta-tag locking when models are active to prevent broken layouts on mobile.
 - **Lifecycle Testing**: Added comprehensive Jest-based lifecycle tests to ensure robust initialization and teardown (SPA-safe).
-- **Maintenance**: Removed legacy `raf`/`cancelRaf` polyfills to streamline the codebase for modern evergreen browsers.
+- **Maintenance**: Deprecated `raf`/`cancelRaf` utility wrappers — internal code now uses native `requestAnimationFrame` directly. Wrappers remain exported for backward compatibility.
 
 ---
 
-## [1.0.3] - 2026-04-07
-
+## [1.0.3] - 2026-04-07 [patch — CI only, no functional changes]
 ### Fixed
 - Resolved "Exit Code 128" issue in automated NPM publish workflow
 - Stabilized CI/CD pipeline for fully automated releases
-
 ### Changed
 - Upgraded GitHub Actions build environment to Node.js 24
 - All feature enhancements from v1.0.2 are included (no functional changes)

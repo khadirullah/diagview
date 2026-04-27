@@ -7,9 +7,10 @@
 import { state, addCleanupFunction } from "../core/config.js";
 
 import { detectTheme, syncTheme } from "../core/theme.js";
-import { throttle } from "../core/utils.js";
-import { addManagedListener } from "../core/lifecycle.js";
+import { throttle, setSVGContent } from "../core/utils.js";
+import { addModalListener } from "../core/lifecycle.js";
 import { cloneSVGForModal } from "../core/svg-clone.js";
+import { BRANDING } from "../core/constants.js";
 import {
   initializePanzoom,
   setupViewportInteractions,
@@ -17,13 +18,12 @@ import {
   saveZoomState,
   restoreZoomState,
 } from "../features/panzoom-integration.js";
-import { setupModalFocusManagement, saveFocus } from "./focus-manager.js";
-import { closeModal, syncBrandingVisibility } from "./modal-controls.js";
+import { setupModalFocusManagement, saveFocus, setInitialFocus } from "./focus-manager.js";
+import { closeModal } from "./modal-controls.js";
 import { createFloatingMenu } from "./floating-menu.js";
 import {
   pushModalHistoryState,
   startVisualViewportSync,
-  triggerVisualViewportSync,
 } from "./viewport.js";
 
 /**
@@ -36,50 +36,118 @@ export function createModal() {
   const modal = document.createElement("div");
   modal.id = "diagview-modal";
   modal.className = "diagview-modal";
+  modal.tabIndex = -1; // Allows silent focus capture
 
   modal.style.backgroundColor = theme.bg;
-  modal.style.setProperty("--dv-current-bg", theme.bg);
-  modal.style.setProperty("--dv-current-text", theme.text);
-  modal.style.setProperty("--dv-current-accent", theme.accent);
 
-  modal.innerHTML = `
-    <div class="diagview-loading" id="diagview-loading">
-      <div class="diagview-spinner"></div>
-    </div>
-    <div class="diagview-modal-content">
-      <div class="diagview-topbar">
-        <a href="https://github.com/khadirullah/diagview" target="_blank" class="diagview-branding" title="DiagView by Khadirullah">
-          DiagView
-        </a>
-        <div class="diagview-search-container">
-          <div class="diagview-search-wrapper">
-            <svg class="diagview-search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="11" cy="11" r="8"></circle>
-              <path d="m21 21-4.35-4.35"></path>
-            </svg>
-            <input
-              type="text"
-              id="diagview-search"
-              class="diagview-search-input"
-              placeholder="Search nodes..."
-              autocomplete="off"
-              spellcheck="false"
-            />
-            <button id="diagview-search-clear" class="diagview-search-clear" aria-label="Clear search">✕</button>
-          </div>
-          <span class="diagview-src-cnt"></span>
-        </div>
-        <span id="diagview-zoom-display" class="diagview-zoom-display">100%</span>
-        <span class="diagview-shortcut-hint">Press <kbd>?</kbd> for shortcuts</span>
-        <button class="diagview-close-btn" id="diagview-close" title="Close (Esc)" aria-label="Close fullscreen">✕</button>
-      </div>
-      <div id="diagview-modal-viewport" class="diagview-modal-viewport"></div>
-      <div id="diagview-minimap" class="diagview-minimap">
-        <div class="dv-mm-v"></div>
-      </div>
-      <div id="diagview-laser" class="diagview-laser"></div>
-    </div>
-  `;
+  // 1. Loading Indicator
+  const loading = document.createElement("div");
+  loading.className = "diagview-loading";
+  loading.id = "diagview-loading";
+  const spinner = document.createElement("div");
+  spinner.className = "diagview-spinner";
+  loading.appendChild(spinner);
+  modal.appendChild(loading);
+
+  // 2. Modal Content
+  const content = document.createElement("div");
+  content.className = "diagview-modal-content";
+  modal.appendChild(content);
+
+  // 3. Topbar
+  const topbar = document.createElement("div");
+  topbar.className = "diagview-topbar";
+  content.appendChild(topbar);
+
+  const brandingLink = document.createElement("a");
+  brandingLink.href = BRANDING.URL;
+  brandingLink.target = "_blank";
+  brandingLink.className = "diagview-branding";
+  brandingLink.title = `${BRANDING.LABEL} by Khadirullah`;
+  brandingLink.textContent = BRANDING.LABEL;
+  topbar.appendChild(brandingLink);
+
+  // Search Container
+  const searchContainer = document.createElement("div");
+  searchContainer.className = "diagview-search-container";
+  const searchWrapper = document.createElement("div");
+  searchWrapper.className = "diagview-search-wrapper";
+  searchContainer.appendChild(searchWrapper);
+
+  const searchIcon = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  searchIcon.classList.add("diagview-search-icon");
+  searchIcon.setAttribute("width", "18");
+  searchIcon.setAttribute("height", "18");
+  searchIcon.setAttribute("viewBox", "0 0 24 24");
+  searchIcon.setAttribute("fill", "none");
+  searchIcon.setAttribute("stroke", "currentColor");
+  searchIcon.setAttribute("stroke-width", "2");
+  setSVGContent(
+    searchIcon,
+    '<circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.35-4.35"></path>',
+  );
+  searchWrapper.appendChild(searchIcon);
+
+  const searchInput = document.createElement("input");
+  searchInput.type = "text";
+  searchInput.id = "diagview-search";
+  searchInput.className = "diagview-search-input";
+  searchInput.placeholder = "Search nodes...";
+  searchInput.autocomplete = "off";
+  searchInput.spellcheck = false;
+  searchWrapper.appendChild(searchInput);
+
+  const searchClear = document.createElement("button");
+  searchClear.id = "diagview-search-clear";
+  searchClear.className = "diagview-search-clear";
+  searchClear.setAttribute("aria-label", "Clear search");
+  searchClear.textContent = "✕";
+  searchWrapper.appendChild(searchClear);
+  topbar.appendChild(searchContainer);
+
+  const zoomDisplay = document.createElement("span");
+  zoomDisplay.id = "diagview-zoom-display";
+  zoomDisplay.className = "diagview-zoom-display";
+  zoomDisplay.textContent = "100%";
+  topbar.appendChild(zoomDisplay);
+
+  const shortcutHint = document.createElement("span");
+  shortcutHint.className = "diagview-shortcut-hint";
+  shortcutHint.appendChild(document.createTextNode("Press "));
+  const kbd = document.createElement("kbd");
+  kbd.textContent = "?";
+  shortcutHint.appendChild(kbd);
+  shortcutHint.appendChild(document.createTextNode(" for shortcuts"));
+  topbar.appendChild(shortcutHint);
+
+  const closeBtn = document.createElement("button");
+  closeBtn.className = "diagview-close-btn";
+  closeBtn.id = "diagview-close";
+  closeBtn.title = "Close (Esc)";
+  closeBtn.setAttribute("aria-label", "Close fullscreen");
+  closeBtn.textContent = "✕";
+  topbar.appendChild(closeBtn);
+
+  // 4. Viewport
+  const viewport = document.createElement("div");
+  viewport.id = "diagview-modal-viewport";
+  viewport.className = "diagview-modal-viewport";
+  content.appendChild(viewport);
+
+  // 5. Minimap
+  const minimap = document.createElement("div");
+  minimap.id = "diagview-minimap";
+  minimap.className = "diagview-minimap";
+  const minimapView = document.createElement("div");
+  minimapView.className = "dv-mm-v";
+  minimap.appendChild(minimapView);
+  content.appendChild(minimap);
+
+  // 6. Laser
+  const laser = document.createElement("div");
+  laser.id = "diagview-laser";
+  laser.className = "diagview-laser";
+  content.appendChild(laser);
 
   document.body.appendChild(modal);
 
@@ -87,25 +155,14 @@ export function createModal() {
   const toast = document.createElement("div");
   toast.id = "diagview-toast";
   toast.className = "diagview-toast";
+  toast.setAttribute("role", "status");
+  toast.setAttribute("aria-live", "polite");
   toast.style.backgroundColor = theme.accent;
   toast.style.color = "#fff";
   document.body.appendChild(toast);
 
   // Setup focus management
   setupModalFocusManagement();
-}
-
-/**
- * Apply restored view state from share link
- * @private
- */
-function applyShareLinkState(element, panzoom) {
-  import("../features/lazy/share.js")
-    .then((m) => {
-      const applied = m.applyRestoredViewState(element, panzoom);
-      return applied;
-    })
-    .catch(() => false);
 }
 
 /**
@@ -126,7 +183,7 @@ export function openFullscreen(element) {
 
   // Clone SVG with text preservation (using centralized function)
   const clone = cloneSVGForModal(originalSvg);
-  viewport.innerHTML = "";
+  viewport.replaceChildren();
   clone.style.backgroundColor = "transparent";
   viewport.appendChild(clone);
 
@@ -137,6 +194,11 @@ export function openFullscreen(element) {
   }
   document.body.style.overflow = "hidden";
   state.isModalOpen = true;
+
+  // Set initial focus (use rAF to ensure modal is rendered and visible)
+  requestAnimationFrame(() => {
+    setInitialFocus();
+  });
 
   // Sync UI elements to visual viewport (handles pinch-zoomed browsers).
   // Must run after modal is visible (display:flex) so dimensions are valid.
@@ -149,7 +211,7 @@ export function openFullscreen(element) {
   // Sync modal with native fullscreen exits (e.g. user presses Escape
   // while in browser fullscreen, or exits via browser UI). Without this,
   // the modal state becomes desynchronized from the viewport.
-  addManagedListener(document, "fullscreenchange", () => {
+  addModalListener(document, "fullscreenchange", () => {
     if (!document.fullscreenElement && state.isModalOpen) {
       closeModal();
     }
@@ -176,12 +238,30 @@ export function openFullscreen(element) {
   // Apply restored view state (if opened via share link)
   // Otherwise, try to restore saved zoom state
   if (state.activePanzoom) {
-    applyShareLinkState(element, state.activePanzoom);
+    Promise.all([
+      import("../features/lazy/share.js"),
+      import("../features/lazy/search.js"),
+    ])
+      .then(([shareMod, searchMod]) => {
+        const pending = shareMod.getPendingShareState(element);
+        const query = pending?.query || "";
 
-    // If no share state, try to restore saved zoom
-    if (diagramId) {
-      restoreZoomState(diagramId, state.activePanzoom);
-    }
+        // If we have a share link, apply it. Otherwise fallback to remembered zoom.
+        if (pending) {
+          shareMod.applyRestoredViewState(element, state.activePanzoom);
+        } else if (diagramId) {
+          restoreZoomState(diagramId, state.activePanzoom);
+        }
+
+        // Initialize search (with query if restored from link)
+        searchMod.setupSearch(clone, query);
+      })
+      .catch(() => {
+        // Fallback: at least try to setup search if one failed
+        import("../features/lazy/search.js")
+          .then((m) => m.setupSearch(clone))
+          .catch(() => {});
+      });
   }
 
   // Setup viewport interactions and STORE cleanup function
@@ -192,18 +272,13 @@ export function openFullscreen(element) {
     // Save zoom state on changes (for remember zoom feature)
     if (diagramId && state.config.rememberZoom) {
       const saveState = () => saveZoomState(diagramId, state.activePanzoom);
-      addManagedListener(clone, "panzoomend", saveState);
+      addModalListener(clone, "panzoomend", saveState);
     }
   }
-
-  // Setup search (lazy loaded)
-  import("../features/lazy/search.js").then((m) => m.setupSearch(clone)).catch(() => {});
 
   // Create floating menu
   createFloatingMenu(element, clone);
 
-  // Re-sync visual viewport now that FAB exists in the DOM
-  triggerVisualViewportSync();
 
   // Setup minimap with throttled updates (lazy loaded)
   if (state.activePanzoom) {
@@ -213,7 +288,7 @@ export function openFullscreen(element) {
           m.updateMinimap(clone, viewport, state.activePanzoom);
         }, 100);
 
-        addManagedListener(clone, "panzoomchange", throttledUpdate);
+        addModalListener(clone, "panzoomchange", throttledUpdate);
 
         // Initial update — use rAF to ensure layout is settled
         requestAnimationFrame(() => m.updateMinimap(clone, viewport, state.activePanzoom));
@@ -232,7 +307,7 @@ export function openFullscreen(element) {
       }
     };
 
-    addManagedListener(clone, "panzoomchange", updateZoomDisplay);
+    addModalListener(clone, "panzoomchange", updateZoomDisplay);
 
     // Initial update
     updateZoomDisplay();
@@ -261,7 +336,7 @@ export function openFullscreen(element) {
     }
   }, 300);
 
-  addManagedListener(window, "resize", handleResize);
+  addModalListener(window, "resize", handleResize);
 
   // Hide loading indicator after everything is ready
   requestAnimationFrame(() => {
@@ -278,6 +353,3 @@ export function openFullscreen(element) {
     }
   }
 }
-
-// Re-export closeModal and syncBrandingVisibility from modal-controls
-export { closeModal, syncBrandingVisibility };

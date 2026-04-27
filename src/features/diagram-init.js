@@ -7,10 +7,13 @@
 import { openFullscreen } from "../ui/modal.js";
 import { exportDiagram } from "./export.js";
 import { state } from "../core/config.js";
-import { fixIds, generateUniqueId } from "../core/utils.js";
+import { fixIds, generateUniqueId, setSVGContent } from "../core/utils.js";
 import { ICONS } from "../ui/icons.js";
 import { LAYOUTS, BUTTON_STYLES } from "../core/constants.js";
 import { createButtonGroup } from "../ui/button-factory.js";
+
+// Map to store per-diagram cleanup functions (for SPA-safe teardown)
+const cleanupMap = new WeakMap();
 
 /**
  * Check if SVG is valid and renderable
@@ -18,20 +21,28 @@ import { createButtonGroup } from "../ui/button-factory.js";
 function isValidSvg(svg) {
   if (!svg) return false;
 
-  // Check if SVG has any visible content
+  // 1. Check for browser-native XML parsing errors (malformed SVG)
+  if (svg.querySelector("parsererror")) return false;
+
+  // 2. Check if SVG has any visible structural content
   const hasContent = svg.querySelector("g, path, rect, circle, text, line, polygon, polyline");
   if (!hasContent) return false;
 
-  // Check for Mermaid error class
-  if (svg.classList.contains("error") || svg.querySelector(".error")) {
-    return false;
-  }
+  // 3. Check for specific error indicators from popular libraries (like Mermaid)
+  // We check for elements that are explicitly designed to show errors
+  const rootError = svg.classList?.contains("error") || (svg.matches && svg.matches(".mermaid-error"));
+  const internalError = svg.querySelector(".error-icon, .mermaid-error, #error-boundary, .error");
 
-  // Check for common error indicators in text
-  const textContent = svg.textContent?.toLowerCase() || "";
-  const errorKeywords = ["syntax error", "parse error", "invalid", "error in diagram"];
-  if (errorKeywords.some((keyword) => textContent.includes(keyword))) {
-    return false;
+  const errorUI = rootError ? svg : internalError;
+
+  if (errorUI) {
+    const textContent = errorUI.textContent?.toLowerCase() || "";
+    const fatalKeywords = ["syntax error", "parse error", "error in diagram", "invalid"];
+    
+    // We only reject if we find fatal keywords OR if it's an explicit library error class
+    if (fatalKeywords.some((keyword) => textContent.includes(keyword)) || rootError) {
+      return false;
+    }
   }
 
   return true;
@@ -66,14 +77,26 @@ function showErrorBoundary(element, svg) {
     }
   }
 
-  errorDiv.innerHTML = `
-    <svg class="diagview-error-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-      <circle cx="12" cy="12" r="10"/>
-      <path d="M12 8v4M12 16h.01"/>
-    </svg>
-    <div class="diagview-error-title">${errorTitle}</div>
-    <div class="diagview-error-message">${errorMessage}</div>
-  `;
+  // Use DOM construction to prevent XSS from SVG text content
+  const iconSvg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  iconSvg.classList.add("diagview-error-icon");
+  iconSvg.setAttribute("viewBox", "0 0 24 24");
+  iconSvg.setAttribute("fill", "none");
+  iconSvg.setAttribute("stroke", "currentColor");
+  iconSvg.setAttribute("stroke-width", "2");
+  setSVGContent(iconSvg, '<circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/>');
+
+  const titleDiv = document.createElement("div");
+  titleDiv.className = "diagview-error-title";
+  titleDiv.textContent = errorTitle;
+
+  const msgDiv = document.createElement("div");
+  msgDiv.className = "diagview-error-message";
+  msgDiv.textContent = errorMessage;
+
+  errorDiv.appendChild(iconSvg);
+  errorDiv.appendChild(titleDiv);
+  errorDiv.appendChild(msgDiv);
 
   // Replace content or append
   if (svg) {
@@ -93,14 +116,11 @@ function extractDiagramTitle(element) {
   // Try to find title in SVG
   const svg = element.querySelector("svg");
   if (svg) {
-    const titleEl = svg.querySelector("title, text[class*='title']");
-    if (titleEl) return titleEl.textContent.trim().toUpperCase();
+    const titleEl = svg.querySelector("title");
+    if (titleEl && titleEl.textContent.trim()) {
+      return titleEl.textContent.trim().toUpperCase();
+    }
   }
-
-  // Try to find title in content
-  const content = element.textContent || "";
-  const titleMatch = content.match(/title[:\s]+([^\n\r]+)/i);
-  if (titleMatch) return titleMatch[1].trim().toUpperCase();
 
   return "DIAGRAM";
 }
@@ -110,7 +130,7 @@ function extractDiagramTitle(element) {
  */
 function getButtonStyleClass() {
   const configStyle = state.config.ui?.buttons?.style;
-  const btnStyle = configStyle || BUTTON_STYLES.ACCENT;
+  const btnStyle = configStyle ?? BUTTON_STYLES.ACCENT;
   return `dv-btn-${btnStyle}`;
 }
 
@@ -140,6 +160,12 @@ export function initializeDiagram(element) {
   const uniqueId = generateUniqueId();
   element.dataset.diagviewId = uniqueId;
 
+  // Backup original IDs before mutation for seamless restoration
+  const originalIds = new Map();
+  svg.querySelectorAll("[id]").forEach((el) => {
+    originalIds.set(el, el.id);
+  });
+
   // Fix ID collisions for multi-diagram pages
   const fixedSvg = fixIds(svg, uniqueId);
 
@@ -151,7 +177,15 @@ export function initializeDiagram(element) {
   // If layout is "off", just make clickable to open fullscreen
   if (isOff) {
     element.style.cursor = "pointer";
-    element.addEventListener("click", () => openFullscreen(element));
+    const openHandler = () => openFullscreen(element);
+    element.addEventListener("click", openHandler);
+
+    // Store cleanup for this specific element
+    cleanupMap.set(element, {
+      fn: () => element.removeEventListener("click", openHandler),
+      wrapper: null, // No wrapper used in 'off' layout
+      originalIds: originalIds, // Store for restoration
+    });
 
     // Apply minimal SVG styling
     if (fixedSvg) {
@@ -234,10 +268,18 @@ export function initializeDiagram(element) {
   viewport.appendChild(element);
 
   // Click viewport to open fullscreen
-  viewport.addEventListener("click", (e) => {
+  const viewportHandler = (e) => {
     if (!e.target.closest(".diagview-controls")) {
       openFullscreen(element);
     }
+  };
+  viewport.addEventListener("click", viewportHandler);
+
+  // Store cleanup function and wrapper reference for this specific element
+  cleanupMap.set(element, {
+    fn: () => viewport.removeEventListener("click", viewportHandler),
+    wrapper: wrapper,
+    originalIds: originalIds, // Store for restoration
   });
 
   // Apply SVG theme
@@ -254,10 +296,30 @@ export function initializeDiagram(element) {
 export function deinitializeDiagram(element) {
   if (!element?.dataset.diagviewInit) return;
 
-  const wrapper = element.closest(".diagview-wrapper");
-  if (wrapper) {
-    wrapper.parentNode.insertBefore(element, wrapper);
-    wrapper.remove();
+  // Run per-element cleanup
+  const data = cleanupMap.get(element);
+  if (data) {
+    const { fn, wrapper, originalIds } = data;
+
+    // Restore original IDs to host SVG
+    if (originalIds) {
+      originalIds.forEach((oldId, el) => {
+        try {
+          if (el && document.contains(el)) {
+            el.id = oldId;
+          }
+        } catch (e) { /* ignore */ }
+      });
+    }
+
+    // Always use the stored wrapper reference (bulletproof against DOM moves)
+    if (wrapper && wrapper.parentNode) {
+      wrapper.parentNode.insertBefore(element, wrapper);
+      wrapper.remove();
+    }
+
+    if (fn) fn();
+    cleanupMap.delete(element);
   }
 
   delete element.dataset.diagviewInit;

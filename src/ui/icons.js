@@ -72,6 +72,6 @@ export function getIcon(name, size = 20) {
   // Add size and common stroke attributes
   return svg.replace(
     "<svg",
-    `<svg width="${size}" height="${size}" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"`
+    `<svg width="${size}" height="${size}" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"`,
   );
 }

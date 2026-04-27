@@ -4,7 +4,7 @@
  * @module ui/modal-controls
  */
 
-import { state, runCleanupFunctions } from "../core/config.js";
+import { state, runModalCleanupFunctions } from "../core/config.js";
 import { safeDestroy } from "../core/lifecycle.js";
 import { restoreFocus } from "./focus-manager.js";
 import { cleanupModalHistoryState, stopVisualViewportSync } from "./viewport.js";
@@ -27,7 +27,7 @@ export function closeModal() {
 
   // Clear viewport
   if (viewport) {
-    viewport.innerHTML = "";
+    viewport.replaceChildren();
   }
 
   // Hide keyboard help modal
@@ -43,7 +43,6 @@ export function closeModal() {
   // Cleanup features (lazy imports to avoid circular dependencies)
   Promise.all([
     import("../features/lazy/minimap.js").then((m) => m.cleanupMinimap()),
-    import("../features/lazy/meeting-mode.js").then((m) => m.cleanupMeetingMode()),
     import("../features/lazy/rotate.js").then((m) => m.cleanupRotation()),
   ]).catch(() => {});
 
@@ -53,8 +52,8 @@ export function closeModal() {
     state.activePanzoom = null;
   }
 
-  // Run all cleanup functions (event listeners, etc.)
-  runCleanupFunctions();
+  // Run modal-specific cleanup functions (event listeners, focus trap, etc.)
+  runModalCleanupFunctions();
 
   // Reset touch state
   state.touchState = {
@@ -69,6 +68,7 @@ export function closeModal() {
   // Close modal
   if (modal) {
     modal.classList.remove("open");
+    modal.classList.remove("animate-open");
 
     // Exit fullscreen if active
     if (document.fullscreenElement) {

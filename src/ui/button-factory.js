@@ -5,6 +5,7 @@
  */
 
 import { TIMING } from "../core/constants.js";
+import { sanitizeSVG } from "../core/utils.js";
 
 /**
  * Create an action button with consistent styling and behavior
@@ -52,7 +53,7 @@ export function createButton(config) {
   btn.setAttribute("data-action", action);
   btn.setAttribute("title", title);
   btn.setAttribute("aria-label", ariaLabel || title);
-  btn.innerHTML = icon;
+  btn.insertAdjacentHTML("afterbegin", sanitizeSVG(icon));
 
   // Add feedback flag if enabled
   if (feedback) {
@@ -163,12 +164,16 @@ export function createMenuItem(config) {
   btn.className = `dv-menu-item ${className}`.trim();
   btn.id = id;
 
-  // Build inner HTML
-  let html = `${icon} ${label}`;
+  // Insert sanitized icon then safe text nodes
+  btn.insertAdjacentHTML("afterbegin", sanitizeSVG(icon));
+  const labelNode = document.createTextNode(" " + label);
+  btn.appendChild(labelNode);
   if (shortcut) {
-    html += ` <kbd>${shortcut}</kbd>`;
+    const kbd = document.createElement("kbd");
+    kbd.textContent = shortcut;
+    btn.appendChild(document.createTextNode(" "));
+    btn.appendChild(kbd);
   }
-  btn.innerHTML = html;
 
   // Attach click handler
   if (onClick) {

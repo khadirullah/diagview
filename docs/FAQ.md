@@ -75,9 +75,27 @@ DiagView.init({
 DiagView.configure({ showBranding: false });
 ```
 
+### Q: My custom configuration (e.g. layout) is being ignored?
+
+If you are using the `<script>` CDN tag, DiagView auto-initializes as soon as the page loads. If you try to call `DiagView.init({ layout: 'header' })` later in your code, it will be ignored because the library is already initialized. 
+
+**Solution:** Add the `data-diagview-no-auto-init` attribute to your script tag:
+```html
+<script src=".../diagview.umd.min.js" data-diagview-no-auto-init></script>
+```
+
 ### Q: How do I disable keyboard shortcuts?
 
 Keyboard shortcuts only work when fullscreen modal is open. You cannot disable them globally, but you can close the modal with `Esc`.
+
+### Q: How do I change the arrow key direction?
+
+**A:** By default, arrow keys move the "Camera" (Traditional). If you want them to move the "Diagram" (Natural/Direct), use the **`naturalPanning`** option:
+```javascript
+DiagView.init({
+  naturalPanning: true
+});
+```
 
 ---
 
@@ -113,6 +131,14 @@ DiagView.init({
 ### Q: Clipboard copy not working?
 
 Clipboard requires HTTPS or localhost. Use download instead on HTTP sites.
+
+### Q: How do I check current settings in the console?
+
+**A:** Use the **`DiagView.state`** object (v1.0.4+):
+```javascript
+console.log(DiagView.state.config); // Check config
+console.log(DiagView.state.rotationAngle); // Check rotation
+```
 
 ---
 
@@ -192,6 +218,13 @@ DiagView.init({
 2. On desktop, hover over diagram
 3. On mobile, buttons are always visible and pinned securely to the view using **Visual Viewport Synchronization**.
 
+### Q: How do I hide the minimap?
+
+If you have a very complex diagram and want to hide the minimap overview, use:
+```javascript
+DiagView.configure({ showMinimap: false });
+```
+
 ### Q: Search not highlighting anything?
 
 Search looks for text in nodes. Ensure your SVG has `<text>` elements.
@@ -205,6 +238,15 @@ Rotation only works in fullscreen mode. Press `R` or click "Rotate 90°" in menu
 1. Requires HTTPS or localhost
 2. Check browser clipboard permissions
 3. Fallback: uses `document.execCommand` on HTTP
+
+### Q: Why are the arrow keys/drag direction "inverted"?
+
+By default, DiagView uses **Traditional Panning** (like a telescope or camera). Moving your mouse Up moves the viewport Up, which makes the diagram appear to move Down.
+
+To change this to **Natural Panning** (like moving a piece of paper on a desk), use:
+```javascript
+DiagView.configure({ naturalPanning: true });
+```
 
 ---
 

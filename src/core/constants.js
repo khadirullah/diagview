@@ -29,10 +29,10 @@ export const TIMING = {
  */
 export const EXPORT = {
   SVG_EXPORT_PADDING: 40,
-  HIGH_RES_SCALE_DEFAULT: 6,
+  HIGH_RES_SCALE_DEFAULT: 4,
   MOBILE_SCALE_DEFAULT: 2,
   PDF_SCALE: 2,
-  MAX_PIXELS_DEFAULT: 25000000,
+  MAX_PIXELS_DEFAULT: 16777216, // 16MP (4096×4096) — safe for all browsers including mobile
 };
 
 /**
@@ -93,4 +93,14 @@ export const BUTTON_STYLES = {
   ACCENT: "accent",
   SOLID: "solid",
   NEUTRAL: "neutral",
+};
+
+/**
+ * Branding constants
+ */
+export const BRANDING = {
+  URL: "https://github.com/khadirullah/diagview",
+  AUTHOR_URL: "https://khadirullah.com",
+  AUTHOR_NAME: "Khadirullah",
+  LABEL: "DiagView",
 };

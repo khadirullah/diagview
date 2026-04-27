@@ -58,18 +58,33 @@ export function debounce(func, wait) {
 }
 
 /**
- * Throttle function execution
+ * Throttle function execution with trailing-edge support
  * @param {Function} func - Function to throttle
- * @param {number} limit - Time limit in milliseconds
- * @returns {Function} Throttled function
+ * @param {number} limit - Throttle limit in ms
+ * @returns {any|undefined} - Function result if executed, undefined if throttled
  */
 export function throttle(func, limit) {
   let inThrottle;
+  let lastFunc;
+  let lastResult;
+
   return function (...args) {
+    const context = this;
     if (!inThrottle) {
-      func.apply(this, args);
+      lastResult = func.apply(context, args);
       inThrottle = true;
-      setTimeout(() => (inThrottle = false), limit);
+      setTimeout(() => {
+        inThrottle = false;
+        if (lastFunc) {
+          lastResult = func.apply(lastFunc.context, lastFunc.args);
+          lastFunc = null;
+        }
+      }, limit);
+      return lastResult;
+    } else {
+      lastFunc = { context, args };
+      // Fix for Bug #15: Return undefined on throttled calls to signal it didn't run
+      return undefined;
     }
   };
 }
@@ -82,23 +97,26 @@ export function isClipboardAvailable() {
 }
 
 /**
- * Get clipboard error message
+ * Check if sessionStorage is available and functional
+ * (May throw SecurityError in Safari Private Mode or if storage is full)
  */
-export function getClipboardError() {
-  if (!isBrowser()) {
-    return "Clipboard not available (not in browser)";
-  }
+let _storageAvailableCache = null;
 
-  if (!window.isSecureContext) {
-    return "Clipboard requires HTTPS or localhost";
-  }
+export function isSessionStorageAvailable() {
+  if (!isBrowser()) return false;
+  if (_storageAvailableCache !== null) return _storageAvailableCache;
 
-  if (!navigator.clipboard) {
-    return "Clipboard API not supported in this browser";
+  try {
+    const key = "__diagview_test_storage__";
+    sessionStorage.setItem(key, "test");
+    sessionStorage.removeItem(key);
+    _storageAvailableCache = true;
+  } catch (e) {
+    _storageAvailableCache = false;
   }
-
-  return "Clipboard access denied. Check browser permissions.";
+  return _storageAvailableCache;
 }
+
 
 /**
  * Generate safe filename from text
@@ -117,7 +135,11 @@ export function sanitizeFilename(text, fallback = "diagram") {
  * Get timestamp string for filenames
  */
 export function getTimestamp() {
-  return new Date().toISOString().slice(0, 10);
+  const n = new Date();
+  const pad = (num) => String(num).padStart(2, "0");
+  const d = `${n.getFullYear()}-${pad(n.getMonth() + 1)}-${pad(n.getDate())}`;
+  const t = `${pad(n.getHours())}${pad(n.getMinutes())}${pad(n.getSeconds())}`;
+  return `${d}_${t}`;
 }
 
 /**
@@ -144,36 +166,22 @@ export function safeQuerySelectorAll(selector, context = document) {
   }
 }
 
-/**
- * Check if element is visible
- */
-export function isElementVisible(element) {
-  if (!element) return false;
-
-  const style = window.getComputedStyle(element);
-  return style.display !== "none" && style.visibility !== "hidden" && style.opacity !== "0";
-}
-
-/**
- * Get element dimensions
- */
-export function getElementDimensions(element) {
-  if (!element) return { width: 0, height: 0 };
-
-  const rect = element.getBoundingClientRect();
-  return {
-    width: rect.width,
-    height: rect.height,
-  };
-}
 
 /**
  * Lazy load script
  */
-export function loadScript(url) {
+export function loadScript(url, integrity = null) {
   return new Promise((resolve, reject) => {
-    // Check if already loaded
-    if (document.querySelector(`script[src="${url}"]`)) {
+    // Safety check for SSR environments
+    if (!isBrowser()) {
+      resolve();
+      return;
+    }
+
+    // Check if already loaded using absolute URL matching
+    const absoluteUrl = new URL(url, window.location.href).href;
+    const isAlreadyLoaded = Array.from(document.scripts).some((s) => s.src === absoluteUrl);
+    if (isAlreadyLoaded) {
       resolve();
       return;
     }
@@ -181,10 +189,67 @@ export function loadScript(url) {
     const script = document.createElement("script");
     script.src = url;
     script.async = true;
+    if (integrity) {
+      script.integrity = integrity;
+      script.crossOrigin = "anonymous";
+    }
     script.onload = resolve;
-    script.onerror = () => reject(new Error(`Failed to load script: ${url}`));
+    script.onerror = () => {
+      let errorMsg = `Failed to load script: ${url}`;
+      if (integrity) {
+        errorMsg += ". This may be due to a Subresource Integrity (SRI) mismatch.";
+      }
+      reject(new Error(errorMsg));
+    };
     document.head.appendChild(script);
   });
+}
+
+/**
+ * Sanitize an SVG string to prevent XSS.
+ * Removes <script> tags and 'on*' event attributes using a secure DOMParser.
+ * @param {string} svgString - The SVG string to sanitize
+ * @returns {string} - The sanitized SVG string
+ */
+export function sanitizeSVG(svgString) {
+  if (!svgString || typeof svgString !== "string") return "";
+
+  try {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(svgString, "image/svg+xml");
+
+    // If parsing fails, return empty
+    if (doc.querySelector("parsererror")) return "";
+
+    const cleanElement = (el) => {
+      // Remove scripts
+      if (el.tagName.toLowerCase() === "script") {
+        el.remove();
+        return;
+      }
+
+      // Remove event handlers
+      const attrs = el.attributes;
+      if (attrs) {
+        for (let i = attrs.length - 1; i >= 0; i--) {
+          const attrName = attrs[i].name.toLowerCase();
+          if (attrName.startsWith("on")) {
+            el.removeAttribute(attrs[i].name);
+          }
+        }
+      }
+
+      // Recurse
+      const children = Array.from(el.children);
+      children.forEach(cleanElement);
+    };
+
+    cleanElement(doc.documentElement);
+    return new XMLSerializer().serializeToString(doc.documentElement);
+  } catch (e) {
+    console.error("DiagView: SVG Sanitization failed", e);
+    return "";
+  }
 }
 
 /**
@@ -195,58 +260,81 @@ export function checkPanzoomDependency() {
 }
 
 /**
- * Fix ID collisions in SVG elements
- * When multiple SVGs exist on a page, they may have duplicate IDs
- * which causes rendering issues with gradients, patterns, and clip paths.
- * This function prefixes all IDs with a unique identifier.
+ * Fix ID collisions in SVG elements using a secure DOM-walking approach.
+ * Replaces the unsafe and slow outerHTML/RegExp strategy with direct attribute manipulation.
+ * This prevents XSS (no innerHTML parsing) and is significantly faster.
+ *
  * @param {SVGElement} svg - The SVG element to fix
  * @param {string} uniqueId - Unique prefix for IDs
- * @returns {SVGElement} - The fixed SVG element (may be a new element)
+ * @returns {SVGElement} - The modified SVG element
  */
 export function fixIds(svg, uniqueId) {
-  if (!svg) return svg;
-
-  const defs = svg.querySelector("defs");
-  if (!defs) return svg;
+  if (!svg || !uniqueId) return svg;
 
   const idMap = new Map();
+  const idElements = svg.querySelectorAll("[id]");
 
-  // Collect all IDs in defs and rename them
-  defs.querySelectorAll("[id]").forEach((el) => {
+  // 1. Build the ID map
+  idElements.forEach((el) => {
     const oldId = el.id;
     const newId = `${uniqueId}-${oldId}`;
-    el.id = newId;
     idMap.set(oldId, newId);
+    el.id = newId; // Update the definition immediately
   });
 
-  // If no IDs were changed, return original
   if (idMap.size === 0) return svg;
 
-  // Replace all URL references and href references
-  let html = svg.outerHTML;
-  const escapeRegExp = (string) => string.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  // 2. Walk the DOM once and update all references using a secure Map lookup.
+  // We use a simple static regex to find all #references and then check our map.
+  // This is O(1) per replacement and immune to ReDoS.
+  const idRefRegex = /#([^\s"'()]+)/g;
+  const allElements = svg.querySelectorAll("*");
 
-  idMap.forEach((newId, oldId) => {
-    const safeOldId = escapeRegExp(oldId);
-    // Replace url(#oldId) with url(#newId)
-    html = html.replace(new RegExp(`url\\(#${safeOldId}\\)`, "g"), `url(#${newId})`);
-    // Replace href="#oldId" with href="#newId"
-    html = html.replace(new RegExp(`href="#${safeOldId}"`, "g"), `href="#${newId}"`);
-    // Replace xlink:href="#oldId" (older SVG spec)
-    html = html.replace(new RegExp(`xlink:href="#${safeOldId}"`, "g"), `xlink:href="#${newId}"`);
+  allElements.forEach((el) => {
+    for (let i = 0; i < el.attributes.length; i++) {
+      const attr = el.attributes[i];
+      const value = attr.value;
+
+      if (!value || !value.includes("#")) continue;
+
+      const newValue = value.replace(idRefRegex, (match, id) => {
+        return idMap.has(id) ? `#${idMap.get(id)}` : match;
+      });
+
+      if (newValue !== value) {
+        attr.value = newValue;
+      }
+    }
   });
 
-  // Create new SVG from modified HTML
-  const temp = document.createElement("div");
-  temp.innerHTML = html;
-  const newSvg = temp.querySelector("svg");
-
-  if (newSvg) {
-    svg.replaceWith(newSvg);
-    return newSvg;
-  }
-
   return svg;
+}
+
+/**
+ * Safely set SVG content without innerHTML.
+ * Uses DOMParser to create a safe document and then moves nodes over.
+ * @param {SVGElement} el - Target SVG element
+ * @param {string} svgContent - SVG string (can be full <svg> tag or just child paths)
+ */
+export function setSVGContent(el, svgContent) {
+  if (!el || !svgContent) return;
+
+  try {
+    const parser = new DOMParser();
+    // If it's a full <svg> tag, we want the children
+    const wrappedContent = svgContent.trim().startsWith("<svg")
+      ? svgContent
+      : `<svg xmlns="http://www.w3.org/2000/svg">${svgContent}</svg>`;
+
+    const doc = parser.parseFromString(wrappedContent, "image/svg+xml");
+    const svgEl = doc.querySelector("svg");
+
+    if (svgEl && !doc.querySelector("parsererror")) {
+      el.replaceChildren(...Array.from(svgEl.childNodes));
+    }
+  } catch (e) {
+    console.error("DiagView: Failed to set SVG content", e);
+  }
 }
 
 /**
@@ -257,69 +345,3 @@ export function generateUniqueId() {
   return `dv-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
 }
 
-/**
- * Set CSS style only if value has changed (dirty checking)
- * Prevents unnecessary reflows
- * @param {HTMLElement} element - Element to update
- * @param {string} property - CSS property name
- * @param {string} value - CSS property value
- * @returns {boolean} True if style was changed
- */
-export function setStyleIfChanged(element, property, value) {
-  if (!element) return false;
-
-  if (element.style[property] !== value) {
-    element.style[property] = value;
-    return true;
-  }
-
-  return false;
-}
-
-/**
- * Batch update multiple styles with dirty checking
- * @param {HTMLElement} element - Element to update
- * @param {object} styles - Object with property: value pairs
- * @returns {number} Number of styles that were changed
- */
-export function batchSetStyles(element, styles) {
-  if (!element) return 0;
-
-  let changedCount = 0;
-
-  for (const [property, value] of Object.entries(styles)) {
-    if (setStyleIfChanged(element, property, value)) {
-      changedCount++;
-    }
-  }
-
-  return changedCount;
-}
-
-/**
- * Toggle CSS class with optional force parameter
- * @param {HTMLElement} element - Element to update
- * @param {string} className - Class name to toggle
- * @param {boolean} force - Force add (true) or remove (false)
- */
-export function toggleClass(element, className, force) {
-  if (!element) return;
-  element.classList.toggle(className, force);
-}
-
-/**
- * Request animation frame
- * @param {Function} callback - Callback function
- * @returns {number} RAF ID
- */
-export function raf(callback) {
-  return window.requestAnimationFrame(callback);
-}
-
-/**
- * Cancel animation frame
- * @param {number} id - RAF ID to cancel
- */
-export function cancelRaf(id) {
-  return window.cancelAnimationFrame(id);
-}

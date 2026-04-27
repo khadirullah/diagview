@@ -48,20 +48,30 @@ const TEXT_ATTRIBUTES = [
  * @private
  */
 function copyComputedStyles(originalNodes, clonedNodes, styleProps) {
-  originalNodes.forEach((original, i) => {
+  const len = originalNodes.length;
+  const propLen = styleProps.length;
+  for (let i = 0; i < len; i++) {
+    const original = originalNodes[i];
     const cloned = clonedNodes[i];
-    if (!cloned) return;
+    if (!cloned) continue;
+
+    // Optimization: Skip container elements that rarely have individual styles
+    const tag = original.tagName.toLowerCase();
+    if (tag === "defs" || tag === "metadata") continue;
+
+    // Skip plain <g> tags, but NOT those with classes (needed for search highlights)
+    if (tag === "g" && !original.classList.length) continue;
 
     const computedStyle = window.getComputedStyle(original);
-
-    styleProps.forEach((prop) => {
+    for (let j = 0; j < propLen; j++) {
+      const prop = styleProps[j];
       const value = computedStyle.getPropertyValue(prop);
       // Only set if different from default to save size
       if (value && value !== "none" && value !== "normal" && value !== "auto") {
         cloned.style[prop] = value;
       }
-    });
-  });
+    }
+  }
 }
 
 /**

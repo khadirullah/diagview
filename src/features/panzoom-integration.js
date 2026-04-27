@@ -25,10 +25,10 @@
 
 import { state } from "../core/config.js";
 import { ZOOM, TIMING } from "../core/constants.js";
-import { checkPanzoomDependency } from "../core/utils.js";
-import { addManagedListener } from "../core/lifecycle.js";
+import { checkPanzoomDependency, isSessionStorageAvailable } from "../core/utils.js";
+import { addManagedListener, addModalListener } from "../core/lifecycle.js";
 import { showErrorToast, showInfoToast } from "../ui/toast.js";
-import { blurIfInput } from "../ui/focus-manager.js";
+import { blurActiveElement } from "../ui/focus-manager.js";
 
 /**
  * Check if Panzoom is available
@@ -55,6 +55,12 @@ export function initializePanzoom(element, options = {}) {
       animate: true,
       duration: state.config.zoomAnimationDuration || TIMING.ZOOM_ANIMATION_DURATION,
       noBind: false,
+      step: 0.35, // Increased sensitivity for snappier feel (Default is 0.3)
+      setTransform: (el, { x, y, scale }) => {
+        const angle = state.rotationAngle || 0;
+        // Natural Camera Order: Translate LAST (leftmost) so it happens in screen-space.
+        el.style.transform = `translate(${x}px, ${y}px) scale(${scale}) rotate(${angle}deg)`;
+      },
       ...options,
     };
 
@@ -76,6 +82,25 @@ export function initializePanzoom(element, options = {}) {
 }
 
 /**
+ * Force a re-render of the current transform
+ * This is the proper, non-hacky way to apply external changes like rotation
+ */
+export function refreshPanzoom(panzoom) {
+  if (!panzoom) return;
+
+  const { x, y } = panzoom.getPan();
+  const scale = panzoom.getScale();
+  const angle = state.rotationAngle || 0;
+
+  // Directly apply the style to bypass the library's internal change detection.
+  // This ensures rotation is applied even if x/y/scale haven't changed.
+  panzoom.setStyle(
+    "transform",
+    `translate(${x}px, ${y}px) scale(${scale}) rotate(${angle}deg)`
+  );
+}
+
+/**
  * Setup viewport interactions for pan/zoom
  */
 export function setupViewportInteractions(viewport, element, panzoom) {
@@ -83,15 +108,20 @@ export function setupViewportInteractions(viewport, element, panzoom) {
 
   let lastTapTime = 0;
 
-  // Desktop wheel zoom (with input blur)
+  // Desktop wheel zoom (with input blur and safety check)
   const handleWheel = (e) => {
-    blurIfInput();
+    if (!state.isModalOpen || !panzoom) return;
+    blurActiveElement();
+
+    // Panzoom handles wheel normalization internally for modern versions.
+    // Manual normalization with object spread ({...e}) breaks in Firefox
+    // because non-enumerable properties are lost.
     panzoom.zoomWithWheel(e);
   };
 
   // Desktop mouse down (blur inputs when starting to pan)
   const handleMouseDown = () => {
-    blurIfInput();
+    blurActiveElement();
   };
 
   // Desktop double-click to reset
@@ -100,38 +130,20 @@ export function setupViewportInteractions(viewport, element, panzoom) {
   };
 
   // Mobile touch handlers
-  const getDist = (touches) =>
-    Math.hypot(touches[0].clientX - touches[1].clientX, touches[0].clientY - touches[1].clientY);
-
   const handleTouchStart = (e) => {
-    blurIfInput();
+    blurActiveElement();
 
-    state.touchState.lastTouchCount = e.touches.length;
-    if (e.touches.length === 2) {
+    if (e.touches.length >= 2) {
       state.touchState.isPinching = true;
-      state.touchState.initialDistance = getDist(e.touches);
-      e.preventDefault();
+      // Note: Panzoom library handles the actual pinch math natively
     }
   };
 
   const handleTouchMove = (e) => {
-    if (state.touchState.isPinching && e.touches.length === 2) {
+    // If using 2 or more fingers, we prevent default to stop the browser from
+    // scrolling/gesturing, but we let Panzoom's native listeners handle the math.
+    if (e.touches.length >= 2) {
       e.preventDefault();
-
-      const currentDist = getDist(e.touches);
-      const scaleDelta = currentDist / state.touchState.initialDistance;
-
-      // Smoother zoom: use smaller lerp factor for more gradual feel
-      const currentScale = panzoom.getScale();
-      const targetScale = currentScale * scaleDelta;
-      const smoothScale = currentScale + (targetScale - currentScale) * 0.15;
-
-      panzoom.zoomToPoint(smoothScale, {
-        clientX: (e.touches[0].clientX + e.touches[1].clientX) / 2,
-        clientY: (e.touches[0].clientY + e.touches[1].clientY) / 2,
-      });
-
-      state.touchState.initialDistance = currentDist;
     }
   };
 
@@ -150,16 +162,15 @@ export function setupViewportInteractions(viewport, element, panzoom) {
     if (e.touches.length === 0) {
       state.touchState.isPinching = false;
     }
-    state.touchState.lastTouchCount = e.touches.length;
   };
 
-  // Attach event listeners using managed listeners
-  addManagedListener(viewport, "wheel", handleWheel, { passive: false });
-  addManagedListener(viewport, "mousedown", handleMouseDown, { passive: true });
-  addManagedListener(viewport, "dblclick", handleDblClick, { passive: true });
-  addManagedListener(viewport, "touchstart", handleTouchStart, { passive: false });
-  addManagedListener(viewport, "touchmove", handleTouchMove, { passive: false });
-  addManagedListener(viewport, "touchend", handleTouchEnd, { passive: true });
+  // Attach event listeners using MODAL listeners (auto-cleanup on close)
+  addModalListener(viewport, "wheel", handleWheel, { passive: false });
+  addModalListener(viewport, "mousedown", handleMouseDown, { passive: true });
+  addModalListener(viewport, "dblclick", handleDblClick, { passive: true });
+  addModalListener(viewport, "touchstart", handleTouchStart, { passive: false });
+  addModalListener(viewport, "touchmove", handleTouchMove, { passive: false });
+  addModalListener(viewport, "touchend", handleTouchEnd, { passive: true });
 
   // Return cleanup function (managed listeners already tracked, this is redundant but kept for compatibility)
   return () => {
@@ -196,31 +207,32 @@ export function resetTouchState() {
 // Remember Zoom State
 // ==========================================
 
-const ZOOM_STATE_KEY = "diagview-zoom-states";
+const ZOOM_STATE_PREFIX = "diagview-zoom-states";
+const isStorageAvailable = isSessionStorageAvailable();
 
 /**
  * Get storage key for diagram
  */
 function getZoomKey(diagramId) {
-  return `${ZOOM_STATE_KEY}:${diagramId}`;
+  return `${ZOOM_STATE_PREFIX}:${diagramId}`;
 }
 
 /**
  * Save zoom state for a diagram
  */
 export function saveZoomState(diagramId, panzoom) {
-  if (!state.config.rememberZoom || !panzoom || !diagramId) return;
+  if (!state.config.rememberZoom || !panzoom || !diagramId || !isStorageAvailable) return;
 
   try {
     const zoomState = {
       scale: panzoom.getScale(),
       pan: panzoom.getPan(),
+      rotation: state.rotationAngle,
       timestamp: Date.now(),
     };
     sessionStorage.setItem(getZoomKey(diagramId), JSON.stringify(zoomState));
   } catch (e) {
-    // sessionStorage may not be available
-    console.warn("DiagView: Could not save zoom state", e);
+    // Silently fail if storage is full or restricted
   }
 }
 
@@ -228,7 +240,7 @@ export function saveZoomState(diagramId, panzoom) {
  * Restore zoom state for a diagram
  */
 export function restoreZoomState(diagramId, panzoom) {
-  if (!state.config.rememberZoom || !panzoom || !diagramId) return false;
+  if (!state.config.rememberZoom || !panzoom || !diagramId || !isStorageAvailable) return false;
 
   try {
     const stored = sessionStorage.getItem(getZoomKey(diagramId));
@@ -237,12 +249,12 @@ export function restoreZoomState(diagramId, panzoom) {
     const zoomState = JSON.parse(stored);
 
     // Apply saved state
+    state.rotationAngle = zoomState.rotation !== undefined ? zoomState.rotation : 0;
     panzoom.zoom(zoomState.scale, { animate: false });
     panzoom.pan(zoomState.pan.x, zoomState.pan.y, { animate: false });
 
     return true;
   } catch (e) {
-    console.warn("DiagView: Could not restore zoom state", e);
     return false;
   }
 }
@@ -251,6 +263,7 @@ export function restoreZoomState(diagramId, panzoom) {
  * Clear zoom state for a diagram
  */
 export function clearZoomState(diagramId) {
+  if (!isStorageAvailable) return;
   try {
     sessionStorage.removeItem(getZoomKey(diagramId));
   } catch (e) {
@@ -262,10 +275,11 @@ export function clearZoomState(diagramId) {
  * Clear all zoom states
  */
 export function clearAllZoomStates() {
+  if (!isStorageAvailable) return;
   try {
     const keys = Object.keys(sessionStorage);
     keys.forEach((key) => {
-      if (key.startsWith(ZOOM_STATE_KEY)) {
+      if (key.startsWith(ZOOM_STATE_PREFIX)) {
         sessionStorage.removeItem(key);
       }
     });

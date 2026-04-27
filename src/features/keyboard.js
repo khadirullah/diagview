@@ -46,57 +46,58 @@ function handleKeyboardShortcut(e) {
 
   const moveStep = e.shiftKey ? PAN.STEP_FAST : PAN.STEP_NORMAL;
 
+  // Handle zoom shortcuts
+  if (["+", "=", "-", "_", "0", " "].includes(e.key)) {
+    switch (e.key) {
+      case "+":
+      case "=":
+        e.preventDefault();
+        state.activePanzoom.zoomIn();
+        break;
+      case "-":
+      case "_":
+        e.preventDefault();
+        state.activePanzoom.zoomOut();
+        break;
+      case "0":
+        e.preventDefault();
+        state.activePanzoom.reset({ animate: true });
+        break;
+      case " ":
+        e.preventDefault();
+        // Special case: Space key on a link (<a>) should still be handled by DiagView
+        // to prevent background page scroll and provide custom Space-to-Click behavior.
+        if (e.target.tagName === "A") {
+          e.target.click();
+        } else {
+          state.activePanzoom.reset({ animate: true });
+        }
+        break;
+    }
+    return;
+  }
+
+  // Handle panning directions based on config
+  // Traditional: Up moves diagram Down (+Y)
+  // Natural: Up moves diagram Up (-Y)
+  const isNatural = state.config.naturalPanning;
+
+  if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.key)) {
+    let dx = 0;
+    let dy = 0;
+    if (e.key === "ArrowUp") dy = isNatural ? -moveStep : moveStep;
+    if (e.key === "ArrowDown") dy = isNatural ? moveStep : -moveStep;
+    if (e.key === "ArrowLeft") dx = isNatural ? -moveStep : moveStep;
+    if (e.key === "ArrowRight") dx = isNatural ? moveStep : -moveStep;
+
+    state.activePanzoom.pan(dx, dy, {
+      relative: true,
+      animate: true,
+    });
+    return;
+  }
+
   switch (e.key) {
-    case "+":
-    case "=":
-      e.preventDefault();
-      state.activePanzoom.zoomIn();
-      break;
-
-    case "-":
-    case "_":
-      e.preventDefault();
-      state.activePanzoom.zoomOut();
-      break;
-
-    case "0":
-    case " ":
-      e.preventDefault();
-      state.activePanzoom.reset({ animate: true });
-      break;
-
-    case "ArrowUp":
-      e.preventDefault();
-      state.activePanzoom.pan(0, moveStep, {
-        relative: true,
-        animate: true,
-      });
-      break;
-
-    case "ArrowDown":
-      e.preventDefault();
-      state.activePanzoom.pan(0, -moveStep, {
-        relative: true,
-        animate: true,
-      });
-      break;
-
-    case "ArrowLeft":
-      e.preventDefault();
-      state.activePanzoom.pan(moveStep, 0, {
-        relative: true,
-        animate: true,
-      });
-      break;
-
-    case "ArrowRight":
-      e.preventDefault();
-      state.activePanzoom.pan(-moveStep, 0, {
-        relative: true,
-        animate: true,
-      });
-      break;
-
     case "m":
     case "M":
       e.preventDefault();

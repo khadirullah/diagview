@@ -14,15 +14,15 @@
     "LICENSE"
   ],
   "scripts": {
-    "test": "NODE_OPTIONS=--experimental-vm-modules jest --env=jsdom",
-    "test:coverage": "NODE_OPTIONS=--experimental-vm-modules jest --env=jsdom --coverage",
+    "test": "NODE_OPTIONS=--experimental-vm-modules jest",
+    "test:coverage": "NODE_OPTIONS=--experimental-vm-modules jest --coverage",
     "dev": "rollup -c -w",
     "build": "npm run clean && npm run build:lib && npm run build:types",
     "build:lib": "rollup -c",
     "build:types": "tsc --declaration --emitDeclarationOnly --outDir dist",
     "format": "prettier --write \"src/**/*.js\" \"tests/**/*.js\" \"*.js\"",
-    "lint": "eslint src/**/*.js",
-    "lint:fix": "eslint src/**/*.js --fix",
+    "lint": "eslint \"src/**/*.js\"",
+    "lint:fix": "eslint \"src/**/*.js\" --fix",
     "size": "size-limit",
     "clean": "rm -rf dist tsconfig.tsbuildinfo",
     "prepublishOnly": "npm run lint && npm run test && npm run build"
@@ -64,7 +64,6 @@
     "@rollup/plugin-node-resolve": "^15.2.3",
     "@rollup/plugin-terser": "^0.4.4",
     "@size-limit/preset-small-lib": "^11.0.0",
-    "@types/jest": "^29.5.14",
     "@types/node": "^20.11.0",
     "eslint": "^8.54.0",
     "eslint-config-prettier": "^9.1.0",
@@ -74,7 +73,7 @@
     "prettier": "^3.1.0",
     "rollup": "^4.57.0",
     "size-limit": "^11.0.0",
-    "typescript": "^5.9.3"
+    "typescript": "^5.7.3"
   },
   "size-limit": [
     {
@@ -97,8 +96,10 @@
     "not ie 11"
   ],
   "jest": {
+    "testEnvironment": "jsdom",
     "moduleNameMapper": {
       "\\.css$": "<rootDir>/tests/mocks/styleMock.js"
-    }
+    },
+    "transform": {}
   }
 }

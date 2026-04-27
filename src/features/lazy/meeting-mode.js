@@ -4,9 +4,11 @@
  * @module features/lazy/meeting-mode
  */
 
-import { state, addCleanupFunction } from "../../core/config.js";
+import { state } from "../../core/config.js";
+import { addModalCleanupFunction } from "../../core/lifecycle.js";
 import { showSuccessToast } from "../../ui/toast.js";
-import { addManagedListener } from "../../core/lifecycle.js";
+
+// Meeting Handlers state handled via state.activeMeetingHandlers in config.js
 
 /**
  * Enable meeting mode with laser pointer
@@ -15,7 +17,7 @@ export function enableMeetingMode() {
   const viewport = document.getElementById("diagview-modal-viewport");
   const laser = document.getElementById("diagview-laser");
 
-  if (!viewport || !laser) return;
+  if (!viewport || !laser || state.meetingMode) return;
 
   state.meetingMode = true;
   viewport.classList.add("meeting");
@@ -27,32 +29,53 @@ export function enableMeetingMode() {
     laser.style.top = e.clientY + "px";
   };
 
-  // Use managed listener for auto-cleanup
-  addManagedListener(viewport, "mousemove", handleMouseMove);
+  // Track touch movement for mobile support
+  const handleTouchMove = (e) => {
+    if (e.touches && e.touches[0]) {
+      laser.style.left = e.touches[0].clientX + "px";
+      laser.style.top = e.touches[0].clientY + "px";
+    }
+  };
 
-  // Store reference for manual cleanup if needed
+  viewport.addEventListener("mousemove", handleMouseMove);
+  viewport.addEventListener("touchmove", handleTouchMove, { passive: true });
+
+  // Store references for removal
+  state.activeMeetingHandlers = {
+    mousemove: handleMouseMove,
+    touchmove: handleTouchMove,
+    viewport: viewport, // Store viewport ref in case it changes (unlikely but safe)
+  };
+
+  // Register cleanup with modal lifecycle (one-time registration)
+  addModalCleanupFunction(() => {
+    disableMeetingMode(true); // silent cleanup
+  });
+
   state.laserPointer = handleMouseMove;
-
   showSuccessToast("Meeting mode ON - Laser pointer active");
 }
 
 /**
  * Disable meeting mode
  */
-export function disableMeetingMode() {
-  const viewport = document.getElementById("diagview-modal-viewport");
+export function disableMeetingMode(silent = false) {
+  const viewport = state.activeMeetingHandlers?.viewport || document.getElementById("diagview-modal-viewport");
   const laser = document.getElementById("diagview-laser");
 
-  if (!viewport || !laser) return;
+  if (state.activeMeetingHandlers) {
+    viewport.removeEventListener("mousemove", state.activeMeetingHandlers.mousemove);
+    viewport.removeEventListener("touchmove", state.activeMeetingHandlers.touchmove);
+    state.activeMeetingHandlers = null;
+  }
 
   state.meetingMode = false;
-  viewport.classList.remove("meeting");
-  laser.style.display = "none";
-
-  // Clear reference (actual cleanup handled by lifecycle manager)
   state.laserPointer = null;
 
-  showSuccessToast("Meeting mode OFF");
+  if (viewport) viewport.classList.remove("meeting");
+  if (laser) laser.style.display = "none";
+
+  if (!silent) showSuccessToast("Meeting mode OFF");
 }
 
 /**
@@ -73,10 +96,9 @@ export function toggleMeetingMode() {
 }
 
 /**
- * Cleanup meeting mode on modal close
+ * Reset module-level state for destroy/re-init cycles
+ * Called by index.js destroy()
  */
-export function cleanupMeetingMode() {
-  if (state.meetingMode) {
-    disableMeetingMode();
-  }
+export function resetMeetingState() {
+  state.activeMeetingHandlers = null;
 }

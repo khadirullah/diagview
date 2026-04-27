@@ -6,10 +6,12 @@
 
 import { state } from "../../core/config.js";
 import { TIMING, SELECTORS } from "../../core/constants.js";
-import { throttle, raf, cancelRaf } from "../../core/utils.js";
+import { throttle } from "../../core/utils.js";
 
-// Cache for search candidates to avoid repeated DOM reads
-// Map<SVGElement, Array<{el: Element, text: string, isPath: boolean}>>
+// searchCache is keyed on the cloned SVG element (the modal clone).
+// When the modal closes, viewport.innerHTML = "" destroys the clone,
+// the WeakMap entry becomes GC-eligible, and the next modal open
+// gets a fresh cache automatically. This is intentional.
 const searchCache = new WeakMap();
 
 /**
@@ -44,26 +46,16 @@ function getSearchCandidates(clone) {
 function clearHighlights(clone) {
   if (!clone) return;
 
-  requestAnimationFrame(() => {
+  if (state.searchRafId) cancelAnimationFrame(state.searchRafId);
+
+  state.searchRafId = requestAnimationFrame(() => {
     // Only touch nodes that actively have our search classes
     const activeNodes = clone.querySelectorAll(".dv-search-match, .dv-cur");
     for (let i = 0; i < activeNodes.length; i++) {
       activeNodes[i].classList.remove("dv-search-match", "dv-cur");
     }
+    state.searchRafId = null;
   });
-}
-
-/**
- * Update search counter display
- */
-function updateSearchCounter(searchCnt) {
-  if (!searchCnt) return;
-
-  const hasMatches = state.searchMatches.length > 0;
-  searchCnt.textContent = hasMatches
-    ? `${state.searchIndex + 1}/${state.searchMatches.length}`
-    : "";
-  searchCnt.classList.toggle("show", hasMatches);
 }
 
 /**
@@ -80,21 +72,20 @@ function highlightCurrentMatch() {
   el.classList.add("dv-cur");
 }
 
-let searchRafId = null;
-
 /**
  * Perform search on diagram
  */
 export function performSearch(clone, query) {
-  if (searchRafId) cancelRaf(searchRafId);
+  if (state.searchRafId) cancelAnimationFrame(state.searchRafId);
 
   // If query is empty, clear everything immediately
   if (!query || !clone) {
-    clearHighlights(clone);
-    clone.classList.remove("dv-searching");
+    if (clone) {
+      clearHighlights(clone);
+      clone.classList.remove("dv-searching");
+    }
     state.searchMatches = [];
     state.searchIndex = -1;
-    updateSearchCounter(document.querySelector(".dv-src-cnt"));
     return;
   }
 
@@ -103,7 +94,7 @@ export function performSearch(clone, query) {
   const newMatches = [];
 
   // Batch DOM updates in next frame
-  searchRafId = raf(() => {
+  state.searchRafId = requestAnimationFrame(() => {
     clone.classList.add("dv-searching");
 
     // Single loop for O(1) DOM updates utilizing CSS fading architecture
@@ -139,8 +130,6 @@ export function performSearch(clone, query) {
     } else {
       state.searchIndex = -1;
     }
-
-    updateSearchCounter(document.querySelector(".dv-src-cnt"));
   });
 }
 
@@ -148,7 +137,7 @@ export function performSearch(clone, query) {
  * Clear search
  */
 export function clearSearch() {
-  if (searchRafId) cancelRaf(searchRafId);
+  if (state.searchRafId) cancelAnimationFrame(state.searchRafId);
 
   const searchInput = document.getElementById("diagview-search");
   const searchClear = document.getElementById("diagview-search-clear");
@@ -166,13 +155,12 @@ export function clearSearch() {
 
   state.searchMatches = [];
   state.searchIndex = -1;
-  updateSearchCounter(document.querySelector(".dv-src-cnt"));
 }
 
 /**
  * Setup search functionality
  */
-export function setupSearch(clone) {
+export function setupSearch(clone, initialQuery = "") {
   const searchInput = document.getElementById("diagview-search");
   const searchClear = document.getElementById("diagview-search-clear");
 
@@ -181,9 +169,17 @@ export function setupSearch(clone) {
   // Pre-warm cache
   getSearchCandidates(clone);
 
-  // Reset search state
-  searchInput.value = "";
-  if (searchClear) searchClear.classList.remove("show");
+  // Reset search state (or apply initial query)
+  searchInput.value = initialQuery || "";
+  if (searchClear) {
+    searchClear.classList.toggle("show", !!initialQuery);
+  }
+
+  if (initialQuery) {
+    // Perform initial search immediately
+    performSearch(clone, initialQuery);
+  }
+
   state.searchMatches = [];
   state.searchIndex = -1;
 
@@ -198,7 +194,14 @@ export function setupSearch(clone) {
     if (searchClear) {
       searchClear.classList.toggle("show", !!query);
     }
-    performSearchThrottled(query);
+
+    // CRITICAL: If query is empty, clear immediately (bypass throttle)
+    // to prevent race conditions when holding backspace.
+    if (!query) {
+      performSearch(clone, "");
+    } else {
+      performSearchThrottled(query);
+    }
   };
 
   searchInput.addEventListener("input", handleInput);
@@ -225,4 +228,17 @@ export function setupSearch(clone) {
     }
   };
   searchInput.addEventListener("keydown", handleKeydown);
+}
+
+/**
+ * Reset module-level state for destroy/re-init cycles
+ * Called by index.js destroy()
+ */
+export function resetSearch() {
+  if (state.searchRafId) {
+    cancelAnimationFrame(state.searchRafId);
+    state.searchRafId = null;
+  }
+  // searchCache is a WeakMap — entries are GC'd automatically when the
+  // clone SVG element is removed from DOM. No manual clear needed.
 }

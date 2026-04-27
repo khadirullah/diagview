@@ -117,6 +117,20 @@ DiagView.closeModal();
 
 ---
 
+## Core Properties
+
+### `DiagView.state`
+
+Access the internal state of DiagView (for debugging and advanced inspection).
+
+**Properties:**
+- `config` (Object) - Current effective configuration
+- `rotationAngle` (number) - Current rotation angle of the diagram
+- `isInitialized` (boolean) - Initialization status
+- `isModalOpen` (boolean) - Fullscreen modal status
+
+---
+
 ## Configuration Options
 
 ### Theme
@@ -125,6 +139,9 @@ DiagView.closeModal();
 - **Type:** `string | null`
 - **Default:** `null` (auto-detect)
 - **Description:** Accent color for buttons and highlights
+
+> [!NOTE]
+> **Theme Caching**: For performance reasons, theme detection (background, text, and accent colors) is cached for **1 second**. If you programmatically change the document's theme via CSS classes or data-attributes, DiagView will reflect those changes after the 1-second cache window expires or upon the next diagram interaction.
 
 #### `backgroundColor`
 - **Type:** `string | null`
@@ -235,6 +252,18 @@ DiagView.closeModal();
 - **Range:** `1-50`
 - **Default:** `25`
 - **Description:** Maximum zoom scale
+
+#### `naturalPanning`
+- **Type:** `boolean`
+- **Default:** `false`
+- **Description:** 
+  - `false` (Default): Traditional mode. Arrow keys move the "Camera" (Up moves diagram Down).
+  - `true`: Natural mode. Arrow keys move the "Content" (Up moves diagram Up).
+
+#### `showMinimap`
+- **Type:** `boolean`
+- **Default:** `true`
+- **Description:** Toggle visibility of the minimap overview for large diagrams.
 
 #### `minZoomScale`
 - **Type:** `number`

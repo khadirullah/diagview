@@ -11,7 +11,10 @@ import { state } from "../../core/config.js";
  */
 export function updateMinimap(clone, viewport, panzoom) {
   const minimap = document.getElementById("diagview-minimap");
-  if (!minimap || !clone || !viewport || !panzoom) return;
+  if (!minimap || !clone || !viewport || !panzoom || !state.config.showMinimap) {
+    if (minimap) minimap.classList.remove("show");
+    return;
+  }
 
   // Use getBoundingClientRect for BOTH SVG and viewport — same CSS pixel
   // coordinate space. GBCR includes CSS transforms (panzoom scale) and is
@@ -40,11 +43,23 @@ export function updateMinimap(clone, viewport, panzoom) {
     height: viewBox?.height || svgRect.height / scale || 600,
   };
 
-  // Create minimap SVG if not exists
-  if (!state.minimapSvg) {
+  // Create minimap SVG if not exists, or if the previous one was detached
+  // (can happen if cleanupMinimap() was skipped on an error path)
+  if (!state.minimapSvg?.isConnected) {
+    if (state.minimapSvg) {
+      state.minimapSvg.remove();
+      state.minimapSvg = null;
+    }
+
     state.minimapSvg = clone.cloneNode(true);
-    state.minimapSvg.style.cssText =
-      "max-width:100%; max-height:100%; width:auto; height:auto; display:block; object-fit:contain; transform:none !important;";
+
+    // Strip search state from minimap clone
+    state.minimapSvg.classList.remove("dv-searching");
+    state.minimapSvg
+      .querySelectorAll(".dv-search-match, .dv-cur")
+      .forEach((el) => el.classList.remove("dv-search-match", "dv-cur"));
+
+    state.minimapSvg.style.cssText = `max-width:100%; max-height:100%; width:auto; height:auto; display:block; object-fit:contain; transform:rotate(${state.rotationAngle}deg);`;
 
     if (!state.minimapSvg.getAttribute("viewBox") && d.width && d.height) {
       state.minimapSvg.setAttribute("viewBox", `0 0 ${d.width} ${d.height}`);
@@ -53,9 +68,13 @@ export function updateMinimap(clone, viewport, panzoom) {
     state.minimapSvg.removeAttribute("width");
     state.minimapSvg.removeAttribute("height");
 
-    // FIX: renamed to 'mmIndicator' to avoid shadowing the 'viewport' parameter
     const mmIndicator = minimap.querySelector(".dv-mm-v");
     minimap.insertBefore(state.minimapSvg, mmIndicator);
+  }
+
+  // Update minimap rotation if it changed
+  if (state.minimapSvg.style.transform !== `rotate(${state.rotationAngle}deg)`) {
+    state.minimapSvg.style.transform = `rotate(${state.rotationAngle}deg)`;
   }
 
   // Calculate minimap scale
@@ -63,6 +82,8 @@ export function updateMinimap(clone, viewport, panzoom) {
   const minimapScale = Math.min(minimapRect.width / d.width, minimapRect.height / d.height) * 0.9;
 
   // Calculate viewport indicator position
+  // We use the actual pan values from panzoom — these already reflect the
+  // correct physical offset regardless of the naturalPanning setting.
   const vx = (-pan.x / scale + d.width / 2 - viewportRect.width / 2 / scale) * minimapScale;
   const vy = (-pan.y / scale + d.height / 2 - viewportRect.height / 2 / scale) * minimapScale;
   const vw = (viewportRect.width / scale) * minimapScale;
