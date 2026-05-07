@@ -35,7 +35,11 @@ function mockElement(rect, viewBox) {
 }
 
 function mockPanzoom(scale = 1, pan = { x: 0, y: 0 }) {
-  return { getScale: () => scale, getPan: () => pan };
+  return {
+    getScale: () => scale,
+    getPan: () => pan,
+    getElement: () => document.createElement("div"),
+  };
 }
 
 describe("Minimap Visibility Logic", () => {

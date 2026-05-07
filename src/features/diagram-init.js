@@ -7,7 +7,7 @@
 import { openFullscreen } from "../ui/modal.js";
 import { exportDiagram } from "./export.js";
 import { state } from "../core/config.js";
-import { fixIds, generateUniqueId, setSVGContent } from "../core/utils.js";
+import { generateUniqueId, setSVGContent } from "../core/utils.js";
 import { ICONS } from "../ui/icons.js";
 import { LAYOUTS, BUTTON_STYLES } from "../core/constants.js";
 import { createButtonGroup } from "../ui/button-factory.js";
@@ -28,20 +28,49 @@ function isValidSvg(svg) {
   const hasContent = svg.querySelector("g, path, rect, circle, text, line, polygon, polyline");
   if (!hasContent) return false;
 
-  // 3. Check for specific error indicators from popular libraries (like Mermaid)
-  // We check for elements that are explicitly designed to show errors
-  const rootError = svg.classList?.contains("error") || (svg.matches && svg.matches(".mermaid-error"));
-  const internalError = svg.querySelector(".error-icon, .mermaid-error, #error-boundary, .error");
+  // 3. Check for specific error indicators from popular libraries (like Mermaid).
+  // Only match library-specific error elements — NOT the generic ".error" class which
+  // can legitimately appear on diagram content nodes (e.g., an "error handling" flowchart node).
+  const rootError = svg.classList?.contains("error") || svg.matches?.(".mermaid-error");
+  const internalError = svg.querySelector(".error-icon, .mermaid-error");
 
   const errorUI = rootError ? svg : internalError;
 
   if (errorUI) {
     const textContent = errorUI.textContent?.toLowerCase() || "";
-    const fatalKeywords = ["syntax error", "parse error", "error in diagram", "invalid"];
-    
-    // We only reject if we find fatal keywords OR if it's an explicit library error class
+    const fatalKeywords = [
+      "syntax error",
+      "parse error",
+      "error in diagram",
+      "invalid",
+      "[plantuml error]",
+      "d2 error",
+      "kroki error",
+    ];
+
+    // Reject only if the error element contains fatal keywords OR is an explicit library error class
     if (fatalKeywords.some((keyword) => textContent.includes(keyword)) || rootError) {
       return false;
+    }
+  }
+
+  // 4. Check for specific library error IDs (Mermaid v10+)
+  if (svg.querySelector('[id*="mermaid-"][id*="-error"]')) return false;
+
+  // 5. Check for zero dimensions in viewBox (empty content area)
+  const vb = svg.viewBox?.baseVal;
+  if (vb && (vb.width === 0 || vb.height === 0)) return false;
+
+  // 6. Check for text-only error fragments (often returned by failed backend renders)
+  const shapes = svg.querySelector("path, rect, circle, line, polygon, polyline");
+  if (!shapes) {
+    const textElements = svg.querySelectorAll("text");
+    if (textElements.length > 0) {
+      const allText = Array.from(textElements)
+        .map((t) => t.textContent)
+        .join(" ")
+        .toLowerCase();
+      if (allText.includes("error") || allText.includes("failed")) return false;
     }
   }
 
@@ -103,6 +132,15 @@ function showErrorBoundary(element, svg) {
     svg.style.display = "none";
   }
   element.appendChild(errorDiv);
+
+  // Fire onError callback if configured (A2: was documented but never called)
+  if (state.config.onError) {
+    try {
+      state.config.onError(new Error(`DiagView: ${errorTitle} — ${errorMessage}`));
+    } catch (e) {
+      console.error("DiagView: onError callback threw:", e);
+    }
+  }
 }
 
 /**
@@ -142,13 +180,94 @@ function getIcon(key, defaultIcon) {
 }
 
 /**
- * Initialize diagram with enhanced UI
+ * Read per-element data-diagview-* overrides and merge over global config.
+ * Supports: data-diagview-layout, data-diagview-accent, data-diagview-scale
+ *
+ * @param {HTMLElement} element - Diagram container element
+ * @returns {object} A local config snapshot for this element only
  */
-export function initializeDiagram(element) {
+function readElementOverrides(element) {
+  // Start from a shallow copy of global config so we never mutate state
+  const cfg = Object.assign({}, state.config);
+
+  const { dataset } = element;
+
+  // data-diagview-layout="header|floating|off"
+  if (dataset.diagviewLayout) {
+    const v = dataset.diagviewLayout.toLowerCase();
+    if ([LAYOUTS.HEADER, LAYOUTS.FLOATING, LAYOUTS.OFF].includes(v)) {
+      cfg.layout = v;
+    } else {
+      console.warn(`DiagView: Unknown data-diagview-layout "${v}" on element, ignoring.`);
+    }
+  }
+
+  // data-diagview-accent="#ff6b6b" (any valid CSS color string)
+  if (dataset.diagviewAccent) {
+    cfg.accentColor = dataset.diagviewAccent;
+  }
+
+  // data-diagview-scale="4" (integer 1–10)
+  if (dataset.diagviewScale) {
+    const n = parseInt(dataset.diagviewScale, 10);
+    if (!isNaN(n) && n >= 1 && n <= 10) {
+      cfg.highResScale = n;
+    } else {
+      console.warn(
+        `DiagView: data-diagview-scale "${dataset.diagviewScale}" must be 1–10, ignoring.`,
+      );
+    }
+  }
+
+  // data-diagview-sanitize="strict|permissive|off"
+  // Only respected if the global config has allowOverrides: true (default).
+  // Use "off" only for diagrams from a fully trusted, controlled source.
+  if (dataset.diagviewSanitize && state.config.security?.allowOverrides) {
+    const v = dataset.diagviewSanitize.toLowerCase();
+    if (["strict", "permissive", "off"].includes(v)) {
+      if (v === "off") {
+        console.warn(
+          `DiagView: SVG sanitization disabled on element via data-diagview-sanitize="off". Ensure the SVG source is trusted.`,
+        );
+      }
+      // Shallow-merge so other security properties (allowOverrides) are preserved
+      cfg.security = { ...state.config.security, mode: v };
+    } else {
+      console.warn(
+        `DiagView: Unknown data-diagview-sanitize value "${dataset.diagviewSanitize}". Must be "strict", "permissive", or "off". Ignoring.`,
+      );
+    }
+  }
+
+  // data-diagview-allow-remote="true|false"
+  // Allows external CSS/@import/remote URLs for this diagram only.
+  if (dataset.diagviewAllowRemote && state.config.security?.allowOverrides) {
+    const v = dataset.diagviewAllowRemote.toLowerCase() === "true";
+    cfg.security = { ...cfg.security, allowRemoteResources: v };
+  }
+
+  return cfg;
+}
+
+/**
+ * Initialize diagram with enhanced UI
+ * @param {HTMLElement} element - Diagram container
+ * @param {number} [precalculatedIndex=-1] - Optional index to avoid global DOM query
+ */
+export function initializeDiagram(element, precalculatedIndex = -1) {
   const svg = element?.querySelector("svg");
   if (element.dataset.diagviewInit) return;
 
   element.dataset.diagviewInit = "1";
+
+  // Resolve config for this element: global config + any data-diagview-* overrides (A1)
+  const elementConfig = readElementOverrides(element);
+
+  // If a per-element accent is set, apply it as a CSS custom property on the element
+  // so buttons and highlights use it without affecting other diagrams
+  if (element.dataset.diagviewAccent) {
+    element.style.setProperty("--dv-accent", elementConfig.accentColor);
+  }
 
   // Error boundary: Check for valid SVG
   if (!svg || !isValidSvg(svg)) {
@@ -160,17 +279,20 @@ export function initializeDiagram(element) {
   const uniqueId = generateUniqueId();
   element.dataset.diagviewId = uniqueId;
 
-  // Backup original IDs before mutation for seamless restoration
-  const originalIds = new Map();
-  svg.querySelectorAll("[id]").forEach((el) => {
-    originalIds.set(el, el.id);
-  });
+  // MAJ-7: Cache the index to avoid expensive global DOM queries on modal open
+  if (precalculatedIndex >= 0) {
+    element.dataset.diagviewIndex = precalculatedIndex;
+  } else {
+    const allDiagrams = document.querySelectorAll(state.config.diagramSelector);
+    element.dataset.diagviewIndex = Array.prototype.indexOf.call(allDiagrams, element);
+  }
 
-  // Fix ID collisions for multi-diagram pages
-  const fixedSvg = fixIds(svg, uniqueId);
+  // MAJ-1: We no longer mutate the original SVG's IDs to avoid "Double Prefixing"
+  // and architectural fragility. IDs are now isolated only during cloning (Modal/Export).
+  const fixedSvg = svg;
 
-  // Get layout configuration
-  const layout = state.config.layout;
+  // Get layout configuration from element-local config
+  const layout = elementConfig.layout;
   const isOff = layout === LAYOUTS.OFF;
   const isFloating = layout === LAYOUTS.FLOATING;
 
@@ -184,7 +306,6 @@ export function initializeDiagram(element) {
     cleanupMap.set(element, {
       fn: () => element.removeEventListener("click", openHandler),
       wrapper: null, // No wrapper used in 'off' layout
-      originalIds: originalIds, // Store for restoration
     });
 
     // Apply minimal SVG styling
@@ -279,7 +400,6 @@ export function initializeDiagram(element) {
   cleanupMap.set(element, {
     fn: () => viewport.removeEventListener("click", viewportHandler),
     wrapper: wrapper,
-    originalIds: originalIds, // Store for restoration
   });
 
   // Apply SVG theme
@@ -299,18 +419,7 @@ export function deinitializeDiagram(element) {
   // Run per-element cleanup
   const data = cleanupMap.get(element);
   if (data) {
-    const { fn, wrapper, originalIds } = data;
-
-    // Restore original IDs to host SVG
-    if (originalIds) {
-      originalIds.forEach((oldId, el) => {
-        try {
-          if (el && document.contains(el)) {
-            el.id = oldId;
-          }
-        } catch (e) { /* ignore */ }
-      });
-    }
+    const { fn, wrapper } = data;
 
     // Always use the stored wrapper reference (bulletproof against DOM moves)
     if (wrapper && wrapper.parentNode) {

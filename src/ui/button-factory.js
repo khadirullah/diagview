@@ -5,7 +5,7 @@
  */
 
 import { TIMING } from "../core/constants.js";
-import { sanitizeSVG } from "../core/utils.js";
+import { setSVGContent } from "../core/utils.js";
 
 /**
  * Create an action button with consistent styling and behavior
@@ -53,7 +53,7 @@ export function createButton(config) {
   btn.setAttribute("data-action", action);
   btn.setAttribute("title", title);
   btn.setAttribute("aria-label", ariaLabel || title);
-  btn.insertAdjacentHTML("afterbegin", sanitizeSVG(icon));
+  setSVGContent(btn, icon, "prepend");
 
   // Add feedback flag if enabled
   if (feedback) {
@@ -165,7 +165,7 @@ export function createMenuItem(config) {
   btn.id = id;
 
   // Insert sanitized icon then safe text nodes
-  btn.insertAdjacentHTML("afterbegin", sanitizeSVG(icon));
+  setSVGContent(btn, icon, "prepend");
   const labelNode = document.createTextNode(" " + label);
   btn.appendChild(labelNode);
   if (shortcut) {

@@ -5,7 +5,28 @@
 
 import { jest } from "@jest/globals";
 import { state, resetConfig } from "../src/core/config.js";
-import { createFloatingMenu } from "../src/ui/floating-menu.js";
+
+// 1. Define mocks BEFORE importing the module under test
+jest.unstable_mockModule("../src/features/export.js", () => ({
+  exportDiagram: jest.fn(() => Promise.resolve()),
+}));
+jest.unstable_mockModule("../src/features/lazy/share.js", () => ({
+  shareLink: jest.fn(),
+  copyShareLink: jest.fn(),
+}));
+jest.unstable_mockModule("../src/features/lazy/rotate.js", () => ({
+  rotateDiagram: jest.fn(),
+}));
+jest.unstable_mockModule("../src/ui/modal.js", () => ({
+  openFullscreen: jest.fn(),
+  closeModal: jest.fn(),
+}));
+
+// 2. Import the module under test AFTER mocks
+const { createFloatingMenu } = await import("../src/ui/floating-menu.js");
+const { exportDiagram } = await import("../src/features/export.js");
+const { shareLink } = await import("../src/features/lazy/share.js");
+const { rotateDiagram } = await import("../src/features/lazy/rotate.js");
 
 describe("Floating Menu UI", () => {
   let sourceElement, clonedSvg;
@@ -13,6 +34,7 @@ describe("Floating Menu UI", () => {
   beforeEach(() => {
     resetConfig();
     document.body.innerHTML = "";
+    jest.clearAllMocks();
 
     // Create mock diagram structure
     sourceElement = document.createElement("div");
@@ -61,18 +83,16 @@ describe("Floating Menu UI", () => {
 
   test("Clicking outside the menu closes it", () => {
     jest.useFakeTimers();
-    // Must set isModalOpen to true because of the M8 safety check
     state.isModalOpen = true;
     createFloatingMenu(sourceElement, clonedSvg);
     const toggle = document.getElementById("dv-toggle");
     const panel = document.getElementById("dv-menu-panel");
-    const container = document.getElementById("diagview-temp-menu");
 
     // Open menu
     toggle.click();
     expect(panel.classList.contains("active")).toBe(true);
 
-    // Advance timers so the outside-click listener is attached (M8 fix)
+    // Advance timers so the outside-click listener is attached
     jest.advanceTimersByTime(100);
 
     // Click on a separate element outside the container
@@ -84,15 +104,30 @@ describe("Floating Menu UI", () => {
     jest.useRealTimers();
   });
 
-  test("Menu items are rendered correctly", () => {
+  test("Interaction: Share button calls shareLink", async () => {
     createFloatingMenu(sourceElement, clonedSvg);
-    const panel = document.getElementById("dv-menu-panel");
+    const shareBtn = document.getElementById("dv-share");
+    shareBtn.click();
 
-    // Check for core sections (using correct dv- classes)
-    expect(panel.querySelector(".dv-menu-sec")).not.toBeNull();
-    expect(panel.querySelector(".dv-exp")).not.toBeNull();
+    await new Promise((r) => setTimeout(r, 10));
+    expect(shareLink).toHaveBeenCalled();
+  });
 
-    // Check for branding (footer)
-    expect(panel.querySelector(".dv-menu-footer")).not.toBeNull();
+  test("Interaction: Rotate button calls rotateDiagram", async () => {
+    createFloatingMenu(sourceElement, clonedSvg);
+    const rotateBtn = document.getElementById("dv-rotate");
+    rotateBtn.click();
+
+    await new Promise((r) => setTimeout(r, 10));
+    expect(rotateDiagram).toHaveBeenCalled();
+  });
+
+  test("Interaction: Export buttons call exportDiagram", async () => {
+    createFloatingMenu(sourceElement, clonedSvg);
+    const pngBtn = document.querySelector('[data-action="png"]');
+    pngBtn.click();
+
+    await new Promise((r) => setTimeout(r, 10));
+    expect(exportDiagram).toHaveBeenCalledWith(sourceElement, "png", expect.any(Object));
   });
 });

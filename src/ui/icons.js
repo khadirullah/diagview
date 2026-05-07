@@ -54,24 +54,7 @@ export const ICONS = {
   info: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>',
   warning:
     '<svg viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>',
+  // Text-select (I-beam cursor shape — universally recognised as "select text")
+  textSelect:
+    '<svg viewBox="0 0 24 24"><line x1="9" y1="4" x2="15" y2="4"/><line x1="12" y1="4" x2="12" y2="20"/><line x1="9" y1="20" x2="15" y2="20"/></svg>',
 };
-
-/**
- * Get icon HTML with custom size and attributes
- * @param {string} name - Icon name from ICONS object
- * @param {number} size - Icon size in pixels (default: 20)
- * @returns {string} SVG HTML string
- */
-export function getIcon(name, size = 20) {
-  const svg = ICONS[name];
-  if (!svg) {
-    console.warn(`DiagView: Unknown icon "${name}"`);
-    return "";
-  }
-
-  // Add size and common stroke attributes
-  return svg.replace(
-    "<svg",
-    `<svg width="${size}" height="${size}" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"`,
-  );
-}

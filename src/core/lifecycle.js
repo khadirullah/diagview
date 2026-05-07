@@ -1,3 +1,4 @@
+// @ts-check
 /**
  * DiagView Lifecycle Management
  * Utilities for cleanup, event management, and resource disposal
@@ -12,7 +13,7 @@ import { state, addCleanupFunction } from "./config.js";
  */
 export function addModalCleanupFunction(fn) {
   if (typeof fn === "function") {
-    state.modalCleanupFunctions.push(fn);
+    state.modalCleanupFunctions.add(fn);
   }
 }
 
@@ -20,7 +21,7 @@ export function addModalCleanupFunction(fn) {
  * Safely destroy an instance with error handling
  * Prevents crashes from failed cleanup operations
  *
- * @param {object} instance - Object to destroy
+ * @param {Record<string, *>} instance - Object to destroy
  * @param {string} methodName - Method name to call (default: 'destroy')
  * @returns {boolean} True if destroyed successfully
  *
@@ -32,7 +33,6 @@ export function safeDestroy(instance, methodName = "destroy") {
   if (!instance) return false;
 
   if (typeof instance[methodName] !== "function") {
-    // console.warn(`DiagView: Instance doesn't have method "${methodName}"`);
     return false;
   }
 
@@ -69,15 +69,17 @@ export function addManagedListener(target, event, handler, options) {
     return () => {};
   }
 
-  // Attach listener
-  target.addEventListener(event, handler, options);
+  // Cast to EventListener — handler is always a valid event handler function
+  const listener = /** @type {EventListener} */ (handler);
 
-  // Create cleanup function
+  // Attach listener
+  target.addEventListener(event, listener, options);
+
   const cleanup = () => {
-    target.removeEventListener(event, handler, options);
+    target.removeEventListener(event, listener, options);
     // Unregister from auto-cleanup to prevent double-firing and memory leaks
-    const idx = state.cleanupFunctions.indexOf(cleanup);
-    if (idx !== -1) state.cleanupFunctions.splice(idx, 1);
+    // MAJ-6: O(1) removal using Set.delete()
+    state.cleanupFunctions.delete(cleanup);
   };
 
   // Register for automatic cleanup on destroy
@@ -100,17 +102,62 @@ export function addManagedListener(target, event, handler, options) {
 export function addModalListener(target, event, handler, options) {
   if (!target || !event || !handler) return () => {};
 
-  target.addEventListener(event, handler, options);
+  // Cast to EventListener — handler is always a valid event handler function
+  const listener = /** @type {EventListener} */ (handler);
+
+  target.addEventListener(event, listener, options);
   const cleanup = () => {
-    target.removeEventListener(event, handler, options);
+    target.removeEventListener(event, listener, options);
     // Unregister from modal auto-cleanup
-    const idx = state.modalCleanupFunctions.indexOf(cleanup);
-    if (idx !== -1) state.modalCleanupFunctions.splice(idx, 1);
+    // MAJ-6: O(1) removal using Set.delete()
+    state.modalCleanupFunctions.delete(cleanup);
   };
 
   addModalCleanupFunction(cleanup);
   return cleanup;
 }
+/**
+ * Register a timeout with automatic cleanup
+ * @param {import('./config.js').DiagViewState} state - Instance state
+ * @param {Function} fn - Callback function
+ * @param {number} delay - Delay in ms
+ * @returns {ReturnType<typeof setTimeout>} Timeout ID
+ */
+export function registerTimeout(state, fn, delay) {
+  const id = setTimeout(() => {
+    state.asyncTasks.timeouts.delete(id);
+    fn();
+  }, delay);
+  state.asyncTasks.timeouts.add(id);
+  return id;
+}
 
+/**
+ * Register a RequestAnimationFrame with automatic cleanup
+ * @param {import('./config.js').DiagViewState} state - Instance state
+ * @param {FrameRequestCallback} fn - Callback function
+ * @returns {number} RAF ID
+ */
+export function registerRAF(state, fn) {
+  const task = { id: 0 };
+  task.id = requestAnimationFrame((timestamp) => {
+    state.asyncTasks.rafs.delete(task.id);
+    fn(timestamp);
+  });
+  state.asyncTasks.rafs.add(task.id);
+  return task.id;
+}
 
+/**
+ * Clear all pending async tasks for an instance
+ * @param {import('./config.js').DiagViewState} state - Instance state
+ */
+export function clearAsyncTasks(state) {
+  if (!state.asyncTasks) return;
 
+  state.asyncTasks.timeouts.forEach((id) => clearTimeout(id));
+  state.asyncTasks.rafs.forEach((id) => cancelAnimationFrame(id));
+
+  state.asyncTasks.timeouts.clear();
+  state.asyncTasks.rafs.clear();
+}

@@ -4,8 +4,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="icon" type="image/png" href="images/logo.png" sizes="512x512">
+    <link rel="apple-touch-icon" href="images/logo.png">
     <title>DiagView - Performance Stress Test</title>
+    <meta property="og:image" content="images/hero.png">
     <meta name="description" content="DiagView performance stress test — 2,500 interactive nodes with hardware-accelerated zoom and pan.">
 
     <!-- Fonts -->
@@ -20,23 +22,49 @@
     <link rel="stylesheet" href="demo-styles.css">
 
     <!-- DiagView Core -->
-    <script src="https://unpkg.com/diagview@1/dist/diagview.umd.js" data-diagview-no-auto-init></script>
+    <script src="https://unpkg.com/diagview@1.0.5/dist/diagview.umd.js" data-diagview-no-auto-init></script>
 
     <!-- Development Mode: Uncomment below to use local file -->
     <!-- <script src="../dist/diagview.umd.js" data-diagview-no-auto-init></script> -->
 
     <style>
-        :root {
-            --diagram-accent: #f59e0b;
+        :root { --diagram-accent: #f59e0b; }
+        .stress-container { max-width: 1400px; margin: 0 auto; }
+        .performance-selector {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            margin: 24px auto 0;
+            background: var(--card-bg);
+            padding: 12px 24px;
+            border-radius: 999px;
+            border: 1px solid var(--border);
+            width: fit-content;
+            box-shadow: var(--shadow-sm);
         }
-
-        body {
-            padding-top: 100px;
+        .performance-selector label {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
-
-        .stress-container {
-            max-width: 1400px;
-            margin: 0 auto;
+        .performance-selector select {
+            background: var(--bg-2);
+            border: 1px solid var(--border);
+            padding: 4px 12px;
+            border-radius: 6px;
+            color: var(--text);
+            font-family: inherit;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .performance-selector .btn-mini {
+            padding: 5px 15px;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
     </style>
 
@@ -47,37 +75,55 @@
 
     <div class="controls">
         <div class="brand">
-            <a href="index.html"
-                style="text-decoration: none; color: inherit; display: flex; align-items: center; gap: 8px;">
-                <span style="font-size: 1.5rem;">🚀</span>
-                <div style="display: flex; flex-direction: column; line-height: 1.2;">
-                    <span
-                        style="font-size: 0.7rem; color: var(--diagram-accent); text-transform: uppercase; letter-spacing: 1px;">DiagView</span>
-                    <span>Performance Test</span>
+            <a href="index.html">
+                <img src="images/logo.png" alt="DiagView" style="width:32px;height:32px;border-radius:8px;object-fit:cover;flex-shrink:0">
+                <div class="brand-meta">
+                    <span class="brand-label">DiagView</span>
+                    <span class="brand-name">Performance Test</span>
                 </div>
             </a>
         </div>
         <div class="toggles">
-            <button class="toggle-btn" onclick="toggleTheme()" title="Toggle Dark/Light Mode">
-                🌓
-            </button>
-            <a href="index.html" class="toggle-btn"
-                style="text-decoration: none; background: var(--diagram-accent); color: white; border: none;">
-                Back to Hub
-            </a>
+            <label class="accent-label">
+                <span>Security</span>
+                <select id="securitySelector" title="Toggle SVG Sanitization Level">
+                    <option value="strict">Strict (High)</option>
+                    <option value="permissive">Permissive</option>
+                    <option value="off">Off (Trusted)</option>
+                </select>
+            </label>
+            <label class="accent-label">
+                <span>Accent</span>
+                <input type="color" id="accentPicker" value="#f59e0b">
+            </label>
+            <button class="toggle-btn" onclick="toggleTheme()" title="Toggle Dark/Light Mode">🌓</button>
+            <a href="index.html" class="toggle-btn" style="background:var(--accent);color:#fff;border:none;">← Hub</a>
         </div>
     </div>
 
-    <div class="container text-center" style="margin-bottom: 40px;">
-        <h1 style="font-size: 2.5rem; margin-bottom: 10px;">Hardware Acceleration Test</h1>
-        <p class="muted" style="font-size: 1.1rem;">Rendering 2,500 interactive nodes in a single SVG.
-            DiagView uses CSS transforms for smooth 60FPS performance.</p>
-    </div>
+    <section class="page-hero">
+        <h1>Hardware Acceleration Test</h1>
+        <p>Test DiagView's hardware-accelerated performance across different diagram scales. Observe how SVG DOM complexity impacts browser responsiveness.</p>
+        
+        <div class="performance-selector">
+            <label for="node-count">Scale:</label>
+            <input type="range" id="node-count" min="100" max="3000" step="100" value="2500" 
+                   style="cursor: pointer; accent-color: var(--accent);"
+                   oninput="document.getElementById('node-count-val').textContent = parseInt(this.value).toLocaleString()"
+                   onchange="runStressTest()">
+            <span id="node-count-val" style="font-weight: 800; min-width: 60px; color: var(--accent); font-family: 'JetBrains Mono';">2,500</span>
+            <button class="btn btn-primary btn-mini" onclick="runStressTest()">Update</button>
+        </div>
+    </section>
 
     <div class="stress-container">
-        <div class="card" style="padding: 0; overflow: hidden; height: 70vh;">
-            <div class="stress-test" data-title="2,500 Node Performance Grid"
-                style="height: 100%; border: none; background: var(--card-bg);">
+        <div class="card" style="height: 80vh;">
+            <div class="card-header">
+                <h3 id="test-title">2,500 Node Performance Grid</h3>
+                <span class="card-badge stress-badge" id="test-badge">2.5k Nodes</span>
+            </div>
+            <div class="stress-test" data-title="Performance Grid"
+                style="height: 100%; flex: 1; border: none; background: var(--card-bg);">
                 <svg id="stress-svg" width="3000" height="3000" viewBox="0 0 3000 3000"
                     xmlns="http://www.w3.org/2000/svg">
                     <rect width="100%" height="100%" fill="transparent" />
@@ -100,31 +146,97 @@
     </footer>
 
     <script>
-        // Page-specific: Generate stress nodes + init DiagView
-        document.addEventListener('DOMContentLoaded', () => {
+        function generateNodes(total) {
             const stressLayer = document.getElementById('stress-node-layer');
-            if (stressLayer) {
-                for (let r = 0; r < 50; r++) {
-                    for (let c = 0; c < 50; c++) {
-                        const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
-                        g.setAttribute("class", "node");
-                        const x = c * 60;
-                        const y = r * 60;
-                        g.innerHTML = `<rect x="${x}" y="${y}" width="40" height="30" rx="4" fill="#f59e0b" fill-opacity="0.1" stroke="#f59e0b" stroke-width="1"/>
-                                       <text x="${x + 20}" y="${y + 20}" font-size="8" text-anchor="middle" font-family="sans-serif" fill="#92400e">N-${r}-${c}</text>`;
-                        stressLayer.appendChild(g);
-                    }
+            if (!stressLayer) return;
+            
+            // Clear existing
+            stressLayer.innerHTML = '';
+            
+            // Calculate grid dimensions
+            const side = Math.ceil(Math.sqrt(total));
+            const spacing = 60;
+            
+            // Update SVG viewBox to fit
+            const svg = document.getElementById('stress-svg');
+            const size = side * spacing;
+            svg.setAttribute('viewBox', `0 0 ${size} ${size}`);
+            svg.setAttribute('width', size);
+            svg.setAttribute('height', size);
+
+            let count = 0;
+            for (let r = 0; r < side; r++) {
+                for (let c = 0; c < side; c++) {
+                    if (count >= total) break;
+                    
+                    const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+                    g.setAttribute("class", "node");
+                    const x = c * spacing;
+                    const y = r * spacing;
+                    
+                    const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+                    rect.setAttribute("x", x); rect.setAttribute("y", y);
+                    rect.setAttribute("width", "40"); rect.setAttribute("height", "30");
+                    rect.setAttribute("rx", "4"); rect.setAttribute("fill", "#f59e0b");
+                    rect.setAttribute("fill-opacity", "0.1"); rect.setAttribute("stroke", "#f59e0b");
+                    rect.setAttribute("stroke-width", "1");
+                    
+                    const label = document.createElementNS("http://www.w3.org/2000/svg", "text");
+                    label.setAttribute("x", x + 20); label.setAttribute("y", y + 20);
+                    label.setAttribute("font-size", "8"); label.setAttribute("text-anchor", "middle");
+                    label.setAttribute("font-family", "sans-serif"); label.setAttribute("fill", "#92400e");
+                    label.textContent = `N-${count}`;
+                    
+                    g.appendChild(rect);
+                    g.appendChild(label);
+                    stressLayer.appendChild(g);
+                    count++;
                 }
             }
+            
+            // Update UI
+            document.getElementById('test-title').textContent = `${total.toLocaleString()} Node Performance Grid`;
+            document.getElementById('test-badge').textContent = total >= 1000 ? `${(total/1000).toFixed(1)}k Nodes` : `${total} Nodes`;
+        }
 
-            DiagView.init({
-                diagramSelector: '.stress-test',
-                showKeyboardHelp: true,
-                highResScale: 4,
-                accentColor: localStorage.getItem('dv-accent') || null,
-                layout: 'floating',
-                showBranding: true
-            });
+        function runStressTest() {
+            const count = parseInt(document.getElementById('node-count').value);
+            
+            // 1. Destroy existing DiagView instance
+            if (window.DiagView && typeof window.DiagView.destroy === 'function') {
+                window.DiagView.destroy();
+            }
+            
+            // 2. Generate new nodes
+            generateNodes(count);
+            
+            // 3. Re-initialize
+            setTimeout(() => {
+                DiagView.init({
+                    diagramSelector: '.stress-test',
+                    showKeyboardHelp: true,
+                    highResScale: 4,
+                    accentColor: localStorage.getItem('dv-accent') || null,
+                    layout: 'floating',
+                    showBranding: true
+                });
+            }, 50);
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // Initial run with default value
+            generateNodes(2500);
+            
+            setTimeout(() => {
+                DiagView.init({
+                    diagramSelector: '.stress-test',
+                    showKeyboardHelp: true,
+                    highResScale: 4,
+                    accentColor: localStorage.getItem('dv-accent') || null,
+                    layout: 'floating',
+                    showBranding: true
+                });
+            }, 100);
         });
     </script>
 </body>

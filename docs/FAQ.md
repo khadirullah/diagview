@@ -1,352 +1,235 @@
-# DiagView FAQ
-
-Frequently Asked Questions
+# DiagView — Frequently Asked Questions
 
 ---
 
 ## General
 
-### Q: Is DiagView free?
+**Q: Is DiagView free?**  
+A: Yes. DiagView is MIT licensed — free for personal and commercial use with no attribution required (though it is appreciated).
 
-**A:** Yes! DiagView is MIT licensed - free for personal and commercial use.
+**Q: What does DiagView require?**  
+A: Only `@panzoom/panzoom` for the fullscreen zoom/pan feature. All other heavy features (search, minimap, share, PDF export) are lazy-loaded on demand.
 
-### Q: Do I need to install anything?
+**Q: Which diagram libraries does DiagView support?**  
+A: Any library that outputs SVG into the DOM — including Mermaid.js, D3.js, Graphviz, PlantUML (rendered), Kroki, and hand-crafted SVGs. See [Mermaid Integration](USAGE.md#21-mermaid-integration).
 
-**A:** DiagView is extremely lightweight and relies on a single external module (`@panzoom/panzoom`) to drive its core coordinate physics.
-
-### Q: What browsers are supported?
-
-**A:** All modern browsers (Chrome, Firefox, Safari, Edge). IE11 is NOT supported.
-
-### Q: Can I use this with Mermaid/D3/PlantUML?
-
-**A:** Yes! DiagView works with ANY SVG-based diagram library.
+**Q: Does it work without npm?**  
+A: Yes. Drop in two `<script>` tags from a CDN and you are done. See [Installation](USAGE.md#1-installation).
 
 ---
 
 ## Installation
 
-### Q: How do I install via CDN?
-```html
-<script src="https://cdn.jsdelivr.net/npm/@panzoom/panzoom@4.5.1/dist/panzoom.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/diagview@1/dist/diagview.umd.min.js"></script>
-```
+**Q: Why doesn't zoom work?**  
+A: The `@panzoom/panzoom` script must be loaded **before** DiagView. If it is missing, DiagView prints "Panzoom library not found" in the console and gracefully degrades — exports still work, but zoom/pan are disabled.
 
-### Q: How do I install via npm?
-```bash
-npm install diagview @panzoom/panzoom
-```
+**Q: Can I use Panzoom from npm instead of CDN?**  
+A: Yes. `npm install @panzoom/panzoom` and import it normally. DiagView uses `window.Panzoom` at runtime; bundlers that expose globals (e.g. Vite with `define`) will wire it up automatically. Otherwise ensure `window.Panzoom = Panzoom` is set before `DiagView.init()`.
 
-### Q: Do I need Panzoom?
-
-**A:** No, but recommended! Without it, zoom/pan won't work (exports still work).
+**Q: Does DiagView inject CSS into `<head>` automatically?**  
+A: Yes. Styles are injected once into a `<style id="diagview-styles">` tag when `init()` is called, and removed by `destroy()`.
 
 ---
 
-## Usage
+## Layout & UI
 
-### Q: How do I change button colors?
-```javascript
-DiagView.init({
-  accentColor: '#ff6b6b'
-});
-```
+**Q: How do I hide the controls?**  
+A: Use `layout: 'off'`. Clicking the diagram opens fullscreen.
 
-### Q: How do I hide buttons?
-```javascript
-DiagView.init({
-  layout: 'off'  // Click diagram to fullscreen
-});
-```
+**Q: How do I make controls always visible on desktop?**  
+A: Use `layout: 'header'`.
 
-### Q: Can I customize which diagrams are enhanced?
-```javascript
-DiagView.init({
-  diagramSelector: '.my-custom-class'
-});
-```
+**Q: How do I hide the "DiagView" branding link?**
 
-### Q: How do I hide the "DiagView" attribution link?
 ```javascript
-DiagView.init({
-  showBranding: false
-});
-// Or change it at runtime:
+DiagView.init({ showBranding: false });
+// or at runtime:
 DiagView.configure({ showBranding: false });
 ```
 
-### Q: My custom configuration (e.g. layout) is being ignored?
+**Q: How do I mix layouts on one page?**  
+A: Use `data-diagview-layout` on individual diagram containers and call `init()` without specifying a global layout (or set a sensible default):
 
-If you are using the `<script>` CDN tag, DiagView auto-initializes as soon as the page loads. If you try to call `DiagView.init({ layout: 'header' })` later in your code, it will be ignored because the library is already initialized. 
-
-**Solution:** Add the `data-diagview-no-auto-init` attribute to your script tag:
 ```html
-<script src=".../diagview.umd.min.js" data-diagview-no-auto-init></script>
+<div class="diagram" data-diagview-layout="header">...</div>
+<div class="diagram" data-diagview-layout="off">...</div>
 ```
 
-### Q: How do I disable keyboard shortcuts?
+**Q: Can I use custom icons for the buttons?**
 
-Keyboard shortcuts only work when fullscreen modal is open. You cannot disable them globally, but you can close the modal with `Esc`.
-
-### Q: How do I change the arrow key direction?
-
-**A:** By default, arrow keys move the "Camera" (Traditional). If you want them to move the "Diagram" (Natural/Direct), use the **`naturalPanning`** option:
 ```javascript
 DiagView.init({
-  naturalPanning: true
+  ui: { buttons: { icons: { copy: "<svg>...</svg>" } } },
 });
 ```
+
+Pass `null` to restore a built-in icon.
+
+---
+
+## Search
+
+**Q: Why does search not highlight anything?**  
+A: Search matches text inside `.node`, `.cluster`, `.label`, `.edgePath`, and `text` elements. Ensure your SVG has actual `<text>` nodes with visible content.
+
+**Q: Can I pre-fill the search when opening fullscreen?**
+
+```javascript
+DiagView.openFullscreen(element, { searchQuery: "my term" });
+```
+
+**Q: Is search case-sensitive?**  
+A: No. All queries and node text are lowercased before comparison.
 
 ---
 
 ## Export
 
-### Q: Why are my exports low resolution?
+**Q: My exports are blurry. How do I fix this?**  
+A: Increase `highResScale`:
 
-Increase export scale:
+```javascript
+DiagView.init({ highResScale: 8 }); // 8× the SVG's intrinsic size
+```
+
+**Q: Can I export a specific diagram from code without opening fullscreen?**
+
+```javascript
+await DiagView.exportToPNG(document.querySelector(".diagram"));
+```
+
+**Q: PDF export shows "PDF engine unavailable" and falls back to PNG. Why?**  
+A: jsPDF failed to load from CDN. Check the network tab for a blocked request. If behind a CSP, host jsPDF locally:
+
 ```javascript
 DiagView.init({
-  highResScale: 8  // Higher = better quality (1-10)
+  pdfLibraryUrl: "/vendor/jspdf.umd.min.js",
+  pdfLibraryIntegrity: null,
 });
 ```
 
-### Q: Can I export without opening fullscreen?
+**Q: Why does JPEG export produce a PNG instead?**  
+A: When `transparent: true` is passed to JPEG export, DiagView automatically switches to transparent PNG (JPEG does not support transparency) and shows a warning toast.
 
-Yes:
-```javascript
-const diagram = document.querySelector('.diagram');
-DiagView.exportDiagram(diagram, 'png');
-```
+**Q: Clipboard copy fails on my site. Why?**  
+A: The Clipboard API requires HTTPS or `localhost`. On plain HTTP, DiagView falls back to `document.execCommand('copy')`. If both fail, an error toast is shown.
 
-### Q: PDF export not working?
+**Q: I'm hitting the export size limit. How do I increase it?**
 
-1. Check if jsPDF loads (network tab)
-2. Override CDN URL if needed:
 ```javascript
 DiagView.init({
-  pdfLibraryUrl: 'https://your-cdn.com/jspdf.min.js'
+  maxPixels: 67108864, // 64MP
+  // Warning: very large canvases can crash mobile browsers
 });
 ```
 
-### Q: Clipboard copy not working?
+---
 
-Clipboard requires HTTPS or localhost. Use download instead on HTTP sites.
+## SVG Sanitization
 
-### Q: How do I check current settings in the console?
+**Q: Can I turn off sanitization for a trusted SVG?**
 
-**A:** Use the **`DiagView.state`** object (v1.0.4+):
+Globally:
+
 ```javascript
-console.log(DiagView.state.config); // Check config
-console.log(DiagView.state.rotationAngle); // Check rotation
+DiagView.init({ security: { mode: "off" } });
 ```
+
+Per-element (requires `security.allowOverrides: true`, the default):
+
+```html
+<div class="diagram" data-diagview-sanitize="off">...</div>
+```
+
+**Q: My SVG has CSS animations that get stripped. Why?**  
+A: `strict` mode removes `<animate>`, `<animateTransform>`, `<set>`, and similar elements as they are known XSS vectors. Switch to `permissive` for the affected diagram:
+
+```html
+<div class="diagram" data-diagview-sanitize="permissive">
+  <svg><!-- animated diagram --></svg>
+</div>
+```
+
+**Q: I want to use Google Fonts embedded in my SVG's `<style>` block. How?**
+
+```html
+<div class="diagram" data-diagview-allow-remote="true">...</div>
+```
+
+Or globally: `DiagView.init({ security: { allowRemoteResources: true } })`.
+
+**Q: Does sanitization affect the original SVG on the page?**  
+A: No. DiagView clones the SVG before sanitizing. The original DOM element is never mutated.
+
+---
+
+## Mobile
+
+**Q: Controls drift when I pinch-zoom in the browser.**  
+A: Enable `immersiveMode`:
+
+```javascript
+DiagView.init({ immersiveMode: true });
+```
+
+This resets the viewport meta tag to `initial-scale=1.0` when the modal opens, snapping browser zoom back to 1×. The user can still re-zoom after opening.
+
+**Q: The minimap doesn't appear on my phone.**  
+A: The minimap is intentionally hidden on viewports narrower than 768 px to preserve screen real estate.
 
 ---
 
 ## Theming
 
-### Q: How do I force dark mode?
-```javascript
-DiagView.init({
-  backgroundColor: '#1a1a1a',
-  textColor: '#ffffff',
-  accentColor: '#60a5fa'
-});
-```
+**Q: Colors look wrong in dark mode.**  
+A: Ensure your HTML signals dark mode via one of:
 
-### Q: Colors look wrong in dark mode?
+- `<html class="dark">` (Tailwind)
+- `<html data-theme="dark">`
+- `<html data-bs-theme="dark">` (Bootstrap)
 
-DiagView auto-detects theme. Ensure your HTML has:
-```html
-<html class="dark">  <!-- Tailwind -->
-<!-- OR -->
-<html data-theme="dark">  <!-- Custom -->
-```
+Or override manually: `DiagView.init({ accentColor: '#60a5fa', backgroundColor: '#0f172a' })`.
 
-### Q: Can I use custom CSS variables?
+**Q: My brand color doesn't apply inside the diagram itself.**  
+A: DiagView applies the accent color to the UI chrome (buttons, minimap, highlights), not to the SVG content itself. To style SVG internals, use your own CSS.
 
-Yes! DiagView checks these:
-- `--diagram-accent`
-- `--diagram-text`
-- `--background` / `--bg-color`
-- `--text-color` / `--foreground`
+---
+
+## Share Links
+
+**Q: The share link doesn't open the right diagram.**  
+A: Share links use the diagram's **index** on the page (`dv-idx`). If the page structure changes between the link being generated and opened, the index may not match. This is a known limitation for highly dynamic pages.
+
+**Q: I see `dv-*` parameters in my URL bar.**  
+A: They are automatically stripped after DiagView processes them using `history.replaceState`. If you see them persisting, check that `history.replaceState` is not blocked by your app's router.
 
 ---
 
 ## Performance
 
-### Q: Does it work with 100+ diagrams on one page?
+**Q: Does DiagView slow down pages with many diagrams?**  
+A: No. DiagView uses an `IntersectionObserver` to initialize diagrams lazily — only when they are 200 px from the viewport. Diagrams off-screen consume almost no resources.
 
-Yes! Diagrams are enhanced lazily (only when they appear).
-
-### Q: Is search fast?
-
-Yes! Search uses caching + dirty checking + RAF batching for 2500+ nodes.
-
-### Q: Does it affect page load time?
-
-Minimal! Lazy features load on-demand (search, minimap, meeting mode, etc.).
+**Q: Search is slow on a large diagram.**  
+A: Search pre-warms its candidate cache during browser idle time. On very large diagrams (5,000+ nodes), the first search may take a moment. Subsequent searches use the cache and are O(n) string comparisons with no DOM reads.
 
 ---
 
-## Features
+## Shadow DOM
 
-### Q: How do I enable "Remember Zoom"?
+**Q: Diagrams inside a Shadow DOM are not found.**
+
 ```javascript
-DiagView.init({
-  rememberZoom: true  // Remembers zoom per diagram (session-based)
-});
-```
-
-### Q: Can I disable the minimap?
-
-**A:** Minimap only shows when the diagram is larger than the viewport. As of v1.0.4, it features **Intelligent Aspect Ratio Scaling**, meaning it will accurately represent both portrait and landscape diagrams without clipping. It auto-hides for small diagrams.
-
-### Q: How do I change auto-close time for keyboard help?
-```javascript
-DiagView.init({
-  helpTimeout: 5000  // 5 seconds (0 = never auto-close)
-});
+DiagView.init(); // initialize globally first
+DiagView.initShadowRoot(myShadowRoot); // then scan the shadow root
 ```
 
 ---
 
-## Troubleshooting
+## Contributing
 
-### Q: Buttons not showing?
+**Q: Where do I report bugs?**  
+A: [GitHub Issues](https://github.com/khadirullah/diagview/issues). Include browser, OS, DiagView version, and a minimal reproduction.
 
-1. Check layout: `layout: 'floating'` (default)
-2. On desktop, hover over diagram
-3. On mobile, buttons are always visible and pinned securely to the view using **Visual Viewport Synchronization**.
-
-### Q: How do I hide the minimap?
-
-If you have a very complex diagram and want to hide the minimap overview, use:
-```javascript
-DiagView.configure({ showMinimap: false });
-```
-
-### Q: Search not highlighting anything?
-
-Search looks for text in nodes. Ensure your SVG has `<text>` elements.
-
-### Q: Rotation not working?
-
-Rotation only works in fullscreen mode. Press `R` or click "Rotate 90°" in menu.
-
-### Q: Share link not copying?
-
-1. Requires HTTPS or localhost
-2. Check browser clipboard permissions
-3. Fallback: uses `document.execCommand` on HTTP
-
-### Q: Why are the arrow keys/drag direction "inverted"?
-
-By default, DiagView uses **Traditional Panning** (like a telescope or camera). Moving your mouse Up moves the viewport Up, which makes the diagram appear to move Down.
-
-To change this to **Natural Panning** (like moving a piece of paper on a desk), use:
-```javascript
-DiagView.configure({ naturalPanning: true });
-```
-
----
-
-## Advanced
-
-### Q: Can I use custom icons?
-
-Yes:
-```javascript
-DiagView.init({
-  ui: {
-    buttons: {
-      icons: {
-        copy: '<svg>...</svg>',
-        download: '<svg>...</svg>',
-        fullscreen: '<svg>...</svg>'
-      }
-    }
-  }
-});
-```
-
-### Q: How do I prevent export on certain diagrams?
-
-Use `layout: 'off'` and override per diagram:
-```html
-<div class="diagram" data-diagview-layout="header">
-  <svg>...</svg>
-</div>
-```
-(Note: Per-diagram config not implemented yet - feature request!)
-
-### Q: Can I export from code without UI?
-
-Yes:
-```javascript
-import { exportDiagram } from 'diagview';
-
-const element = document.querySelector('.diagram');
-exportDiagram(element, 'png');
-```
-
----
-
-## Integration
-
-### Q: Does it work with React/Vue/Svelte?
-
-Yes! See [USAGE.md](./USAGE.md#framework-integration)
-
-### Q: Does it work with static site generators?
-
-Yes! Works with:
-- Hugo
-- Jekyll
-- 11ty
-- Gatsby
-- Next.js (SSR mode)
-- Astro
-
-### Q: Does it work with Markdown?
-
-Yes! If your Markdown processor outputs diagrams with `.diagram` class or `[data-diagram]` attribute.
-
----
-
-## Licensing
-
-### Q: Can I use this commercially?
-
-Yes! MIT license allows commercial use.
-
-### Q: Do I need to credit you?
-
-**A:** Not required, but appreciated! 😊 By default, a small "DiagView" link appears in the viewer. You can hide it using `showBranding: false`.
-
-### Q: Can I modify the code?
-
-Yes! MIT license allows modification.
-
----
-
-## Support
-
-### Q: Where do I report bugs?
-
-GitHub Issues: https://github.com/khadirullah/diagview/issues
-
-### Q: How do I request features?
-
-Open a GitHub Issue with `[Feature Request]` prefix.
-
-### Q: Is there a Discord/Slack?
-
-Not yet! For now, use GitHub Discussions.
-
----
-
-## Still have questions?
-
-- 📖 [Read Usage Guide](./USAGE.md)
-- 💻 [Browse Examples](../demo/)
-- 🐛 [Report Issue](https://github.com/khadirullah/diagview/issues)
+**Q: How do I request a feature?**  
+A: Open a GitHub Issue titled `[Feature] My request`. Describe the problem it solves and your proposed solution.

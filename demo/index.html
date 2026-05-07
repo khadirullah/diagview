@@ -4,10 +4,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="icon" type="image/png" href="images/logo.png" sizes="512x512">
+    <link rel="apple-touch-icon" href="images/logo.png">
     <title>DiagView - Lightweight Interactive SVG Diagram Viewer</title>
 
     <!-- SEO -->
+    <meta property="og:image" content="images/hero.png">
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="DiagView — Interactive SVG Diagram Viewer">
     <meta name="description"
         content="A lightweight, framework-agnostic viewer for SVG diagrams. Adds interactive Zoom, Pan, Search, Export, and Presentation Mode.">
 
@@ -21,204 +25,66 @@
     <link rel="stylesheet" href="demo-styles.css">
 
     <style>
-        /* Specific overrides for Hub landing page */
-        .header {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: clamp(60px, 10vw, 70px);
-            background: rgba(15, 23, 42, 0.95);
-            border-bottom: 1px solid var(--border);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0 clamp(15px, 5vw, 40px);
-            z-index: 1000;
-        }
-
-        @supports (backdrop-filter: blur(8px)) {
-            .header {
-                background: rgba(15, 23, 42, 0.8);
-                backdrop-filter: blur(12px);
-                -webkit-backdrop-filter: blur(12px);
-            }
-        }
-
-        .dark .header {
-            background: rgba(15, 23, 42, 0.92);
-        }
+        /* ── Hub landing page: body has no padding-top (hero is full-bleed) ── */
+        body { padding-top: 0; }
 
         .hero {
-            padding: 140px 20px 100px;
+            padding: clamp(100px, 18vw, 160px) clamp(16px, 5vw, 40px) clamp(60px, 10vw, 100px);
             text-align: center;
-            background: radial-gradient(circle at top, #1e40af22 0%, var(--bg) 70%);
+            background: radial-gradient(ellipse at top, rgba(59,130,246,.10) 0%, var(--bg) 65%);
         }
 
-        h1 {
-            font-size: clamp(2.2rem, 10vw, 5.5rem);
+        .hero h1 {
+            font-size: clamp(2.8rem, 10vw, 5.5rem);
             font-weight: 800;
-            margin-bottom: 20px;
             letter-spacing: -2px;
             line-height: 1;
+            margin-bottom: 20px;
         }
 
         .hero .subtitle {
-            font-size: 1.4rem;
+            font-size: clamp(1rem, 2.5vw, 1.4rem);
             color: var(--muted);
-            max-width: 800px;
-            margin: 0 auto 40px;
+            max-width: 700px;
+            margin: 0 auto 36px;
+            line-height: 1.7;
         }
 
-        .btn-group {
-            display: flex;
-            gap: 15px;
-            justify-content: center;
-            flex-wrap: wrap;
-        }
-
-        /* --- Layout Grid --- */
-        .layout-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(260px, 320px));
-            justify-content: center;
-            gap: clamp(16px, 3vw, 28px);
-            max-width: 1100px;
-            margin: 0 auto 80px;
-            padding: 0 clamp(12px, 4vw, 24px);
-        }
-
-        .layout-card {
-            background: var(--card-bg);
-            border-radius: 20px;
-            border: 1px solid var(--border);
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-            text-decoration: none;
-            color: inherit;
-            box-shadow: var(--card-shadow);
-        }
-
-        .layout-card:hover {
-            transform: scale(1.02);
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2);
-        }
-
-        .layout-info {
-            padding: 25px;
-            text-align: center;
-            border-bottom: 1px solid var(--border);
-        }
-
-        .layout-info h3 {
-            margin-bottom: 8px;
-            font-size: 1.25rem;
-            text-transform: capitalize;
-        }
-
-        .layout-info p {
-            color: var(--muted);
-            font-size: 0.9rem;
-            margin-bottom: 12px;
-        }
-
-        .layout-link {
-            color: var(--accent);
-            font-weight: 600;
-            font-size: 0.85rem;
-        }
-
-        .layout-demo {
-            flex-grow: 1;
-            min-height: 350px;
-            background: var(--card-bg);
-            display: grid;
-            place-items: center;
-            position: relative;
-        }
-
-        /* --- Features --- */
         .features {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 300px));
+            grid-template-columns: repeat(auto-fit, minmax(min(100%, 230px), 280px));
             justify-content: center;
-            gap: 24px;
+            gap: clamp(14px, 3vw, 22px);
             max-width: 1100px;
-            margin: 0 auto 80px;
+            margin: 0 auto clamp(48px, 8vw, 80px);
             padding: 0 clamp(12px, 4vw, 24px);
         }
 
         .feature-item {
-            padding: 30px;
-            background: var(--feature-bg);
+            padding: clamp(20px, 3vw, 28px);
+            background: var(--card-bg);
             border: 1px solid var(--border);
-            border-radius: 16px;
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-            box-shadow: var(--card-shadow);
+            border-radius: var(--r-lg);
+            box-shadow: var(--shadow-sm);
+            transition: transform 0.25s, box-shadow 0.25s;
         }
 
         .feature-item:hover {
             transform: translateY(-4px);
-            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1);
+            box-shadow: var(--shadow-md), 0 0 0 1px var(--accent-glow);
         }
 
-        .dark .feature-item:hover {
-            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.3);
+        .feature-icon { font-size: 2.2rem; margin-bottom: 16px; display: block; }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(12px); }
+            to   { opacity: 1; transform: translateY(0); }
         }
 
-        .feature-icon {
-            font-size: 2.5rem;
-            margin-bottom: 20px;
-            display: block;
-        }
-
-        footer {
-            text-align: center;
-            padding: 60px 20px;
-            border-top: 1px solid var(--border);
-            background: var(--footer-bg);
-        }
-
-        @media (max-width: 768px) {
-            h1 {
-                font-size: 3rem;
-            }
-
-            .layout-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
-
-            .features {
-                grid-template-columns: repeat(2, 1fr);
-            }
-
-            .header {
-                padding: 0 20px;
-            }
-        }
-
-        @media (max-width: 540px) {
-            .layout-grid,
-            .features {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        @media (max-width: 400px) {
-            h1 {
-                font-size: 2.2rem;
-                letter-spacing: -1px;
-            }
-
-            .hero {
-                padding: 120px 12px 60px;
-            }
-
-            .hero .subtitle {
-                font-size: 1.1rem;
-            }
+        @media (max-width: 600px) {
+            .hero { padding-top: clamp(80px, 15vw, 110px); }
+            .hero h1 { letter-spacing: -1px; }
+            .features { grid-template-columns: 1fr; }
         }
     </style>
     <script src="demo-runtime.js"></script>
@@ -226,59 +92,110 @@
 
 <body>
 
-    <header class="header">
-        <div class="brand" style="color: var(--text);">
-            <span style="font-size: 1.5rem;">🏗️</span>
-            <span>DiagView Hub</span>
+    <header class="controls">
+        <div class="brand">
+            <img src="images/logo.png" alt="DiagView" style="width:34px;height:34px;border-radius:9px;object-fit:cover;flex-shrink:0">
+            <div class="brand-meta">
+                <span class="brand-label">Demo Hub</span>
+                <span class="brand-name">DiagView</span>
+            </div>
         </div>
         <div class="toggles">
             <label class="accent-label">
-                Accent:
+                <span>Security</span>
+                <select id="securitySelector" title="Toggle SVG Sanitization Level">
+                    <option value="strict">Strict (High)</option>
+                    <option value="permissive">Permissive</option>
+                    <option value="off">Off (Trusted)</option>
+                </select>
+            </label>
+            <label class="accent-label">
+                <span>Accent</span>
                 <input type="color" id="accentPicker" value="#3b82f6">
             </label>
-            <button class="toggle-btn" onclick="toggleTheme()" title="Toggle Dark/Light Mode">
-                🌓
-            </button>
+            <button class="toggle-btn" onclick="toggleTheme()" title="Toggle Dark/Light Mode">🌓</button>
+            <a href="https://github.com/khadirullah/diagview" class="toggle-btn" target="_blank" rel="noopener">GitHub ↗</a>
         </div>
     </header>
 
+    <style>
+        @keyframes fadeIn {
+            from { opacity: 0; } to { opacity: 1; }
+        }
+        .hero-badge { animation: fadeInUp 0.6s ease-out both; }
+        .hero h1    { animation: fadeInUp 0.7s ease-out 0.08s both; }
+        .hero .subtitle { animation: fadeInUp 0.7s ease-out 0.15s both; }
+        .hero .btn-group { animation: fadeInUp 0.7s ease-out 0.22s both; }
+        .hero-image-wrap { animation: fadeIn 1s ease-out 0.3s both; }
+        .hero-shortcuts  { animation: fadeInUp 0.7s ease-out 0.35s both; }
+
+        .hero-image-wrap {
+            margin: 48px auto 0;
+            max-width: 860px;
+            border-radius: 20px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+            box-shadow: 0 24px 64px rgba(0,0,0,.45), 0 0 0 1px var(--border);
+            position: relative;
+        }
+        .hero-image-wrap img {
+            width: 100%; display: block; height: auto;
+        }
+        /* Browser chrome overlay */
+        .hero-image-wrap::before {
+            content: '';
+            position: absolute; top: 0; left: 0; right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #6366f1, #3b82f6, #06b6d4);
+        }
+        .hero-shortcuts {
+            margin-top: 32px;
+            display: flex;
+            justify-content: center;
+            gap: 10px 24px;
+            flex-wrap: wrap;
+            font-size: 0.8rem;
+            color: var(--muted);
+            padding-top: 24px;
+            border-top: 1px solid var(--border);
+        }
+        .hero-shortcuts span { display: flex; align-items: center; gap: 6px; }
+    </style>
+
     <section class="hero">
         <div class="container">
-            <span class="badge"><span data-version></span> Now Available</span>
+            <span class="badge hero-badge">⚡ <span data-version></span> Now Available</span>
             <h1>DiagView</h1>
-            <p class="subtitle">Transform static SVGs into interactive tools. Lightweight & Powerful. Framework
-                agnostic.</p>
+            <p class="subtitle">Transform any static SVG into a fully interactive diagram viewer.<br>
+                Zoom · Pan · Search · Export · Fullscreen. Framework-agnostic.</p>
 
             <div class="btn-group">
-                <a href="https://github.com/khadirullah/diagview" class="btn btn-primary" target="_blank">Star on
-                    GitHub</a>
+                <a href="https://github.com/khadirullah/diagview" class="btn btn-primary" target="_blank" rel="noopener">
+                    ⭐ Star on GitHub
+                </a>
                 <a href="#layouts" class="btn btn-secondary"
-                    onclick="document.getElementById('layouts').scrollIntoView({behavior: 'smooth'}); return false;">Explore
-                    Layouts</a>
+                   onclick="document.getElementById('layouts').scrollIntoView({behavior:'smooth'});return false;">
+                    Explore Layouts ↓
+                </a>
             </div>
 
-            <div
-                style="margin-top: 40px; display: flex; justify-content: center; gap: 16px 30px; flex-wrap: wrap; font-size: 0.8rem; color: var(--muted); border-top: 1px solid var(--border); padding-top: 20px; animation: fadeInUp 1s ease-out 0.5s backwards;">
-                <span title="Plus Key"><code>+</code> Zoom In</span>
-                <span title="Minus Key"><code>-</code> Zoom Out</span>
-                <span title="Arrow Keys"><code>arrows</code> Pan</span>
-                <span title="Space Key"><code>Space</code> Center</span>
-                <span title="Slash Key"><code>/</code> Search</span>
+            <!-- Hero image -->
+            <div class="hero-image-wrap">
+                <img src="images/hero.png" alt="DiagView interactive diagram viewer in action"
+                     width="860" height="484" loading="eager">
+            </div>
+
+            <!-- Quick keyboard reference -->
+            <div class="hero-shortcuts">
+                <span><kbd>+</kbd> Zoom in</span>
+                <span><kbd>-</kbd> Zoom out</span>
+                <span><kbd>arrows</kbd> Pan</span>
+                <span><kbd>Space</kbd> Center</span>
+                <span><kbd>/</kbd> Search</span>
+                <span><kbd>E</kbd> Export PNG</span>
+                <span><kbd>Esc</kbd> Close</span>
             </div>
         </div>
-        <style>
-            @keyframes fadeInUp {
-                from {
-                    opacity: 0;
-                    transform: translateY(10px);
-                }
-
-                to {
-                    opacity: 1;
-                    transform: translateY(0);
-                }
-            }
-        </style>
     </section>
 
     <div class="container" id="layouts">
@@ -419,6 +336,36 @@
                 </div>
             </a>
 
+            <!-- LAYOUT COMPARE -->
+            <a href="./layout-compare.html" class="layout-card">
+                <div class="layout-info">
+                    <h3>Layout Compare</h3>
+                    <p>All 3 layout modes side-by-side using per-diagram <code>data-diagview-layout</code> overrides on one page.</p>
+                    <span class="layout-link">Compare Layouts →</span>
+                </div>
+                <div class="layout-demo">
+                    <svg width="250" height="180" viewBox="0 0 250 180" xmlns="http://www.w3.org/2000/svg">
+                        <!-- Floating FAB indicator -->
+                        <rect x="15" y="20" width="60" height="40" rx="6" fill="#f59e0b" fill-opacity=".12" stroke="#f59e0b" stroke-width="1.5"/>
+                        <circle cx="68" cy="53" r="7" fill="#f59e0b" opacity=".9"/>
+                        <text x="38" y="43" text-anchor="middle" font-size="8" font-family="sans-serif" fill="#f59e0b" font-weight="600">floating</text>
+                        <!-- Header bar indicator -->
+                        <rect x="90" y="20" width="60" height="40" rx="6" fill="#6366f1" fill-opacity=".12" stroke="#6366f1" stroke-width="1.5"/>
+                        <rect x="90" y="20" width="60" height="11" rx="3" fill="#6366f1" opacity=".35"/>
+                        <text x="120" y="43" text-anchor="middle" font-size="8" font-family="sans-serif" fill="#6366f1" font-weight="600">header</text>
+                        <!-- Off indicator -->
+                        <rect x="165" y="20" width="60" height="40" rx="6" fill="#10b981" fill-opacity=".12" stroke="#10b981" stroke-width="1.5"/>
+                        <text x="195" y="43" text-anchor="middle" font-size="8" font-family="sans-serif" fill="#10b981" font-weight="600">off</text>
+                        <!-- Labels -->
+                        <text x="45" y="85" text-anchor="middle" font-size="7" font-family="sans-serif" fill="#94a3b8">FAB</text>
+                        <text x="120" y="85" text-anchor="middle" font-size="7" font-family="sans-serif" fill="#94a3b8">Toolbar</text>
+                        <text x="195" y="85" text-anchor="middle" font-size="7" font-family="sans-serif" fill="#94a3b8">Click-only</text>
+                        <text x="125" y="130" text-anchor="middle" font-size="10" font-family="sans-serif" fill="#94a3b8" font-weight="600">Per-diagram overrides</text>
+                        <text x="125" y="148" text-anchor="middle" font-size="8" font-family="sans-serif" fill="#64748b">data-diagview-layout=""</text>
+                    </svg>
+                </div>
+            </a>
+
             <!-- PERFORMANCE STRESS TEST -->
             <a href="./demo-performance.html" class="layout-card">
                 <div class="layout-info">
@@ -484,10 +431,10 @@
 &lt;script src="https://cdn.jsdelivr.net/npm/@panzoom/panzoom@4.5.1/dist/panzoom.min.js"&gt;&lt;/script&gt;
 
 &lt;!-- Option A: Basic Usage (Auto-initializes) --&gt;
-&lt;script src="https://unpkg.com/diagview@1/dist/diagview.umd.js"&gt;&lt;/script&gt;
+&lt;script src="https://unpkg.com/diagview@1.0.5/dist/diagview.umd.js"&gt;&lt;/script&gt;
 
 &lt;!-- Option B: Custom Configuration --&gt;
-&lt;script src="https://unpkg.com/diagview@1/dist/diagview.umd.js" data-diagview-no-auto-init&gt;&lt;/script&gt;
+&lt;script src="https://unpkg.com/diagview@1.0.5/dist/diagview.umd.js" data-diagview-no-auto-init&gt;&lt;/script&gt;
 &lt;script&gt;
   DiagView.init({
     layout: 'floating',

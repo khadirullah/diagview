@@ -4,8 +4,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="icon" type="image/png" href="images/logo.png" sizes="512x512">
+    <link rel="apple-touch-icon" href="images/logo.png">
     <title>DiagView - Floating Layout</title>
+    <meta property="og:image" content="images/hero.png">
     <meta name="description" content="DiagView floating layout demo — HUD-style hover controls with static SVG rendering.">
 
     <!-- Fonts -->
@@ -23,26 +25,15 @@
 
     <!-- Primary: CDN (Online) -->
     <!-- DiagView Core -->
-    <!-- <script src="https://unpkg.com/diagview@1/dist/diagview.umd.js" data-diagview-no-auto-init></script> -->
+    <script src="https://unpkg.com/diagview@1.0.5/dist/diagview.umd.js" data-diagview-no-auto-init></script>
 
     <!-- Development Mode: Uncomment below to use local file -->
-    <script src="../dist/diagview.umd.js" data-diagview-no-auto-init></script>
+    <!-- <script src="../dist/diagview.umd.js" data-diagview-no-auto-init></script> -->
 
 
 
 
-    <style>
-        :root {
-            --diagram-accent: #3b82f6;
-        }
-
-        body {
-            padding-top: clamp(80px, 12vw, 120px);
-        }
-
-        /* Specific tweak for floating layout */
-        /* diagview internal UI fixes for floating mode can go here if needed */
-    </style>
+    <style>:root { --diagram-accent: #3b82f6; }</style>
 
     <script src="demo-runtime.js"></script>
 </head>
@@ -51,41 +42,45 @@
 
     <div class="controls">
         <div class="brand">
-            <a href="index.html"
-                style="text-decoration: none; color: inherit; display: flex; align-items: center; gap: 8px;">
-                <span style="font-size: 1.5rem;">🏠</span>
-                <div style="display: flex; flex-direction: column; line-height: 1.2;">
-                    <span
-                        style="font-size: 0.7rem; color: var(--diagram-accent); text-transform: uppercase; letter-spacing: 1px;">DiagView</span>
-                    <span>Floating Layout</span>
+            <a href="index.html">
+                <img src="images/logo.png" alt="DiagView" style="width:32px;height:32px;border-radius:8px;object-fit:cover;flex-shrink:0">
+                <div class="brand-meta">
+                    <span class="brand-label">DiagView</span>
+                    <span class="brand-name">Floating Layout</span>
                 </div>
             </a>
         </div>
         <div class="toggles">
             <label class="accent-label">
-                Accent:
+                <span>Security</span>
+                <select id="securitySelector" title="Toggle SVG Sanitization Level">
+                    <option value="strict">Strict (High)</option>
+                    <option value="permissive">Permissive</option>
+                    <option value="off">Off (Trusted)</option>
+                </select>
+            </label>
+            <label class="accent-label">
+                <span>Accent</span>
                 <input type="color" id="accentPicker" value="#3b82f6">
             </label>
-            <button class="toggle-btn" onclick="toggleTheme()" title="Toggle Dark/Light Mode">
-                🌓
-            </button>
-            <a href="index.html" class="toggle-btn"
-                style="text-decoration: none; background: var(--diagram-accent); color: white; border: none;">
-                Back to Hub
-            </a>
+            <button class="toggle-btn" onclick="toggleTheme()" title="Toggle Dark/Light Mode">🌓</button>
+            <a href="index.html" class="toggle-btn" style="background:var(--accent);color:#fff;border:none;">← Hub</a>
         </div>
     </div>
 
-    <div style="max-width: clamp(800px, 90vw, 1400px); margin: 0 auto 40px; text-align: center;">
-        <h1 style="font-size: clamp(1.8rem, 6vw, 2.5rem); margin-bottom: 10px;">Static SVG & HUD UI</h1>
-        <p style="color: var(--muted); font-size: 1.1rem;">Clean, non-intrusive floating controls combined with
-            high-performance static SVG rendering.</p>
-    </div>
+    <section class="page-hero">
+        <h1>Static SVG &amp; HUD UI</h1>
+        <p>Clean, non-intrusive floating controls combined with high-performance static SVG rendering.</p>
+        <div class="badge-row"><span class="badge">⊙ Floating FAB Mode</span></div>
+    </section>
 
     <div class="grid">
         <!-- Flowchart (SVG) -->
         <div class="card">
-            <h2>User Login Flow</h2>
+            <div class="card-header">
+                <h3>User Login Flow</h3>
+                <span class="card-badge svg-badge">SVG</span>
+            </div>
             <div class="diagram" data-title="Auth Flowchart">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
                     <defs>
@@ -141,7 +136,10 @@
 
         <!-- Network (SVG) -->
         <div class="card">
-            <h2>Network Topology</h2>
+            <div class="card-header">
+                <h3>Network Topology</h3>
+                <span class="card-badge svg-badge">SVG</span>
+            </div>
             <div class="diagram" data-title="Cloud Network">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 350">
                     <defs>
@@ -189,7 +187,10 @@
 
         <!-- Mini (Mermaid) -->
         <div class="card">
-            <h2>Logic Flow (Mermaid)</h2>
+            <div class="card-header">
+                <h3>Logic Flow (Mermaid)</h3>
+                <span class="card-badge mermaid-badge">Mermaid</span>
+            </div>
             <div class="mermaid">
                 graph LR
                 A[Request] --> B{Valid?}
@@ -200,7 +201,10 @@
 
         <!-- Deployment Pipeline (SVG) -->
         <div class="card">
-            <h2>Deployment Pipeline</h2>
+            <div class="card-header">
+                <h3>Deployment Pipeline</h3>
+                <span class="card-badge svg-badge">SVG</span>
+            </div>
             <div class="diagram" data-title="CI/CD Pipeline">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 200">
                     <defs>
@@ -237,7 +241,10 @@
 
         <!-- Entity Relationship (SVG) -->
         <div class="card">
-            <h2>Entity Relationship</h2>
+            <div class="card-header">
+                <h3>Entity Relationship</h3>
+                <span class="card-badge svg-badge">SVG</span>
+            </div>
             <div class="diagram" data-title="ER Diagram">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 280">
                     <defs>
@@ -287,7 +294,10 @@
 
         <!-- Performance Stress Test (SVG) -->
         <div class="card">
-            <h2>Performance Stress Test</h2>
+            <div class="card-header">
+                <h3>Performance Stress Test</h3>
+                <span class="card-badge stress-badge">2.5k Nodes</span>
+            </div>
             <div class="stress-test" data-title="2,500 Nodes Test">
                 <svg id="stress-svg" width="3000" height="3000" viewBox="0 0 3000 3000"
                     xmlns="http://www.w3.org/2000/svg">
@@ -300,7 +310,95 @@
         </div>
     </div>
 
-    <footer>
+    
+    <!-- ── Feature highlights ── -->
+    <div class="page-section">
+        <div class="section-header">
+            <h2 class="section-title">Why choose this layout?</h2>
+            <p class="section-subtitle">Designed for real-world use cases where control placement matters.</p>
+        </div>
+        <div class="info-grid">
+        <div class="info-card">
+            <div class="info-icon">⊙</div>
+            <h4>Non-Intrusive by Design</h4>
+            <p>The FAB button sits outside the diagram content flow. Users who just need to read never see it — controls appear only on hover.</p>
+        </div>
+        <div class="info-card">
+            <div class="info-icon">📐</div>
+            <h4>Works in Any Container</h4>
+            <p>Floating mode adapts to any parent container size. Embed in sidebars, modals, or full-width sections — the FAB always positions correctly.</p>
+        </div>
+        <div class="info-card">
+            <div class="info-icon">⌨️</div>
+            <h4>Full Keyboard Navigation</h4>
+            <p>Press / to search, + / − to zoom, arrows to pan, Esc to close. Every action is accessible without touching the mouse.</p>
+        </div>
+        </div>
+    </div>
+
+
+    <!-- ── Keyboard shortcuts ── -->
+    <div class="shortcuts-section">
+        <div class="section-header">
+            <h2 class="section-title">Keyboard Reference</h2>
+            <p class="section-subtitle">Every action is keyboard-accessible. No mouse required.</p>
+        </div>
+        <div class="shortcuts-grid">
+            <div class="shortcut-card">
+                <div class="shortcut-group">Zoom</div>
+                <div class="shortcut-row"><kbd>+</kbd><span>Zoom in</span></div>
+                <div class="shortcut-row"><kbd>-</kbd><span>Zoom out</span></div>
+                <div class="shortcut-row"><kbd>Space</kbd><span>Reset &amp; center</span></div>
+            </div>
+            <div class="shortcut-card">
+                <div class="shortcut-group">Pan</div>
+                <div class="shortcut-row"><kbd>↑ ↓ ← →</kbd><span>Pan diagram</span></div>
+                <div class="shortcut-row"><kbd>Scroll</kbd><span>Vertical pan</span></div>
+                <div class="shortcut-row"><kbd>Drag</kbd><span>Free pan</span></div>
+            </div>
+            <div class="shortcut-card">
+                <div class="shortcut-group">Search</div>
+                <div class="shortcut-row"><kbd>/</kbd><span>Open search</span></div>
+                <div class="shortcut-row"><kbd>Esc</kbd><span>Clear / close</span></div>
+            </div>
+            <div class="shortcut-card">
+                <div class="shortcut-group">Export &amp; View</div>
+                <div class="shortcut-row"><kbd>E</kbd><span>Export PNG</span></div>
+                <div class="shortcut-row"><kbd>M</kbd><span>Meeting mode</span></div>
+                <div class="shortcut-row"><kbd>F</kbd><span>Hi-res snapshot</span></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Integration code ── -->
+    <div class="code-section">
+        <div class="section-header" style="margin-bottom:20px">
+            <h2 class="section-title" style="font-size:1.3rem">Integration</h2>
+        </div>
+        <div class="code-block"><pre><code><span class="c">// 1. CDN — drop into any HTML page</span>
+&lt;<span class="t">script</span> <span class="a">src</span>=<span class="v">"https://unpkg.com/diagview@1.0.5/dist/diagview.umd.js"</span>&gt;&lt;/<span class="t">script</span>&gt;
+
+<span class="c">// 2. Init with floating FAB</span>
+<span class="kw">DiagView</span>.init({
+  diagramSelector: <span class="v">'.diagram'</span>,
+  layout:          <span class="v">'floating'</span>,
+  accentColor:     <span class="v">'#f59e0b'</span>,
+  showBranding:    <span class="b">true</span>
+});
+
+<span class="c">// 3. Or set layout per-element via HTML</span>
+&lt;<span class="t">div</span> <span class="a">class</span>=<span class="v">"diagram"</span>
+     <span class="a">data-diagview-layout</span>=<span class="v">"floating"</span>
+     <span class="a">data-diagview-accent</span>=<span class="v">"#f59e0b"</span>&gt;
+  &lt;<span class="t">svg</span>&gt;...&lt;/<span class="t">svg</span>&gt;
+&lt;/<span class="t">div</span>&gt;</code></pre></div>
+        <div class="code-nav">
+            <a href="layout-compare.html" class="code-nav-link">Compare all layouts →</a>
+            <a href="layout-header.html" class="code-nav-link">Try Header Layout →</a>
+        </div>
+    </div>
+
+<footer>
         <div class="container">
             <div class="footer-links">
                 <a href="index.html">← Back to Hub</a>
@@ -325,7 +423,13 @@
                         g.setAttribute("class", "node");
                         const x = c * 60;
                         const y = r * 60;
-                        g.innerHTML = `<rect x="${x}" y="${y}" width="40" height="30" rx="4" fill="#f59e0b" fill-opacity="0.1" stroke="#f59e0b" stroke-width="1"/>`;
+                        const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+                        rect.setAttribute("x", x); rect.setAttribute("y", y);
+                        rect.setAttribute("width", "40"); rect.setAttribute("height", "30");
+                        rect.setAttribute("rx", "4"); rect.setAttribute("fill", "#f59e0b");
+                        rect.setAttribute("fill-opacity", "0.1"); rect.setAttribute("stroke", "#f59e0b");
+                        rect.setAttribute("stroke-width", "1");
+                        g.appendChild(rect);
                         stressLayer.appendChild(g);
                     }
                 }
@@ -333,7 +437,7 @@
 
             if (window.mermaid) await mermaid.run();
 
-            DiagView.init({
+            const dvInit = () => DiagView.init({
                 diagramSelector: '.diagram, .chart, .mermaid, .stress-test, [data-diagram]',
                 showKeyboardHelp: true,
                 highResScale: 4,
@@ -341,6 +445,8 @@
                 layout: 'floating',
                 showBranding: true
             });
+            dvInit();
+            if (window.setupDiagViewToggle) setupDiagViewToggle(dvInit);
         });
     </script>
 </body>

@@ -56,7 +56,6 @@ describe("Search: performSearch", () => {
     document.body.appendChild(cnt);
 
     state.searchMatches = [];
-    state.searchIndex = -1;
 
     // Capture requestAnimationFrame callbacks for manual flushing
     rafCallbacks = [];
@@ -70,7 +69,6 @@ describe("Search: performSearch", () => {
   afterEach(() => {
     document.body.innerHTML = "";
     state.searchMatches = [];
-    state.searchIndex = -1;
     jest.restoreAllMocks();
   });
 
@@ -85,28 +83,27 @@ describe("Search: performSearch", () => {
     flushRaf();
 
     expect(state.searchMatches.length).toBeGreaterThanOrEqual(1);
-    expect(state.searchIndex).toBe(0);
+    // All matches are shown simultaneously — no index-based navigation
+    state.searchMatches.forEach((m) => {
+      expect(m.classList.contains("dv-search-match")).toBe(true);
+    });
   });
 
   test("clears matches when query is empty", () => {
     // Set some prior state
     state.searchMatches = [document.createElement("div")];
-    state.searchIndex = 0;
 
     performSearch(svg, "");
 
     expect(state.searchMatches.length).toBe(0);
-    expect(state.searchIndex).toBe(-1);
   });
 
   test("clears matches when clone is null", () => {
     state.searchMatches = [document.createElement("div")];
-    state.searchIndex = 0;
 
     performSearch(null, "test");
 
     expect(state.searchMatches.length).toBe(0);
-    expect(state.searchIndex).toBe(-1);
   });
 
   test("case-insensitive matching", () => {
@@ -136,16 +133,17 @@ describe("Search: performSearch", () => {
     flushRaf();
 
     expect(state.searchMatches.length).toBe(0);
-    expect(state.searchIndex).toBe(-1);
   });
 
-  test("highlights current match with dv-cur class", () => {
+  test("all matches get dv-search-match class (simultaneous highlight)", () => {
     performSearch(svg, "auth");
     flushRaf();
 
     expect(state.searchMatches.length).toBeGreaterThanOrEqual(1);
-    const current = state.searchMatches[state.searchIndex];
-    expect(current.classList.contains("dv-cur")).toBe(true);
+    // Every match must be highlighted — no single "current" concept
+    state.searchMatches.forEach((el) => {
+      expect(el.classList.contains("dv-search-match")).toBe(true);
+    });
   });
 });
 
@@ -161,7 +159,6 @@ describe("Search: clearSearch", () => {
       <span class="dv-src-cnt show">1/3</span>
     `;
     state.searchMatches = [document.createElement("div")];
-    state.searchIndex = 0;
 
     jest.spyOn(window, "requestAnimationFrame").mockImplementation((cb) => {
       cb();
@@ -173,7 +170,6 @@ describe("Search: clearSearch", () => {
   afterEach(() => {
     document.body.innerHTML = "";
     state.searchMatches = [];
-    state.searchIndex = -1;
     jest.restoreAllMocks();
   });
 
@@ -187,10 +183,9 @@ describe("Search: clearSearch", () => {
     expect(document.getElementById("diagview-search-clear").classList.contains("show")).toBe(false);
   });
 
-  test("resets search state", () => {
+  test("resets searchMatches to empty array", () => {
     clearSearch();
     expect(state.searchMatches.length).toBe(0);
-    expect(state.searchIndex).toBe(-1);
   });
 
   test("removes dv-searching class from SVG", () => {

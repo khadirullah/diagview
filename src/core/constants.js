@@ -22,6 +22,12 @@ export const TIMING = {
   THEME_SYNC_DEBOUNCE: 50,
   SEARCH_THROTTLE: 150,
   OBSERVER_DEBOUNCE: 100,
+  MINIMAP_THROTTLE: 100,
+  RENDER_DELAY: 50,
+  CLEANUP_DELAY: 100,
+  IDLE_TIMEOUT: 2000,
+  PREWARM_DELAY: 200,
+  RESOURCE_REVOKE_DELAY: 1000,
 };
 
 /**
@@ -33,6 +39,11 @@ export const EXPORT = {
   MOBILE_SCALE_DEFAULT: 2,
   PDF_SCALE: 2,
   MAX_PIXELS_DEFAULT: 16777216, // 16MP (4096×4096) — safe for all browsers including mobile
+  MAX_PIXELS_LIMIT: 268435456, // 256MP (16384×16384) — ceiling for specialized high-res needs
+  MIN_PIXELS_LIMIT: 1000000, // 1MP floor
+  LARGE_FILE_THRESHOLD: 1000000, // 1MB threshold for SVG/Data strings
+  LARGE_FILE_THRESHOLD_DEFAULT: 1000000, // 1MB for performance bypass
+  CRITICAL_FILE_LIMIT_DEFAULT: 50000000, // 50MB for hard block
 };
 
 /**

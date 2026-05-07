@@ -8,7 +8,7 @@
  */
 (function () {
     /* ── Version (single source of truth for all demo pages) ── */
-    var DV_VERSION = '1.0.4';
+    var DV_VERSION = '1.0.5';
 
     /* ── Phase 1: Immediate — runs before first paint ── */
 
@@ -59,18 +59,34 @@
             }
         });
 
+        // Global security toggle
+        window.updateSecurity = function (mode) {
+            if (window.DiagView) {
+                window.DiagView.configure({ security: { mode: mode } });
+                console.log('DiagView: Security mode changed to ' + mode);
+            }
+        };
+
         // Auto-wire accent color picker if present on page
         var picker = document.getElementById('accentPicker');
         if (picker) {
             try {
                 var saved = localStorage.getItem('dv-accent');
                 if (saved) picker.value = saved;
-            } catch (e) {}
+            } catch (e) { }
 
             picker.addEventListener('input', function (ev) {
                 var color = ev.target.value;
                 applyAccent(color);
-                try { localStorage.setItem('dv-accent', color); } catch (e) {}
+                try { localStorage.setItem('dv-accent', color); } catch (e) { }
+            });
+        }
+
+        // Auto-wire security selector if present on page
+        var securitySelector = document.getElementById('securitySelector');
+        if (securitySelector) {
+            securitySelector.addEventListener('change', function (ev) {
+                window.updateSecurity(ev.target.value);
             });
         }
 
@@ -84,6 +100,37 @@
         requestAnimationFrame(function () {
             document.body.classList.add('ready');
         });
+
+        // DiagView destroy/init toggle — call setupDiagViewToggle(initFn) on each page
+        window.setupDiagViewToggle = function (initFn) {
+            var toggles = document.querySelector('.toggles');
+            if (!toggles) return;
+
+            var active = true;
+            var btn = document.createElement('button');
+            btn.id = 'dv-toggle-btn';
+            btn.className = 'toggle-btn';
+            btn.title = 'Toggle DiagView on/off to compare before/after';
+            btn.style.cssText = 'background:#ef4444;color:#fff;border:none;font-weight:600;';
+            btn.textContent = '⊖ Destroy DiagView';
+
+            btn.addEventListener('click', function () {
+                if (active) {
+                    if (window.DiagView) window.DiagView.destroy();
+                    active = false;
+                    btn.textContent = '⊕ Init DiagView';
+                    btn.style.background = '#10b981';
+                } else {
+                    initFn();
+                    active = true;
+                    btn.textContent = '⊖ Destroy DiagView';
+                    btn.style.background = '#ef4444';
+                }
+            });
+
+            // Insert as the first toggle button
+            toggles.insertBefore(btn, toggles.firstChild);
+        };
     }
 
     if (document.readyState === 'loading') {

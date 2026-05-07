@@ -18,6 +18,7 @@
  */
 
 import { state } from "../../core/config.js";
+import { ZOOM } from "../../core/constants.js";
 import { showSuccessToast, showErrorToast } from "../../ui/toast.js";
 
 /**
@@ -26,6 +27,18 @@ import { showSuccessToast, showErrorToast } from "../../ui/toast.js";
  * @private
  */
 const shareStates = new WeakMap();
+
+/**
+ * Clamp a numeric value to a safe range.
+ * @param {number} val - Value to clamp.
+ * @param {number} min - Minimum allowed value.
+ * @param {number} max - Maximum allowed value.
+ * @returns {number} Clamped value.
+ * @private
+ */
+function clampNum(val, min, max) {
+  return Math.min(Math.max(val, min), max);
+}
 
 /**
  * Creates a standard SVG Point object used for matrix transformation math.
@@ -126,12 +139,9 @@ export function generateShareLink(diagramIndex) {
   const svg = viewport?.querySelector("svg");
   if (!viewport || !svg) return null;
 
-  const url = new URL(window.location.href);
-
-  // Strip existing parameters to ensure a clean link
-  ["dv-idx", "dv-z", "dv-x", "dv-y", "dv-cx", "dv-cy", "dv-r", "dv-q"].forEach((p) =>
-    url.searchParams.delete(p),
-  );
+  // Build from origin + pathname only — never copy existing query params
+  // (avoids leaking auth tokens, session IDs, or other host-app parameters).
+  const url = new URL(window.location.origin + window.location.pathname);
 
   const scale = state.activePanzoom.getScale();
   const rotation = state.rotationAngle || 0;
@@ -210,13 +220,27 @@ export function restoreViewFromURL(diagrams) {
   if (idx >= 0 && idx < diagrams.length) {
     const diagram = diagrams[idx];
 
+    // Clamp all numeric params to safe ranges before trusting them.
+    // Prevents crafted URLs from passing extreme values to panzoom/DOM ops.
+    const rawScale = params.get("dv-z") ? parseFloat(params.get("dv-z")) : null;
+    const rawCx = params.get("dv-cx") ? parseInt(params.get("dv-cx"), 10) : null;
+    const rawCy = params.get("dv-cy") ? parseInt(params.get("dv-cy"), 10) : null;
+    const rawX = params.get("dv-x") ? parseInt(params.get("dv-x"), 10) : null;
+    const rawY = params.get("dv-y") ? parseInt(params.get("dv-y"), 10) : null;
+    const rawRot = params.get("dv-r") ? parseInt(params.get("dv-r"), 10) : null;
+
+    const VALID_ROTATIONS = new Set([0, 90, 180, 270]);
+
     shareStates.set(diagram, {
-      scale: params.get("dv-z") ? parseFloat(params.get("dv-z")) : null,
-      x: params.get("dv-x") ? parseInt(params.get("dv-x"), 10) : null,
-      y: params.get("dv-y") ? parseInt(params.get("dv-y"), 10) : null,
-      cx: params.get("dv-cx") ? parseInt(params.get("dv-cx"), 10) : null,
-      cy: params.get("dv-cy") ? parseInt(params.get("dv-cy"), 10) : null,
-      rotation: params.get("dv-r") ? parseInt(params.get("dv-r"), 10) : null,
+      scale:
+        rawScale !== null && isFinite(rawScale)
+          ? clampNum(rawScale, ZOOM.MIN_SCALE_LIMIT, ZOOM.MAX_SCALE_LIMIT)
+          : null,
+      x: rawX !== null && isFinite(rawX) ? clampNum(rawX, -100000, 100000) : null,
+      y: rawY !== null && isFinite(rawY) ? clampNum(rawY, -100000, 100000) : null,
+      cx: rawCx !== null && isFinite(rawCx) ? clampNum(rawCx, -100000, 100000) : null,
+      cy: rawCy !== null && isFinite(rawCy) ? clampNum(rawCy, -100000, 100000) : null,
+      rotation: rawRot !== null && VALID_ROTATIONS.has(rawRot) ? rawRot : null,
       query: params.get("dv-q") || null,
     });
 
@@ -249,6 +273,7 @@ export function applyRestoredViewState(diagram, panzoom) {
   if (cx !== null && cy !== null) {
     // Wait for the browser to paint the new zoom layout
     requestAnimationFrame(() => {
+      if (!state.isModalOpen) return;
       const viewport = document.getElementById("diagview-modal-viewport");
       const svg = viewport?.querySelector("svg");
       if (!svg || !panzoom) return;

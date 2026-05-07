@@ -1,86 +1,228 @@
 # Contributing to DiagView
 
-Thank you for considering contributing! 🎉
+Thank you for your interest in contributing! 🎉 This document covers everything you need to get started.
 
-## How to Contribute
+---
 
-### Reporting Bugs
+## Table of Contents
 
-1. Check if the bug already exists in [Issues](https://github.com/khadirullah/diagview/issues)
-2. If not, create a new issue with:
-   - Clear title
-   - Steps to reproduce
-   - Expected vs actual behavior
-   - Screenshots if applicable
-   - Environment details (browser, OS)
+- [Code of Conduct](#code-of-conduct)
+- [Getting Started](#getting-started)
+- [Project Structure](#project-structure)
+- [Development Workflow](#development-workflow)
+- [Running Tests](#running-tests)
+- [Commit Message Convention](#commit-message-convention)
+- [Pull Request Process](#pull-request-process)
+- [Reporting Bugs](#reporting-bugs)
+- [Requesting Features](#requesting-features)
 
-### Suggesting Features
+---
 
-1. Check [existing feature requests](https://github.com/khadirullah/diagview/issues?q=is%3Aissue+label%3Aenhancement)
-2. Create a new issue with `[FEATURE]` prefix
-3. Describe the problem it solves
-4. Explain your proposed solution
+## Code of Conduct
 
-### Pull Requests
+Be kind, constructive, and respectful. Harassment of any kind is not tolerated.
 
-1. Fork the repository
-2. Create a feature branch: `git checkout -b feature/my-feature`
-3. Make your changes
-4. Add tests if applicable (optional)
-5. Run linter: `npm run lint`
-6. Commit with clear message: `git commit -m "Add my feature"`
-7. Push: `git push origin feature/my-feature`
-8. Open a Pull Request
+---
 
-### Code Style
+## Getting Started
 
-- Use ESLint configuration provided
-- Follow existing code patterns
-- Add JSDoc comments for public APIs
-- Keep functions small and focused
+### Prerequisites
 
-### Documentation
+- Node.js ≥ 16
+- npm ≥ 8
+- Git
 
-- Update README.md if needed
-- Add/update JSDoc comments
-- Update USAGE.md for new features
+### Setup
 
-## Subresource Integrity (SRI) Management
-
-DiagView uses external CDNs for optional dependencies like jsPDF. To prevent silent failures when the CDN updates:
-1. Always specify an exact version in the URL (e.g., `.../jspdf/2.5.1/...`).
-2. Provide a matching `pdfLibraryIntegrity` hash in the default config.
-3. If you update the URL, you **must** update the hash. A mismatch will cause the browser to block the script, falling back to PNG export silently.
-4. Users modifying the `pdfLibraryUrl` at runtime without providing a new hash will have the SRI check disabled to prevent breakages.
-
-## Technical Architecture
-
-### Module Singletons
-DiagView uses a centralized `state` object for most data. However, for performance and simplicity, some modules (like `observer.js` and `meeting-mode.js`) use **module-level singletons** for state that doesn't need to be multi-instance aware. 
-
-- **Lifecycle**: If you add new module-level variables, ensure you export a reset function (e.g., `resetSearch()`) and call it inside the `destroy()` flow in `src/index.js`. This prevents state "leaks" in Single Page Applications where DiagView might be initialized multiple times.
-- **Deduplication**: We assume a standard build environment where the bundler (Rollup, Webpack, etc.) deduplicates these modules correctly.
-
-### Design Principles
-- **Lazy Loading**: Keep the core bundle small. Complex features (Minimap, PDF Export, Search) should be dynamically imported only when used.
-- **Accessibility**: All UI elements must maintain high contrast ratios (WCAG 2.0). Use the utility functions in `theme.js` to verify colors.
-- **Security**: Avoid `innerHTML`. Use `createTextNode` or `insertAdjacentHTML` with trusted SVG strings for UI construction.
-
-## Development Setup
 ```bash
-# Clone your fork
-git clone https://github.com/khadirullah/diagview.git
+# 1. Fork the repo on GitHub, then clone your fork:
+git clone https://github.com/<your-username>/diagview.git
 cd diagview
 
-# Install dependencies
+# 2. Install dependencies
 npm install
 
-# Start dev server
+# 3. Build the library
+npm run build
+
+# 4. Start watch mode for development
 npm run dev
 ```
 
-## Questions?
+### Running the demo locally
 
-Open an issue or reach out to maintainers!
+Open `demo/index.html` in your browser. The demo pages load from `../dist/diagview.umd.js`, so build first with `npm run build`.
 
-Thank you for contributing! ❤️
+---
+
+## Project Structure
+
+```
+diagview/
+├── src/
+│   ├── core/             # State, config, events, lifecycle, utils
+│   ├── features/         # Diagram init, export, keyboard
+│   │   └── lazy/         # Search, minimap, share, rotate, meeting mode
+│   └── ui/               # Modal, floating menu, toast, focus manager
+├── tests/
+│   ├── *.test.js         # Jest unit tests (one file per module)
+│   └── mocks/            # JSDOM mocks (styleMock.js)
+├── demo/                 # Static demo pages (no build step needed)
+├── docs/                 # Documentation (Markdown)
+├── scripts/              # Build helpers (sync-version.js)
+├── dist/                 # Built output (git-ignored, generated by npm run build)
+├── rollup.config.js      # Build configuration
+└── package.json
+```
+
+### Key design principles
+
+- **Lazy loading:** Heavy features (search cache pre-warm, minimap, share, PDF) are loaded only when first used via dynamic `import()`.
+- **No innerHTML sinks:** All DOM mutation uses `createElement`, `createElementNS`, `DOMParser`, or `setSVGContent()` — never `innerHTML` or `insertAdjacentHTML`.
+- **Cleanup discipline:** Every event listener registered during a modal session is registered via `addManagedListener` / `addModalListener` so it is automatically removed.
+- **No circular dependencies:** Modules are structured to minimize circular imports.
+
+---
+
+## Development Workflow
+
+```bash
+# Watch mode — rebuilds on every file save
+npm run dev
+
+# One-off production build
+npm run build
+
+# Lint
+npm run lint
+npm run lint:fix
+
+# Format
+npm run format
+
+# Check bundle size against limits
+npm run size
+```
+
+### Environment variables
+
+| Variable            | Effect                                                   |
+| ------------------- | -------------------------------------------------------- |
+| `ROLLUP_WATCH=true` | Disables terser minification (auto-set by `npm run dev`) |
+| `ANALYZE=1`         | Generates `dist/bundle-stats.html` bundle visualization  |
+
+```bash
+ANALYZE=1 npm run build:analyze
+```
+
+---
+
+## Running Tests
+
+### Unit tests (Jest)
+
+```bash
+# Run all tests
+npm test
+
+# Run with coverage report
+npm run test:coverage
+
+# Run a specific test file
+npx jest tests/search.test.js
+
+# Run tests in watch mode
+npx jest --watch
+```
+
+Tests use JSDOM. Canvas APIs are polyfilled by `jest-canvas-mock`. CSS imports are mocked via `tests/mocks/styleMock.js`.
+
+---
+
+## Commit Message Convention
+
+We follow [Conventional Commits](https://www.conventionalcommits.org/):
+
+```
+<type>(<scope>): <short summary>
+```
+
+**Types:**
+
+| Type       | When to use                                             |
+| ---------- | ------------------------------------------------------- |
+| `feat`     | New user-facing feature                                 |
+| `fix`      | Bug fix                                                 |
+| `refactor` | Code change that is neither a bug fix nor a new feature |
+| `perf`     | Performance improvement                                 |
+| `docs`     | Documentation only                                      |
+| `test`     | Adding or correcting tests                              |
+| `tooling`  | Build scripts, CI, configs                              |
+| `chore`    | Maintenance (version bumps, dependency updates)         |
+
+**Examples:**
+
+```
+feat(search): pre-warm candidate cache during idle time
+fix(minimap): correct portrait diagram clipping
+docs(api): add initShadowRoot() documentation
+refactor(modal): extract prepareViewportContent into separate phase
+perf(svg-clone): cap styled nodes at 5000 to prevent lockup
+test(share): add coverage for RAFbased pan fallback
+```
+
+---
+
+## Pull Request Process
+
+1. **Fork** the repository and create a branch from `main`:
+
+   ```bash
+   git checkout -b fix/minimap-portrait-clipping
+   ```
+
+2. **Make your changes.** Keep commits atomic and well-described.
+3. **Add or update tests** for your change. Bugfixes should include a regression test.
+4. **Run the full test suite locally:**
+
+   ```bash
+   npm run lint && npm test && npm run build && npm run size
+   ```
+
+5. **Open the PR** against `main`. Fill in the PR template:
+   - What problem does this solve?
+   - How was it tested?
+   - Any breaking changes?
+
+6. **Address review feedback.** Force-push to your branch if needed.
+7. **Merge** is done by maintainers after approval.
+
+### What makes a good PR
+
+- Focused: one logical change per PR
+- Tested: unit tests for new logic, regression tests for bug fixes
+- Documented: update `docs/` or JSDoc if the public API changes
+- Small: prefer multiple small PRs over one large one
+
+---
+
+## Reporting Bugs
+
+Open a [GitHub Issue](https://github.com/khadirullah/diagview/issues) and include:
+
+- DiagView version (`DiagView.version`)
+- Browser and OS
+- Steps to reproduce (ideally a minimal HTML snippet)
+- Expected behaviour vs actual behaviour
+- Console errors (screenshots welcome)
+
+---
+
+## Requesting Features
+
+Open a [GitHub Issue](https://github.com/khadirullah/diagview/issues) titled `[Feature] <your idea>` and describe:
+
+- The problem you are trying to solve
+- Your proposed solution
+- Any alternatives you considered
+- Whether you are willing to implement it yourself

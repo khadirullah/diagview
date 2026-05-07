@@ -6,10 +6,13 @@
 import resolve from "@rollup/plugin-node-resolve";
 import babel from "@rollup/plugin-babel";
 import terser from "@rollup/plugin-terser";
+import replace from "@rollup/plugin-replace";
+import { visualizer } from "rollup-plugin-visualizer";
 import fs from "fs";
 
 const pkg = JSON.parse(fs.readFileSync(new URL("./package.json", import.meta.url), "utf8"));
 const production = !process.env.ROLLUP_WATCH;
+const analyze = !!process.env.ANALYZE;
 
 function stringPlugin() {
   return {
@@ -86,6 +89,10 @@ export default [
         browser: true,
         preferBuiltins: false,
       }),
+      replace({
+        __DV_VERSION__: JSON.stringify(pkg.version),
+        preventAssignment: true,
+      }),
       babel(babelConfig),
     ],
   },
@@ -112,8 +119,20 @@ export default [
         browser: true,
         preferBuiltins: false,
       }),
+      replace({
+        __DV_VERSION__: JSON.stringify(pkg.version),
+        preventAssignment: true,
+      }),
       babel(babelConfig),
       production && terser(terserConfig),
+      // Bundle analysis — only runs when ANALYZE=1 (never in CI builds)
+      analyze &&
+        visualizer({
+          filename: "dist/bundle-stats.html",
+          open: false,
+          gzipSize: true,
+          title: `DiagView v${pkg.version} Bundle Analysis`,
+        }),
     ],
   },
 
@@ -130,6 +149,10 @@ export default [
     external: ["@panzoom/panzoom"],
     plugins: [
       stringPlugin(),
+      replace({
+        __DV_VERSION__: JSON.stringify(pkg.version),
+        preventAssignment: true,
+      }),
       babel({
         ...babelConfig,
         presets: [

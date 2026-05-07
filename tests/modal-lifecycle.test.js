@@ -33,7 +33,7 @@ describe("Managed Event Listeners", () => {
     addManagedListener(target, "click", handler);
 
     // Cleanup should be registered in state
-    expect(state.cleanupFunctions.length).toBeGreaterThan(0);
+    expect(state.cleanupFunctions.size).toBeGreaterThan(0);
 
     // Running cleanup removes the listener
     runCleanupFunctions();
@@ -66,14 +66,14 @@ describe("Cleanup Function System", () => {
     addCleanupFunction(fn1);
     addCleanupFunction(fn2);
     addCleanupFunction(fn3);
-    expect(state.cleanupFunctions).toHaveLength(3);
+    expect(state.cleanupFunctions.size).toBe(3);
 
     runCleanupFunctions();
 
     expect(fn1).toHaveBeenCalledTimes(1);
     expect(fn2).toHaveBeenCalledTimes(1);
     expect(fn3).toHaveBeenCalledTimes(1);
-    expect(state.cleanupFunctions).toEqual([]);
+    expect(state.cleanupFunctions.size).toBe(0);
   });
 
   test("runCleanupFunctions handles errors without stopping", () => {
@@ -98,6 +98,6 @@ describe("Cleanup Function System", () => {
     addCleanupFunction("not a function");
     addCleanupFunction(null);
     addCleanupFunction(42);
-    expect(state.cleanupFunctions).toEqual([]);
+    expect(state.cleanupFunctions.size).toBe(0);
   });
 });

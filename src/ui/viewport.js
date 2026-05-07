@@ -3,17 +3,17 @@
  * Handles browser history state and viewport layout locking.
  *
  * NOTE: For mobile stability, we use the "Viewport Meta Hack".
- * While this temporarily restricts browser-level zoom (WCAG 1.4.4),
- * it is the industry standard for immersive Full-Screen Lightbox
- * applications (like Google Photos, Instagram Web, PhotoSwipe).
- * The user can dynamically zoom the diagram itself via Panzoom,
- * and turning off browser-zoom guarantees a flawless, native-app-like
- * CSS layout for the modal controls without "runaway" UI bugs.
+ * This ensures the modal opens at the correct 1:1 scale on mobile devices.
+ * To comply with WCAG 1.4.4 (Resize Text), we DO NOT use user-scalable=no
+ * or maximum-scale. The user can always use native browser zoom to
+ * enlarge the UI controls, and DiagView provides internal Panzoom
+ * for the diagram itself.
  *
  * @module ui/viewport
  */
 
 import { state } from "../core/config.js";
+import { TIMING } from "../core/constants.js";
 
 // ==========================================
 // History State (Mobile Back Button)
@@ -21,12 +21,13 @@ import { state } from "../core/config.js";
 
 let _historyStatePushed = false;
 let _popstateHandler = null;
+let _historyTransitionLock = false;
 
 /**
  * Push a history entry when modal opens.
  */
 export function pushModalHistoryState(onBackButton) {
-  if (_historyStatePushed) return;
+  if (_historyStatePushed || _historyTransitionLock) return;
 
   history.pushState({ diagviewModal: true }, "");
   _historyStatePushed = true;
@@ -53,7 +54,12 @@ export function cleanupModalHistoryState() {
   if (_historyStatePushed) {
     _historyStatePushed = false;
     if (history.state && history.state.diagviewModal) {
+      _historyTransitionLock = true;
       history.back();
+      // Lock prevents a new push during the async back transition
+      setTimeout(() => {
+        _historyTransitionLock = false;
+      }, TIMING.CLEANUP_DELAY);
     }
   }
 }
@@ -73,28 +79,34 @@ let _didInjectViewportMeta = false;
 export function startVisualViewportSync() {
   stopVisualViewportSync(); // ensure clean state
 
-  // If not in immersive mode, we don't hijack the meta viewport at all.
-  // This is better for WCAG 1.4.4 compliance and host-page integration.
-  if (!state.config.immersiveMode) return;
+  // We use the "Viewport Meta Hack" to force-reset the mobile zoom level.
+  // By removing and re-injecting the tag, we force stubborn browsers (like Firefox)
+  // to re-evaluate the layout viewport and snap back to 1:1 scale.
+  const content = "width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no, shrink-to-fit=no";
 
   const meta = document.querySelector('meta[name="viewport"]');
   if (meta) {
     _originalViewportMeta = meta.content;
-    _didInjectViewportMeta = false;
-    // Force scale reset and disable user scaling
-    meta.content = "width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no";
-  } else {
-    // Inject if doesn't exist
-    const newMeta = document.createElement("meta");
-    newMeta.name = "viewport";
-    newMeta.id = "diagview-injected-viewport";
-    newMeta.content = "width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no";
-    document.head.appendChild(newMeta);
-    _didInjectViewportMeta = true;
-    _originalViewportMeta = null;
+    meta.remove(); // Force re-evaluation
   }
-}
 
+  // Force scroll to top-left to help reset the visual viewport position
+  window.scrollTo(0, 0);
+
+  const newMeta = document.createElement("meta");
+  newMeta.name = "viewport";
+  newMeta.id = "diagview-injected-viewport";
+  
+  // Two-step hack for Firefox: Set a slightly different scale first, then snap to 1
+  newMeta.content = "width=device-width, initial-scale=0.999";
+  document.head.appendChild(newMeta);
+  _didInjectViewportMeta = true;
+
+  // Final snap in next frame
+  requestAnimationFrame(() => {
+    if (newMeta) newMeta.content = content;
+  });
+}
 
 /**
  * Restore the original viewport settings so the user can
@@ -112,4 +124,21 @@ export function stopVisualViewportSync() {
     }
     _originalViewportMeta = null;
   }
+}
+
+/**
+ * Reset all module-level state.
+ * CRIT-4: Ensures clean state across multiple init/destroy cycles in SPAs.
+ */
+export function resetViewportState() {
+  _historyStatePushed = false;
+  _historyTransitionLock = false;
+
+  if (_popstateHandler) {
+    window.removeEventListener("popstate", _popstateHandler);
+    _popstateHandler = null;
+  }
+
+  // Also ensure viewport meta tags are restored
+  stopVisualViewportSync();
 }

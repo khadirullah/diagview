@@ -1,6 +1,7 @@
+/* global __DV_VERSION__ */
 /**
  * DiagView - Universal Interactive Diagram Viewer
- * @version 1.0.4
+ * @version __DV_VERSION__
  * @license MIT
  *
  * A lightweight, framework-agnostic library for displaying interactive
@@ -9,6 +10,7 @@
 
 import {
   state,
+  publicState,
   updateConfig,
   resetConfig,
   getConfig,
@@ -16,20 +18,30 @@ import {
   runCleanupFunctions,
   runModalCleanupFunctions,
 } from "./core/config.js";
-import { isBrowser } from "./core/utils.js";
-import { safeDestroy } from "./core/lifecycle.js";
+import { isBrowser, sanitizeSVG, clearSVGContentCache } from "./core/utils.js";
+import { safeDestroy, clearAsyncTasks } from "./core/lifecycle.js";
 import { setupThemeWatchers, teardownThemeWatchers, syncTheme } from "./core/theme.js";
 import { injectStyles, removeStyles } from "./ui/styles.js";
-import { createModal } from "./ui/modal.js";
+import { createModal, openFullscreen } from "./ui/modal.js";
 import { closeModal, syncBrandingVisibility } from "./ui/modal-controls.js";
+import { resetViewportState } from "./ui/viewport.js";
 import { setupKeyboardShortcuts, teardownKeyboardShortcuts } from "./features/keyboard.js";
 import {
   observeDiagrams,
   stopObserving,
   refreshDiagrams,
   resetShareLinkCheck,
+  processDiagrams,
 } from "./core/observer.js";
-import { exportDiagram } from "./features/export.js";
+import {
+  exportDiagram,
+  exportToPNG,
+  exportToSVG,
+  exportToJPEG,
+  exportToWebP,
+  exportToPDF,
+  copyToClipboard,
+} from "./features/export.js";
 import { deinitializeDiagram } from "./features/diagram-init.js";
 import { cleanupKeyboardHelp } from "./ui/keyboard-help.js";
 import { resetFocusManagement } from "./ui/focus-manager.js";
@@ -92,6 +104,11 @@ async function destroy() {
     return;
   }
 
+  // 0. If modal is open, close it first to release scroll locks and global listeners
+  if (state.isModalOpen) {
+    await closeModal();
+  }
+
   // Stop observers first so no new diagrams get initialised during teardown
   stopObserving();
   teardownThemeWatchers();
@@ -109,6 +126,7 @@ async function destroy() {
   // Run cleanup BEFORE resetConfig so cleanup functions can still read state
   runModalCleanupFunctions();
   runCleanupFunctions();
+  clearAsyncTasks(state);
 
   // Lazy module resets (module-level vars not in state)
   // We use Promise.all to ensure all async cleanups finish before resetConfig()
@@ -148,7 +166,12 @@ async function destroy() {
   // Clean up all saved zoom states from sessionStorage
   clearAllZoomStates();
 
+  // Clear event bus and caches
+  state.events.clear();
+  clearSVGContentCache();
+
   // Now reset all state — cleanup functions have already run
+  resetViewportState();
   resetConfig();
 }
 
@@ -163,6 +186,24 @@ function refresh() {
 
   syncTheme();
   refreshDiagrams();
+}
+
+/**
+ * Initialize diagrams inside a Shadow DOM root.
+ * @param {ShadowRoot} shadowRoot
+ */
+function initShadowRoot(shadowRoot) {
+  if (!state.isInitialized) {
+    console.warn("DiagView: Call init() before initShadowRoot()");
+    return;
+  }
+
+  if (!shadowRoot || !shadowRoot.querySelectorAll) {
+    console.warn("DiagView: Invalid ShadowRoot provided to initShadowRoot()");
+    return;
+  }
+
+  processDiagrams(shadowRoot);
 }
 
 /**
@@ -188,32 +229,56 @@ function getConfiguration() {
   return getConfig();
 }
 
+// Version
+const version = __DV_VERSION__;
+
 // Public API
 const DiagView = {
   // Core methods
   init,
+  initShadowRoot,
   destroy,
   refresh,
   configure,
   getConfiguration,
 
   // State (for debugging/inspection)
-  /** Internal state object for debugging and inspection */
-  state,
+  /** Internal state object for debugging and inspection (Read-Only) */
+  state: publicState,
 
   // Export functionality
   exportDiagram,
+  exportToPNG,
+  exportToSVG,
+  exportToJPEG,
+  exportToWebP,
+  exportToPDF,
+  copyToClipboard,
 
   // Utilities
   closeModal,
+  /** Utility functions for SVG processing and security */
+  utils: {
+    sanitizeSVG,
+  },
+
+  /**
+   * Open a diagram in fullscreen programmatically.
+   * @param {HTMLElement} element - Diagram container
+   * @param {{zoom?: number, searchQuery?: string}} [options]
+   */
+  openFullscreen,
 
   // Version
-  version: "1.0.4",
+  version,
 };
 
 // Auto-bootstrap (optional)
 if (typeof window !== "undefined") {
-  window.DiagView = DiagView;
+  // Defensive global assignment to prevent overwriting existing versions
+  if (typeof window !== "undefined") {
+    window.DiagView = window.DiagView || DiagView;
+  }
 
   // Auto-initialize on DOMContentLoaded
   const autoInit = () => {
@@ -221,7 +286,8 @@ if (typeof window !== "undefined") {
     if (state.isInitialized) return;
 
     // 2. Check for explicit opt-out on the script tag itself
-    const currentScript = document.currentScript || document.querySelector('script[src*="diagview"]');
+    const currentScript =
+      document.currentScript || document.querySelector('script[src*="diagview"]');
     const isOptedOut = currentScript && currentScript.hasAttribute("data-diagview-no-auto-init");
 
     // 3. Determine if we should initialize
@@ -249,4 +315,21 @@ if (typeof window !== "undefined") {
 
 // Export for module systems
 export default DiagView;
-export { init, destroy, refresh, configure, getConfiguration, exportDiagram, closeModal };
+export {
+  init,
+  initShadowRoot,
+  destroy,
+  refresh,
+  configure,
+  getConfiguration,
+  exportDiagram,
+  exportToPNG,
+  exportToSVG,
+  exportToJPEG,
+  exportToWebP,
+  exportToPDF,
+  copyToClipboard,
+  closeModal,
+  openFullscreen,
+  version,
+};

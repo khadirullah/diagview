@@ -1,374 +1,483 @@
 # DiagView
 
-> Lightweight, framework-agnostic interactive diagram viewer with zoom, pan, search, and export.
+> A lightweight, framework-agnostic interactive viewer for SVG diagrams.  
+> Adds Zoom · Pan · Search · Export · Minimap · Rotation · Presentation Mode to any SVG on your page.
 
 [![npm version](https://img.shields.io/npm/v/diagview.svg)](https://www.npmjs.com/package/diagview)
 [![Bundle Size](https://img.shields.io/bundlephobia/minzip/diagview)](https://bundlephobia.com/package/diagview)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+[![Test Suite](https://github.com/khadirullah/diagview/actions/workflows/test.yml/badge.svg)](https://github.com/khadirullah/diagview/actions)
 
-> [!TIP]
-> **Check out the Live Demo:** [View Demo Hub](https://khadirullah.github.io/diagview/)
+![DiagView Demo](media/demo.gif)
+
+> **[Live Demo →](https://khadirullah.github.io/diagview/)**
+
+---
+
+## Table of Contents
+
+- [Features](#-features)
+- [Installation](#-installation)
+- [Quick Start](#-quick-start)
+- [Layout Modes](#-layout-modes)
+- [Per-Diagram Overrides](#-per-diagram-overrides)
+- [Keyboard Shortcuts](#-keyboard-shortcuts)
+- [Export Formats](#-export-formats)
+- [Framework Integration](#-framework-integration)
+- [Configuration](#-configuration)
+- [Screenshots](#-screenshots)
+- [Live Demo](#-live-demo)
+- [Documentation](#-documentation)
+- [Contributing](#-contributing)
+- [License](#-license)
 
 ---
 
 ## ✨ Features
 
-- 🎨 **Auto-theming** - Detects light/dark mode automatically
-- 🔍 **Fast Search** - Highlight nodes with instant search
-- 📤 **Multi-format Export** - PNG, SVG, PDF, WebP, Clipboard
-- ⌨️ **Keyboard Shortcuts** - Full keyboard navigation
-- 📱 **Mobile Optimized** - Touch gestures, pinch-to-zoom, and Viewport Locking for stability
-- 🏗️ **Smart Minimap** - Accurate scaling for both portrait and landscape diagrams
-- 🎯 **Meeting Mode** - Laser pointer for presentations
-- 🔗 **Share Links** - Share exact zoom/pan view
-- 🎨 **3 Layout Modes** - Header, Floating, Click-to-open
-- 🔄 **Lazy Loading** - Features load on-demand (NPM/ESM only)
-- 📦 **Minimal Dependencies** - Only requires @panzoom/panzoom
-- 🚀 **Framework Agnostic** - Works with React, Vue, Svelte, vanilla JS
+| Feature                      | Description                                                            |
+| ---------------------------- | ---------------------------------------------------------------------- |
+| 🎨 **Auto-Theming**          | Detects Tailwind, Bootstrap, and system dark/light mode automatically  |
+| 🔍 **Node Search**           | Instant search with pulsing glow highlights on matching nodes          |
+| 📤 **Multi-Format Export**   | PNG, SVG, PDF, JPEG, WebP — with transparent background option         |
+| 📋 **Clipboard Copy**        | Copy diagrams directly to the clipboard                                |
+| ⌨️ **Keyboard Shortcuts**    | Full keyboard navigation (zoom, pan, search, share, rotate)            |
+| 📱 **Mobile Optimized**      | Pinch-to-zoom, double-tap to reset, Visual Viewport sync for stability |
+| 🗺️ **Smart Minimap**         | Accurate portrait/landscape scaling; click-to-navigate                 |
+| 🎯 **Meeting Mode**          | Laser pointer that follows the cursor for presentations                |
+| 🔗 **Precision Share Links** | Share exact zoom/pan position via URL parameters                       |
+| 🔄 **Rotation**              | 90° rotation steps with correct Panzoom recalibration                  |
+| 📝 **Text Select Mode**      | Toggle SVG text selection for copying node labels                      |
+| 🔒 **SVG Sanitization**      | Three-tier security model (strict/permissive/off)                      |
+| 🎭 **3 Layout Modes**        | Header toolbar, floating FAB, or invisible click-to-open               |
+| 🔧 **Per-Diagram Overrides** | Set layout, accent, scale per diagram via `data-*` attributes          |
+| 🌐 **Shadow DOM Support**    | Works inside Shadow DOM roots                                          |
+| 🔄 **Remember Zoom**         | Persist zoom/pan state per diagram across modal opens (session)        |
+| 📦 **Minimal Dependencies**  | Only requires @panzoom/panzoom core module                             |
+| 🚫 **Framework Agnostic**    | Works with React, Vue, Svelte, Angular, or plain HTML                  |
 
 ---
 
 ## 📦 Installation
 
-### CDN (Quickest)
+### CDN (Recommended for quick start)
+
 ```html
-<!-- Panzoom (Required core module) -->
+<!-- 1. Required: Panzoom for zoom/pan physics -->
 <script src="https://cdn.jsdelivr.net/npm/@panzoom/panzoom@4.5.1/dist/panzoom.min.js"></script>
 
-<!-- DiagramView -->
-<script src="https://cdn.jsdelivr.net/npm/diagview@1/dist/diagview.umd.min.js"></script>
+<!-- 2. DiagView (latest stable) -->
+<script src="https://cdn.jsdelivr.net/npm/diagview@1.0.5/dist/diagview.umd.min.js"></script>
+<!-- For auto-updates within v1: diagview@1.0.5 -->
+```
 
+To disable auto-initialization and configure manually:
+
+```html
+<script
+  src="https://cdn.jsdelivr.net/npm/diagview@1.0.5/dist/diagview.umd.min.js"
+  data-diagview-no-auto-init
+></script>
 <script>
-  DiagView.init();
+  DiagView.init({ layout: "floating", accentColor: "#3b82f6" });
 </script>
 ```
 
-> [!NOTE]
-> **Bundle Performance**: The UMD build (CDN) includes all features (Search, Minimap, Export) in a single bundle for maximum compatibility. For the smallest possible footprint with tree-shaking and true dynamic lazy loading, use the **NPM** version with a modern bundler.
-
 ### NPM
+
 ```bash
 npm install diagview @panzoom/panzoom
 ```
-```javascript
-import DiagView from 'diagview';
 
-DiagView.init();
+```javascript
+import DiagView from "diagview";
+
+DiagView.init({ layout: "floating" });
+```
+
+### ESM (Bundlers / Vite / Webpack)
+
+```javascript
+import DiagView from "diagview"; // resolves dist/esm/index.js
 ```
 
 ---
 
 ## 🚀 Quick Start
 
-### 1. Add Your Diagram
+### Step 1 — Wrap your SVG
+
+DiagView matches any element that contains an `<svg>` tag. By default it targets `.diagram`, `.chart`, and `[data-diagram]`:
+
 ```html
-<div class="diagram">
-  <svg width="800" height="600">
-    <!-- Your SVG content -->
+<div class="diagram" data-title="System Overview">
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600">
+    <!-- your SVG content -->
   </svg>
 </div>
 ```
 
-### 2. Initialize DiagView
+### Step 2 — Initialize
+
 ```javascript
 DiagView.init({
-  layout: 'floating',      // 'header', 'floating', 'off'
-  accentColor: '#3b82f6', // Your brand color
-  showKeyboardHelp: true   // Show keyboard shortcuts
+  layout: "floating", // 'header' | 'floating' | 'off'
+  accentColor: "#3b82f6", // optional brand color
+  highResScale: 4, // export resolution (1–10)
+  showKeyboardHelp: true, // show shortcuts on first open
 });
 ```
 
-> [!IMPORTANT]
-> **Preventing Auto-Init Race Conditions:** DiagView automatically initializes on `DOMContentLoaded` if it finds `.diagram` elements. If you are using the `<script>` tag and want to pass custom options like `layout: 'header'` via Javascript, you **must** add `data-diagview-no-auto-init` to the library's script tag to prevent the default auto-initialization from overriding your custom settings:
-> ```html
-> <script src="https://cdn.jsdelivr.net/npm/diagview@1/dist/diagview.umd.min.js" data-diagview-no-auto-init></script>
-> ```
+### Step 3 — Done 🎉
 
-### 3. Done! 🎉
+DiagView automatically:
 
-DiagView automatically adds:
-- ✅ Copy, Download, Fullscreen buttons
-- ✅ Zoom/pan in fullscreen mode
-- ✅ Search functionality
-- ✅ Keyboard shortcuts
-- ✅ Export in multiple formats
-
----
-
-## 📸 Screenshots
-
-### Demo
-![DiagView Demo](media/demo.gif)
-*Now with intelligent minimap scaling and mobile viewport synchronization.*
-
-### Floating Layout (Default)
-![Floating Layout](media/layout-floating.png)
-*Clean HUD-style buttons that appear on hover. Ideal for minimal UIs.*
-
-### Header Layout
-![Header Layout](media/layout-header.png)
-*Classic top-bar controls. Best for documentation and dashboards.*
-
-### Fullscreen Mode
-![Fullscreen Mode](media/fullscreen-view.png)
-*Professional viewing experience with specialized tools, sidebar search, and high-res export.*
-
-### Smart Minimap
-![Minimap View](media/minimap-view.png)
-*Intelligent scaling for both portrait and landscape diagrams. Dynamic frame shows exactly what part of the diagram you are viewing.*
-
-### Mobile Optimized
-![Mobile View](media/mobile-view.png)
-*Responsive hub and viewport locking ensure rock-solid stability even when pinch-zooming.*
+- Wraps each matching diagram with interactive controls
+- Adds copy, download, and fullscreen buttons
+- Enables zoom, pan, and search in fullscreen mode
+- Handles keyboard shortcuts, theme sync, and mobile touch
 
 ---
 
 ## 🎨 Layout Modes
 
-### Floating (Modern)
-```javascript
-DiagView.init({ layout: 'floating' });
-```
-Buttons overlay at bottom center, appear on hover.
+### Floating (Default)
 
-### Header (Classic)
-```javascript
-DiagView.init({ layout: 'header' });
-```
-Title bar at top with buttons always visible.
+A circular FAB button appears at the bottom-right of the fullscreen viewer. Controls on the diagram card hover in at the bottom. Ideal for clean, minimal UIs.
 
-### Off (Minimal)
 ```javascript
-DiagView.init({ layout: 'off' });
+DiagView.init({ layout: "floating" });
 ```
-No buttons, click diagram to open fullscreen.
+
+### Header
+
+A full-width toolbar is always visible above the diagram. Best for documentation sites and dashboards where discoverability matters.
+
+```javascript
+DiagView.init({ layout: "header" });
+```
+
+### Off (Click-to-open)
+
+No controls are rendered on the diagram card. The diagram itself is the trigger — clicking it opens the fullscreen viewer. Perfect for tight layouts and embeds.
+
+```javascript
+DiagView.init({ layout: "off" });
+```
 
 ---
 
-## 📤 Export Formats
+## 🎛️ Per-Diagram Overrides
 
-- **PNG** - High-resolution raster (configurable DPI)
-- **PNG-T** - Transparent background
-- **SVG** - Vector format (scalable)
-- **WebP / WebP-T** - Modern compressed format (optional transparency)
-- **JPEG** - Standard compressed format (no transparency)
-- **PDF** - Print-ready document
-- **Copy** - Copy to clipboard
+Any diagram can override the global configuration using `data-diagview-*` attributes. This lets you mix layout modes and accent colors on a single page.
 
-### Example:
-```javascript
-const diagram = document.querySelector('.diagram');
-DiagView.exportDiagram(diagram, 'png');
+```html
+<!-- Use header layout with a purple accent for this diagram only -->
+<div
+  class="diagram"
+  data-diagview-layout="header"
+  data-diagview-accent="#8b5cf6"
+  data-diagview-scale="6"
+  data-title="My Architecture"
+>
+  <svg>...</svg>
+</div>
+
+<!-- This diagram uses the global defaults -->
+<div class="diagram">
+  <svg>...</svg>
+</div>
 ```
+
+| Attribute                    | Values                            | Description                             |
+| ---------------------------- | --------------------------------- | --------------------------------------- |
+| `data-diagview-layout`       | `header` \| `floating` \| `off`   | Layout for this diagram only            |
+| `data-diagview-accent`       | Any CSS color                     | Accent color for this diagram only      |
+| `data-diagview-scale`        | `1`–`10`                          | Export resolution for this diagram only |
+| `data-diagview-sanitize`     | `strict` \| `permissive` \| `off` | SVG sanitization mode                   |
+| `data-diagview-allow-remote` | `true` \| `false`                 | Allow remote CSS/fonts in SVG           |
+| `data-title`                 | Any string                        | Title shown in header layout label      |
+
+> **Security note:** `data-diagview-sanitize="off"` and `data-diagview-allow-remote="true"` only work when `security.allowOverrides` is `true` in the global config (the default). Use these only with SVGs from fully trusted sources.
 
 ---
 
 ## ⌨️ Keyboard Shortcuts
 
-| Key | Action |
-|-----|--------|
-| `Esc` | Close fullscreen |
-| `Space` / `0` | Reset zoom |
-| `+` / `-` | Zoom in/out |
-| `↑↓←→` | Pan diagram |
-| `Shift + Arrows` | Fast pan |
-| `F` | Focus search |
-| `M` | Meeting mode (laser) |
-| `L` | Share link |
-| `R` | Rotate 90° |
-| `?` | Show shortcuts |
+All shortcuts are active when the fullscreen modal is open.
+
+| Key              | Action                                          |
+| ---------------- | ----------------------------------------------- |
+| `Esc`            | Close fullscreen (or close keyboard help first) |
+| `Space` / `0`    | Reset zoom — fit diagram to screen              |
+| `+` / `=`        | Zoom in                                         |
+| `-` / `_`        | Zoom out                                        |
+| `↑` `↓` `←` `→`  | Pan diagram                                     |
+| `Shift` + `↑↓←→` | Fast pan (3× speed)                             |
+| `F`              | Focus search input                              |
+| `T`              | Toggle text-select mode (copy SVG labels)       |
+| `R`              | Rotate 90° clockwise                            |
+| `M`              | Toggle meeting mode (laser pointer)             |
+| `L`              | Copy share link to clipboard                    |
+| `?`              | Show/hide keyboard shortcuts panel              |
 
 ---
 
-## 🔍 Search
+## 📤 Export Formats
 
-Instantly highlight nodes in your diagram:
+| Format | Transparent | Notes                                 |
+| ------ | ----------- | ------------------------------------- |
+| PNG    | ✅          | High-res raster; default 4× scale     |
+| SVG    | ✅          | Fully scalable vector                 |
+| JPEG   | ❌          | Smallest file size                    |
+| WebP   | ✅          | Modern format; good compression       |
+| PDF    | ❌          | Requires jsPDF (lazy-loaded from CDN) |
+| Copy   | ❌          | Copies PNG to system clipboard        |
 
-1. Open fullscreen
-2. Type in search box (top-left)
-3. Matching nodes are highlighted
-4. Non-matching nodes are dimmed
+### Programmatic export
 
-Perfect for navigating complex flowcharts and diagrams!
-
----
-
-## 🎯 Meeting Mode
-
-Laser pointer for presentations:
-
-1. Press `M` in fullscreen
-2. Red laser follows your mouse
-3. Perfect for virtual meetings
-
----
-
-## 🔗 Share Links
-
-Share your exact view (zoom + pan):
-
-1. Zoom/pan to desired view
-2. Press `L` or click "Share Link"
-3. Link copied to clipboard
-4. Recipients see exact same view
-
----
-
-## 🎨 Theming
-
-DiagView auto-detects your theme:
 ```javascript
-// Auto-detect (default)
-DiagView.init();
+const el = document.querySelector(".diagram");
 
-// Manual override
-DiagView.init({
-  accentColor: '#ff6b6b',
-  backgroundColor: '#1a1a1a',
-  textColor: '#ffffff',
-  showBranding: true
-});
+// Format shortcuts
+await DiagView.exportToPNG(el, { transparent: true });
+await DiagView.exportToSVG(el);
+await DiagView.exportToJPEG(el, { filename: "my-diagram" });
+await DiagView.exportToWebP(el, { transparent: true });
+await DiagView.exportToPDF(el);
+await DiagView.copyToClipboard(el);
+
+// Generic dispatcher (used internally by the UI)
+await DiagView.exportDiagram(el, "png", { transparent: true });
 ```
-
-### CSS Variables Support
-```css
-:root {
-  --diagram-accent: #3b82f6;
-  --diagram-text: #1e293b;
-  --background: #ffffff;
-}
-```
-
----
-
-## ⚙️ Configuration
-
-### Full Options
-```javascript
-DiagView.init({
-  // Theme
-  accentColor: null,           // null = auto-detect
-  backgroundColor: null,
-  textColor: null,
-
-  // Layout
-  layout: 'floating',          // 'header', 'floating', 'off'
-
-  // Export
-  highResScale: 6,             // 1-10 (desktop)
-  mobileScale: 2,              // 1-5 (mobile)
-
-  // Features
-  showKeyboardHelp: true,
-  rememberZoom: false,         // Remember zoom per diagram
-  animateOpen: true,
-
-  // Interaction
-  naturalPanning: false,        // (Default) If false, arrows move view. If true, arrows move diagram.
-  maxZoomScale: 25,
-  minZoomScale: 0.05,
-
-  // Feature toggles
-  showMinimap: true,            // Toggle minimap visibility
-  rememberZoom: false,         // Remember zoom per diagram
-  animateOpen: true,
-
-  // Callbacks
-  onOpen: () => {},
-  onClose: () => {},
-  onExport: (format, filename) => {},
-  onZoomChange: (scale) => {}
-});
-```
-
-[See full configuration →](./docs/USAGE.md#advanced-configuration)
 
 ---
 
 ## 🌐 Framework Integration
 
 ### React
-```jsx
-import { useEffect } from 'react';
-import DiagView from 'diagview';
 
-function App() {
+```jsx
+import { useEffect } from "react";
+import DiagView from "diagview";
+
+export default function App() {
   useEffect(() => {
-    DiagView.init();
-    return () => DiagView.destroy();
+    DiagView.init({ layout: "floating" });
+    return () => {
+      DiagView.destroy();
+    };
   }, []);
 
-  return <div className="diagram"><svg>...</svg></div>;
+  return (
+    <div className="diagram">
+      <svg viewBox="0 0 400 300">{/* ... */}</svg>
+    </div>
+  );
 }
 ```
 
-### Vue
+### Vue 3
+
 ```vue
 <script setup>
-import { onMounted, onUnmounted } from 'vue';
-import DiagView from 'diagview';
+import { onMounted, onUnmounted } from "vue";
+import DiagView from "diagview";
 
-onMounted(() => DiagView.init());
+onMounted(() => DiagView.init({ layout: "floating" }));
 onUnmounted(() => DiagView.destroy());
 </script>
 
 <template>
-  <div class="diagram"><svg>...</svg></div>
+  <div class="diagram">
+    <svg viewBox="0 0 400 300"><!-- ... --></svg>
+  </div>
 </template>
 ```
 
 ### Svelte
+
 ```svelte
 <script>
   import { onMount, onDestroy } from 'svelte';
   import DiagView from 'diagview';
 
-  onMount(() => DiagView.init());
+  onMount(() => DiagView.init({ layout: 'floating' }));
   onDestroy(() => DiagView.destroy());
 </script>
 
-<div class="diagram"><svg>...</svg></div>
+<div class="diagram">
+  <svg viewBox="0 0 400 300"><!-- ... --></svg>
+</div>
 ```
 
-[More examples →](./docs/USAGE.md#framework-integration)
+### Shadow DOM
+
+```javascript
+const shadow = myElement.attachShadow({ mode: "open" });
+// ... render content into shadow root ...
+
+DiagView.init(); // init normally first
+DiagView.initShadowRoot(shadow); // then scan the shadow root
+```
+
+### Mermaid.js
+
+Always render Mermaid first, then initialize DiagView:
+
+```javascript
+await mermaid.run();
+DiagView.init({ diagramSelector: ".mermaid" });
+```
+
+---
+
+## ⚙️ Configuration
+
+Full configuration reference:
+
+```javascript
+DiagView.init({
+  // ── Selectors ────────────────────────────────────
+  diagramSelector: ".diagram, .chart, [data-diagram]",
+
+  // ── Theme ────────────────────────────────────────
+  accentColor: null, // null = auto-detect from CSS vars / OS
+  backgroundColor: null, // null = auto-detect
+  textColor: null, // null = auto-detect
+
+  // ── Layout ───────────────────────────────────────
+  layout: "floating", // 'header' | 'floating' | 'off'
+
+  // ── UI ───────────────────────────────────────────
+  ui: {
+    buttons: {
+      style: "accent", // 'transparent' | 'accent' | 'solid' | 'neutral'
+      icons: {
+        copy: null, // null = built-in icon, or pass an SVG string
+        download: null,
+        fullscreen: null,
+      },
+    },
+  },
+  showBranding: true, // Show DiagView branding link
+  showKeyboardHelp: true, // Show shortcut panel on first open
+  helpTimeout: 8000, // ms before shortcut panel auto-closes (0 = never)
+  animateOpen: true, // CSS scale animation when opening fullscreen
+
+  // ── Interaction ──────────────────────────────────
+  naturalPanning: false, // true = scroll-like pan direction
+  immersiveMode: false, // true = lock viewport meta on mobile open
+  rememberZoom: false, // true = restore zoom/pan across modal opens (session)
+  showMinimap: true, // Show minimap when diagram overflows viewport
+  printFriendly: true, // Hide controls in print media
+
+  // ── Zoom / Pan ───────────────────────────────────
+  maxZoomScale: 25, // Upper zoom limit (1–50)
+  minZoomScale: 0.05, // Lower zoom limit (0.01–1)
+  zoomAnimationDuration: 200, // ms
+  panAnimationDuration: 200, // ms
+
+  // ── Export ───────────────────────────────────────
+  highResScale: 4, // Desktop export multiplier (1–10)
+  mobileScale: 2, // Mobile export multiplier (1–5)
+  maxPixels: 16777216, // Safety cap (default 16MP = 4096×4096)
+
+  // ── Security ─────────────────────────────────────
+  security: {
+    mode: "strict", // 'strict' | 'permissive' | 'off'
+    allowOverrides: true, // Allow data-diagview-sanitize per element
+    allowRemoteResources: false, // Allow @import / url() to external URLs
+  },
+  allowedImageTypes: ["png", "jpeg", "webp", "gif"],
+
+  // ── Performance ──────────────────────────────────
+  performance: {
+    largeFileThreshold: 1000000, // 1 MB — skip style baking above this
+    criticalFileLimit: 50000000, // 50 MB — hard block above this
+  },
+
+  // ── Notifications ────────────────────────────────
+  toastDuration: 2500, // Success toast duration (ms)
+  errorToastDuration: 5000, // Error toast duration (ms)
+
+  // ── PDF ──────────────────────────────────────────
+  pdfLibraryUrl: "https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js",
+  // pdfLibraryIntegrity is auto-set when using the default URL above.
+  // Set to null if you provide a custom pdfLibraryUrl.
+
+  // ── Callbacks ────────────────────────────────────
+  onOpen: null, // () => void — modal opened
+  onClose: null, // () => void — modal closed
+  onExport: null, // (format, filename) => void — export complete
+  onZoomChange: null, // (scale) => void — zoom level changed
+  onError: null, // (error) => void — SVG validation failed
+});
+```
+
+## 🚀 Live Demo
+
+Experience all features including Search, Export, and Meeting Mode in our interactive playground:
+
+**[Explore the Live Demo →](https://khadirullah.github.io/diagview/)**
+
+---
+
+## 📸 Screenshots
+
+### Fullscreen Viewer
+
+The heart of DiagView. A dedicated, distraction-free environment for deep diagram analysis with integrated tools.
+![Fullscreen](media/fullscreen-view.png)
+
+### Smart Minimap
+
+Real-time navigation with accurate portrait/landscape scaling. Click anywhere to jump to that part of the diagram.
+![Minimap](media/minimap-view.png)
+
+### Mobile Optimized
+
+A first-class mobile experience with pinch-to-zoom, double-tap to reset, and visual viewport stability.
+![Mobile](media/mobile-view.png)
+
+### Flexible Layouts
+
+Choose the layout that fits your site: **Floating HUD**, **Header Controls**, or **Minimalist (Off)**.
+
+<p align="center">
+  <img src="media/layout-floating.png" width="32%" alt="Floating Layout" />
+  <img src="media/layout-header.png" width="32%" alt="Header Layout" />
+  <img src="media/layout-off.png" width="32%" alt="Minimalist Layout" />
+</p>
 
 ---
 
 ## 📚 Documentation
 
-- [Usage Guide](./docs/USAGE.md) - Complete guide
-- [FAQ](./docs/FAQ.md) - Common questions
-- [API Reference](./docs/API.md) - Full API docs
-- [Examples](./demo/) - Live demos
-  
----
-
-## 🔧 Development
-```bash
-# Install dependencies
-npm install
-
-# Start dev server
-npm run dev
-
-# Build library
-npm run build
-
-# Check bundle size
-npm run size
-```
+| Document                                             | Description                             |
+| ---------------------------------------------------- | --------------------------------------- |
+| [Live Demo](https://khadirullah.github.io/diagview/) | **Interactive online playground**       |
+| docs/USAGE.md                                        | Complete usage guide (basic → advanced) |
+| docs/API.md                                          | Full public API reference               |
+| docs/FAQ.md                                          | Frequently asked questions              |
+| BUILD.md                                             | Local development & build instructions  |
+| CONTRIBUTING.md                                      | How to contribute                       |
+| SECURITY.md                                          | Security policy                         |
+| CHANGELOG.md                                         | Version history                         |
 
 ---
 
 ## 🤝 Contributing
 
-Contributions welcome! Please read [CONTRIBUTING.md](./CONTRIBUTING.md) first.
+Contributions are welcome! See CONTRIBUTING.md for guidelines.
 
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+```bash
+git clone https://github.com/khadirullah/diagview.git
+cd diagview
+npm install
+npm run dev     # watch mode
+npm test        # run unit tests
+```
 
 ---
 
@@ -378,49 +487,14 @@ MIT © [Khadirullah Mohammad](https://github.com/khadirullah)
 
 ---
 
-## 💡 Why I Built This
-
-I use **Hugo** and **Blowfish** for technical documentation, and while they support **Mermaid.js** beautifully, I found the viewing experience for complex schematics to be limited.
-
-I built **DiagView** to fix that specific frustration—turning static SVGs into an interactive, CAD-like experience. While born from a documentation need, it evolved into a universal wrapper that solves this usability gap for *any* SVG diagram.
-
----
-
 ## 🙏 Credits
 
-- **Panzoom** - Zoom/pan library
-- **jsPDF** - PDF export
-- **Lucide** - Icon design inspiration
-
----
-
-## 📊 Browser Support
-
-| Browser | Version |
-|---------|---------|
-| Chrome | ≥90 |
-| Firefox | ≥88 |
-| Safari | ≥14 |
-| Edge | ≥90 |
-
-**Not supported:** Internet Explorer
-
----
-
-## ⭐ Show Your Support
-
-Give a ⭐️ if this project helped you!
-
----
-
-## 📫 Contact
-
-- GitHub: [@khadirullah](https://github.com/khadirullah)
-- X (Twitter): [@KhadirullahM](https://x.com/KhadirullahM)
-- LinkedIn: [in/khadirullah](https://linkedin.com/in/khadirullah)
+- [Panzoom](https://github.com/timmywil/panzoom) — zoom/pan physics
+- [jsPDF](https://github.com/parallax/jsPDF) — PDF export (lazy-loaded)
+- [Lucide Icons](https://lucide.dev) — icon design inspiration
 
 ---
 
 ## 🤖 Authenticity Statement
 
-This library was born from a personal need to make technical diagrams more interactive on my own documentation site. While the code was generated using AI, the project has since undergone a rigorous audit to close security gaps, remove technical debt, and ensure professional build quality. I believe in transparency: AI helped me write the code, but my vision, real-world testing, and insistence on quality are what make this a tool you can trust.
+This library was conceptually designed and architected by the author to solve real-world SVG documentation needs. Implementation was produced with AI assistance under strict human supervision and code review.

@@ -4,13 +4,14 @@
  * @module ui/floating-menu
  */
 
-import { state } from "../core/config.js";
+import { state, addModalCleanupFunction } from "../core/config.js";
 import { detectTheme } from "../core/theme.js";
-import { throttle, setSVGContent } from "../core/utils.js";
-import { addModalListener } from "../core/lifecycle.js";
+import { sanitizeSVG } from "../core/utils.js";
+
 import { exportDiagram } from "../features/export.js";
 import { ICONS } from "./icons.js";
 import { createMenuItem } from "./button-factory.js";
+import { invalidateFocusableCache } from "./focus-manager.js";
 import { BRANDING } from "../core/constants.js";
 
 /**
@@ -28,6 +29,35 @@ export function createFloatingMenu(sourceElement, clonedSvg) {
   container.id = "diagview-temp-menu";
 
   // 1. FAB Button
+  const fab = _createFAB(container, theme);
+
+  // 2. Menu Panel
+  const menuPanel = _createMenuPanel(container);
+
+  // 3. Sections
+  const zoomElements = _createZoomSection(menuPanel);
+  const { transChk, expGrid } = _createExportSection(menuPanel);
+  const toolsContainer = _createToolsSection(menuPanel);
+  _createMenuFooter(menuPanel);
+
+  const modal = document.getElementById("diagview-modal");
+  if (modal) {
+    modal.appendChild(container);
+  } else {
+    document.body.appendChild(container);
+  }
+
+  // 4. Setup Logic & Wiring
+  _setupMenuController(
+    { container, fab, menuPanel, zoomElements, transChk, expGrid, toolsContainer },
+    sourceElement,
+    clonedSvg,
+  );
+}
+
+// --- Private Builders ---
+
+function _createFAB(container, theme) {
   const fab = document.createElement("button");
   fab.className = "diagview-fab-btn";
   fab.id = "dv-toggle";
@@ -36,17 +66,21 @@ export function createFloatingMenu(sourceElement, clonedSvg) {
   fab.style.placeItems = "center";
   fab.style.backgroundColor = theme.accent;
   fab.style.color = "#fff";
-  fab.insertAdjacentHTML("afterbegin", ICONS.menu);
+  fab.insertAdjacentHTML("afterbegin", sanitizeSVG(ICONS.menu, "permissive"));
   container.appendChild(fab);
+  return fab;
+}
 
-  // 2. Menu Panel
+function _createMenuPanel(container) {
   const menuPanel = document.createElement("div");
   menuPanel.className = "diagview-menu";
   menuPanel.id = "dv-menu-panel";
   menuPanel.tabIndex = -1;
   container.appendChild(menuPanel);
+  return menuPanel;
+}
 
-  // Section 1: Zoom
+function _createZoomSection(menuPanel) {
   const zoomSec = document.createElement("div");
   zoomSec.className = "dv-menu-sec";
 
@@ -85,40 +119,30 @@ export function createFloatingMenu(sourceElement, clonedSvg) {
   zoomSec.appendChild(zoomControls);
   menuPanel.appendChild(zoomSec);
 
-  // Section 2: Export
+  return { zoomInBtn, zoomOutBtn, resetBtn };
+}
+
+function _createExportSection(menuPanel) {
   const expSec = document.createElement("div");
   expSec.className = "dv-menu-sec";
 
   const expLbl = document.createElement("div");
-  expLbl.className = "dv-menu-lbl";
-  expLbl.style.display = "flex";
-  expLbl.style.justifyContent = "space-between";
-  expLbl.style.alignItems = "center";
+  expLbl.className = "dv-menu-lbl dv-menu-lbl--row";
   expLbl.textContent = "Export";
 
   const transLabel = document.createElement("label");
-  transLabel.style.display = "flex";
-  transLabel.style.alignItems = "center";
-  transLabel.style.gap = "4px";
-  transLabel.style.fontSize = "10px";
-  transLabel.style.cursor = "pointer";
-  transLabel.style.textTransform = "none";
-  transLabel.style.letterSpacing = "normal";
+  transLabel.className = "dv-exp-trans-label";
 
   const transChk = document.createElement("input");
   transChk.type = "checkbox";
   transChk.id = "dv-exp-trans";
-  transChk.style.margin = "0";
-  transChk.style.width = "auto";
-  transChk.style.cursor = "pointer";
-  transChk.style.accentColor = "var(--dv-accent)";
+  transChk.className = "dv-exp-trans-chk";
 
   transLabel.appendChild(transChk);
   transLabel.appendChild(document.createTextNode("Transparent "));
 
   const transHint = document.createElement("span");
-  transHint.style.opacity = "0.5";
-  transHint.style.fontSize = "8px";
+  transHint.className = "dv-exp-trans-hint";
   transHint.textContent = "(PNG/WebP/SVG)";
   transLabel.appendChild(transHint);
 
@@ -136,23 +160,33 @@ export function createFloatingMenu(sourceElement, clonedSvg) {
   expSec.appendChild(expGrid);
   menuPanel.appendChild(expSec);
 
-  // Section 3: Tools
+  return { transChk, expGrid };
+}
+
+function _createToolsSection(menuPanel) {
   const toolsSec = document.createElement("div");
   toolsSec.className = "dv-menu-sec";
+
   const toolsLbl = document.createElement("div");
   toolsLbl.className = "dv-menu-lbl";
   toolsLbl.textContent = "Tools";
+
   const toolsContainer = document.createElement("div");
   toolsContainer.id = "dv-tools-container";
+
   toolsSec.appendChild(toolsLbl);
   toolsSec.appendChild(toolsContainer);
   menuPanel.appendChild(toolsSec);
 
-  // Section 4: Branding
+  return toolsContainer;
+}
+
+function _createMenuFooter(menuPanel) {
   const footer = document.createElement("div");
   footer.className = "dv-menu-footer";
 
   const brandLink = document.createElement("a");
+  brandLink.className = "dv-menu-brand";
   brandLink.href = BRANDING.URL;
   brandLink.target = "_blank";
   brandLink.textContent = BRANDING.LABEL;
@@ -166,106 +200,117 @@ export function createFloatingMenu(sourceElement, clonedSvg) {
   footer.appendChild(document.createTextNode(" by "));
   footer.appendChild(authorLink);
   menuPanel.appendChild(footer);
+}
 
-  const modal = document.getElementById("diagview-modal");
-  if (modal) {
-    modal.appendChild(container);
-  } else {
-    document.body.appendChild(container);
-  }
+/**
+ * Controller for Floating Menu logic and event wiring
+ * @private
+ */
+function _setupMenuController(elements, sourceElement, clonedSvg) {
+  const { container, fab, menuPanel, zoomElements, transChk, expGrid, toolsContainer } = elements;
+  const { zoomInBtn, zoomOutBtn, resetBtn } = zoomElements;
 
-  // Create tool menu items using button factory
-
-  const shareBtn = createMenuItem({
-    id: "dv-share",
-    icon: ICONS.share,
-    label: "Share Link",
-    shortcut: "L",
-    onClick: async () => {
-      const { shareLink } = await import("../features/lazy/share.js");
-      shareLink(state.currentDiagramIndex);
-      toggleMenu();
-    },
-  });
-
-  const rotateBtn = createMenuItem({
-    id: "dv-rotate",
-    icon: ICONS.rotate,
-    label: "Rotate 90°",
-    shortcut: "R",
-    onClick: async () => {
-      const { rotateDiagram } = await import("../features/lazy/rotate.js");
-      rotateDiagram();
-      toggleMenu();
-    },
-  });
-
-  const meetingBtn = createMenuItem({
-    id: "dv-meeting",
-    icon: ICONS.laser,
-    label: "Meeting Mode",
-    shortcut: "M",
-    onClick: async () => {
-      const { toggleMeetingMode } = await import("../features/lazy/meeting-mode.js");
-      toggleMeetingMode();
-      toggleMenu();
-    },
-  });
-
-  // Append tool buttons
-  if (shareBtn) toolsContainer.appendChild(shareBtn);
-  if (rotateBtn) toolsContainer.appendChild(rotateBtn);
-  if (meetingBtn) toolsContainer.appendChild(meetingBtn);
-
-  // Toggle State Logic
   let isOpen = false;
+  const menuTimeouts = new Set();
 
-  const toggleMenu = (e) => {
+  const safeTimeout = (fn, delay) => {
+    const id = setTimeout(() => {
+      menuTimeouts.delete(id);
+      fn();
+    }, delay);
+    menuTimeouts.add(id);
+    return id;
+  };
+
+  addModalCleanupFunction(() => {
+    menuTimeouts.forEach((id) => clearTimeout(id));
+    menuTimeouts.clear();
+  });
+
+  const toggleMenu = (e, forceState) => {
     e?.preventDefault();
     e?.stopPropagation();
-    isOpen = !isOpen;
+
+    const nextState = typeof forceState === "boolean" ? forceState : !isOpen;
+    if (nextState === isOpen) return; // Guard against redundant state changes
+
+    isOpen = nextState;
+
+    invalidateFocusableCache();
     menuPanel.classList.toggle("active", isOpen);
     fab.classList.toggle("open", isOpen);
     fab.replaceChildren();
-    fab.insertAdjacentHTML("afterbegin", isOpen ? ICONS.close : ICONS.menu);
+    fab.insertAdjacentHTML(
+      "afterbegin",
+      sanitizeSVG(isOpen ? ICONS.close : ICONS.menu, "permissive"),
+    );
     fab.setAttribute("aria-expanded", isOpen);
 
     if (isOpen) {
-      // Focus the panel itself instead of the first button
-      // This prevents the "Space" shortcut from accidentally clicking "Zoom Out"
-      setTimeout(() => {
-        menuPanel.focus();
-      }, 50);
+      requestAnimationFrame(() => {
+        if (isOpen) menuPanel.focus();
+      });
     } else {
-      // Return focus to FAB when closing
       fab.focus();
     }
   };
 
   fab.onclick = toggleMenu;
 
-  // Close when clicking outside
+  // Tools initialization
+  const toolDefs = [
+    { id: "dv-share", icon: ICONS.share, label: "Share Link", shortcut: "L", feat: "share" },
+    { id: "dv-rotate", icon: ICONS.rotate, label: "Rotate 90°", shortcut: "R", feat: "rotate" },
+    {
+      id: "dv-meeting",
+      icon: ICONS.laser,
+      label: "Meeting Mode",
+      shortcut: "M",
+      feat: "meeting-mode",
+    },
+  ];
+
+  toolDefs.forEach((def) => {
+    const btn = createMenuItem({
+      id: def.id,
+      icon: def.icon,
+      label: def.label,
+      shortcut: def.shortcut,
+      onClick: async () => {
+        let mod;
+        try {
+          // Use static paths so Rollup can inline them for UMD builds
+          if (def.feat === "share") mod = await import("../features/lazy/share.js");
+          else if (def.feat === "rotate") mod = await import("../features/lazy/rotate.js");
+          else if (def.feat === "meeting-mode")
+            mod = await import("../features/lazy/meeting-mode.js");
+
+          if (def.feat === "share") mod.shareLink(state.currentDiagramIndex);
+          else if (def.feat === "rotate") mod.rotateDiagram();
+          else if (def.feat === "meeting-mode") mod.toggleMeetingMode();
+          toggleMenu(null, false);
+        } catch (err) {
+          console.error(`DiagView: Failed to load ${def.label}`, err);
+        }
+      },
+    });
+    if (btn) toolsContainer.appendChild(btn);
+  });
+
+  // Outside click handling
   const handleClickOutside = (e) => {
     if (isOpen && !container.contains(e.target)) {
-      isOpen = false;
-      menuPanel.classList.remove("active");
-      fab.classList.remove("open");
-      fab.replaceChildren();
-      fab.insertAdjacentHTML("afterbegin", ICONS.menu);
-      fab.setAttribute("aria-expanded", "false");
+      toggleMenu(null, false);
     }
   };
 
-  // Use timeout to avoid immediate close if triggered by a bubble event
-  setTimeout(() => {
-    // Safety check: ensure modal is still open and menu still exists
+  requestAnimationFrame(() => {
     if (!state.isModalOpen || !document.contains(container)) return;
-    addModalListener(document, "click", handleClickOutside);
-  }, 0);
+    document.addEventListener("click", handleClickOutside);
+    addModalCleanupFunction(() => document.removeEventListener("click", handleClickOutside));
+  });
 
-  // --- Event Wiring ---
-
-  // Zoom controls
+  // Wiring Helpers
   const bindClick = (btn, fn) => {
     if (btn) {
       btn.onclick = (e) => {
@@ -275,35 +320,30 @@ export function createFloatingMenu(sourceElement, clonedSvg) {
     }
   };
 
-  // Zoom controls
   bindClick(zoomInBtn, () => state.activePanzoom?.zoomIn());
   bindClick(zoomOutBtn, () => state.activePanzoom?.zoomOut());
   bindClick(resetBtn, () => state.activePanzoom?.reset({ animate: true }));
 
-  // Export Grid Delegation
-
   expGrid.onclick = (e) => {
     e.stopPropagation();
     const btn = e.target.closest("button");
-    if (!btn) return;
+    if (!btn || btn.disabled) return;
 
     const type = btn.dataset.action;
     btn.classList.add("active");
-    setTimeout(() => btn.classList.remove("active"), 200);
+    safeTimeout(() => btn.classList.remove("active"), 200);
 
-    const isTrans = transChk ? transChk.checked : false;
+    btn.setAttribute("aria-busy", "true");
+    btn.disabled = true;
 
-    exportDiagram(sourceElement, type, { transparent: isTrans, modalClone: clonedSvg });
+    const isTrans = transChk?.checked || false;
+    exportDiagram(sourceElement, type, { transparent: isTrans, modalClone: clonedSvg }).finally(
+      () => {
+        btn.removeAttribute("aria-busy");
+        btn.disabled = false;
+      },
+    );
 
-    toggleMenu();
+    toggleMenu(null, false);
   };
-
-  // Update zoom display
-  if (state.activePanzoom) {
-    const updateZoom = throttle((e) => {
-      zoomTag.textContent = `${Math.round(e.detail.scale * 100)}%`;
-    }, 100);
-
-    addModalListener(clonedSvg, "panzoomchange", updateZoom);
-  }
 }

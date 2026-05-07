@@ -1,4 +1,4 @@
-import { isBrowser, fixIds } from "../src/core/utils.js";
+import { isBrowser, fixIds, sanitizeFilename } from "../src/core/utils.js";
 
 describe("Utils API", () => {
   test("isBrowser accurately detects JS environment", () => {
@@ -28,5 +28,12 @@ describe("Utils API", () => {
     // Testing regex character escaping
     expect(newHtml).toContain('id="dv-prefix-clip.with.regex.chars$"');
     expect(newHtml).toContain("url(#dv-prefix-clip.with.regex.chars$)");
+  });
+
+  test("sanitizeFilename preserves Unicode letters and numbers", () => {
+    expect(sanitizeFilename("héllo world")).toBe("héllo_world");
+    expect(sanitizeFilename("你好世界")).toBe("你好世界");
+    expect(sanitizeFilename("diagram-123")).toBe("diagram-123");
+    expect(sanitizeFilename("!!!")).toBe("diagram"); // fallback
   });
 });

@@ -25,7 +25,8 @@
 
 import { state } from "../core/config.js";
 import { ZOOM, TIMING } from "../core/constants.js";
-import { checkPanzoomDependency, isSessionStorageAvailable } from "../core/utils.js";
+import { checkPanzoomDependency } from "../core/utils.js";
+
 import { addManagedListener, addModalListener } from "../core/lifecycle.js";
 import { showErrorToast, showInfoToast } from "../ui/toast.js";
 import { blurActiveElement } from "../ui/focus-manager.js";
@@ -56,11 +57,6 @@ export function initializePanzoom(element, options = {}) {
       duration: state.config.zoomAnimationDuration || TIMING.ZOOM_ANIMATION_DURATION,
       noBind: false,
       step: 0.35, // Increased sensitivity for snappier feel (Default is 0.3)
-      setTransform: (el, { x, y, scale }) => {
-        const angle = state.rotationAngle || 0;
-        // Natural Camera Order: Translate LAST (leftmost) so it happens in screen-space.
-        el.style.transform = `translate(${x}px, ${y}px) scale(${scale}) rotate(${angle}deg)`;
-      },
       ...options,
     };
 
@@ -87,30 +83,25 @@ export function initializePanzoom(element, options = {}) {
  */
 export function refreshPanzoom(panzoom) {
   if (!panzoom) return;
-
-  const { x, y } = panzoom.getPan();
-  const scale = panzoom.getScale();
-  const angle = state.rotationAngle || 0;
-
-  // Directly apply the style to bypass the library's internal change detection.
-  // This ensures rotation is applied even if x/y/scale haven't changed.
-  panzoom.setStyle(
-    "transform",
-    `translate(${x}px, ${y}px) scale(${scale}) rotate(${angle}deg)`
-  );
+  // The wrapper pattern (modal.js) handles rotation independently.
+  // We just let Panzoom handle its own transforms at 100% speed.
+  panzoom.reset();
 }
 
 /**
  * Setup viewport interactions for pan/zoom
  */
 export function setupViewportInteractions(viewport, element, panzoom) {
-  if (!panzoom) return () => {};
+  if (!panzoom) return;
 
   let lastTapTime = 0;
 
+  // Helper to check if text select mode is ON
+  const isTextSelectActive = () => viewport.classList.contains("dv-text-select");
+
   // Desktop wheel zoom (with input blur and safety check)
   const handleWheel = (e) => {
-    if (!state.isModalOpen || !panzoom) return;
+    if (!state.isModalOpen || !panzoom || isTextSelectActive()) return;
     blurActiveElement();
 
     // Panzoom handles wheel normalization internally for modern versions.
@@ -121,16 +112,19 @@ export function setupViewportInteractions(viewport, element, panzoom) {
 
   // Desktop mouse down (blur inputs when starting to pan)
   const handleMouseDown = () => {
+    if (isTextSelectActive()) return;
     blurActiveElement();
   };
 
   // Desktop double-click to reset
   const handleDblClick = () => {
+    if (isTextSelectActive()) return;
     panzoom.reset({ animate: true, duration: 250 });
   };
 
   // Mobile touch handlers
   const handleTouchStart = (e) => {
+    if (isTextSelectActive()) return;
     blurActiveElement();
 
     if (e.touches.length >= 2) {
@@ -172,24 +166,8 @@ export function setupViewportInteractions(viewport, element, panzoom) {
   addModalListener(viewport, "touchmove", handleTouchMove, { passive: false });
   addModalListener(viewport, "touchend", handleTouchEnd, { passive: true });
 
-  // Return cleanup function (managed listeners already tracked, this is redundant but kept for compatibility)
-  return () => {
-    // Cleanup is now handled by lifecycle manager
-    // This function is kept for backward compatibility
-  };
-}
-
-/**
- * Destroy panzoom instance
- */
-export function destroyPanzoom(panzoom) {
-  if (panzoom && typeof panzoom.destroy === "function") {
-    try {
-      panzoom.destroy();
-    } catch (error) {
-      console.warn("DiagView: Error destroying Panzoom", error);
-    }
-  }
+  // All listeners use addModalListener — they are cleaned up automatically
+  // when the modal closes via runModalCleanupFunctions(). No return needed.
 }
 
 /**
@@ -208,7 +186,6 @@ export function resetTouchState() {
 // ==========================================
 
 const ZOOM_STATE_PREFIX = "diagview-zoom-states";
-const isStorageAvailable = isSessionStorageAvailable();
 
 /**
  * Get storage key for diagram
@@ -221,7 +198,7 @@ function getZoomKey(diagramId) {
  * Save zoom state for a diagram
  */
 export function saveZoomState(diagramId, panzoom) {
-  if (!state.config.rememberZoom || !panzoom || !diagramId || !isStorageAvailable) return;
+  if (!state.config.rememberZoom || !panzoom || !diagramId || !state.isStorageAvailable) return;
 
   try {
     const zoomState = {
@@ -240,7 +217,8 @@ export function saveZoomState(diagramId, panzoom) {
  * Restore zoom state for a diagram
  */
 export function restoreZoomState(diagramId, panzoom) {
-  if (!state.config.rememberZoom || !panzoom || !diagramId || !isStorageAvailable) return false;
+  if (!state.config.rememberZoom || !panzoom || !diagramId || !state.isStorageAvailable)
+    return false;
 
   try {
     const stored = sessionStorage.getItem(getZoomKey(diagramId));
@@ -263,7 +241,7 @@ export function restoreZoomState(diagramId, panzoom) {
  * Clear zoom state for a diagram
  */
 export function clearZoomState(diagramId) {
-  if (!isStorageAvailable) return;
+  if (!state.isStorageAvailable) return;
   try {
     sessionStorage.removeItem(getZoomKey(diagramId));
   } catch (e) {
@@ -275,12 +253,13 @@ export function clearZoomState(diagramId) {
  * Clear all zoom states
  */
 export function clearAllZoomStates() {
-  if (!isStorageAvailable) return;
+  if (!state.isStorageAvailable) return;
   try {
-    const keys = Object.keys(sessionStorage);
+    const storage = sessionStorage;
+    const keys = Object.keys(storage);
     keys.forEach((key) => {
       if (key.startsWith(ZOOM_STATE_PREFIX)) {
-        sessionStorage.removeItem(key);
+        storage.removeItem(key);
       }
     });
   } catch (e) {

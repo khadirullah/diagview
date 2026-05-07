@@ -24,7 +24,7 @@ jest.unstable_mockModule("../src/features/lazy/share.js", () => ({
 }));
 
 // 2. Import modules AFTER mocks are defined
-const { state, resetConfig } = await import("../src/core/config.js");
+const { state, resetConfig, updateConfig } = await import("../src/core/config.js");
 const { observeDiagrams, stopObserving, refreshDiagrams } = await import("../src/core/observer.js");
 const { initializeDiagram } = await import("../src/features/diagram-init.js");
 const { openFullscreen } = await import("../src/ui/modal.js");
@@ -34,7 +34,7 @@ describe("Observer Module", () => {
     document.body.innerHTML = "";
     resetConfig();
     state.observer = null;
-    state.config.diagramSelector = ".diagram";
+    updateConfig({ diagramSelector: ".diagram" });
     jest.clearAllMocks();
   });
 
@@ -53,7 +53,7 @@ describe("Observer Module", () => {
 
     observeDiagrams();
 
-    expect(initializeDiagram).toHaveBeenCalledWith(div);
+    expect(initializeDiagram).toHaveBeenCalledWith(div, 0);
     expect(div.dataset.diagviewInit).toBe("true");
   });
 
@@ -70,7 +70,7 @@ describe("Observer Module", () => {
     // Wait for MutationObserver (microtask) + Observer debounce (100ms)
     await wait(200);
 
-    expect(initializeDiagram).toHaveBeenCalledWith(div);
+    expect(initializeDiagram).toHaveBeenCalledWith(div, 0);
   });
 
   test("MutationObserver handles nested diagrams", async () => {
@@ -87,7 +87,7 @@ describe("Observer Module", () => {
 
     await wait(200);
 
-    expect(initializeDiagram).toHaveBeenCalledWith(nested);
+    expect(initializeDiagram).toHaveBeenCalledWith(nested, 0);
   });
 
   test("stopObserving disconnects the observer", () => {
@@ -110,11 +110,16 @@ describe("Observer Module", () => {
 
     refreshDiagrams();
 
-    expect(initializeDiagram).toHaveBeenCalledWith(div);
+    expect(initializeDiagram).toHaveBeenCalledWith(div, 0);
   });
 
   test("Auto-opens diagram from share link if present", async () => {
     const { restoreViewFromURL } = await import("../src/features/lazy/share.js");
+
+    // Simulate DiagView parameters in URL for the fast-path check
+    const originalLocation = window.location;
+    delete window.location;
+    window.location = new URL("http://localhost?dv-idx=0");
 
     // Simulate finding a diagram in the URL
     const div = document.createElement("div");
@@ -135,5 +140,6 @@ describe("Observer Module", () => {
     expect(openFullscreen).toHaveBeenCalledWith(div);
 
     jest.useRealTimers();
+    window.location = originalLocation;
   });
 });

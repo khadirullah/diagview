@@ -9,6 +9,13 @@ import { TIMING } from "../core/constants.js";
 import { detectTheme } from "../core/theme.js";
 
 /**
+ * Track toast-specific timers to ensure they are properly cleared
+ * without affecting other library features.
+ * @type {Set<number>}
+ */
+const toastTimers = new Set();
+
+/**
  * Toast types with colors
  */
 const TOAST_TYPES = {
@@ -30,19 +37,33 @@ const TOAST_TYPES = {
  * Show toast notification
  */
 export function showToast(message, type = "success", duration = null) {
-  const toast = document.getElementById("diagview-toast");
-  if (!toast) return;
-
-  // Clear existing timer
-  if (state.toastTimer) {
-    clearTimeout(state.toastTimer);
-    state.toastTimer = null;
+  // 1. Ensure container exists and is on top
+  let container = document.getElementById("diagview-toast-container");
+  if (!container) {
+    container = document.createElement("div");
+    container.id = "diagview-toast-container";
+    container.className = "diagview-toast-container";
+    document.body.appendChild(container);
+  } else if (container.nextSibling) {
+    // Re-append to ensure it's the last child (on top of modal)
+    document.body.appendChild(container);
   }
 
-  const theme = detectTheme();
+  // 2. Create new toast element
+  const toast = document.createElement("div");
+  toast.className = `diagview-toast diagview-toast-${type}`;
+  toast.textContent = message;
+
+  let theme;
+  try {
+    theme = detectTheme();
+  } catch (e) {
+    // Fallback to safe theme if detection fails during rapid transitions
+    theme = { isDark: true, accent: "#3b82f6", text: "#ffffff" };
+  }
   const toastConfig = TOAST_TYPES[type] || TOAST_TYPES.info;
 
-  // Set colors and ARIA roles
+  // 3. Set styles and accessibility
   if (type === "error") {
     toast.setAttribute("role", "alert");
     toast.setAttribute("aria-live", "assertive");
@@ -60,47 +81,69 @@ export function showToast(message, type = "success", duration = null) {
     }
   }
 
-  toast.textContent = message;
-
-  // Reset transition
-  toast.style.transition = "none";
+  // 4. Animation - Initial state
   toast.style.opacity = "0";
+  toast.style.transform = "translateY(10px) scale(0.95)";
+  toast.style.transition = "all 0.3s cubic-bezier(0.16, 1, 0.3, 1)";
 
-  // Trigger reflow
-  requestAnimationFrame(() => {
-    toast.style.transition = "opacity 0.3s ease";
+  container.appendChild(toast);
+
+  // Trigger entrance animation
+  const rafId = requestAnimationFrame(() => {
     toast.style.opacity = "1";
+    toast.style.transform = "translateY(0) scale(1)";
+    state.asyncTasks.rafs.delete(rafId);
   });
+  state.asyncTasks.rafs.add(rafId);
 
-  // Auto-hide
+  // 5. Auto-hide
   const hideAfter =
     duration !== null
       ? duration
       : type === "error"
-        ? TIMING.ERROR_TOAST_DURATION
-        : TIMING.TOAST_DURATION;
+        ? state.config.errorToastDuration || TIMING.ERROR_TOAST_DURATION
+        : state.config.toastDuration || TIMING.TOAST_DURATION;
 
   if (hideAfter > 0) {
-    state.toastTimer = setTimeout(() => {
+    const timerId = setTimeout(() => {
+      toastTimers.delete(timerId);
+      state.asyncTasks.timeouts.delete(timerId);
       toast.style.opacity = "0";
-      state.toastTimer = null;
+      toast.style.transform = "translateY(-10px) scale(0.95)";
+
+      // Remove from DOM after transition
+      const removeTimerId = setTimeout(() => {
+        toastTimers.delete(removeTimerId);
+        state.asyncTasks.timeouts.delete(removeTimerId);
+        toast.remove();
+        // Remove container if empty
+        if (container.children.length === 0) {
+          container.remove();
+        }
+      }, 300);
+      toastTimers.add(removeTimerId);
+      state.asyncTasks.timeouts.add(removeTimerId);
     }, hideAfter);
+    toastTimers.add(timerId);
+    state.asyncTasks.timeouts.add(timerId);
   }
 }
 
 /**
- * Hide toast immediately
+ * Hide all toasts immediately and cancel pending animations
  */
 export function hideToast() {
-  const toast = document.getElementById("diagview-toast");
-  if (!toast) return;
-
-  if (state.toastTimer) {
-    clearTimeout(state.toastTimer);
-    state.toastTimer = null;
+  const container = document.getElementById("diagview-toast-container");
+  if (container) {
+    container.remove();
   }
 
-  toast.style.opacity = "0";
+  // Safely cancel only the toast-related timers
+  toastTimers.forEach((id) => {
+    clearTimeout(id);
+    state.asyncTasks.timeouts.delete(id);
+  });
+  toastTimers.clear();
 }
 
 /**

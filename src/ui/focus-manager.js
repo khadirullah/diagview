@@ -9,6 +9,21 @@ import { state } from "../core/config.js";
 import { addModalCleanupFunction } from "../core/lifecycle.js";
 
 // Focus Management State handled via state.focusManagementSetup in config.js
+let _focusCacheTimestamp = 0;
+const FOCUS_CACHE_TTL = 500; // ms
+
+const LAYOUT_KEYS = new Set([
+  "ArrowUp",
+  "ArrowDown",
+  "ArrowLeft",
+  "ArrowRight",
+  "+",
+  "=",
+  "-",
+  "_",
+  "0",
+  " ",
+]);
 
 /**
  * Blur active element if it's an interactive UI element (input, button, link)
@@ -50,11 +65,18 @@ export function saveFocus() {
  * Restore previous focus state
  */
 export function restoreFocus() {
-  if (state.lastActiveElement && state.lastActiveElement.focus) {
+  const target = state.lastActiveElement;
+  if (target) {
     try {
-      state.lastActiveElement.focus();
+      // Only focus if still in the document
+      if (document.contains(target)) {
+        target.focus({ preventScroll: true });
+      } else {
+        // Fallback: focus the document body so keyboard navigation resumes
+        document.body.focus();
+      }
     } catch (e) {
-      // Element might no longer exist
+      document.body.focus();
     }
   }
   state.lastActiveElement = null;
@@ -103,9 +125,9 @@ export function shouldHandleKeyboardEvent(event) {
 
   const target = event.target;
 
-  // Special case: Space key on a link (<a>) should still be handled by DiagView
+  // Special case: Space key on a link (<a>) or its children should still be handled by DiagView
   // to prevent background page scroll and provide custom Space-to-Click behavior.
-  if (event.key === " " && target.tagName === "A") {
+  if (event.key === " " && target && target.closest && target.closest("a")) {
     return true;
   }
 
@@ -117,28 +139,52 @@ export function shouldHandleKeyboardEvent(event) {
     target.isContentEditable;
 
   if (isInteractive) {
-    // If focus is on a BUTTON, Space/Enter are reserved for activation.
-    if (target.tagName === "BUTTON" && (event.key === " " || event.key === "Enter")) {
-      return false;
-    }
-    // If focus is on a LINK (<a>), Enter is reserved for activation.
-    if (target.tagName === "A" && event.key === "Enter") {
+    // If we are on a button or link, we only allow specific navigation/layout keys
+    if (target.tagName === "BUTTON" || target.tagName === "A") {
+      if (event.key === "Escape") return true; // Always allow Escape to close modal/help
+
+      // Reserved keys for native activation must not be handled by DiagView shortcuts
+      if (target.tagName === "BUTTON" && (event.key === " " || event.key === "Enter")) {
+        return false;
+      }
+      if (target.tagName === "A" && event.key === "Enter") {
+        return false;
+      }
+
+      // Allow navigation and zoom keys to pass through to handleKeyboardShortcut
+      if (LAYOUT_KEYS.has(event.key)) {
+        return true;
+      }
+
+      // Block all other single-character shortcuts (R, M, L, F, T, etc.)
+      // to prevent conflicts with focused UI elements.
       return false;
     }
 
-    // For all other keys (Arrows, R, M, L, 0, etc.),
-    // we allow DiagView to handle the shortcut even if a button/link is focused.
-    return true;
+    return false;
   }
 
   return true;
 }
 
 /**
- * Get all focusable elements within modal
+ * Invalidate the focusable elements cache
+ */
+export function invalidateFocusableCache() {
+  state.focusableElements = null;
+  _focusCacheTimestamp = 0;
+}
+
+/**
+ * Get all focusable elements within modal (with caching)
  */
 function getFocusableElements(modal) {
-  return Array.from(
+  const now = Date.now();
+  if (state.focusableElements && now - _focusCacheTimestamp < FOCUS_CACHE_TTL) {
+    return state.focusableElements;
+  }
+
+  const focusable = Array.from(
     modal.querySelectorAll(
       'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
     ),
@@ -147,6 +193,10 @@ function getFocusableElements(modal) {
     const style = window.getComputedStyle(el);
     return style.display !== "none" && style.visibility !== "hidden";
   });
+
+  state.focusableElements = focusable;
+  _focusCacheTimestamp = now;
+  return focusable;
 }
 
 /**
@@ -185,7 +235,7 @@ export function setupFocusTrap() {
 
     if (e.shiftKey) {
       // Shift + Tab - going backwards
-      if (!isInModal || activeElement === firstElement) {
+      if (!isInModal || activeElement === firstElement || activeElement === modal) {
         e.preventDefault();
         lastElement.focus();
       }
@@ -211,4 +261,5 @@ export function setupFocusTrap() {
  */
 export function resetFocusManagement() {
   state.focusManagementSetup = false;
+  _focusCacheTimestamp = 0;
 }

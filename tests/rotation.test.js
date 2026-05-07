@@ -4,14 +4,16 @@
  */
 
 import { jest } from "@jest/globals";
-import { state, resetConfig } from "../src/core/config.js";
+import { state, resetConfig, updateConfig } from "../src/core/config.js";
 import { rotateDiagram, resetRotation, getRotationAngle } from "../src/features/lazy/rotate.js";
 import { saveZoomState, restoreZoomState } from "../src/features/panzoom-integration.js";
 
 // Mock DOM
 document.body.innerHTML = `
   <div id="diagview-modal-viewport">
-    <svg id="test-svg"></svg>
+    <div id="diagview-rotator">
+      <svg id="test-svg"></svg>
+    </div>
   </div>
   <div class="diagview-wrapper">
     <svg class="diagram" id="diag1"></svg>
@@ -25,7 +27,7 @@ const mockPanzoom = {
   zoom: jest.fn(),
   pan: jest.fn(),
   reset: jest.fn(),
-  setStyle: jest.fn(),
+  getElement: () => document.getElementById("test-svg"),
 };
 
 describe("Rotation Logic", () => {
@@ -41,7 +43,8 @@ describe("Rotation Logic", () => {
     rotateDiagram();
     expect(state.rotationAngle).toBe(90);
     expect(getRotationAngle()).toBe(90);
-    expect(mockPanzoom.setStyle).toHaveBeenCalled();
+    const rotGroup = document.querySelector(".dv-rot-g");
+    expect(rotGroup.getAttribute("transform")).toContain("rotate(90");
   });
 
   test("resetRotation resets angle to 0", () => {
@@ -52,7 +55,7 @@ describe("Rotation Logic", () => {
   });
 
   test("saveZoomState includes rotation in sessionStorage", () => {
-    state.config.rememberZoom = true;
+    updateConfig({ rememberZoom: true });
     state.rotationAngle = 270;
     saveZoomState("diag1", mockPanzoom);
 
@@ -61,7 +64,7 @@ describe("Rotation Logic", () => {
   });
 
   test("restoreZoomState restores rotation from sessionStorage", () => {
-    state.config.rememberZoom = true;
+    updateConfig({ rememberZoom: true });
     const zoomState = {
       scale: 1.5,
       pan: { x: 10, y: 20 },

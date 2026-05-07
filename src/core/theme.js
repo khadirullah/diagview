@@ -6,11 +6,13 @@
 
 import { state } from "./config.js";
 import { TIMING, COLORS } from "./constants.js";
-import { debounce, isSessionStorageAvailable } from "./utils.js";
+import { debounce } from "./utils.js";
+
 import { addManagedListener } from "./lifecycle.js";
 
 // Theme State handled via state in config.js
 const CACHE_DURATION = 1000; // 1 second
+const NAMED_COLOR_CACHE = new Map();
 
 /**
  * Calculate relative luminance (WCAG 2.0)
@@ -59,10 +61,18 @@ function parseColor(color) {
   }
 
   // 3. Named colors - convert via CSS computed style (Faster than Canvas)
+  // OPT-7: Use a targeted cache for named colors to prevent layout thrashing
+  if (NAMED_COLOR_CACHE.has(trimmed)) {
+    return NAMED_COLOR_CACHE.get(trimmed);
+  }
+
   if (!state.colorParserEl && typeof document !== "undefined") {
-    state.colorParserEl = document.createElement("div");
-    state.colorParserEl.style.cssText = "display:none !important;visibility:hidden !important;";
-    document.body.appendChild(state.colorParserEl);
+    // Use <meta> instead of <div> and append to <html> to avoid body layout flushes
+    state.colorParserEl = document.createElement("meta");
+    state.colorParserEl.setAttribute("aria-hidden", "true");
+    state.colorParserEl.style.cssText =
+      "display:none!important;position:absolute!important;visibility:hidden!important;";
+    document.documentElement.appendChild(state.colorParserEl);
   }
 
   if (state.colorParserEl) {
@@ -70,7 +80,12 @@ function parseColor(color) {
     const computed = getComputedStyle(state.colorParserEl).color;
     // Returns "rgb(r, g, b)"
     const match = computed.match(/\d+/g);
-    return match ? match.slice(0, 3).map(Number) : null;
+    const result = match ? match.slice(0, 3).map(Number) : null;
+
+    if (result) {
+      NAMED_COLOR_CACHE.set(trimmed, result);
+    }
+    return result;
   }
 
   return null;
@@ -258,7 +273,7 @@ export function detectTheme() {
   state.themeCacheTimestamp = now;
 
   // Store in sessionStorage for persistence
-  if (isSessionStorageAvailable()) {
+  if (state.isStorageAvailable) {
     try {
       const safe = {
         isDark: !!theme.isDark,

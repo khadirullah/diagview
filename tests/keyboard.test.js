@@ -20,6 +20,7 @@ describe("Keyboard Shortcuts Integration", () => {
       reset: jest.fn(),
       pan: jest.fn(),
       getScale: jest.fn().mockReturnValue(1),
+      getElement: () => document.createElement("div"),
     };
 
     state.activePanzoom = mockPanzoom;

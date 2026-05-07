@@ -5,7 +5,7 @@
  */
 
 import { state } from "../core/config.js";
-import { EXPORT, COLORS } from "../core/constants.js";
+import { EXPORT, COLORS, TIMING } from "../core/constants.js";
 import { detectTheme } from "../core/theme.js";
 import {
   downloadFile,
@@ -14,39 +14,10 @@ import {
   isMobileDevice,
   isClipboardAvailable,
   loadScript,
+  getRobustDimensions,
 } from "../core/utils.js";
-import { cloneSVGForExport } from "../core/svg-clone.js";
-import { showSuccessToast, showErrorToast, showInfoToast } from "../ui/toast.js";
-
-/**
- * Robust dimension calculator
- * Prioritizes BBox to ensure we capture the actual visible content area,
- * preventing alignment issues if the diagram doesn't start at 0,0.
- */
-function getRobustDimensions(svg) {
-  // 1. Try BBox (Best for centering content)
-  // We prioritize this because we want to know where the *ink* is, not just the canvas size.
-  try {
-    const bbox = svg.getBBox();
-    if (bbox.width > 0 && bbox.height > 0) {
-      return { x: bbox.x, y: bbox.y, w: bbox.width, h: bbox.height, src: "bbox" };
-    }
-  } catch (e) {
-    // Ignore BBox errors (e.g. valid in JSDOM or if not attached)
-  }
-
-  // 2. Try viewBox
-  if (svg.hasAttribute("viewBox")) {
-    const vb = svg.getAttribute("viewBox").split(/\s+|,/).map(parseFloat);
-    if (vb.length === 4 && vb[2] > 0 && vb[3] > 0) {
-      return { x: vb[0], y: vb[1], w: vb[2], h: vb[3], src: "viewBox" };
-    }
-  }
-
-  // 3. Fallback to client rect (0,0 assumed)
-  const rect = svg.getBoundingClientRect();
-  return { x: 0, y: 0, w: rect.width || 1000, h: rect.height || 1000, src: "rect" };
-}
+import { cloneSVGForExportAsync } from "../core/svg-clone.js";
+import { showSuccessToast, showErrorToast, showInfoToast, showWarningToast } from "../ui/toast.js";
 
 /**
  * Generate filename
@@ -67,93 +38,198 @@ export function generateFilename(svg) {
 }
 
 /**
- * Prepare SVG for export
+ * Fetch a URL and return a base64 data URI, or null on failure.
+ * Used to embed fonts so export SVGs render consistently.
+ * @private
  */
-function prepareSvgForExport(svg, modalClone) {
+async function fetchAsDataURI(url) {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+  try {
+    const resp = await fetch(url, { mode: "cors", signal: controller.signal });
+    clearTimeout(timeoutId);
+
+    if (!resp.ok) return null;
+    const blob = await resp.blob();
+    return new Promise((res) => {
+      const reader = new FileReader();
+      reader.onload = () => res(reader.result);
+      reader.onerror = () => res(null);
+      reader.readAsDataURL(blob);
+    });
+  } catch (err) {
+    clearTimeout(timeoutId);
+    return null;
+  }
+}
+
+/**
+ * Collect @font-face rules from loaded document stylesheets
+ * and embed referenced font files as base64 data URIs.
+ * Mutates the SVG element's first/new <style> block.
+ * @private
+ */
+async function embedDocumentFonts(svgEl) {
+  if (typeof document === "undefined" || !document.fonts) return;
+
+  // Wait for all fonts to be loaded before reading metrics / before export
+  await document.fonts.ready;
+
+  const fontFaceRules = [];
+  for (const sheet of document.styleSheets) {
+    try {
+      for (const rule of sheet.cssRules) {
+        if (rule instanceof CSSFontFaceRule) {
+          fontFaceRules.push(rule.cssText);
+        }
+      }
+    } catch {
+      // cross-origin stylesheets — skip
+    }
+  }
+
+  if (!fontFaceRules.length) return;
+
+  // Fetch and inline font files referenced by url(...)
+  const inlined = await Promise.all(
+    fontFaceRules.map(async (cssText) => {
+      // Replace each url("https://...") with a base64 data URI
+      const urlMatches = [...cssText.matchAll(/url\(['"]?(https?:\/\/[^'")\s]+)['"]?\)/gi)];
+      let result = cssText;
+      for (const [match, rawUrl] of urlMatches) {
+        const dataURI = await fetchAsDataURI(rawUrl);
+        if (dataURI) {
+          result = result.replace(match, `url('${dataURI}')`);
+        }
+      }
+      return result;
+    }),
+  );
+
+  // Prepend a <style> with embedded @font-face rules to the SVG
+  let styleEl = svgEl.querySelector("style.dv-font-embed");
+  if (!styleEl) {
+    styleEl = document.createElementNS("http://www.w3.org/2000/svg", "style");
+    styleEl.classList.add("dv-font-embed");
+    svgEl.insertBefore(styleEl, svgEl.firstChild);
+  }
+  styleEl.textContent = inlined.join("\n");
+}
+
+/**
+ * Prepare SVG for export.
+ * KEY CHANGES vs original:
+ *  1. Always clone from ORIGINAL page SVG (not modal clone) → correct CSS context
+ *  2. Set explicit px dimensions, never "100%" (avoids intrinsic-size=0 in <img>)
+ *  3. Wait for fonts → embed them → consistent text metrics
+ * @private
+ */
+async function prepareSvgForExport(svg, modalClone) {
   const theme = detectTheme();
 
-  // Use robust dimensions - Capture the TRUE content bounds
-  const d = getRobustDimensions(svg);
+  // Wait for fonts to load so BBox / computed styles are stable
+  if (document.fonts?.ready) {
+    await document.fonts.ready;
+  }
 
-  // Padding (5% or minimum 20px)
-  // We use a slightly generous padding to ensure labels near the edge aren't cut off
+  // Use modalClone for dimensions and content if available to ensure fidelity
+  const sourceSvg = modalClone || svg;
+  const d = getRobustDimensions(sourceSvg);
+
   const zoomCushion = Math.max(d.w, d.h) * 0.05;
   const padding = Math.max(EXPORT.SVG_EXPORT_PADDING / 2, zoomCushion);
 
-  // New ViewBox calculations
-  // Center: x - padding, y - padding
   const vx = d.x - padding;
   const vy = d.y - padding;
   const vw = d.w + padding * 2;
   const vh = d.h + padding * 2;
-
   const width = vw;
   const height = vh;
 
-  // Create final exportable SVG
-  const source = modalClone || svg;
+  // CRITICAL FIX: Use sourceSvg (modalClone if in fullscreen)
+  const exportSvg = await cloneSVGForExportAsync(sourceSvg);
 
-  // Use centralized cloning function for consistent style baking
-  const exportSvg = cloneSVGForExport(source);
+  if (!exportSvg) return null;
 
-  // Set sizing - Explicitly set viewBox to center content
+  // Embed fonts so text metrics match the original browser render
+  await embedDocumentFonts(exportSvg);
+
+  // Set explicit dimensions as ATTRIBUTES (not CSS — CSS "100%" breaks img intrinsic size)
   exportSvg.setAttribute("viewBox", `${vx} ${vy} ${vw} ${vh}`);
-  exportSvg.setAttribute("width", width);
-  exportSvg.setAttribute("height", height);
+  exportSvg.setAttribute("width", String(Math.round(width)));
+  exportSvg.setAttribute("height", String(Math.round(height)));
   exportSvg.setAttribute("xmlns", "http://www.w3.org/2000/svg");
+  exportSvg.setAttribute("xmlns:xlink", "http://www.w3.org/1999/xlink");
 
-  // (Background color relies dynamically on canvas rendering for PNG-T support)
-
-  // CRITICAL FIX: Reset Zoom/Pan Transforms
-  // We must strip any zoom/pan transforms to export the "clean" full diagram.
-  exportSvg.style.transform = "none";
+  // CRITICAL FIX: clear ALL inline styles on the root element.
+  // The original code set style.width="100%" which overrides the width attribute
+  // when loaded as <img>, causing the SVG to have no intrinsic size → clipping.
+  exportSvg.style.cssText = "";
   exportSvg.removeAttribute("transform");
-  exportSvg.style.transformOrigin = "center center";
-  exportSvg.style.margin = "0";
-  exportSvg.style.position = "static";
 
-  // Reset dimensions to ensure it fits the canvas logic
-  exportSvg.style.width = "100%";
-  exportSvg.style.height = "100%";
-  exportSvg.style.maxWidth = "none";
-  exportSvg.style.maxHeight = "none";
-  exportSvg.style.minWidth = "0";
-  exportSvg.style.minHeight = "0";
-
-  // CRITICAL FIX (Bug #20): Do NOT reset internal group transforms.
-  // We rely on getRobustDimensions (BBox) and the viewBox to frame the content.
-  // Resetting group transforms here would break diagrams (like Mermaid) that
-  // use root groups for internal positioning/padding.
-
-  // Fix for potential canvas tainting from external images
-  const images = exportSvg.querySelectorAll("image");
-  images.forEach((img) => {
-    const href = img.getAttribute("href") || img.getAttribute("xlink:href");
-    if (href && (href.startsWith("http") || href.startsWith("//"))) {
-      img.setAttribute("crossorigin", "anonymous");
+  // Prevent stale Panzoom matrix on root (defensive)
+  const firstGroup = exportSvg.querySelector("g[style*='transform']");
+  if (firstGroup) {
+    const ts = firstGroup.style.transform;
+    if (ts && ts !== "none" && !ts.includes("rotate")) {
+      // Only clear Panzoom matrix transforms; preserve SVG structural transforms
+      firstGroup.style.removeProperty("transform");
     }
+  }
+
+  // Fix cross-origin images inside the SVG
+  exportSvg.querySelectorAll("image").forEach((img) => {
+    const href = img.getAttribute("href") || img.getAttribute("xlink:href") || "";
+    if (/^https?:\/\//.test(href)) img.setAttribute("crossorigin", "anonymous");
   });
 
   return { width, height, bg: theme.bg, svg: exportSvg };
 }
 
 /**
- * Generic Canvas renderer
+ * Helper to serialize SVG to string asynchronously to avoid UI blocking
+ * @private
+ */
+async function serializeSVGAsync(svgEl) {
+  return new Promise((resolve) => {
+    // Use MessageChannel to yield to the event loop before heavy serialization
+    // This ensures UI updates (like toasts) are rendered before the CPU spike
+    if (typeof MessageChannel !== "undefined") {
+      const { port1, port2 } = new MessageChannel();
+      port1.onmessage = () => resolve(new XMLSerializer().serializeToString(svgEl));
+      port2.postMessage(null);
+    } else {
+      // Fallback for environments without MessageChannel (like Node/JSDOM tests)
+      setTimeout(() => resolve(new XMLSerializer().serializeToString(svgEl)), 0);
+    }
+  });
+}
+
+/**
+ * Render to canvas.
+ * CHANGE: always pass null as modalClone — use original SVG only.
  */
 export async function renderToCanvas(sourceElement, modalClone, transparent = false) {
   const originalSvg = sourceElement.querySelector("svg");
   if (!originalSvg) throw new Error("No SVG found");
 
-  const { width, height, bg, svg: finalSvg } = prepareSvgForExport(originalSvg, modalClone);
+  const style = window.getComputedStyle(originalSvg);
+  if (style.display === "none") {
+    console.warn("DiagView: Exporting a hidden element may result in empty styles.");
+  }
 
-  // Calculate Scale (High Res by default)
+  // Use modalClone if available to ensure export matches browser rendering
+  const result = await prepareSvgForExport(originalSvg, modalClone);
+  if (!result) throw new Error("SVG preparation failed");
+
+  const { width, height, bg, svg: finalSvg } = result;
+
   const isMobile = isMobileDevice();
-  // FORCE 2x MINIMUM for desktop to avoid blurriness, unless config says otherwise
   let scale = isMobile
     ? state.config.mobileScale || EXPORT.MOBILE_SCALE_DEFAULT
     : state.config.highResScale || EXPORT.HIGH_RES_SCALE_DEFAULT;
 
-  // Cap pixels to prevent crash
   const targetPixels = width * scale * (height * scale);
   if (targetPixels > state.config.maxPixels) {
     scale = Math.sqrt(state.config.maxPixels / (width * height));
@@ -165,15 +241,11 @@ export async function renderToCanvas(sourceElement, modalClone, transparent = fa
   canvas.height = Math.round(height * scale);
   const ctx = canvas.getContext("2d");
 
-  // Serialization Logic: Smart Hybrid Approach
-  // We use Data URLs for small diagrams to bypass 'file://' origin restrictions (Maximum Compatibility)
-  // We use Blob URLs for large diagrams to avoid URL length limits and browser crashes (Maximum Performance)
-  const svgStr = new XMLSerializer().serializeToString(finalSvg);
-  const isSmall = svgStr.length < 1000000; // ~1MB Threshold
+  const svgStr = await serializeSVGAsync(finalSvg);
+  const isSmall = svgStr.length < EXPORT.LARGE_FILE_THRESHOLD;
 
-  let url;
-  let isBlob = false;
-
+  let url,
+    isBlob = false;
   if (isSmall || typeof URL.createObjectURL !== "function") {
     url = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svgStr);
   } else {
@@ -183,44 +255,49 @@ export async function renderToCanvas(sourceElement, modalClone, transparent = fa
   }
 
   const img = new Image();
-  // setting crossOrigin is important for external images within the SVG
   img.crossOrigin = "anonymous";
 
-  // Promise wrapper for loading
+  // Set explicit dimensions on the img element to guarantee correct natural size
+  img.width = Math.round(width);
+  img.height = Math.round(height);
+
   await new Promise((resolve, reject) => {
     img.onload = () => {
       if (isBlob) URL.revokeObjectURL(url);
       resolve();
     };
-    img.onerror = (err) => {
+    img.onerror = (_err) => {
       if (isBlob) URL.revokeObjectURL(url);
-      reject(new Error("Image load failed. The SVG may be too large or contain invalid data."));
+      reject(new Error("Image load failed. SVG may be too large or contain invalid data."));
     };
     img.src = url;
   });
 
-  // Draw
   if (!transparent) {
     ctx.fillStyle = bg || COLORS.BG_LIGHT;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
   }
 
-  // Smooth scaling
   ctx.imageSmoothingEnabled = true;
   ctx.imageSmoothingQuality = "high";
-
   ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
 
   return { canvas, scale, width, height };
 }
 
 /**
- * EXPORT: SVG
+ * Export as SVG
+ * @param {HTMLElement} sourceElement - Element containing SVG
+ * @param {object} [options={}] - Export options
  */
-async function exportSVG(sourceElement, filename, isTransparent = false, modalClone = null) {
+export async function exportToSVG(sourceElement, options = {}) {
+  const filename = options.filename || generateFilename(sourceElement.querySelector("svg"));
+  const isTransparent = options.transparent || false;
+  const modalClone = options.modalClone || null;
+
   try {
     const originalSvg = sourceElement.querySelector("svg");
-    const { bg, svg } = prepareSvgForExport(originalSvg, modalClone);
+    const { bg, svg } = await prepareSvgForExport(originalSvg, modalClone);
 
     // Add bg rect for non-transparent SVG
     if (!isTransparent) {
@@ -235,10 +312,10 @@ async function exportSVG(sourceElement, filename, isTransparent = false, modalCl
       svg.insertBefore(rect, svg.firstChild);
     }
 
-    const data = new XMLSerializer().serializeToString(svg);
+    const data = await serializeSVGAsync(svg);
 
     // Use DataURL for small SVGs to ensure filename compatibility on file://
-    const isSmall = data.length < 1000000;
+    const isSmall = data.length < EXPORT.LARGE_FILE_THRESHOLD;
     const downloadUrl = isSmall
       ? "data:image/svg+xml;charset=utf-8," + encodeURIComponent(data)
       : URL.createObjectURL(new Blob([data], { type: "image/svg+xml;charset=utf-8" }));
@@ -251,19 +328,25 @@ async function exportSVG(sourceElement, filename, isTransparent = false, modalCl
 }
 
 /**
- * EXPORT: PNG / WebP / JPEG
+ * Internal Image Export Processor
  */
-async function exportImage(sourceElement, filename, format, transparent, copy, modalClone) {
+async function processImageExport(
+  sourceElement,
+  filename,
+  format,
+  transparent,
+  copy,
+  modalClone,
+  silent = false,
+) {
   try {
     const isWebP = format === "webp";
     const isJpeg = format === "jpeg" || format === "jpg";
 
-    // JPEG doesn't support transparency, force off
-    if (isJpeg) transparent = false;
-
     // Determine mime type and extension
-    let mime = "image/png",
-      ext = "png";
+    let mime = "image/png";
+    let ext = "png";
+
     if (isWebP) {
       mime = "image/webp";
       ext = "webp";
@@ -272,34 +355,63 @@ async function exportImage(sourceElement, filename, format, transparent, copy, m
       ext = "jpeg";
     }
 
-    const label = (transparent ? "Transparent " : "") + (isWebP ? "WebP" : isJpeg ? "JPEG" : "PNG");
+    let label = (transparent ? "Transparent " : "") + (isWebP ? "WebP" : isJpeg ? "JPEG" : "PNG");
 
-    showInfoToast(`Processing ${label}...`);
-
-    const { canvas, scale } = await renderToCanvas(sourceElement, modalClone, transparent);
-
-    const quality = isWebP ? 0.95 : undefined;
-    const blob = await new Promise((resolve, reject) => {
-      canvas.toBlob((b) => (b ? resolve(b) : reject(new Error("Encoding failed"))), mime, quality);
-    });
-
-    if (copy) {
-      // Clipboard (PNG only usually)
-      if (!isClipboardAvailable() || isWebP) {
-        downloadFile(canvas.toDataURL(mime), `${filename}.${ext}`);
-        showSuccessToast(`${label} downloaded (Clipboard unavailable)`);
-      } else {
-        await navigator.clipboard.write([new ClipboardItem({ [mime]: blob })]);
-        showSuccessToast("Copied to clipboard!");
+    // JPEG doesn't support transparency, auto-switch to PNG for better UX
+    if (isJpeg && transparent) {
+      label = "Transparent PNG";
+      mime = "image/png";
+      ext = "png";
+      if (!silent) {
+        showWarningToast("JPEGs don't support transparency. Switched to Transparent PNG for you.");
       }
-    } else {
-      // Download: Use DataURL for small images to ensure filename compatibility on file://
-      // Use BlobURL only for massive images that would crash DataURL strings.
-      const isMassive = canvas.width * canvas.height > 4000000; // ~4MP threshold
-      const downloadUrl = isMassive ? URL.createObjectURL(blob) : canvas.toDataURL(mime);
+    } else if (!silent) {
+      showInfoToast(`Processing ${label}...`);
+    }
 
-      downloadFile(downloadUrl, `${filename}.${ext}`);
-      showSuccessToast(`${scale.toFixed(1)}x ${label} saved`);
+    // Small delay to ensure toast renders before heavy canvas work
+    await new Promise((resolve) => setTimeout(resolve, TIMING.RENDER_DELAY));
+
+    let canvasRef = null;
+    try {
+      const { canvas, scale } = await renderToCanvas(sourceElement, modalClone, transparent);
+      canvasRef = canvas;
+
+      const quality = isWebP ? 0.95 : undefined;
+      const blob = await new Promise((resolve, reject) => {
+        canvas.toBlob(
+          (b) => (b ? resolve(b) : reject(new Error("Encoding failed"))),
+          mime,
+          quality,
+        );
+      });
+
+      if (copy) {
+        // Clipboard (PNG only usually)
+        if (!isClipboardAvailable() || isWebP) {
+          // Fallback to download if clipboard fails
+          const url = URL.createObjectURL(blob);
+          downloadFile(url, `${filename}.${ext}`);
+          setTimeout(() => URL.revokeObjectURL(url), TIMING.CLEANUP_DELAY);
+          showSuccessToast(`${label} downloaded (Clipboard unavailable)`);
+        } else {
+          await navigator.clipboard.write([new ClipboardItem({ [mime]: blob })]);
+          showSuccessToast("Copied to clipboard!");
+        }
+      } else {
+        // Download: Use BlobURL for maximum stability
+        const downloadUrl = URL.createObjectURL(blob);
+        downloadFile(downloadUrl, `${filename}.${ext}`);
+        // Revoke after a short delay to ensure browser has started the download
+        setTimeout(() => URL.revokeObjectURL(downloadUrl), TIMING.BUTTON_SUCCESS_DURATION);
+        showSuccessToast(`${scale.toFixed(1)}x ${label} saved`);
+      }
+    } finally {
+      // DOM-4: Release canvas memory immediately
+      if (canvasRef) {
+        canvasRef.width = 0;
+        canvasRef.height = 0;
+      }
     }
   } catch (e) {
     console.error("DiagView Export Error:", e);
@@ -307,8 +419,9 @@ async function exportImage(sourceElement, filename, format, transparent, copy, m
     // Handle "Tainted Canvas" security error specifically
     if (e.name === "SecurityError" || e.message?.includes("tainted")) {
       showErrorToast(
-        "Export Restricted",
-        "External fonts or images are blocking PNG export. Try 'SVG' export instead, or run from a web server."
+        "Export blocked by cross-origin image",
+        "An embedded image from another domain blocked canvas export. " +
+          "Use SVG export instead, or ensure external images have CORS headers (Access-Control-Allow-Origin: *).",
       );
     } else {
       showErrorToast("Export Failed", e.message);
@@ -317,26 +430,86 @@ async function exportImage(sourceElement, filename, format, transparent, copy, m
 }
 
 /**
- * EXPORT: PDF
+ * Export as PNG
  */
-async function exportPDF(sourceElement, filename, modalClone) {
+export async function exportToPNG(sourceElement, options = {}) {
+  const filename = options.filename || generateFilename(sourceElement.querySelector("svg"));
+  return processImageExport(
+    sourceElement,
+    filename,
+    "png",
+    !!options.transparent,
+    false,
+    options.modalClone,
+    !!options.silent,
+  );
+}
+
+/**
+ * Export as JPEG
+ */
+export async function exportToJPEG(sourceElement, options = {}) {
+  const filename = options.filename || generateFilename(sourceElement.querySelector("svg"));
+  return processImageExport(
+    sourceElement,
+    filename,
+    "jpeg",
+    !!options.transparent,
+    false,
+    options.modalClone,
+    !!options.silent,
+  );
+}
+
+/**
+ * Export as WebP
+ */
+export async function exportToWebP(sourceElement, options = {}) {
+  const filename = options.filename || generateFilename(sourceElement.querySelector("svg"));
+  return processImageExport(
+    sourceElement,
+    filename,
+    "webp",
+    !!options.transparent,
+    false,
+    options.modalClone,
+  );
+}
+
+/**
+ * Copy to Clipboard (PNG)
+ */
+export async function copyToClipboard(sourceElement, options = {}) {
+  const filename = options.filename || generateFilename(sourceElement.querySelector("svg"));
+  return processImageExport(sourceElement, filename, "png", false, true, options.modalClone);
+}
+
+/**
+ * Export as PDF
+ */
+export async function exportToPDF(sourceElement, options = {}) {
+  const filename = options.filename || generateFilename(sourceElement.querySelector("svg"));
+  const transparent = options.transparent || false;
+  const modalClone = options.modalClone || null;
+
   try {
     showInfoToast("Generating PDF...");
     const pdfUrl = state.config.pdfLibraryUrl;
     if (!window.jspdf) {
-      await loadScript(pdfUrl, state.config.pdfLibraryIntegrity).catch((err) => {
-        console.error("DiagView PDF Load Error:", err);
-        // Integrity failure is a common cause for script load failure when hardcoded hashes are used
-        showErrorToast("PDF Library Failed", "Possible Security Integrity (SRI) mismatch or Network Error.");
+      await loadScript(pdfUrl, state.config.pdfLibraryIntegrity).catch(() => {
+        // Silently handle load failure, the check below will trigger the fallback UI
       });
     }
 
     // Fallback: If no jsPDF, save as PNG
     if (!window.jspdf) {
-      console.warn("jsPDF missing, falling back to PNG");
-      showInfoToast("Falling back to PNG export...");
-      await exportImage(sourceElement, filename, "png", false, false, modalClone);
+      showInfoToast("PDF engine unavailable, falling back to PNG...");
+      await exportToPNG(sourceElement, { filename, modalClone, silent: true });
       return;
+    }
+
+    if (transparent) {
+      showWarningToast("PDF format does not support transparency. Using background color.");
     }
 
     const { canvas, width, height } = await renderToCanvas(sourceElement, modalClone, false);
@@ -384,18 +557,33 @@ export async function exportDiagram(sourceElement, mode, options = {}) {
 
   switch (mode) {
     case "svg":
-      return exportSVG(sourceElement, filename, isTransparent, modalClone);
+      await exportToSVG(sourceElement, { filename, transparent: isTransparent, modalClone });
+      break;
     case "copy":
-      return exportImage(sourceElement, filename, "png", false, true, modalClone);
+      await copyToClipboard(sourceElement, { filename, modalClone });
+      break;
     case "jpeg":
-      return exportImage(sourceElement, filename, "jpeg", false, false, modalClone);
+      await exportToJPEG(sourceElement, { filename, transparent: isTransparent, modalClone });
+      break;
     case "png":
-      return exportImage(sourceElement, filename, "png", isTransparent, false, modalClone);
+      await exportToPNG(sourceElement, { filename, transparent: isTransparent, modalClone });
+      break;
     case "webp":
-      return exportImage(sourceElement, filename, "webp", isTransparent, false, modalClone);
+      await exportToWebP(sourceElement, { filename, transparent: isTransparent, modalClone });
+      break;
     case "pdf":
-      return exportPDF(sourceElement, filename, modalClone);
+      await exportToPDF(sourceElement, { filename, transparent: isTransparent, modalClone });
+      break;
     default:
-      return exportImage(sourceElement, filename, "png", false, false, modalClone);
+      await exportToPNG(sourceElement, { filename, modalClone });
+  }
+
+  // Fire onExport callback after export completes (matches onOpen/onClose pattern)
+  if (state.config.onExport) {
+    try {
+      state.config.onExport(mode, filename);
+    } catch (e) {
+      console.error("DiagView: onExport callback error:", e);
+    }
   }
 }

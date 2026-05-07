@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="images/logo.png" sizes="512x512">
+    <link rel="apple-touch-icon" href="images/logo.png">
+    <title>DiagView — Layout Comparison</title>
+    <meta property="og:image" content="images/hero.png">
+    <meta name="description"
+        content="Compare DiagView's three layout modes — floating, header, and off — side by side on a single page using per-diagram data-diagview-layout overrides.">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono&display=swap"
+        rel="stylesheet">
+
+    <link rel="stylesheet" href="demo-styles.css">
+
+    <!-- Panzoom (required for fullscreen zoom/pan) -->
+    <script src="https://cdn.jsdelivr.net/npm/@panzoom/panzoom@4.5.1/dist/panzoom.min.js"></script>
+
+    <!-- DiagView — CDN (Online) -->
+    <script src="https://unpkg.com/diagview@1.0.5/dist/diagview.umd.js" data-diagview-no-auto-init></script>
+
+    <!-- Development Mode: Uncomment below to use local file -->
+    <!-- <script src="../dist/diagview.umd.js" data-diagview-no-auto-init></script> -->
+
+    <script src="demo-runtime.js"></script>
+
+    <style>
+        body { padding-top: 90px; }
+
+        .hero {
+            text-align: center;
+            padding: 48px 24px 32px;
+            max-width: 780px;
+            margin: 0 auto;
+        }
+        .hero h1 { font-size: clamp(1.8rem, 4vw, 2.6rem); margin-bottom: 12px; }
+        .hero p  { font-size: 1.05rem; opacity: .72; max-width: 560px; margin: 0 auto 24px; }
+
+        .badge-row {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 0;
+        }
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 5px 14px;
+            border-radius: 999px;
+            font-size: .78rem;
+            font-weight: 600;
+            letter-spacing: .5px;
+            text-transform: uppercase;
+        }
+        .badge.floating { background: rgba(245,158,11,.12); color: #f59e0b; border: 1px solid rgba(245,158,11,.3); }
+        .badge.header   { background: rgba(99,102,241,.12);  color: #6366f1; border: 1px solid rgba(99,102,241,.3); }
+        .badge.off      { background: rgba(16,185,129,.12);  color: #10b981; border: 1px solid rgba(16,185,129,.3); }
+
+        /* ── Comparison grid ── */
+        .compare-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 28px;
+            max-width: 1300px;
+            margin: 0 auto 60px;
+            padding: 0 24px;
+        }
+
+        .layout-card {
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+            border-radius: 16px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+            background: var(--card-bg);
+            transition: box-shadow .25s, transform .25s;
+        }
+        .layout-card:hover {
+            box-shadow: 0 12px 40px rgba(0,0,0,.18);
+            transform: translateY(-3px);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 20px 12px;
+            border-bottom: 1px solid var(--border);
+        }
+        .card-header h3 { font-size: 1rem; font-weight: 700; margin: 0; }
+
+        /* Diagram container inside each card */
+        .layout-card .diagram {
+            border-radius: 0 !important;
+            border: none !important;
+        }
+
+        /* Code snippet */
+        .attr-snippet {
+            padding: 14px 20px;
+            background: var(--card-bg);
+            border-top: 1px solid var(--border);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: .72rem;
+            color: var(--muted, #888);
+            overflow-x: auto;
+            white-space: pre;
+            line-height: 1.6;
+        }
+        .attr-key   { color: #818cf8; }
+        .attr-val   { color: #34d399; }
+
+        /* Info section */
+        .info-section {
+            max-width: 860px;
+            margin: 0 auto 60px;
+            padding: 0 24px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 20px;
+        }
+        .info-card {
+            padding: 24px;
+            border-radius: 14px;
+            border: 1px solid var(--border);
+            background: var(--card-bg);
+        }
+        .info-card .icon { font-size: 1.8rem; margin-bottom: 10px; }
+        .info-card h4    { font-size: .95rem; font-weight: 700; margin: 0 0 6px; }
+        .info-card p     { font-size: .85rem; opacity: .7; margin: 0; line-height: 1.6; }
+
+        /* Full code block */
+        .code-section {
+            max-width: 860px;
+            margin: 0 auto 80px;
+            padding: 0 24px;
+        }
+        .code-section h2 { font-size: 1.3rem; margin-bottom: 16px; }
+        .code-block {
+            background: #0f172a;
+            border-radius: 12px;
+            padding: 24px 28px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: .8rem;
+            line-height: 1.75;
+            overflow-x: auto;
+            color: #e2e8f0;
+        }
+        .code-block .kw  { color: #818cf8; }
+        .code-block .str { color: #34d399; }
+        .code-block .cmt { color: #64748b; }
+        .code-block .tag { color: #f472b6; }
+        .code-block .atn { color: #7dd3fc; }
+        .code-block .atv { color: #a3e635; }
+    </style>
+</head>
+
+<body>
+
+    <div class="controls">
+        <div class="brand">
+            <a href="index.html">
+                <img src="images/logo.png" alt="DiagView" style="width:32px;height:32px;border-radius:8px;object-fit:cover;flex-shrink:0">
+                <div class="brand-meta">
+                    <span class="brand-label">DiagView</span>
+                    <span class="brand-name">Layout Compare</span>
+                </div>
+            </a>
+        </div>
+        <div class="toggles">
+            <label class="accent-label">
+                <span>Security</span>
+                <select id="securitySelector" title="Toggle SVG Sanitization Level">
+                    <option value="strict">Strict (High)</option>
+                    <option value="permissive">Permissive</option>
+                    <option value="off">Off (Trusted)</option>
+                </select>
+            </label>
+            <label class="accent-label">
+                <span>Accent</span>
+                <input type="color" id="accentPicker" value="#6366f1">
+            </label>
+            <button class="toggle-btn" onclick="toggleTheme()" title="Toggle Dark/Light Mode">🌓</button>
+            <a href="index.html" class="toggle-btn" style="background:var(--accent);color:#fff;border:none">← Hub</a>
+        </div>
+    </div>
+
+    <section class="page-hero">
+        <h1>Per-Diagram Layout Control</h1>
+        <p>Three different layout modes on a <strong>single page</strong>, each set with a single HTML attribute.
+            Click <em>Destroy DiagView</em> above to see the bare diagrams, then restore.</p>
+        <div class="badge-row">
+            <span class="badge floating">⊙ Floating FAB</span>
+            <span class="badge header">▬ Header bar</span>
+            <span class="badge off">✕ Off (click-only)</span>
+        </div>
+    </section>
+
+    <!-- Comparison grid -->
+    <div class="compare-grid">
+
+        <!-- ── FLOATING ── -->
+        <div class="layout-card">
+            <div class="card-header">
+                <h3>Floating</h3>
+                <span class="badge floating">floating</span>
+            </div>
+            <div class="diagram"
+                data-diagview-layout="floating"
+                data-diagview-accent="#f59e0b"
+                data-title="Microservices Architecture (Floating)"
+                id="diag-floating">
+                <!-- SVG injected by JS -->
+            </div>
+            <div class="attr-snippet"><span class="attr-key">data-diagview-layout</span>=<span class="attr-val">"floating"</span>
+<span class="attr-key">data-diagview-accent</span>=<span class="attr-val">"#f59e0b"</span></div>
+        </div>
+
+        <!-- ── HEADER ── -->
+        <div class="layout-card">
+            <div class="card-header">
+                <h3>Header</h3>
+                <span class="badge header">header</span>
+            </div>
+            <div class="diagram"
+                data-diagview-layout="header"
+                data-diagview-accent="#6366f1"
+                data-title="Microservices Architecture (Header)"
+                id="diag-header">
+            </div>
+            <div class="attr-snippet"><span class="attr-key">data-diagview-layout</span>=<span class="attr-val">"header"</span>
+<span class="attr-key">data-diagview-accent</span>=<span class="attr-val">"#6366f1"</span></div>
+        </div>
+
+        <!-- ── OFF ── -->
+        <div class="layout-card">
+            <div class="card-header">
+                <h3>Off</h3>
+                <span class="badge off">off</span>
+            </div>
+            <div class="diagram"
+                data-diagview-layout="off"
+                data-diagview-accent="#10b981"
+                data-title="Microservices Architecture (Off)"
+                id="diag-off">
+            </div>
+            <div class="attr-snippet"><span class="attr-key">data-diagview-layout</span>=<span class="attr-val">"off"</span>
+<span class="attr-key">data-diagview-accent</span>=<span class="attr-val">"#10b981"</span>
+<span class="cmt">// Click diagram to open fullscreen</span></div>
+        </div>
+
+    </div>
+
+    <!-- Info cards -->
+    <div class="info-section">
+        <div class="info-card">
+            <div class="icon">⊙</div>
+            <h4>Floating FAB</h4>
+            <p>A circular action button hovers over the bottom-right corner. Minimally intrusive — ideal for embedded
+                diagrams where you want controls available but out of the way.</p>
+        </div>
+        <div class="info-card">
+            <div class="icon">▬</div>
+            <h4>Header Bar</h4>
+            <p>A full-width toolbar appears above the diagram. All actions are always visible. Best for documentation
+                pages where users expect a familiar toolbar.</p>
+        </div>
+        <div class="info-card">
+            <div class="icon">✕</div>
+            <h4>Off (Click-only)</h4>
+            <p>No toolbar rendered at all. The diagram is clickable and opens fullscreen. Perfect for tight layouts or
+                when you want a completely clean embed.</p>
+        </div>
+    </div>
+
+    <!-- Code example -->
+    <div class="code-section">
+        <h2>How it works</h2>
+        <div class="code-block">&lt;<span class="tag">script</span>&gt;
+  <span class="cmt">// One global init — no layout specified</span>
+  <span class="kw">DiagView</span>.init({ showBranding: <span class="kw">true</span> });
+&lt;/<span class="tag">script</span>&gt;
+
+<span class="cmt">&lt;!-- Each element specifies its own layout --&gt;</span>
+&lt;<span class="tag">div</span> <span class="atn">class</span>=<span class="atv">"diagram"</span>
+     <span class="atn">data-diagview-layout</span>=<span class="atv">"floating"</span>
+     <span class="atn">data-diagview-accent</span>=<span class="atv">"#f59e0b"</span>&gt;
+  &lt;<span class="tag">svg</span>&gt;...&lt;/<span class="tag">svg</span>&gt;
+&lt;/<span class="tag">div</span>&gt;
+
+&lt;<span class="tag">div</span> <span class="atn">class</span>=<span class="atv">"diagram"</span>
+     <span class="atn">data-diagview-layout</span>=<span class="atv">"header"</span>
+     <span class="atn">data-diagview-accent</span>=<span class="atv">"#6366f1"</span>&gt;
+  &lt;<span class="tag">svg</span>&gt;...&lt;/<span class="tag">svg</span>&gt;
+&lt;/<span class="tag">div</span>&gt;
+
+&lt;<span class="tag">div</span> <span class="atn">class</span>=<span class="atv">"diagram"</span>
+     <span class="atn">data-diagview-layout</span>=<span class="atv">"off"</span>&gt;
+  &lt;<span class="tag">svg</span>&gt;...&lt;/<span class="tag">svg</span>&gt;
+&lt;/<span class="tag">div</span>&gt;</div>
+    </div>
+
+    <footer>
+        <div class="container">
+            <div class="footer-links">
+                <a href="index.html">← Back to Hub</a>
+                <a href="https://github.com/khadirullah/diagview" target="_blank">GitHub</a>
+                <a href="https://www.npmjs.com/package/diagview" target="_blank">NPM</a>
+            </div>
+            <p class="copyright">DiagView &bull; <span data-version></span> &bull; Built with ❤️</p>
+        </div>
+    </footer>
+
+    <script>
+        // Build the architecture SVG (DOM-safe, no innerHTML)
+        function buildArchSvg(accentColor) {
+            const NS = 'http://www.w3.org/2000/svg';
+            const W = 580, H = 340;
+            const svg = document.createElementNS(NS, 'svg');
+            svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+            svg.setAttribute('xmlns', NS);
+            svg.setAttribute('width', '100%');
+            svg.setAttribute('style', 'display:block;');
+
+            const accent = accentColor || '#6366f1';
+            const fill   = accent + '18';
+            const stroke = accent;
+
+            // Node definitions: [id, label, x, y, w, h]
+            const nodes = [
+                ['api-gw',   'API Gateway',       210, 18,  160, 38],
+                ['auth',     'Auth Service',        40, 120, 130, 38],
+                ['product',  'Product Service',    225, 120, 130, 38],
+                ['order',    'Order Service',       410, 120, 130, 38],
+                ['user-db',  'User DB',             40, 240, 130, 38],
+                ['prod-db',  'Product DB',         225, 240, 130, 38],
+                ['cache',    'Redis Cache',         370, 240, 110, 38],
+                ['order-db', 'Order DB',            490, 240, 85,  38],
+            ];
+
+            // Edge definitions: [x1, y1, x2, y2]
+            const edges = [
+                [290, 56,  105, 120],  // API GW → Auth
+                [290, 56,  290, 120],  // API GW → Product
+                [290, 56,  475, 120],  // API GW → Order
+                [105, 158, 105, 240],  // Auth → User DB
+                [290, 158, 290, 240],  // Product → Product DB
+                [475, 158, 425, 240],  // Order → Cache
+                [475, 158, 532, 240],  // Order → Order DB
+            ];
+
+            // Draw edges first (behind nodes)
+            edges.forEach(([x1, y1, x2, y2]) => {
+                const g = document.createElementNS(NS, 'g');
+                g.setAttribute('class', 'edgePath');
+                const path = document.createElementNS(NS, 'path');
+                const mx = (x1 + x2) / 2;
+                path.setAttribute('d', `M ${x1} ${y1} C ${x1} ${mx} ${x2} ${mx} ${x2} ${y2}`);
+                path.setAttribute('fill', 'none');
+                path.setAttribute('stroke', stroke);
+                path.setAttribute('stroke-width', '1.5');
+                path.setAttribute('stroke-opacity', '0.5');
+                path.setAttribute('marker-end', 'url(#arrow)');
+                g.appendChild(path);
+                svg.appendChild(g);
+            });
+
+            // Arrowhead marker
+            const defs = document.createElementNS(NS, 'defs');
+            const marker = document.createElementNS(NS, 'marker');
+            marker.setAttribute('id', 'arrow');
+            marker.setAttribute('markerWidth', '8');
+            marker.setAttribute('markerHeight', '8');
+            marker.setAttribute('refX', '6');
+            marker.setAttribute('refY', '3');
+            marker.setAttribute('orient', 'auto');
+            const arrowPath = document.createElementNS(NS, 'path');
+            arrowPath.setAttribute('d', 'M0,0 L0,6 L8,3 z');
+            arrowPath.setAttribute('fill', stroke);
+            arrowPath.setAttribute('opacity', '0.6');
+            marker.appendChild(arrowPath);
+            defs.appendChild(marker);
+            svg.insertBefore(defs, svg.firstChild);
+
+            // Draw nodes
+            nodes.forEach(([id, label, x, y, w, h]) => {
+                const g = document.createElementNS(NS, 'g');
+                g.setAttribute('class', 'node');
+                g.setAttribute('id', id);
+
+                const rect = document.createElementNS(NS, 'rect');
+                rect.setAttribute('x', x); rect.setAttribute('y', y);
+                rect.setAttribute('width', w); rect.setAttribute('height', h);
+                rect.setAttribute('rx', '8');
+                rect.setAttribute('fill', fill);
+                rect.setAttribute('stroke', stroke);
+                rect.setAttribute('stroke-width', '1.5');
+
+                const text = document.createElementNS(NS, 'text');
+                text.setAttribute('x', x + w / 2);
+                text.setAttribute('y', y + h / 2 + 5);
+                text.setAttribute('text-anchor', 'middle');
+                text.setAttribute('font-size', '11');
+                text.setAttribute('font-family', 'Outfit, system-ui, sans-serif');
+                text.setAttribute('font-weight', '600');
+                text.setAttribute('fill', stroke);
+                text.textContent = label;
+
+                g.appendChild(rect);
+                g.appendChild(text);
+                svg.appendChild(g);
+            });
+
+            return svg;
+        }
+
+        // Inject SVGs into each container
+        const diagrams = [
+            { id: 'diag-floating', accent: '#f59e0b' },
+            { id: 'diag-header',   accent: '#6366f1' },
+            { id: 'diag-off',      accent: '#10b981' },
+        ];
+        diagrams.forEach(({ id, accent }) => {
+            const container = document.getElementById(id);
+            if (container) container.appendChild(buildArchSvg(accent));
+        });
+
+        // Init DiagView — no global layout: each element's data-diagview-layout takes over
+        document.addEventListener('DOMContentLoaded', () => {
+            const dvInit = () => DiagView.init({
+                diagramSelector: '.diagram',
+                showKeyboardHelp: true,
+                highResScale: 4,
+                showBranding: true
+            });
+            dvInit();
+            if (window.setupDiagViewToggle) setupDiagViewToggle(dvInit);
+        });
+    </script>
+
+</body>
+</html>

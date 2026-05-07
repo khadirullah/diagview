@@ -2,92 +2,109 @@
 
 All notable changes to this project will be documented in this file.
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+---
+
+## [Unreleased]
+
+---
+
+## [1.0.5] - 2026-05-05
+
+### Added
+
+- **Premium UI Aesthetics** — Rebuilt the entire UI with glassmorphism, backdrop-filters, and smooth animations.
+- **Enterprise Security Overhaul** — New `DOMParser`-based recursive SVG sanitization engine (Strict/Permissive modes).
+- **Native Text Selection** — Added toggle to suspend Panzoom and enable native browser text selection over SVG labels.
+- **Shadow DOM Support** — Full support for diagrams inside Web Components/Shadow roots.
+- **Sync Version Script** — Automated version synchronization across README and demo files.
+
+### Changed
+
+- **Optimized Interactions** — Refined Minimap, Laser Pointer (Meeting Mode), and 90° Rotation for better performance and stability.
+- **Lazy Feature Loading** — Heavy modules (PDF export, search cache, minimap) are now lazy-loaded on demand.
+- **Mobile Stability** — Implemented Visual Viewport Synchronization to fix UI drift on pinch-zoom.
+- **Documentation Overhaul** — Audited and rewrote all primary documentation (README, API, USAGE, FAQ) for total accuracy.
+
+### Removed
+
+- **Legacy Regex Sanitizer** — Replaced with a more robust DOM-walking sanitizer.
+
+---
 
 ## [1.0.4] - 2026-04-20
 
 ### Fixed
-- **Minimap Clipping**: Resolved bug where tall portrait-oriented diagrams (e.g., Mermaid TD) were partially clipped in the minimap.
-- **Minimap Stability**: Ensured minimap background remains static by stripping inherited panzoom transforms from the clone.
-- **Viewport Layout**: Fixed UI elements (Search, FAB, Minimap) drifting on mobile when the browser is pinch-zoomed by using Visual Viewport synchronization.
+
+- **Minimap clipping** — Tall portrait-oriented diagrams (e.g. Mermaid `graph TD`) were partially clipped in the minimap thumbnail. Root cause: coordinate space mismatch. Fix: use `getBoundingClientRect()` for both measurements.
+- **Minimap ghosting** — The minimap SVG inherited CSS transforms from Panzoom on the clone element. Fix: snapshot the original SVG via a Data URL.
+- **Mobile viewport drift** — UI chrome elements drifted when the browser was pinch-zoomed. Fix: Visual Viewport Synchronization.
+- **Double-prefixing of SVG IDs** — IDs on the host page's original SVG were being mutated. Fix: `fixIds()` is now called only on the internal clone.
+- **`panzoom.pause()` / `panzoom.resume()` crash** — Fix: replaced with `panzoom.setOptions({ disablePan, disableZoom })`.
 
 ### Changed
-- **Mobile Responsiveness**: Minimap is now hidden on viewports < 768px to preserve screen space on mobile and small tablets.
-- **UI Units**: Switched key UI components to responsive CSS units (`clamp`, `dvh`, `min`) for better cross-browser stability.
-- **Formatting Script**: Widened Prettier script to cover `tests/` and root configuration files.
-- **Size Limit**: Relaxed ESM bundle size limit to 25KB for CI pipeline stability.
+
+- **Minimap hidden on mobile** — Minimap is now hidden on viewports narrower than 768 px.
+- **Responsive CSS** — Key UI elements now use `clamp()`, `dvh`, and `min()`.
+- **`resetConfig()` scope** — Now resets the entire internal state (not just `config`).
 
 ### Added
-- **Mobile Viewport Lock**: Implemented industry-standard meta-tag locking when models are active to prevent broken layouts on mobile.
-- **Lifecycle Testing**: Added comprehensive Jest-based lifecycle tests to ensure robust initialization and teardown (SPA-safe).
-- **Maintenance**: Deprecated `raf`/`cancelRaf` utility wrappers — internal code now uses native `requestAnimationFrame` directly. Wrappers remain exported for backward compatibility.
+
+- **Visual Viewport Synchronization** (`viewport.js`) — Keeps the fullscreen modal correctly positioned when pinch-zoomed.
+- **`immersiveMode` config option** — Opt-in mobile viewport locking.
+- **`onError` callback** — Fires when a diagram container's SVG fails validation.
+- **Per-element `data-diagview-sanitize` and `data-diagview-allow-remote`** — Fine-grained security control.
 
 ---
 
-## [1.0.3] - 2026-04-07 [patch — CI only, no functional changes]
+## [1.0.3] - 2026-04-07
+
 ### Fixed
-- Resolved "Exit Code 128" issue in automated NPM publish workflow
-- Stabilized CI/CD pipeline for fully automated releases
+
+- Resolved "Exit Code 128" issue in the automated npm publish workflow.
+
 ### Changed
-- Upgraded GitHub Actions build environment to Node.js 24
-- All feature enhancements from v1.0.2 are included (no functional changes)
+
+- Upgraded GitHub Actions build environment to Node.js 24.
 
 ---
 
 ## [1.0.2] - 2026-04-07
 
 ### Added
-- GitHub Actions for automated CI/CD (testing, linting, and publishing)
-- Jest-based unit testing suite with coverage reporting
-- Official SECURITY.md policy
-- Dynamic version injection in build banners via rollup.config.js
+
+- **GitHub Actions CI/CD** — Automated test, lint, build, and publish pipeline.
+- **Jest unit test suite** — 25+ test files covering all major modules.
+- **Coverage reporting** — Istanbul/c8 coverage with enforced thresholds.
+- **`SECURITY.md`** — Responsible disclosure policy.
 
 ### Fixed
-- Standardized all CDN references to v4.5.1 for consistency
-- Extracted CSS from 1,151-line JS string to native src/ui/styles.css
-- Resolved stale build artifacts in dist/esm/ during build lifecycle
-- Corrected various documentation paths and broken links
+
+- Extracted CSS from a 1,151-line JS string into `src/ui/styles.css`.
+- Standardized all demo CDN references to `@panzoom/panzoom@4.5.1`.
+- Stale `dist/esm/` artifacts from previous builds no longer accumulate.
+
+---
 
 ## [1.0.1] - 2026-02-10
 
 ### Fixed
-- TypeScript declaration files (`.d.ts`) not being generated due to `incremental` build cache
+
+- TypeScript declaration files (`.d.ts`) were not generated due to a stale `tsconfig.tsbuildinfo` incremental build cache.
 
 ### Changed
-- Updated CDN version reference from `@1.0.0` to `@1` for automatic minor/patch updates
-- Clean script now removes `tsconfig.tsbuildinfo` to prevent stale builds
 
-### Added
-- Demo GIF in README (`media/demo.gif`)
+- Updated CDN version reference from pinned `@1.0.0` to floating `@1`.
 
 ---
 
 ## [1.0.0] - 2026-02-07
 
-### Added
-- \U0001f389 Initial release
-- Interactive diagram viewer with zoom/pan
-- Multiple export formats (PNG, SVG, PDF, WebP, Clipboard)
-- Search functionality with node highlighting
-- Keyboard shortcuts for navigation
-- Meeting mode with laser pointer
-- Share links with zoom/pan state
-- 3 layout modes (header, floating, off)
-- Auto-theming (light/dark mode detection)
-- Mobile optimized with touch gestures
-- Framework-agnostic (React, Vue, Svelte support)
-- TypeScript definitions
-- Comprehensive documentation
+Initial public release.
 
-### Architecture
-- Modular codebase with lazy loading
-- Centralized constants and configuration
-- Lifecycle management utilities
-- Consolidated SVG cloning
-- Button factory for DRY code
-- ~85% code optimization vs initial version
-
+[Unreleased]: https://github.com/khadirullah/diagview/compare/v1.0.5...HEAD
+[1.0.5]: https://github.com/khadirullah/diagview/compare/v1.0.4...v1.0.5
 [1.0.4]: https://github.com/khadirullah/diagview/compare/v1.0.3...v1.0.4
 [1.0.3]: https://github.com/khadirullah/diagview/compare/v1.0.2...v1.0.3
 [1.0.2]: https://github.com/khadirullah/diagview/compare/v1.0.1...v1.0.2

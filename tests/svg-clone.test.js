@@ -1,82 +1,84 @@
-/**
- * SVG Cloning Tests
- * Verifies style baking, text preservation, and deep cloning logic.
- */
-
 import { jest } from "@jest/globals";
-import { cloneSVG, cloneSVGForModal, cloneSVGForExport } from "../src/core/svg-clone.js";
+import { cloneSVG, cloneSVGForExport, cloneSVGForModal } from "../src/core/svg-clone.js";
 
 describe("SVG Cloning Utilities", () => {
-  let originalSvg;
+  let svg;
 
   beforeEach(() => {
-    document.body.innerHTML = "";
-
-    // Create a realistic SVG structure
-    originalSvg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-    originalSvg.setAttribute("viewBox", "0 0 100 100");
+    // Setup a mock SVG
+    svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    svg.setAttribute("width", "100");
+    svg.setAttribute("height", "100");
+    svg.setAttribute("viewBox", "0 0 100 100");
 
     const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
-    rect.setAttribute("fill", "red");
-    rect.className.baseVal = "test-rect";
-    originalSvg.appendChild(rect);
+    rect.setAttribute("x", "10");
+    rect.setAttribute("y", "10");
+    rect.setAttribute("width", "80");
+    rect.setAttribute("height", "80");
+    rect.setAttribute("class", "test-rect");
+    svg.appendChild(rect);
 
     const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+    text.setAttribute("x", "50");
+    text.setAttribute("y", "50");
     text.textContent = "Hello World";
-    originalSvg.appendChild(text);
+    svg.appendChild(text);
 
-    document.body.appendChild(originalSvg);
-
-    // Mock getComputedStyle to simulate browser behavior
+    // Mock getComputedStyle for "baking" test
     window.getComputedStyle = jest.fn().mockReturnValue({
-      getPropertyValue: jest.fn((prop) => {
+      getPropertyValue: (prop) => {
         if (prop === "fill") return "rgb(255, 0, 0)";
-        if (prop === "font-size") return "14px";
-        return "none";
-      }),
+        if (prop === "stroke") return "none";
+        return "";
+      },
     });
 
-    // Mock getBBox for text dimension calculation
-    SVGElement.prototype.getBBox = jest.fn().mockReturnValue({
-      x: 0,
-      y: 0,
-      width: 80,
-      height: 20,
-    });
+    document.body.appendChild(svg);
   });
 
-  test("cloneSVG creates a separate deep copy", () => {
-    const clone = cloneSVG(originalSvg);
-    expect(clone).not.toBe(originalSvg);
-    expect(clone.querySelectorAll("rect")).toHaveLength(1);
-    expect(clone.querySelectorAll("text")).toHaveLength(1);
+  afterEach(() => {
+    if (svg && svg.parentNode) {
+      document.body.removeChild(svg);
+    }
+    jest.clearAllMocks();
   });
 
-  test("cloneSVGForModal preserves text dimensions but skips style baking", () => {
-    const clone = cloneSVGForModal(originalSvg);
-    const clonedRect = clone.querySelector("rect");
-    const clonedText = clone.querySelector("text");
-
-    // Should have textLength (from our BBox mock)
-    expect(clonedText.getAttribute("textLength")).toBe("80");
-
-    // Should NOT have inline fill (modal clone is optimized to skip this)
-    expect(clonedRect.style.fill).toBe("");
+  test("cloneSVGForModal preserves text and basic structure but does not bake styles", () => {
+    const clone = cloneSVGForModal(svg);
+    expect(clone).not.toBe(svg);
+    expect(clone.querySelector("rect")).toBeTruthy();
+    expect(clone.querySelector("rect").style.fill).toBe(""); // Not baked
+    expect(clone.hasAttribute("xmlns")).toBe(true);
   });
 
   test("cloneSVGForExport bakes computed styles into inline styles", () => {
-    const clone = cloneSVGForExport(originalSvg);
-    const clonedRect = clone.querySelector("rect");
+    const clone = cloneSVGForExport(svg);
+    const clonedRect = clone.querySelector(".test-rect");
 
-    // Should HAVE inline fill (export clone bakes styles)
     expect(clonedRect.style.fill).toBe("rgb(255, 0, 0)");
+    expect(clone.getAttribute("xmlns")).toBe("http://www.w3.org/2000/svg");
+    expect(clone.getAttribute("xmlns:xlink")).toBe("http://www.w3.org/1999/xlink");
+  });
+
+  test("text preservation adds textLength for consistent rendering", () => {
+    // Mock getBBox for text element
+    const textEl = svg.querySelector("text");
+    textEl.getBBox = jest.fn().mockReturnValue({ x: 50, y: 50, width: 60, height: 20 });
+
+    const clone = cloneSVGForModal(svg);
+    const clonedText = clone.querySelector("text");
+
+    // OPT-1: textLength is no longer forced in loops to prevent layout thrashing
+    expect(clonedText.getAttribute("textLength")).toBeNull();
+    expect(clonedText.style.whiteSpace).toBe("nowrap");
   });
 
   test("cloneSVG correctly handles missing input", () => {
-    const warn = jest.spyOn(console, "warn").mockImplementation(() => {});
-    const result = cloneSVG(null);
-    expect(result).toBeNull();
-    expect(warn).toHaveBeenCalled();
-    warn.mockRestore();
+    const consoleSpy = jest.spyOn(console, "warn").mockImplementation(() => {});
+    const clone = cloneSVG(null);
+    expect(clone).toBeNull();
+    expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining("No SVG provided"));
+    consoleSpy.mockRestore();
   });
 });

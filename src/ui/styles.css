@@ -2,6 +2,19 @@
    DiagView - Interactive Diagram Viewer
    ================================================================= */
 
+/* Screen-reader only: visually hidden but accessible to assistive tech */
+.diagview-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 /* Theme Variables */
 :root {
   --dv-bg: transparent;
@@ -14,6 +27,13 @@
   --dv-popover-bg: rgba(128, 128, 128, 0.08);
   --dv-btn-bg: rgba(128, 128, 128, 0.12);
   --dv-radius-sm: 8px;
+  --dv-header-h: 52px;
+}
+
+@media (max-width: 639px) {
+  :root {
+    --dv-header-h: 48px;
+  }
 }
 
 @media (prefers-color-scheme: dark) {
@@ -38,7 +58,9 @@
 .diagview-wrapper *:focus-visible,
 .diagview-menu *:focus-visible {
   outline: none !important;
-  box-shadow: 0 0 0 2px var(--dv-bg), 0 0 0 4px var(--dv-accent) !important;
+  box-shadow:
+    0 0 0 2px var(--dv-bg),
+    0 0 0 4px var(--dv-accent) !important;
   border-radius: inherit !important;
   transition: box-shadow 0.2s ease;
 }
@@ -99,7 +121,7 @@
   contain: layout style;
 }
 
-.diagview-viewport>* {
+.diagview-viewport > * {
   width: 100% !important;
   display: flex;
   justify-content: center;
@@ -124,7 +146,9 @@
   width: 100%;
   background: var(--dv-header-bg);
   border-bottom: 1px solid var(--dv-border-color);
-  transition: opacity 0.3s ease, transform 0.3s ease;
+  transition:
+    opacity 0.3s ease,
+    transform 0.3s ease;
 }
 
 .diagview-label {
@@ -256,7 +280,7 @@
 }
 
 .diagview-btn.success::after {
-  content: '✓';
+  content: "✓";
   position: absolute;
   inset: 0;
   display: flex;
@@ -289,7 +313,7 @@
   display: none;
   position: fixed;
   inset: 0;
-  z-index: 999999;
+  z-index: 2147483647; /* Maximum 32-bit integer to stay on top of everything */
   flex-direction: column;
   overflow: hidden;
   background-color: var(--dv-bg);
@@ -329,10 +353,11 @@
   align-items: center;
   justify-content: space-between;
   gap: 10px;
-  padding: 0 8px;
-  min-height: clamp(40px, 7vh, 52px);
+  /* right padding reserves space for the always-absolute close btn */
+  padding: 0 52px 0 8px;
+  min-height: var(--dv-header-h);
   flex-shrink: 0;
-  overflow: hidden;
+  overflow: visible; /* allow tooltip overflow */
   background: var(--dv-header-bg);
   border-bottom: 1px solid var(--dv-border-color);
   backdrop-filter: blur(12px);
@@ -341,8 +366,209 @@
 
 @media (min-width: 640px) {
   .diagview-topbar {
-    padding: 0 60px 0 20px;
+    padding: 0 60px 0 20px; /* right: 60px = room for absolute close btn only */
     justify-content: center;
+    overflow: visible;
+  }
+}
+
+/* ── Mobile icon action row ────────────────────────────── */
+.dv-topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+}
+
+@media (min-width: 640px) {
+  .dv-topbar-actions {
+    display: none; /* desktop uses full search + dedicated btn */
+  }
+}
+
+/* Generic 36×36 icon button (search, text-select, etc.) */
+.dv-icon-btn {
+  all: unset;
+  box-sizing: border-box;
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  cursor: pointer;
+  border: 1px solid var(--dv-border-color) !important;
+  background: rgba(128, 128, 128, 0.06);
+  color: var(--dv-text-color);
+  transition:
+    background 0.2s,
+    color 0.2s,
+    border-color 0.2s;
+}
+.dv-icon-btn svg {
+  width: 16px;
+  height: 16px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  pointer-events: none;
+}
+.dv-icon-btn:hover {
+  background: rgba(128, 128, 128, 0.14);
+  color: var(--dv-text-color);
+}
+.dv-icon-btn.active {
+  color: var(--dv-accent, #3b82f6);
+  border-color: var(--dv-accent, #3b82f6) !important;
+  background: rgba(59, 130, 246, 0.1);
+}
+.dv-icon-btn:focus-visible {
+  outline: 2px solid var(--dv-accent);
+  outline-offset: 2px;
+}
+
+/* ── Mobile: search container slides in-place on topbar ── */
+/* On mobile the .diagview-search-container is normally hidden.          */
+/* Tapping the search icon adds .search-open to the topbar, which slides */
+/* the real search input in from the left — no duplicate DOM needed.     */
+@media (max-width: 639px) {
+  .diagview-search-container {
+    display: flex;
+    flex: 0;
+    max-width: 0;
+    overflow: hidden;
+    opacity: 0;
+    pointer-events: none;
+    padding: 0;
+    transition:
+      max-width 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+      opacity 0.2s ease,
+      flex 0.25s ease;
+  }
+
+  .diagview-topbar.search-open .diagview-search-container {
+    flex: 1;
+    max-width: 600px;
+    opacity: 1;
+    pointer-events: auto;
+    overflow: visible;
+  }
+
+  /* Show back button and hide search icon inside wrapper */
+  .diagview-topbar.search-open .diagview-search-back {
+    display: flex;
+  }
+  .diagview-topbar.search-open .diagview-search-icon {
+    display: none;
+  }
+
+  /* Hide the action row and branding when search is expanded */
+  .diagview-topbar.search-open .dv-topbar-actions,
+  .diagview-topbar.search-open .diagview-branding {
+    display: none !important;
+  }
+}
+
+/* When search is open, hide specific buttons marked with this class */
+.diagview-topbar.search-open .dv-hide-on-search {
+  display: none;
+}
+
+/* ── Desktop text-select button — in-flow flex item after shortcut hint ─ */
+/* Sits in the natural flex row so it never overlaps centered content.      */
+.dv-text-select-btn {
+  display: none; /* mobile: hidden */
+}
+
+@media (min-width: 640px) {
+  .dv-text-select-btn {
+    all: unset;
+    box-sizing: border-box;
+    position: relative; /* required: tooltip ::after is position:absolute */
+    flex-shrink: 0;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    cursor: pointer;
+    margin-left: 8px; /* breathing room after shortcut hint */
+    border: 1px solid var(--dv-border-color) !important;
+    background: rgba(128, 128, 128, 0.06);
+    color: var(--dv-text-color);
+    transition:
+      background 0.2s,
+      color 0.2s,
+      border-color 0.2s;
+  }
+  .dv-text-select-btn svg {
+    width: 16px;
+    height: 16px;
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    pointer-events: none;
+  }
+  .dv-text-select-btn:hover {
+    background: rgba(59, 130, 246, 0.1);
+    color: var(--dv-accent, #3b82f6);
+    border-color: var(--dv-accent, #3b82f6) !important;
+  }
+  .dv-text-select-btn.active {
+    color: #ffffff !important;
+    border-color: var(--dv-accent, #3b82f6) !important;
+    background: var(--dv-accent, #3b82f6) !important;
+    box-shadow: 0 0 12px rgba(59, 130, 246, 0.4);
+  }
+  .dv-text-select-btn:focus-visible {
+    outline: 2px solid var(--dv-accent);
+    outline-offset: 2px;
+  }
+}
+
+/* ── CSS tooltip (desktop only) ───────────────────────── */
+/* Usage: data-tooltip="Your message here" on any element  */
+@media (min-width: 640px) {
+  [data-tooltip] {
+    position: relative;
+  }
+  [data-tooltip]::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 50%;
+    transform: translateX(-50%) scale(0.94);
+    background: #1e293b;
+    color: #e2e8f0;
+    padding: 5px 10px;
+    border-radius: 7px;
+    font-size: 11.5px;
+    font-family:
+      system-ui,
+      -apple-system,
+      sans-serif;
+    font-weight: 500;
+    white-space: nowrap;
+    letter-spacing: 0.01em;
+    pointer-events: none;
+    opacity: 0;
+    transition:
+      opacity 0.15s ease,
+      transform 0.15s ease;
+    z-index: 1000020;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+  }
+  [data-tooltip]:hover::after {
+    opacity: 1;
+    transform: translateX(-50%) scale(1);
   }
 }
 
@@ -362,13 +588,32 @@
 
 /* Reactive Toggle Class */
 .dv-hide-branding .diagview-branding,
+.dv-hide-branding .dv-menu-brand,
 .dv-hide-branding .dv-menu-footer {
   display: none !important;
 }
 
-@media (min-width: 520px) {
+@media (min-width: 320px) {
   .diagview-branding {
     display: block;
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    margin: 0;
+    pointer-events: none;
+  }
+  .diagview-branding * {
+    pointer-events: auto;
+  }
+}
+
+@media (min-width: 640px) {
+  .diagview-branding {
+    display: block;
+    position: static;
+    transform: none;
+    margin-right: 15px;
+    pointer-events: auto;
   }
 }
 
@@ -379,23 +624,32 @@
 
 /* Branding Footer - Menu Panel (Mobile/Desktop) */
 .dv-menu-footer {
-  margin-top: 4px;
-  padding-top: 10px;
+  margin-top: 12px;
+  padding: 12px 0 4px 0;
   border-top: 1px solid rgba(128, 128, 128, 0.1);
   text-align: center;
-  font-size: 10px;
-  font-weight: 600;
+  font-size: 12px;
+  font-weight: 500;
   color: var(--dv-text-color);
-  opacity: 0.4;
-  letter-spacing: 0.05em;
-  line-height: 1.5;
+  opacity: 0.75;
+  letter-spacing: 0.03em;
+  line-height: 1.6;
 }
 
 .dv-menu-footer a {
   color: inherit;
   text-decoration: none !important;
-  font-weight: 800;
-  transition: color 0.2s ease;
+  font-weight: 700;
+  transition:
+    color 0.2s ease,
+    opacity 0.2s ease;
+  display: inline-block; /* Ensure no absolute positioning leaks */
+  position: relative;
+}
+
+.dv-menu-brand {
+  color: var(--dv-primary, var(--dv-accent, #3b82f6)) !important;
+  opacity: 1 !important;
 }
 
 .dv-menu-footer a:hover {
@@ -406,8 +660,6 @@
 .dv-menu-footer:hover {
   opacity: 0.8;
 }
-
-
 
 /* Search Container */
 .diagview-search-container {
@@ -493,8 +745,6 @@
   color: #ff4444;
 }
 
-
-
 /* Zoom Display */
 .diagview-zoom-display {
   display: none;
@@ -533,7 +783,6 @@
 }
 
 @media (min-width: 640px) {
-
   .diagview-zoom-display {
     display: block;
   }
@@ -543,10 +792,14 @@
   }
 }
 
-/* Close Button */
+/* Close Button — always pinned top-right */
 .diagview-close-btn {
   all: unset;
-  flex-shrink: 0;
+  box-sizing: border-box;
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
   width: 36px;
   height: 36px;
   display: flex;
@@ -559,38 +812,27 @@
   border: 1px solid var(--dv-border-color) !important;
   background: rgba(128, 128, 128, 0.08);
   color: var(--dv-text-color);
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-@media (min-width: 640px) {
-  .diagview-close-btn {
-    position: absolute;
-    right: 12px;
-    top: 50%;
-    transform: translateY(-50%);
-  }
+  transition:
+    background 0.2s,
+    color 0.2s,
+    border-color 0.2s,
+    transform 0.2s;
 }
 
 .diagview-close-btn:hover {
   background: rgba(255, 68, 68, 0.15);
   color: #ff4444;
   border-color: rgba(255, 68, 68, 0.3) !important;
-}
-
-@media (min-width: 640px) {
-  .diagview-close-btn:hover {
-    transform: translateY(-50%) scale(1.05);
-  }
+  transform: translateY(-50%) scale(1.06);
 }
 
 .diagview-close-btn:active {
-  transform: scale(0.95);
+  transform: translateY(-50%) scale(0.94);
 }
 
-@media (min-width: 640px) {
-  .diagview-close-btn:active {
-    transform: translateY(-50%) scale(0.95);
-  }
+.diagview-close-btn:focus-visible {
+  outline: 2px solid var(--dv-accent);
+  outline-offset: 2px;
 }
 
 /* Search Highlighting - Mermaid Optimized */
@@ -603,7 +845,27 @@
   will-change: opacity;
 }
 
-/* Hard-fade non-matching nodes via CSS GPU (O(1) JS optimization) */
+/*
+ * WCAG Contrast Exception — intentional design decision (audit item B5)
+ *
+ * Non-matching nodes are dimmed to opacity: 0.15 during active search.
+ * This technically violates WCAG 2.1 SC 1.4.3 (minimum contrast ratio 4.5:1)
+ * for those nodes.
+ *
+ * Rationale for exception:
+ * 1. The dimming is TRANSIENT — it only occurs while the user is actively typing
+ *    in the search box and disappears the moment search is cleared.
+ * 2. The PRIMARY information ("these nodes don't match") is conveyed by the dimming
+ *    itself, not by reading the dimmed text — the content of dimmed nodes is
+ *    intentionally de-emphasized, not the accessible channel.
+ * 3. Matching nodes remain at full opacity (see .dv-search-match below) and are
+ *    announced via the aria-live region (#diagview-search-status).
+ * 4. This pattern matches established design systems (VS Code search, GitHub search)
+ *    that dim non-matching items without WCAG exception.
+ *
+ * Screen reader users get match counts via aria-live="polite" — they do not
+ * rely on the visual opacity state to understand search results.
+ */
 .dv-searching .node:not(.dv-search-match),
 .dv-searching .cluster:not(.dv-search-match),
 .dv-searching .label:not(.dv-search-match),
@@ -612,15 +874,36 @@
   pointer-events: none !important;
 }
 
-/* Match Highlighting - Force Visibility + Stroke */
+/* Match Highlighting - Premium Glow + Pulse */
 .dv-searching .dv-search-match {
   opacity: 1 !important;
-  stroke: var(--dv-accent) !important;
-  stroke-width: 3px !important;
-  filter: none !important;
+  filter: drop-shadow(0 0 12px var(--dv-accent)) !important;
+  animation: dv-pulse 2s infinite ease-in-out;
 }
 
-/* Specific fix for edge paths that are matches (lines need color) */
+/* Ensure text inside matches remains crisp and original */
+.dv-searching .dv-search-match text,
+.dv-searching text.dv-search-match {
+  fill: inherit !important;
+  stroke: none !important;
+  font-weight: inherit !important;
+}
+
+/* Pulse animation for easy discovery */
+@keyframes dv-pulse {
+  0% {
+    filter: drop-shadow(0 0 8px var(--dv-accent));
+  }
+  50% {
+    filter: drop-shadow(0 0 16px var(--dv-accent));
+    brightness: 1.1;
+  }
+  100% {
+    filter: drop-shadow(0 0 8px var(--dv-accent));
+  }
+}
+
+/* Specific fix for edge paths (lines) */
 .dv-searching .edgePath.dv-search-match path {
   stroke: var(--dv-accent) !important;
   stroke-width: 3px !important;
@@ -647,6 +930,35 @@
   cursor: grabbing;
 }
 
+/* Text-select mode: overrides user-select:none so SVG labels are copyable */
+.diagview-modal-viewport.dv-text-select {
+  user-select: text;
+  cursor: text;
+}
+.diagview-modal-viewport.dv-text-select:active {
+  cursor: text;
+}
+
+/* Force text-selectable on SVG text nodes — user-select doesn't reliably
+   cascade into SVG internals without !important across all browsers.
+   Also reset pointer-events so the OS can deliver mouse events for selection. */
+.diagview-modal-viewport.dv-text-select svg,
+.diagview-modal-viewport.dv-text-select svg text,
+.diagview-modal-viewport.dv-text-select svg tspan,
+.diagview-modal-viewport.dv-text-select svg foreignObject,
+.diagview-modal-viewport.dv-text-select svg foreignObject * {
+  user-select: text !important;
+  -webkit-user-select: text !important;
+  pointer-events: auto !important;
+  cursor: text !important;
+}
+
+/* Global helper to ensure selection is allowed */
+.dv-selection-allowed {
+  user-select: text !important;
+  -webkit-user-select: text !important;
+}
+
 .diagview-modal-viewport svg {
   width: 100% !important;
   height: 100% !important;
@@ -667,7 +979,7 @@
   pointer-events: none;
 }
 
-.diagview-fab-container>* {
+.diagview-fab-container > * {
   pointer-events: auto;
 }
 
@@ -723,10 +1035,6 @@
   width: min(260px, calc(100vw - 80px));
   max-height: min(70vh, calc(100vh - 120px));
   overflow-y: auto;
-  background: var(--dv-bg) !important;
-  backdrop-filter: blur(24px) saturate(180%);
-  -webkit-backdrop-filter: blur(24px) saturate(180%);
-  border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 20px;
   box-shadow:
     0 24px 48px -12px rgba(0, 0, 0, 0.25),
@@ -740,13 +1048,37 @@
   visibility: hidden;
   transform: translateY(10px) scale(0.95);
   transform-origin: bottom right;
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  /* MIN-4: Optimize transition to prevent GPU ghosting. 
+     Transition only specific properties and use faster timing for snappiness. */
+  transition:
+    opacity 0.15s cubic-bezier(0.4, 0, 0.2, 1),
+    transform 0.15s cubic-bezier(0.4, 0, 0.2, 1),
+    visibility 0.15s step-end;
+  will-change: transform, opacity;
+  overflow: hidden;
+}
+
+/* MIN-4: Move backdrop-filter to a pseudo-element to ensure perfect 
+   synchronization between the blur and the content during opacity transitions. */
+.diagview-menu::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--dv-bg) !important;
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  z-index: -1;
+  border-radius: inherit;
 }
 
 .diagview-menu.active {
   opacity: 1;
   visibility: visible;
   transform: translateY(0) scale(1);
+  transition:
+    opacity 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+    visibility 0s linear;
 }
 
 .dv-menu-sec {
@@ -800,7 +1132,12 @@
   color: var(--dv-text-color);
   font-size: 1.25rem;
   cursor: pointer;
-  transition: all 0.2s;
+  /* MIN-4: Remove 'all' transition to stop buttons from lagging behind parent opacity */
+  transition:
+    background 0.2s ease,
+    color 0.2s ease,
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
   border: none;
 }
 
@@ -835,7 +1172,13 @@
   font-size: 0.6875rem;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s;
+  /* MIN-4: Remove 'all' transition to stop buttons from lagging behind parent opacity */
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease,
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -849,6 +1192,36 @@
   color: #fff;
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Export label row modifier (contains the transparent checkbox) */
+.dv-menu-lbl--row {
+  justify-content: space-between;
+}
+
+/* Transparent-export checkbox label */
+.dv-exp-trans-label {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  cursor: pointer;
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+/* Transparent-export checkbox input */
+.dv-exp-trans-chk {
+  margin: 0;
+  width: auto;
+  cursor: pointer;
+  accent-color: var(--dv-accent);
+}
+
+/* Transparent-export format hint "(PNG/WebP/SVG)" */
+.dv-exp-trans-hint {
+  opacity: 0.5;
+  font-size: 8px;
 }
 
 /* Menu List Items (Tools) */
@@ -933,6 +1306,9 @@
   width: 100%;
   height: 100%;
   object-fit: contain;
+  /* minimap text must never be selectable — it's too small to be useful */
+  user-select: none;
+  pointer-events: none;
 }
 
 .dv-mm-v {
@@ -954,7 +1330,7 @@
 }
 
 .diagview-laser::before {
-  content: '';
+  content: "";
   position: absolute;
   inset: 0;
   background: radial-gradient(circle, #ef4444 0%, transparent 70%);
@@ -962,7 +1338,7 @@
 }
 
 .diagview-laser::after {
-  content: '';
+  content: "";
   position: absolute;
   top: 50%;
   left: 50%;
@@ -975,7 +1351,6 @@
 }
 
 @keyframes dv-laser {
-
   0%,
   100% {
     opacity: 1;
@@ -993,21 +1368,33 @@
 }
 
 /* Toast Notifications */
-.diagview-toast {
+.diagview-toast-container {
   position: fixed;
-  bottom: 5rem;
+  bottom: 24px;
   left: 50%;
   transform: translateX(-50%);
-  padding: 12px 24px;
-  border-radius: 24px;
-  font: 600 14px system-ui;
-  z-index: 2000000;
-  opacity: 0;
-  transition: opacity 0.3s;
+  display: flex;
+  flex-direction: column-reverse;
+  gap: 10px;
+  align-items: center;
+  z-index: 2147483647; /* Match modal z-index (last child wins) */
   pointer-events: none;
-  background: var(--dv-text-color);
-  color: var(--dv-bg);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  width: 90%;
+  max-width: 500px;
+}
+
+.diagview-toast {
+  padding: 12px 24px;
+  border-radius: 12px;
+  font: 600 14px system-ui;
+  background: var(--dv-accent);
+  color: #fff;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  white-space: normal;
+  text-align: center;
+  width: fit-content;
+  max-width: 100%;
+  line-height: 1.4;
 }
 
 /* Accessibility */
@@ -1020,7 +1407,6 @@
 }
 
 @media print {
-
   .diagview-controls,
   .diagview-menu,
   .diagview-modal {
@@ -1122,6 +1508,24 @@
   to {
     transform: rotate(360deg);
   }
+}
+
+.diagview-search-back {
+  display: none;
+  background: none;
+  border: none;
+  padding: 4px 8px;
+  color: var(--dv-text-color);
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border-radius: 8px;
+  transition: background 0.2s;
+}
+
+.diagview-search-back:hover {
+  background: rgba(128, 128, 128, 0.1);
 }
 
 /* === Error Boundary === */

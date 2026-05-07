@@ -24,3 +24,5 @@ jobs:
       run: npm run test
     - name: Verify Build
       run: npm run build
+    - name: Check Bundle Size
+      run: npm run size
