@@ -27,14 +27,24 @@ export function enableMeetingMode() {
 
   // Track mouse movement for laser pointer
   const handleMouseMove = (e) => {
+    // SEC-7: We must multiply by visualViewport.scale because the modal
+    // is counter-scaled by (1 / scale). This ensures the laser pointer
+    // matches the actual screen position even when background is zoomed.
+    const scale = window.visualViewport ? window.visualViewport.scale : 1;
+    const x = e.clientX * scale;
+    const y = e.clientY * scale;
+
     // OPT-5: Use transform instead of top/left to avoid layout thrashing
-    laser.style.transform = `translate3d(${e.clientX}px, ${e.clientY}px, 0)`;
+    laser.style.transform = `translate3d(${x}px, ${y}px, 0)`;
   };
 
   // Track touch movement for mobile support
   const handleTouchMove = (e) => {
     if (e.touches && e.touches[0]) {
-      laser.style.transform = `translate3d(${e.touches[0].clientX}px, ${e.touches[0].clientY}px, 0)`;
+      const scale = window.visualViewport ? window.visualViewport.scale : 1;
+      const x = e.touches[0].clientX * scale;
+      const y = e.touches[0].clientY * scale;
+      laser.style.transform = `translate3d(${x}px, ${y}px, 0)`;
     }
   };
 
