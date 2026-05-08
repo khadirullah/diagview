@@ -251,7 +251,15 @@ function _setupMenuController(elements, sourceElement, clonedSvg) {
         if (isOpen) menuPanel.focus();
       });
     } else {
-      fab.focus();
+      // Restore focus to the main modal instead of the FAB button.
+      // This allows keyboard shortcuts (R, M, L, etc.) to resume immediately
+      // without being blocked by the "interactive element" check in focus-manager.
+      const modal = document.getElementById("diagview-modal");
+      if (modal) {
+        modal.focus();
+      } else {
+        fab.focus();
+      }
     }
   };
 
