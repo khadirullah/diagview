@@ -65,70 +65,91 @@ export function cleanupModalHistoryState() {
 }
 
 // ==========================================
-// Viewport Lock (Native-App Stability)
+// Visual Viewport Synchronization (Mobile Zoom Handling)
 // ==========================================
 
-let _originalViewportMeta = null;
-let _didInjectViewportMeta = false;
+let _viewportSyncCleanup = null;
 
 /**
- * Lock the viewport to 100% scale (Opt-in only).
- * If immersiveMode is enabled, forces the mobile browser to snap out of
- * pinch-zoom, locking the layout viewport perfectly to screen bounds.
+ * Synchronize the modal to the visual viewport.
+ * This is the "Best Fix" for satisfying the following requirements:
+ * 1. Open diagram in perfect 1:1 scale even if background is zoomed.
+ * 2. Persist background zoom and scroll position on close.
+ * 3. Work reliably in Firefox, Chrome, Safari, and Brave.
+ *
+ * It uses the VisualViewport API to "counter-scale" the modal against the
+ * background zoom level without modifying the page's viewport meta tag.
  */
 export function startVisualViewportSync() {
-  stopVisualViewportSync(); // ensure clean state
+  const modal = document.getElementById("diagview-modal");
+  if (!modal || !window.visualViewport) return;
 
-  // We use the "Viewport Meta Hack" to force-reset the mobile zoom level.
-  // By removing and re-injecting the tag, we force stubborn browsers (like Firefox)
-  // to re-evaluate the layout viewport and snap back to 1:1 scale.
-  const content = "width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no, shrink-to-fit=no";
+  // Ensure modal has the correct starting styles for transformation.
+  // We use position: absolute relative to document.body to ensure that
+  // vv.offsetLeft/Top coordinates are applied accurately across all browsers.
+  modal.style.position = "absolute";
+  modal.style.left = "0";
+  modal.style.top = "0";
+  modal.style.transformOrigin = "0 0";
+  modal.style.willChange = "transform, width, height";
+  modal.style.zIndex = "2147483647";
 
-  const meta = document.querySelector('meta[name="viewport"]');
-  if (meta) {
-    _originalViewportMeta = meta.content;
-    meta.remove(); // Force re-evaluation
-  }
+  const sync = () => {
+    const vv = window.visualViewport;
+    if (!vv) return;
 
-  // Force scroll to top-left to help reset the visual viewport position
-  window.scrollTo(0, 0);
+    // The scale factor to negate the browser's pinch-zoom
+    const scale = 1 / vv.scale;
 
-  const newMeta = document.createElement("meta");
-  newMeta.name = "viewport";
-  newMeta.id = "diagview-injected-viewport";
-  
-  // Two-step hack for Firefox: Set a slightly different scale first, then snap to 1
-  newMeta.content = "width=device-width, initial-scale=0.999";
-  document.head.appendChild(newMeta);
-  _didInjectViewportMeta = true;
+    // We make the modal's base size equal to the layout viewport size
+    // so that after scaling by (1/vv.scale) it matches the visual viewport.
+    const baseWidth = vv.width * vv.scale;
+    const baseHeight = vv.height * vv.scale;
 
-  // Final snap in next frame
-  requestAnimationFrame(() => {
-    if (newMeta) newMeta.content = content;
-  });
+    // vv.pageLeft and vv.pageTop are the coordinates of the visual viewport
+    // relative to the document. Since the modal is position:absolute
+    // at the top of the document, these are the exact coordinates we need.
+    const x = vv.pageLeft;
+    const y = vv.pageTop;
+
+    modal.style.width = `${baseWidth}px`;
+    modal.style.height = `${baseHeight}px`;
+    modal.style.transform = `translate(${x}px, ${y}px) scale(${scale})`;
+  };
+
+  // Sync on resize (zoom) and scroll
+  window.visualViewport.addEventListener("resize", sync);
+  window.visualViewport.addEventListener("scroll", sync);
+
+  // Initial sync
+  sync();
+
+  _viewportSyncCleanup = () => {
+    window.visualViewport.removeEventListener("resize", sync);
+    window.visualViewport.removeEventListener("scroll", sync);
+
+    // Restore modal styles
+    modal.style.transform = "";
+    modal.style.width = "";
+    modal.style.height = "";
+    modal.style.position = "";
+    modal.style.left = "";
+    modal.style.top = "";
+  };
 }
 
 /**
- * Restore the original viewport settings so the user can
- * resume zooming the background website text.
+ * Stop synchronization and cleanup listeners.
  */
 export function stopVisualViewportSync() {
-  if (_didInjectViewportMeta) {
-    const injected = document.getElementById("diagview-injected-viewport");
-    if (injected) injected.remove();
-    _didInjectViewportMeta = false;
-  } else if (_originalViewportMeta !== null) {
-    const meta = document.querySelector('meta[name="viewport"]');
-    if (meta) {
-      meta.content = _originalViewportMeta;
-    }
-    _originalViewportMeta = null;
+  if (_viewportSyncCleanup) {
+    _viewportSyncCleanup();
+    _viewportSyncCleanup = null;
   }
 }
 
 /**
  * Reset all module-level state.
- * CRIT-4: Ensures clean state across multiple init/destroy cycles in SPAs.
  */
 export function resetViewportState() {
   _historyStatePushed = false;
@@ -139,6 +160,5 @@ export function resetViewportState() {
     _popstateHandler = null;
   }
 
-  // Also ensure viewport meta tags are restored
   stopVisualViewportSync();
 }

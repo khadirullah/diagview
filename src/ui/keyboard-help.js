@@ -159,7 +159,12 @@ function createHelpModal() {
   content.addEventListener("mousemove", startAutoCloseTimer);
   content.addEventListener("touchstart", startAutoCloseTimer);
 
-  document.body.appendChild(helpModal);
+  // SEC-7: Determine the best parent for the help modal.
+  // If the main diagram modal is open, we append the help modal TO THE MODAL.
+  // This ensures it inherits the "Visual Viewport Sync" transform and 1:1 scale.
+  const modal = document.getElementById("diagview-modal");
+  const targetParent = modal && document.contains(modal) ? modal : document.body;
+  targetParent.appendChild(helpModal);
 
   // Initialize pause events
   cleanupPause = setupAutoPauseEvents(helpModal);

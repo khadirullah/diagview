@@ -102,6 +102,11 @@ export function setupViewportInteractions(viewport, element, panzoom) {
   // Desktop wheel zoom (with input blur and safety check)
   const handleWheel = (e) => {
     if (!state.isModalOpen || !panzoom || isTextSelectActive()) return;
+
+    // Prevent the background page from zooming/scrolling while we are zooming the diagram.
+    // This is critical for stability in modern browsers when the viewport is not hard-locked.
+    if (e.cancelable) e.preventDefault();
+
     blurActiveElement();
 
     // Panzoom handles wheel normalization internally for modern versions.

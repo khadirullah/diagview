@@ -39,14 +39,22 @@ const TOAST_TYPES = {
 export function showToast(message, type = "success", duration = null) {
   // 1. Ensure container exists and is on top
   let container = document.getElementById("diagview-toast-container");
+
+  // SEC-7: Determine the best parent for the toast container.
+  // If the modal is open, we append the toast TO THE MODAL.
+  // This ensures that the toast inherits the "Visual Viewport Sync" transform
+  // and appears at the correct 1:1 scale even if the background is zoomed.
+  const modal = document.getElementById("diagview-modal");
+  const targetParent = modal && document.contains(modal) ? modal : document.body;
+
   if (!container) {
     container = document.createElement("div");
     container.id = "diagview-toast-container";
     container.className = "diagview-toast-container";
-    document.body.appendChild(container);
-  } else if (container.nextSibling) {
-    // Re-append to ensure it's the last child (on top of modal)
-    document.body.appendChild(container);
+    targetParent.appendChild(container);
+  } else if (container.parentNode !== targetParent || container.nextSibling) {
+    // Re-append to ensure it's in the correct parent and on top
+    targetParent.appendChild(container);
   }
 
   // 2. Create new toast element

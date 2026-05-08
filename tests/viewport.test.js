@@ -51,14 +51,71 @@ describe("History State Management", () => {
   });
 });
 
-describe("Viewport Meta Functions Removed", () => {
-  test("module does not export resetViewportZoom", async () => {
-    const mod = await import("../src/ui/viewport.js");
-    expect(mod.resetViewportZoom).toBeUndefined();
+describe("Visual Viewport Sync", () => {
+  let modal;
+  beforeEach(() => {
+    modal = document.createElement("div");
+    modal.id = "diagview-modal";
+    document.body.appendChild(modal);
+
+    // Mock visualViewport
+    window.visualViewport = {
+      width: 1000,
+      height: 800,
+      scale: 2,
+      pageLeft: 100,
+      pageTop: 50,
+      addEventListener: jest.fn(),
+      removeEventListener: jest.fn(),
+    };
   });
 
-  test("module does not export restoreViewportZoom", async () => {
-    const mod = await import("../src/ui/viewport.js");
-    expect(mod.restoreViewportZoom).toBeUndefined();
+  afterEach(() => {
+    document.body.innerHTML = "";
+    delete window.visualViewport;
+  });
+
+  test("startVisualViewportSync attaches listeners and performs initial sync", async () => {
+    const { startVisualViewportSync } = await import("../src/ui/viewport.js");
+    startVisualViewportSync();
+
+    expect(window.visualViewport.addEventListener).toHaveBeenCalledWith(
+      "resize",
+      expect.any(Function),
+    );
+    expect(window.visualViewport.addEventListener).toHaveBeenCalledWith(
+      "scroll",
+      expect.any(Function),
+    );
+
+    // Check initial sync styles
+    // scale(1/2) = scale(0.5)
+    // baseWidth = vv.width (1000) * vv.scale (2) = 2000
+    // x = vv.pageLeft (which is mocked as 100 in my previous test but I should update mock)
+    // Actually, I'll update the mock to be more realistic.
+    expect(modal.style.width).toBe("2000px");
+    expect(modal.style.height).toBe("1600px");
+    expect(modal.style.transform).toBe("translate(100px, 50px) scale(0.5)");
+    expect(modal.style.position).toBe("absolute");
+  });
+
+  test("stopVisualViewportSync removes listeners and restores styles", async () => {
+    const { startVisualViewportSync, stopVisualViewportSync } =
+      await import("../src/ui/viewport.js");
+    startVisualViewportSync();
+    stopVisualViewportSync();
+
+    expect(window.visualViewport.removeEventListener).toHaveBeenCalledWith(
+      "resize",
+      expect.any(Function),
+    );
+    expect(window.visualViewport.removeEventListener).toHaveBeenCalledWith(
+      "scroll",
+      expect.any(Function),
+    );
+
+    // Check restored styles
+    expect(modal.style.transform).toBe("");
+    expect(modal.style.width).toBe("");
   });
 });

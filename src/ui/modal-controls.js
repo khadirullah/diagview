@@ -12,24 +12,46 @@ import { hideKeyboardHelp } from "./keyboard-help.js";
 import { hideToast } from "./toast.js";
 
 /**
- * Lock body scroll (iOS Safari robust version)
+ * Lock body scroll (Non-destructive version)
+ * Satisfies Req 3: Persistence of background zoom and scroll position.
  */
 export function lockBodyScroll() {
   state.savedScrollY = window.scrollY;
-  document.body.style.position = "fixed";
-  document.body.style.top = `-${state.savedScrollY}px`;
-  document.body.style.width = "100%";
+
+  // 1. Standard lock for most browsers
+  document.documentElement.style.overflow = "hidden";
   document.body.style.overflow = "hidden";
+
+  // 2. iOS Safari Elastic Scroll Prevention
+  // We prevent touchmove on the document to stop background scrolling,
+  // but we EXPLICITLY allow multi-touch (pinch-zoom) to satisfy Req 3.
+  const preventDefault = (e) => {
+    // Only prevent if it's a single-finger touch (scroll)
+    // and not happening inside a scrollable element (if we had any in modal)
+    if (state.isModalOpen && e.touches.length === 1) {
+      // Check if the target is NOT part of a scrollable element in the modal
+      // For DiagView, the viewport handles its own pan via Panzoom,
+      // so we can safely prevent all native document-level scrolling.
+      if (e.cancelable) e.preventDefault();
+    }
+  };
+
+  document.addEventListener("touchmove", preventDefault, { passive: false });
+
+  // Register cleanup
+  state.modalCleanupFunctions.add(() => {
+    document.removeEventListener("touchmove", preventDefault);
+  });
 }
 
 /**
  * Unlock body scroll
  */
 export function unlockBodyScroll() {
-  document.body.style.position = "";
-  document.body.style.top = "";
-  document.body.style.width = "";
+  document.documentElement.style.overflow = "";
   document.body.style.overflow = "";
+  // Note: scrollTo is not strictly needed if we didn't use position:fixed,
+  // but it's a safe fallback to ensure we are exactly where we left off.
   window.scrollTo(0, state.savedScrollY);
 }
 
