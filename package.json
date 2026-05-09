@@ -102,12 +102,12 @@
     {
       "name": "UMD bundle (script tag)",
       "path": "dist/diagview.umd.min.js",
-      "limit": "32 KB"
+      "limit": "34 KB"
     },
     {
       "name": "ESM bundle (bundlers)",
       "path": "dist/esm/index.js",
-      "limit": "36 KB"
+      "limit": "38 KB"
     }
   ],
   "engines": {

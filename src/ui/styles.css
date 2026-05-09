@@ -1210,12 +1210,46 @@
   letter-spacing: normal;
 }
 
-/* Transparent-export checkbox input */
+/* Transparent-export checkbox input (Premium Custom Checkbox) */
 .dv-exp-trans-chk {
+  appearance: none;
+  -webkit-appearance: none;
   margin: 0;
-  width: auto;
+  width: 14px;
+  height: 14px;
+  border: 1.5px solid var(--dv-border-color);
+  border-radius: 4px;
+  background: rgba(128, 128, 128, 0.1);
   cursor: pointer;
-  accent-color: var(--dv-accent);
+  display: inline-grid;
+  place-content: center;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  flex-shrink: 0;
+}
+
+.dv-exp-trans-chk:checked {
+  background: var(--dv-primary, var(--dv-accent, #3b82f6));
+  border-color: var(--dv-primary, var(--dv-accent, #3b82f6));
+}
+
+.dv-exp-trans-chk:checked::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  transform: scale(1);
+  background-color: #fff;
+  clip-path: polygon(14% 44%, 0 65%, 50% 100%, 100% 16%, 80% 0%, 43% 62%);
+}
+
+.dv-exp-trans-chk:hover {
+  border-color: var(--dv-primary, var(--dv-accent, #3b82f6));
+  background: rgba(128, 128, 128, 0.2);
+}
+
+.dv-exp-trans-chk:focus-visible {
+  outline: 2px solid var(--dv-primary, var(--dv-accent, #3b82f6));
+  outline-offset: 2px;
 }
 
 /* Transparent-export format hint "(PNG/WebP/SVG)" */
