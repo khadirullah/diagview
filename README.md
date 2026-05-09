@@ -55,6 +55,7 @@
 | 🔄 **Remember Zoom**         | Persist zoom/pan state per diagram across modal opens (session)        |
 | 📦 **Minimal Dependencies**  | Only requires @panzoom/panzoom core module                             |
 | 🚫 **Framework Agnostic**    | Works with React, Vue, Svelte, Angular, or plain HTML                  |
+| 🏷️ **Silent Branding**       | Invisible in UI; professional attribution added during export          |
 
 ---
 
@@ -189,14 +190,19 @@ Any diagram can override the global configuration using `data-diagview-*` attrib
 </div>
 ```
 
-| Attribute                    | Values                            | Description                             |
-| ---------------------------- | --------------------------------- | --------------------------------------- |
-| `data-diagview-layout`       | `header` \| `floating` \| `off`   | Layout for this diagram only            |
-| `data-diagview-accent`       | Any CSS color                     | Accent color for this diagram only      |
-| `data-diagview-scale`        | `1`–`10`                          | Export resolution for this diagram only |
-| `data-diagview-sanitize`     | `strict` \| `permissive` \| `off` | SVG sanitization mode                   |
-| `data-diagview-allow-remote` | `true` \| `false`                 | Allow remote CSS/fonts in SVG           |
-| `data-title`                 | Any string                        | Title shown in header layout label      |
+| Attribute                         | Values                              | Description                             |
+| --------------------------------- | ----------------------------------- | --------------------------------------- |
+| `data-diagview-layout`            | `header` \| `floating` \| `off`     | Layout for this diagram only            |
+| `data-diagview-accent`            | Any CSS color                       | Accent color for this diagram only      |
+| `data-diagview-scale`             | `1`–`10`                            | Export resolution for this diagram only |
+| `data-diagview-sanitize`          | `strict` \| `permissive` \| `off`   | SVG sanitization mode                   |
+| `data-diagview-allow-remote`      | `true` \| `false`                   | Allow remote CSS/fonts in SVG           |
+| `data-diagview-watermark`         | `true` \| `false`                   | Enable branding for this diagram only   |
+| `data-diagview-watermark-text`    | Any string                          | Custom brand text (e.g. your name)      |
+| `data-diagview-watermark-style`   | `corner` \| `background` \| `both`  | Style override for this diagram         |
+| `data-diagview-watermark-pos`     | `top-left` \| `...` \| `four-sides` | Position override for this diagram      |
+| `data-diagview-watermark-opacity` | `0.1`–`1.0`                         | Transparency override for this diagram  |
+| `data-title`                      | Any string                          | Title shown in header layout label      |
 
 > **Security note:** `data-diagview-sanitize="off"` and `data-diagview-allow-remote="true"` only work when `security.allowOverrides` is `true` in the global config (the default). Use these only with SVGs from fully trusted sources.
 
@@ -412,6 +418,15 @@ DiagView.init({
   onExport: null, // (format, filename) => void — export complete
   onZoomChange: null, // (scale) => void — zoom level changed
   onError: null, // (error) => void — SVG validation failed
+
+  // ── Watermark (Silent Branding) ──────────────────
+  watermark: {
+    enabled: false, // true = inject branding on export/download
+    text: "", // The text to display (e.g. "yourdomain.com")
+    style: "corner", // 'corner' | 'background' | 'both'
+    position: "bottom-right", // 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right' | 'four-sides'
+    opacity: 0.2, // 0.1 - 1.0 (default 0.2)
+  },
 });
 ```
 

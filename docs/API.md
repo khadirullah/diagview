@@ -380,6 +380,15 @@ interface DiagViewConfig {
   onExport: ((format: string, filename: string) => void) | null;
   onZoomChange: ((scale: number) => void) | null;
   onError: ((error: Error) => void) | null;
+
+  // Watermark (Silent Branding)
+  watermark: {
+    enabled: boolean; // default: false
+    text: string; // branding text
+    style: "corner" | "background" | "both"; // default: 'corner'
+    position: "top-left" | "top-right" | "bottom-left" | "bottom-right" | "center" | "four-sides"; // default: 'bottom-right'
+    opacity: number; // default: 0.2 (range 0.0–1.0)
+  };
 }
 ```
 

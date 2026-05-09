@@ -226,6 +226,25 @@ DiagView.initShadowRoot(myShadowRoot); // then scan the shadow root
 
 ---
 
+## Branding & Watermarking
+
+**Q: Why don't I see the watermark in the viewer?**  
+A: DiagView watermarks are "Silent." They are designed to keep your website clean and professional. They only appear on the exported file (PNG, JPEG, SVG, or PDF) to ensure your work is attributed when shared.
+
+**Q: Does adding a watermark affect image quality?**  
+A: No. DiagView renders watermarks using native SVG vectors, ensuring they are crystal clear at any resolution.
+
+**Q: Will a long brand name overlap my diagram?**  
+A: No. DiagView uses a "Safe-Fit" scaling engine. It automatically calculates the available space and reduces the font size until your brand fits perfectly within the diagram boundaries.
+
+**Q: What if my diagram has a yellow or dark background?**  
+A: DiagView is "Contrast-Aware." It automatically adds a subtle outline (stroke) to the text in a contrasting color (e.g., white text on dark nodes) to ensure your brand is always legible.
+
+**Q: Does "four-sides" put text on all 4 corners?**  
+A: No, it puts them on the center of each edge (Top, Bottom, Left, Right) to maximize visibility while preventing the diagram from looking cluttered.
+
+---
+
 ## Contributing
 
 **Q: Where do I report bugs?**  

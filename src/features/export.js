@@ -118,6 +118,147 @@ async function embedDocumentFonts(svgEl) {
 }
 
 /**
+ * Injects a watermark into the SVG for branding during export.
+ * Supports "background" (centered/rotated) and "corner" styles.
+ * @private
+ */
+function injectWatermark(svg, d) {
+  if (!(svg instanceof SVGElement)) return;
+
+  // 1. Start with global config
+  const config = { ...state.config.watermark };
+
+  // 2. Apply element-level overrides if available (A1)
+  // We use state.activeSourceElement as it's the original diagram container
+  const el = state.activeSourceElement;
+  if (el && el.dataset) {
+    const dataset = el.dataset;
+    if (dataset.diagviewWatermark) config.enabled = dataset.diagviewWatermark === "true";
+    if (dataset.diagviewWatermarkText) config.text = dataset.diagviewWatermarkText;
+    if (dataset.diagviewWatermarkStyle) config.style = dataset.diagviewWatermarkStyle;
+    if (dataset.diagviewWatermarkPos) config.position = dataset.diagviewWatermarkPos;
+    if (dataset.diagviewWatermarkOpacity) {
+      const n = parseFloat(dataset.diagviewWatermarkOpacity);
+      if (!isNaN(n)) config.opacity = n;
+    }
+  }
+
+  // Final validation before processing
+  if (!config || !config.enabled || !config.text || !d || d.w <= 0 || d.h <= 0) return;
+
+  // Detect theme for contrasting color
+  const theme = detectTheme();
+  const mainColor = theme.isDark ? "#ffffff" : "#000000";
+  const contrastColor = theme.isDark ? "#000000" : "#ffffff";
+
+  const style = (config.style || "corner").toLowerCase();
+  const pos = (
+    config.position || (style === "background" ? "center" : "bottom-right")
+  ).toLowerCase();
+  const opacity = config.opacity ?? (style === "background" ? 0.15 : 0.2);
+
+  const createWatermarkElement = (fontSize, textOpacity, maxWidth = 0) => {
+    const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+    text.textContent = config.text;
+    text.setAttribute("font-family", "sans-serif");
+    text.setAttribute("font-weight", "bold");
+
+    // Safe-Fit Scaling: Automatically fit text to available width without distortion
+    let effectiveFontSize = fontSize;
+    if (maxWidth > 0) {
+      const charWidthRatio = 0.6; // Average for bold sans-serif
+      const estimatedWidth = config.text.length * (fontSize * charWidthRatio);
+      if (estimatedWidth > maxWidth) {
+        effectiveFontSize = maxWidth / config.text.length / charWidthRatio;
+      }
+    }
+
+    text.setAttribute("font-size", `${effectiveFontSize}px`);
+    text.setAttribute("fill", mainColor);
+    text.setAttribute("stroke", contrastColor);
+    text.setAttribute("stroke-width", String(effectiveFontSize * 0.05));
+    text.setAttribute("paint-order", "stroke");
+    text.setAttribute("fill-opacity", String(textOpacity));
+    text.setAttribute("stroke-opacity", String(textOpacity * 0.5));
+    text.setAttribute("pointer-events", "none");
+    text.style.userSelect = "none";
+
+    return text;
+  };
+
+  const addAt = (el, x, y, anchor, rotation = 0) => {
+    el.setAttribute("x", String(x));
+    el.setAttribute("y", String(y));
+    el.setAttribute("text-anchor", anchor);
+    if (rotation) {
+      el.setAttribute("transform", `rotate(${rotation}, ${x}, ${y})`);
+    }
+    svg.appendChild(el);
+  };
+
+  // 1. BACKGROUND / CENTERED LAYER (Large & Protective)
+  if (style === "background" || style === "both" || pos === "center") {
+    const angleRad = -30 * (Math.PI / 180);
+    const cosA = Math.abs(Math.cos(angleRad));
+    const sinA = Math.abs(Math.sin(angleRad));
+
+    // Calculate the maximum possible length that fits in the box at this angle
+    // L_max = min(W / cos(alpha), H / sin(alpha))
+    const maxLen = Math.min(d.w / cosA, d.h / sinA) * 0.9;
+
+    const fontSize = maxLen * 0.12;
+    const bgOpacity = style === "both" ? opacity * 0.6 : opacity;
+
+    const el = createWatermarkElement(fontSize, bgOpacity, maxLen);
+    const centerX = d.x + d.w / 2;
+    const centerY = d.y + d.h / 2;
+    el.setAttribute("dominant-baseline", "middle");
+    addAt(el, centerX, centerY, "middle", -30);
+  }
+
+  // 2. CORNER / SIDES LAYER (Small & Professional)
+  if (style === "corner" || style === "both") {
+    const maxDim = Math.max(d.w, d.h);
+    const fontSize = maxDim * 0.025; // Always small relative to diagram
+    const margin = fontSize;
+    const sideOpacity = style === "both" ? opacity * 0.8 : opacity;
+
+    if (pos === "four-sides") {
+      const sides = [
+        { x: d.x + d.w / 2, y: d.y + margin + fontSize, anchor: "middle", max: d.w * 0.5 },
+        { x: d.x + d.w / 2, y: d.y + d.h - margin, anchor: "middle", max: d.w * 0.5 },
+        { x: d.x + margin, y: d.y + d.h / 2, anchor: "middle", rot: -90, max: d.h * 0.5 },
+        { x: d.x + d.w - margin, y: d.y + d.h / 2, anchor: "middle", rot: 90, max: d.h * 0.5 },
+      ];
+
+      sides.forEach((p) => {
+        const el = createWatermarkElement(fontSize, sideOpacity, p.max);
+        addAt(el, p.x, p.y, p.anchor, p.rot);
+      });
+    } else if (pos !== "center") {
+      const cornerMaxWidth = d.w * 0.35; // Strict corner limit
+      const el = createWatermarkElement(fontSize, sideOpacity, cornerMaxWidth);
+
+      let x, y, anchor;
+      if (pos.includes("right")) {
+        x = d.x + d.w - margin;
+        anchor = "end";
+      } else {
+        x = d.x + margin;
+        anchor = "start";
+      }
+
+      if (pos.includes("bottom")) {
+        y = d.y + d.h - margin;
+      } else {
+        y = d.y + margin + fontSize;
+      }
+      addAt(el, x, y, anchor);
+    }
+  }
+}
+
+/**
  * Prepare SVG for export.
  * KEY CHANGES vs original:
  *  1. Always clone from ORIGINAL page SVG (not modal clone) → correct CSS context
@@ -183,6 +324,9 @@ async function prepareSvgForExport(svg, modalClone) {
     const href = img.getAttribute("href") || img.getAttribute("xlink:href") || "";
     if (/^https?:\/\//.test(href)) img.setAttribute("crossorigin", "anonymous");
   });
+
+  // Inject watermark if enabled (Silent Branding)
+  injectWatermark(exportSvg, d);
 
   return { width, height, bg: theme.bg, svg: exportSvg };
 }

@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="images/logo.png" sizes="512x512">
+    <link rel="apple-touch-icon" href="images/logo.png">
+    <title>DiagView - Silent Watermarks</title>
+    <meta property="og:image" content="images/hero.png">
+    <meta name="description" content="DiagView Silent Watermark demo — non-intrusive branding for exported diagrams.">
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono&display=swap"
+        rel="stylesheet">
+
+    <!-- Dependencies -->
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@panzoom/panzoom@4.5.1/dist/panzoom.min.js"></script>
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="demo-styles.css">
+
+    <!-- Primary: CDN (Online) -->
+    <!-- DiagView Core -->
+    <script src="https://unpkg.com/diagview@1.0.5/dist/diagview.umd.js" data-diagview-no-auto-init></script>
+    
+    <!-- Development Mode: Uncomment below to use local file -->
+    <!-- <script src="../dist/diagview.umd.js" data-diagview-no-auto-init></script> -->
+
+    <style>
+        :root {
+            --diagram-accent: #f59e0b;
+        }
+
+        .badge-watermark {
+            background: #f59e0b;
+            color: #fff;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 2rem;
+            padding: 2rem;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        .mermaid { display: flex; justify-content: center; }
+    </style>
+
+    <script src="demo-runtime.js"></script>
+</head>
+
+<body>
+
+    <div class="controls">
+        <div class="brand">
+            <a href="index.html">
+                <img src="images/logo.png" alt="DiagView"
+                    style="width:32px;height:32px;border-radius:8px;object-fit:cover;flex-shrink:0">
+                <div class="brand-meta">
+                    <span class="brand-label">DiagView</span>
+                    <span class="brand-name">Silent Watermarks</span>
+                </div>
+            </a>
+        </div>
+        <div class="toggles">
+            <label class="accent-label">
+                <span>Security</span>
+                <select id="securitySelector" title="Toggle SVG Sanitization Level">
+                    <option value="strict">Strict (High)</option>
+                    <option value="permissive">Permissive</option>
+                    <option value="off">Off (Trusted)</option>
+                </select>
+            </label>
+            <label class="accent-label">
+                <span>Accent</span>
+                <input type="color" id="accentPicker" value="#f59e0b">
+            </label>
+            <button class="toggle-btn" onclick="toggleTheme()" title="Toggle Dark/Light Mode">🌓</button>
+            <a href="index.html" class="toggle-btn" style="background:var(--accent);color:#fff;border:none;">← Hub</a>
+        </div>
+    </div>
+
+    <section class="page-hero">
+        <h1>Silent Branding &amp; Attribution</h1>
+        <p>Protect your intellectual property with non-intrusive watermarks. Invisible in the viewer, present on every
+            export.</p>
+        <div class="badge-row"><span class="badge badge-watermark">✨ Premium Branding Mode</span></div>
+    </section>
+
+    <div class="grid">
+        <!-- 1. MERMAID EXAMPLE -->
+        <div class="card">
+            <div class="card-header">
+                <h3>Mermaid - Maximum Coverage</h3>
+                <span class="card-badge" style="background:#dc2626; color:white;">Style: All + Both</span>
+            </div>
+            <p style="margin: 0 1.5rem 1rem; font-size: 0.85rem; color: var(--muted);">Full protection on dynamic diagrams. 5 Watermarks: Center + All 4 Edges.</p>
+            <div class="mermaid" 
+                data-diagview-watermark="true"
+                data-diagview-watermark-text="© DiagView Mermaid Demo"
+                data-diagview-watermark-style="corner">
+                graph TD
+                A[Start] --> B{Process}
+                B -->|Success| C[Done]
+                B -->|Error| D[Retry]
+                D --> B
+            </div>
+            <p style="text-align: center; margin-top: 10px; color: #f59e0b; font-size: 0.8rem; font-weight: 600;">Mermaid diagrams support all watermark styles</p>
+        </div>
+
+        <!-- 2. PLANTUML (INLINE) -->
+        <div class="card">
+            <div class="card-header">
+                <h3>PlantUML - Hybrid Protection</h3>
+                <span class="card-badge svg-badge">Style: Both</span>
+            </div>
+            <p style="margin: 0 1.5rem 1rem; font-size: 0.85rem; color: var(--muted);">Centered overlay + Corner attribution. Fully protected PlantUML exports.</p>
+            <div class="diagram" 
+                data-diagview-watermark="true"
+                data-diagview-watermark-text="© DiagView PlantUML Protection"
+                data-diagview-watermark-style="both"
+                data-diagview-watermark-opacity="0.2">
+                <!-- We'll fetch this in the script below to make it an inline SVG -->
+                <div id="plantuml-container" style="min-height: 150px; display: flex; justify-content: center; align-items: center;">
+                    <span style="color: var(--muted); font-size: 0.8rem;">Loading PlantUML...</span>
+                </div>
+            </div>
+            <p style="text-align: center; margin-top: 10px; color: #f59e0b; font-size: 0.8rem; font-weight: 600;">Full branding coverage on PlantUML exports</p>
+        </div>
+
+        <!-- 3. ALL CORNERS (SVG) -->
+        <div class="card">
+            <div class="card-header">
+                <h3>4-Side Signature</h3>
+                <span class="card-badge svg-badge">Style: Corner (All)</span>
+            </div>
+            <p style="margin: 0 1.5rem 1rem; font-size: 0.85rem; color: var(--muted);">Branding on every edge. Impossible to crop out the attribution.</p>
+            <div class="diagram" 
+                data-diagview-watermark="true"
+                data-diagview-watermark-text="khadirullah.com"
+                data-diagview-watermark-style="corner"
+                data-diagview-watermark-pos="four-sides">
+                <svg viewBox="0 0 400 200" xmlns="http://www.w3.org/2000/svg">
+                    <rect x="50" y="50" width="300" height="100" rx="8" fill="#8b5cf6" fill-opacity="0.1" stroke="#8b5cf6" stroke-width="2" />
+                    <text x="200" y="105" text-anchor="middle" fill="currentColor" font-family="sans-serif" font-size="20" font-weight="800">FOUR SIDES</text>
+                </svg>
+            </div>
+            <p style="text-align: center; margin-top: 10px; color: #f59e0b; font-size: 0.8rem; font-weight: 600;">Download to see text on all 4 edges</p>
+        </div>
+
+        <!-- 4. HYBRID (BOTH) -->
+        <div class="card">
+            <div class="card-header">
+                <h3>Hybrid Branding</h3>
+                <span class="card-badge svg-badge">Style: Both</span>
+            </div>
+            <p style="margin: 0 1.5rem 1rem; font-size: 0.85rem; color: var(--muted);">Overlay + 1 Corner. The best balance for professional reports.</p>
+            <div class="diagram" 
+                data-diagview-watermark="true"
+                data-diagview-watermark-text="© DiagView Enterprise"
+                data-diagview-watermark-style="both"
+                data-diagview-watermark-pos="bottom-right">
+                <svg viewBox="0 0 400 200" xmlns="http://www.w3.org/2000/svg">
+                    <rect x="50" y="50" width="300" height="100" rx="8" fill="#3b82f6" fill-opacity="0.1" stroke="#3b82f6" stroke-width="2" />
+                    <text x="200" y="105" text-anchor="middle" fill="currentColor" font-family="sans-serif" font-size="20" font-weight="800">HYBRID (BOTH)</text>
+                </svg>
+            </div>
+            <p style="text-align: center; margin-top: 10px; color: #f59e0b; font-size: 0.8rem; font-weight: 600;">Download to see Center + Bottom-Right</p>
+        </div>
+
+        <!-- 5. TOTAL LOCKOUT -->
+        <div class="card">
+            <div class="card-header">
+                <h3>Total Lockout</h3>
+                <span class="card-badge" style="background:#dc2626; color:white;">Style: All + Both</span>
+            </div>
+            <p style="margin: 0 1.5rem 1rem; font-size: 0.85rem; color: var(--muted);">Full centered overlay plus branding on every single edge.</p>
+            <div class="diagram" 
+                data-diagview-watermark="true"
+                data-diagview-watermark-text="PROPRIETARY & CONFIDENTIAL"
+                data-diagview-watermark-style="both" 
+                data-diagview-watermark-pos="four-sides">
+                <svg viewBox="0 0 400 200" xmlns="http://www.w3.org/2000/svg">
+                    <rect x="50" y="50" width="300" height="100" rx="8" fill="#ef4444" fill-opacity="0.1" stroke="#ef4444" stroke-width="2" />
+                    <text x="200" y="105" text-anchor="middle" fill="currentColor" font-family="sans-serif" font-size="20" font-weight="800">TOTAL LOCKOUT</text>
+                </svg>
+            </div>
+            <p style="text-align: center; margin-top: 10px; color: #dc2626; font-size: 0.8rem; font-weight: 800;">5 Total Watermarks: Center + 4 Edges</p>
+        </div>
+    </div>
+
+    <!-- Feature section -->
+    <div class="page-section">
+        <div class="section-header">
+            <h2 class="section-title">The "Silent" Advantage</h2>
+            <p class="section-subtitle">Why DiagView watermarking is superior to standard solutions.</p>
+        </div>
+        <div class="info-grid">
+            <div class="info-card">
+                <div class="info-icon">🔕</div>
+                <h4>Zero UI Distraction</h4>
+                <p>The watermark never appears in your website's UI. Your site stays clean and professional while your
+                    images stay protected.</p>
+            </div>
+            <div class="info-card">
+                <div class="info-icon">🌓</div>
+                <h4>Contrast Aware</h4>
+                <p>DiagView automatically calculates the best stroke color (white-on-dark / black-on-light) to ensure
+                    branding is legible on any diagram color.</p>
+            </div>
+            <div class="info-card">
+                <div class="info-icon">🎯</div>
+                <h4>Granular Control</h4>
+                <p>Enable branding globally or use <code>data-diagview-watermark</code> to protect only your most
+                    important diagrams.</p>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <div class="container">
+            <div class="footer-links">
+                <a href="index.html">← Back to Hub</a>
+                <a href="https://github.com/khadirullah/diagview" target="_blank">GitHub</a>
+                <a href="https://www.npmjs.com/package/diagview" target="_blank">NPM</a>
+            </div>
+            <p class="copyright">DiagView &bull; <span data-version></span> &bull; Built with ❤️</p>
+        </div>
+    </footer>
+
+    <script>
+        // Mermaid init
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'default',
+            securityLevel: 'loose'
+        });
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            // 1. Fetch PlantUML and inline it
+            try {
+                const response = await fetch('https://www.plantuml.com/plantuml/svg/SoWkIImgAStDuNBAJrBGjLDmpCbCJbMmKiX8pSd9vt98pKi1IW80');
+                const svgText = await response.text();
+                const container = document.getElementById('plantuml-container');
+                if (container) container.innerHTML = svgText;
+            } catch (e) {
+                console.error("Failed to fetch PlantUML", e);
+            }
+
+            // 2. Setup Mermaid with "Maximum Coverage"
+            const mermaidDiv = document.querySelector('.mermaid');
+            if (mermaidDiv) {
+                mermaidDiv.dataset.diagviewWatermarkStyle = "both";
+                mermaidDiv.dataset.diagviewWatermarkPos = "four-sides";
+                mermaidDiv.dataset.diagviewWatermarkOpacity = "0.2";
+            }
+
+            await mermaid.run();
+
+            const dvInit = () => DiagView.init({
+                diagramSelector: '.mermaid, .diagram',
+                showKeyboardHelp: true,
+                highResScale: 4,
+                accentColor: localStorage.getItem('dv-accent') || '#f59e0b',
+                layout: 'header',
+                watermark: {
+                    enabled: false 
+                }
+            });
+            dvInit();
+            if (window.setupDiagViewToggle) setupDiagViewToggle(dvInit);
+        });
+    </script>
+</body>
+
+</html>

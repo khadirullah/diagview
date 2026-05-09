@@ -30,6 +30,7 @@ Complete guide from basic setup to advanced integration patterns.
 22. [Advanced Configuration](#22-advanced-configuration)
 23. [Programmatic Control](#23-programmatic-control)
 24. [Troubleshooting](#24-troubleshooting)
+25. [Watermark](#25-watermark)
 
 ---
 
@@ -204,14 +205,19 @@ Set any of the following `data-diagview-*` attributes directly on a diagram cont
 </div>
 ```
 
-| Attribute                    | Type                          | Description                                      |
-| ---------------------------- | ----------------------------- | ------------------------------------------------ |
-| `data-diagview-layout`       | `header \| floating \| off`   | Layout for this diagram                          |
-| `data-diagview-accent`       | CSS color string              | Accent color — sets `--dv-accent` on the element |
-| `data-diagview-scale`        | Integer `1`–`10`              | Export `highResScale` for this diagram           |
-| `data-diagview-sanitize`     | `strict \| permissive \| off` | SVG sanitization for this diagram                |
-| `data-diagview-allow-remote` | `true \| false`               | Allow remote CSS/fonts in SVG styles             |
-| `data-title`                 | String                        | Diagram title for header label                   |
+| Attribute                         | Type                               | Description                                      |
+| --------------------------------- | ---------------------------------- | ------------------------------------------------ |
+| `data-diagview-layout`            | `header \| floating \| off`        | Layout for this diagram                          |
+| `data-diagview-accent`            | CSS color string                   | Accent color — sets `--dv-accent` on the element |
+| `data-diagview-scale`             | Integer `1`–`10`                   | Export `highResScale` for this diagram           |
+| `data-diagview-sanitize`          | `strict` \| `permissive` \| `off`  | SVG sanitization mode                            |
+| `data-diagview-allow-remote`      | `true` \| `false`                  | Allow remote CSS/fonts in SVG                    |
+| `data-diagview-watermark`         | `true` \| `false`                  | Enable watermark for this diagram only           |
+| `data-diagview-watermark-text`    | Any string                         | Custom watermark text                            |
+| `data-diagview-watermark-style`   | `corner` \| `background` \| `both` | Style override for this diagram                  |
+| `data-diagview-watermark-pos`     | `top-left` \| `...`                | Position override for this diagram               |
+| `data-diagview-watermark-opacity` | `0`–`1`                            | Opacity override for this diagram                |
+| `data-title`                      | Any string                         | Title shown in header layout label               |
 
 > **Requires `security.allowOverrides: true`** (the default) for `data-diagview-sanitize` and `data-diagview-allow-remote` to take effect.
 
@@ -917,3 +923,60 @@ DiagView.init({ immersiveMode: true });
 ### "Double Prefixing" on SVG IDs
 
 DiagView never mutates your original SVG's IDs. ID namespacing only happens on the internal clone used in the fullscreen modal. If you see IDs changing on the host page, please open an issue.
+
+---
+
+## 25. Watermark
+
+DiagView can automatically inject a watermark into your diagrams when they are downloaded or exported. This is a "silent" feature—the watermark is invisible in the viewer on your website, but appears on the saved image to ensure your work is always attributed.
+
+### Basic Setup
+
+Enable watermarking in your initialization call:
+
+```javascript
+DiagView.init({
+  watermark: {
+    enabled: true,
+    text: "khadirullah.com",
+    style: "background",
+    opacity: 0.08,
+  },
+});
+```
+
+### Configuration Options
+
+| Option     | Type    | Default          | Description                                                                  |
+| ---------- | ------- | ---------------- | ---------------------------------------------------------------------------- |
+| `enabled`  | boolean | `false`          | Whether to inject branding on export/download                                |
+| `text`     | string  | `""`             | The branding text (e.g. your domain or name)                                 |
+| `style`    | string  | `"corner"`       | `corner` \| `background` (PowerPoint style) \| `both`                        |
+| `position` | string  | `"bottom-right"` | `top-left` \| `top-right` \| `bottom-left` \| `bottom-right` \| `four-sides` |
+| `opacity`  | number  | `0.2`            | Transparency level (0.0 to 1.0)                                              |
+
+### Branding Styles
+
+#### 1. Full-Canvas Overlay
+
+Places a large, faint version of your text in the center of the diagram, rotated at -30 degrees. This is the most protective option as it covers the main content area. Note: This style is always centered and ignores the `position` setting.
+
+#### 2. Corner (Professional Signature)
+
+Places a small signature in the corner of your choice. This style obeys the `position` setting.
+
+#### 3. Both (Ultimate Protection)
+
+Shows **both** the large background text AND the corner signature.
+
+#### 4. Four Sides
+
+By setting `position: "four-sides"`, you can place your branding on all four edges of the image simultaneously.
+
+### File Size Note
+
+Adding watermarks increases the complexity of the exported image. While the impact is minimal for most diagrams, using the `both` style or `four-sides` position will slightly increase the final file size of your exported PNG, SVG, or PDF files.
+
+### Visibility Optimization
+
+DiagView uses a "Contrast Stroke" technique to ensure your watermark is visible on any background. If your diagram has light yellow boxes (like Mermaid charts) or dark nodes, the watermark will remain legible by using a subtle outline of the opposite color.

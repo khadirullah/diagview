@@ -246,6 +246,38 @@ function readElementOverrides(element) {
     cfg.security = { ...cfg.security, allowRemoteResources: v };
   }
 
+  // --- Watermark Overrides ---
+  // data-diagview-watermark="true|false"
+  if (dataset.diagviewWatermark) {
+    cfg.watermark = { ...cfg.watermark, enabled: dataset.diagviewWatermark === "true" };
+  }
+
+  // data-diagview-watermark-text="My Label"
+  if (dataset.diagviewWatermarkText) {
+    cfg.watermark = { ...cfg.watermark, text: dataset.diagviewWatermarkText };
+  }
+
+  // data-diagview-watermark-style="corner|background|both"
+  if (dataset.diagviewWatermarkStyle) {
+    const v = dataset.diagviewWatermarkStyle.toLowerCase();
+    if (["corner", "background", "both"].includes(v)) {
+      cfg.watermark = { ...cfg.watermark, style: v };
+    }
+  }
+
+  // data-diagview-watermark-pos="top-left|..."
+  if (dataset.diagviewWatermarkPos) {
+    cfg.watermark = { ...cfg.watermark, position: dataset.diagviewWatermarkPos };
+  }
+
+  // data-diagview-watermark-opacity="0.5"
+  if (dataset.diagviewWatermarkOpacity) {
+    const n = parseFloat(dataset.diagviewWatermarkOpacity);
+    if (!isNaN(n) && n >= 0 && n <= 1) {
+      cfg.watermark = { ...cfg.watermark, opacity: n };
+    }
+  }
+
   return cfg;
 }
 

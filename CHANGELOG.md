@@ -8,6 +8,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 
 ## [Unreleased]
 
+### Added
+
+- **Silent Watermark Branding** — Configurable watermark system for exports (Overlay, Corner, or Both styles) with automatic theme-based contrast-aware strokes.
+- **Proportional Safe-Fit Scaling** — New boundary-aware math engine that automatically fits branding text into any aspect ratio without squashing or overflow.
+- **Support for 'four-sides' Position** — Ultimate protection mode that places attribution on all four edges of the exported image.
+
+### Fixed
+
+- **Global Shortcut Reliability** — Re-engineered focus management to ensure keyboard shortcuts (M, Space, R, etc.) are 100% reliable even after interacting with Search, UI tools, or complex SVG nodes.
+- **Meeting Mode Cursor Artifacts** — Resolved "double pointer" bug by correctly hiding the system cursor in presentation mode.
+
 ---
 
 ## [1.0.5] - 2026-05-05

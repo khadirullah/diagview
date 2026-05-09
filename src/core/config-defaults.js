@@ -90,6 +90,15 @@ export const INITIAL_CONFIG = {
   onZoomChange: null,
   onOpen: null,
   onClose: null,
+
+  // Watermark settings (Applied only during export/download)
+  watermark: {
+    enabled: false,
+    text: "",
+    style: "corner", // "corner" | "background" | "both"
+    position: "bottom-right", // "top-left" | "top-right" | "bottom-left" | "bottom-right" | "center" | "four-sides"
+    opacity: 0.2,
+  },
 };
 
 /**
