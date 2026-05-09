@@ -34,7 +34,12 @@ function checkShareLink() {
 
   const result = restoreViewFromURL(allDiagrams);
   if (result) {
-    // Found a target diagram! Open it.
+    // Found a target diagram! Check if it's "ready" (has an SVG)
+    // If the website is lazy-loading the SVG itself, we must wait for it.
+    if (!result.diagram.querySelector("svg")) {
+      return; // Keep hasCheckedShareLink = false to try again on next mutation
+    }
+
     // Use timeout to ensure UI is ready
     setTimeout(() => {
       // Defensive wrapping handles both real Promises and test mocks
@@ -42,12 +47,12 @@ function checkShareLink() {
         console.warn("DiagView: Failed to restore shared view", e);
       });
     }, TIMING.OBSERVER_DEBOUNCE);
+
+    // Only mark as checked if we successfully found and opened the diagram
+    state.hasCheckedShareLink = true;
+    // Cleanup URL to remove internal dv- parameters after processing
+    stripDiagViewParams();
   }
-
-  state.hasCheckedShareLink = true;
-
-  // Cleanup URL to remove internal dv- parameters after processing
-  stripDiagViewParams();
 }
 
 /**
@@ -141,6 +146,8 @@ export function observeDiagrams() {
   if (!state.isInitialProcessDone) {
     processDiagrams(document.body);
     state.isInitialProcessDone = true;
+    // Check for share link immediately after initial processing
+    checkShareLink();
   }
 
   // Define debounced processor (stored at module level for cancellation)
