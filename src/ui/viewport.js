@@ -103,8 +103,10 @@ export function startVisualViewportSync() {
 
     // We make the modal's base size equal to the layout viewport size
     // so that after scaling by (1/vv.scale) it matches the visual viewport.
+    // ⚠️ FIREFOX FIX: We use window.innerHeight for baseHeight to prevent
+    // the modal from shrinking when the mobile keyboard opens.
     const baseWidth = vv.width * vv.scale;
-    const baseHeight = vv.height * vv.scale;
+    const baseHeight = (window.innerHeight || vv.height) * vv.scale;
 
     // vv.pageLeft and vv.pageTop are the coordinates of the visual viewport
     // relative to the document. Since the modal is position:absolute
@@ -114,7 +116,7 @@ export function startVisualViewportSync() {
 
     modal.style.width = `${baseWidth}px`;
     modal.style.height = `${baseHeight}px`;
-    modal.style.transform = `translate(${x}px, ${y}px) scale(${scale})`;
+    modal.style.transform = `translate3d(${x}px, ${y}px, 0) scale(${scale})`;
   };
 
   // Sync on resize (zoom) and scroll

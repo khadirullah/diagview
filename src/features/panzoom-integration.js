@@ -134,7 +134,6 @@ export function setupViewportInteractions(viewport, element, panzoom) {
 
     if (e.touches.length >= 2) {
       state.touchState.isPinching = true;
-      // Note: Panzoom library handles the actual pinch math natively
     }
   };
 
@@ -142,7 +141,7 @@ export function setupViewportInteractions(viewport, element, panzoom) {
     // If using 2 or more fingers, we prevent default to stop the browser from
     // scrolling/gesturing, but we let Panzoom's native listeners handle the math.
     if (e.touches.length >= 2) {
-      e.preventDefault();
+      if (e.cancelable) e.preventDefault();
     }
   };
 

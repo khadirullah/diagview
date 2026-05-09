@@ -313,13 +313,12 @@
   display: none;
   position: fixed;
   inset: 0;
-  z-index: 2147483647; /* Maximum 32-bit integer to stay on top of everything */
+  z-index: 2147483647 !important; /* Maximum 32-bit integer to stay on top of everything */
   flex-direction: column;
   overflow: hidden;
-  background-color: var(--dv-bg);
+  background-color: var(--dv-bg) !important;
   color: var(--dv-text-color);
   outline: none !important;
-  /* Ensure silent startup focus */
 }
 
 .diagview-modal.open {
