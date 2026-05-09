@@ -90,26 +90,51 @@ export function setupModalFocusManagement() {
   state.focusManagementSetup = true;
 
   const modal = document.getElementById("diagview-modal");
-  const viewport = document.getElementById("diagview-modal-viewport");
+  if (!modal) return;
 
-  if (!modal || !viewport) return;
+  // OPTIMIZATION: Track last execution to prevent double-firing for pointerdown + mousedown
+  let lastBlurTime = 0;
 
-  // Track listeners for cleanup
-  const handleBlur = () => blurActiveElement();
+  const handleBlur = (e) => {
+    const now = Date.now();
+    // Ignore events firing in rapid succession (e.g., pointerdown followed by mousedown)
+    // or high-frequency wheel events if focus is already handled.
+    if (now - lastBlurTime < 50) return;
 
-  viewport.addEventListener("mousedown", handleBlur, { passive: true });
-  viewport.addEventListener("wheel", handleBlur, { passive: true });
-  viewport.addEventListener("touchstart", handleBlur, { passive: true });
+    // Check if we even need to blur (is focus already on the modal or body?)
+    const active = document.activeElement;
+    if (active === modal || active === document.body) {
+      // Still allow the timestamp update for wheel events to keep them quiet
+      if (e.type === "wheel") lastBlurTime = now;
+      return;
+    }
+
+    const isUI = e.target.closest(".diagview-topbar, .diagview-fab-container, .diagview-menu");
+    if (!isUI) {
+      lastBlurTime = now;
+      blurActiveElement();
+      // Only focus if needed
+      if (document.activeElement !== modal) {
+        modal.focus();
+      }
+    }
+  };
+
+  modal.addEventListener("mousedown", handleBlur, true);
+  modal.addEventListener("pointerdown", handleBlur, true);
+  modal.addEventListener("wheel", handleBlur, { passive: true, capture: true });
+  modal.addEventListener("touchstart", handleBlur, true);
 
   // Setup focus trap and register full cleanup
   const cleanupTrap = setupFocusTrap();
 
   addModalCleanupFunction(() => {
-    viewport.removeEventListener("mousedown", handleBlur);
-    viewport.removeEventListener("wheel", handleBlur);
-    viewport.removeEventListener("touchstart", handleBlur);
+    modal.removeEventListener("mousedown", handleBlur, true);
+    modal.removeEventListener("pointerdown", handleBlur, true);
+    modal.removeEventListener("wheel", handleBlur, true);
+    modal.removeEventListener("touchstart", handleBlur, true);
     cleanupTrap();
-    state.focusManagementSetup = false; // Reset guard so it can re-init on next open
+    state.focusManagementSetup = false;
   });
 }
 

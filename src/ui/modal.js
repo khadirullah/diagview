@@ -175,7 +175,7 @@ function _activateModalUI(modal) {
  * PHASE 3: Core Interactions
  * Initializes Panzoom and handles initial zoom/search state.
  * @private
- * @returns {Promise<{panzoom: any, diagramId: string}>}
+ * @returns {Promise<{panzoom: any, diagramId: string}>} The initialized panzoom instance and diagram ID.
  */
 async function _initCoreInteractions(element, clone, viewport, options) {
   // Calculate diagram index for share links
@@ -638,6 +638,11 @@ function _wireModalEvents(elements, viewport) {
         btn.setAttribute("aria-pressed", String(on));
       }
     });
+
+    // Reset focus to modal so keyboard shortcuts (R, M, L, etc.) work immediately
+    // even if the user toggled the button using the mouse.
+    const modal = document.getElementById("diagview-modal");
+    if (modal) modal.focus();
 
     import("./toast.js")
       .then((m) => {

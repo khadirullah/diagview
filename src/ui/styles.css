@@ -1363,8 +1363,9 @@
   }
 }
 
-.diagview-modal-viewport.meeting {
-  cursor: none;
+.diagview-modal-viewport.meeting,
+.diagview-modal-viewport.meeting * {
+  cursor: none !important;
 }
 
 /* Toast Notifications */
