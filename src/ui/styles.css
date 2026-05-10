@@ -319,6 +319,11 @@
   background-color: var(--dv-bg) !important;
   color: var(--dv-text-color);
   outline: none !important;
+  /* Prevent native pinch-zoom on non-viewport areas (topbar, FAB, menu).
+     Without this, pinch-zooming on UI chrome triggers browser zoom which
+     persists after the modal closes — leaving the background page zoomed.
+     The diagram viewport has touch-action:none so Panzoom is unaffected. */
+  touch-action: pan-x pan-y;
 }
 
 .diagview-modal.open {
@@ -361,6 +366,9 @@
   border-bottom: 1px solid var(--dv-border-color);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
+  /* Counter-scale when browser is pinch-zoomed so controls stay at design size.
+     --dv-zoom-comp is set by viewport.js startVisualViewportSync(). */
+  zoom: var(--dv-zoom-comp, 1);
 }
 
 @media (min-width: 640px) {
@@ -976,6 +984,9 @@
   flex-direction: column-reverse;
   align-items: flex-end;
   pointer-events: none;
+  /* Counter-scale when browser is pinch-zoomed so controls stay at design size.
+     --dv-zoom-comp is set by viewport.js startVisualViewportSync(). */
+  zoom: var(--dv-zoom-comp, 1);
 }
 
 .diagview-fab-container > * {
@@ -1033,7 +1044,6 @@
   right: 0;
   width: min(260px, calc(100vw - 80px));
   max-height: min(70vh, calc(100vh - 120px));
-  overflow-y: auto;
   border-radius: 20px;
   box-shadow:
     0 24px 48px -12px rgba(0, 0, 0, 0.25),
@@ -1054,7 +1064,12 @@
     transform 0.15s cubic-bezier(0.4, 0, 0.2, 1),
     visibility 0.15s step-end;
   will-change: transform, opacity;
+  /* Clip content while closed/animating to prevent visual overflow */
   overflow: hidden;
+  /* Solid fallback background that covers the full scrollable area.
+     The ::before pseudo only covers the scroll viewport (inset:0),
+     so without this, content that scrolls past the viewport has no background. */
+  background-color: var(--dv-bg);
 }
 
 /* MIN-4: Move backdrop-filter to a pseudo-element to ensure perfect 
@@ -1078,6 +1093,9 @@
     opacity 0.2s cubic-bezier(0.16, 1, 0.3, 1),
     transform 0.2s cubic-bezier(0.16, 1, 0.3, 1),
     visibility 0s linear;
+  /* Restore scrolling when open — critical for heavy zoom levels where
+     the menu content exceeds the viewport height */
+  overflow-y: auto;
 }
 
 .dv-menu-sec {
@@ -1415,6 +1433,9 @@
   pointer-events: none;
   width: 90%;
   max-width: 500px;
+  /* Counter-scale when browser is pinch-zoomed so toasts stay at design size.
+     --dv-zoom-comp is set by viewport.js startVisualViewportSync(). */
+  zoom: var(--dv-zoom-comp, 1);
 }
 
 .diagview-toast {

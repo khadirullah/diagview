@@ -77,46 +77,66 @@ let _viewportSyncCleanup = null;
  * 2. Persist background zoom and scroll position on close.
  * 3. Work reliably in Firefox, Chrome, Safari, and Brave.
  *
- * It uses the VisualViewport API to "counter-scale" the modal against the
- * background zoom level without modifying the page's viewport meta tag.
+ * APPROACH: "Scale-Free" — position:fixed + exact visual viewport dimensions.
+ *
+ * We size the modal to the visual viewport (vv.width × vv.height) and
+ * position it using vv.offsetLeft/offsetTop with translate3d only — NO
+ * scale() transform on the modal.
+ *
+ * Why this matters:
+ * - Panzoom operates in the modal's CSS pixel space. If we counter-scale
+ *   the modal (old approach: scale(1/vv.scale)), Panzoom's coordinate
+ *   space is inflated, making pan/zoom feel sluggish when the browser
+ *   is pinch-zoomed.
+ * - Firefox computes pageLeft/pageTop differently from Chrome when using
+ *   position:absolute, causing layout shifts. position:fixed with
+ *   offsetLeft/offsetTop is consistent across browsers.
  */
 export function startVisualViewportSync() {
   const modal = document.getElementById("diagview-modal");
   if (!modal || !window.visualViewport) return;
 
-  // Ensure modal has the correct starting styles for transformation.
-  // We use position: absolute relative to document.body to ensure that
-  // vv.offsetLeft/Top coordinates are applied accurately across all browsers.
-  modal.style.position = "absolute";
+  // Use position:fixed so the modal is relative to the viewport, not the
+  // document. Combined with offsetLeft/offsetTop, this gives us the exact
+  // position of the visual viewport within the layout viewport — consistent
+  // across Chrome, Firefox, Safari, and Brave.
+  modal.style.position = "fixed";
   modal.style.left = "0";
   modal.style.top = "0";
   modal.style.transformOrigin = "0 0";
   modal.style.willChange = "transform, width, height";
   modal.style.zIndex = "2147483647";
+  // Clear inset so our explicit left/top/width/height take precedence
+  modal.style.right = "auto";
+  modal.style.bottom = "auto";
 
   const sync = () => {
     const vv = window.visualViewport;
     if (!vv) return;
 
-    // The scale factor to negate the browser's pinch-zoom
-    const scale = 1 / vv.scale;
+    // Use the visual viewport dimensions directly — NO scale transform.
+    // This means the modal's CSS pixel space equals the screen pixel space,
+    // so Panzoom operates 1:1 with what the user sees on screen.
+    const w = vv.width;
+    const h = vv.height;
 
-    // We make the modal's base size equal to the layout viewport size
-    // so that after scaling by (1/vv.scale) it matches the visual viewport.
-    // ⚠️ FIREFOX FIX: We use window.innerHeight for baseHeight to prevent
-    // the modal from shrinking when the mobile keyboard opens.
-    const baseWidth = vv.width * vv.scale;
-    const baseHeight = (window.innerHeight || vv.height) * vv.scale;
+    // offsetLeft/offsetTop give the visual viewport's offset from the
+    // layout viewport origin. With position:fixed, this is exactly
+    // the translation we need to keep the modal pinned to the visible area.
+    const x = vv.offsetLeft;
+    const y = vv.offsetTop;
 
-    // vv.pageLeft and vv.pageTop are the coordinates of the visual viewport
-    // relative to the document. Since the modal is position:absolute
-    // at the top of the document, these are the exact coordinates we need.
-    const x = vv.pageLeft;
-    const y = vv.pageTop;
+    modal.style.width = `${w}px`;
+    modal.style.height = `${h}px`;
+    modal.style.transform = `translate3d(${x}px, ${y}px, 0)`;
 
-    modal.style.width = `${baseWidth}px`;
-    modal.style.height = `${baseHeight}px`;
-    modal.style.transform = `translate3d(${x}px, ${y}px, 0) scale(${scale})`;
+    // Publish the zoom compensation factor as a CSS custom property.
+    // UI chrome elements (topbar, FAB) consume this via CSS rules to
+    // stay at their design pixel size. Using a custom property (instead
+    // of direct style.zoom) ensures that elements created AFTER this
+    // sync (e.g. the FAB container) instantly inherit the correct value
+    // via CSS cascade — no timing gap, no visual glitch.
+    modal.style.setProperty("--dv-zoom-comp", 1 / vv.scale);
   };
 
   // Sync on resize (zoom) and scroll
@@ -130,13 +150,20 @@ export function startVisualViewportSync() {
     window.visualViewport.removeEventListener("resize", sync);
     window.visualViewport.removeEventListener("scroll", sync);
 
-    // Restore modal styles
+    // Restore modal styles to CSS defaults (position:fixed; inset:0)
     modal.style.transform = "";
     modal.style.width = "";
     modal.style.height = "";
-    modal.style.position = "";
+    modal.style.position = "fixed";
     modal.style.left = "";
     modal.style.top = "";
+    modal.style.right = "";
+    modal.style.bottom = "";
+    modal.style.transformOrigin = "";
+    modal.style.willChange = "";
+
+    // Remove zoom compensation property
+    modal.style.removeProperty("--dv-zoom-comp");
   };
 }
 

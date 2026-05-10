@@ -18,21 +18,34 @@ import { hideToast } from "./toast.js";
 export function lockBodyScroll() {
   state.savedScrollY = window.scrollY;
 
+  // FIX: Suppress CSS scroll-behavior BEFORE touching overflow/scroll.
+  // Some browsers animate the scroll position change that can happen when
+  // overflow:hidden is applied to <html>, which then shows as a jump on close.
+  const htmlEl = document.documentElement;
+  // Stash whatever the page had so we can restore it on unlock.
+  htmlEl.dataset.dvPrevScrollBehavior = htmlEl.style.scrollBehavior;
+  htmlEl.style.scrollBehavior = "auto";
+
   // 1. Standard lock for most browsers
-  document.documentElement.style.overflow = "hidden";
+  htmlEl.style.overflow = "hidden";
   document.body.style.overflow = "hidden";
 
-  // 2. iOS Safari Elastic Scroll Prevention
-  // We prevent touchmove on the document to stop background scrolling,
-  // but we EXPLICITLY allow multi-touch (pinch-zoom) to satisfy Req 3.
+  // 2. iOS Safari Elastic Scroll Prevention + Pinch-Zoom Protection
+  // We prevent touchmove on the document to stop background scrolling.
+  // We also prevent multi-finger gestures OUTSIDE the diagram viewport
+  // to stop native pinch-zoom on UI chrome (topbar, FAB, menu) which
+  // would change the browser zoom and persist after modal close.
+  const viewport = document.getElementById("diagview-modal-viewport");
   const preventDefault = (e) => {
-    // Only prevent if it's a single-finger touch (scroll)
-    // and not happening inside a scrollable element (if we had any in modal)
-    if (state.isModalOpen && e.touches.length === 1) {
-      // Check if the target is NOT part of a scrollable element in the modal
-      // For DiagView, the viewport handles its own pan via Panzoom,
-      // so we can safely prevent all native document-level scrolling.
+    if (!state.isModalOpen) return;
+
+    if (e.touches.length === 1) {
+      // Single-finger: prevent native scrolling everywhere
       if (e.cancelable) e.preventDefault();
+    } else if (e.touches.length >= 2) {
+      // Multi-finger: only allow inside the viewport (Panzoom handles it)
+      const isInViewport = viewport && viewport.contains(e.target);
+      if (!isInViewport && e.cancelable) e.preventDefault();
     }
   };
 
@@ -48,11 +61,30 @@ export function lockBodyScroll() {
  * Unlock body scroll
  */
 export function unlockBodyScroll() {
-  document.documentElement.style.overflow = "";
+  const htmlEl = document.documentElement;
+  htmlEl.style.overflow = "";
   document.body.style.overflow = "";
-  // Note: scrollTo is not strictly needed if we didn't use position:fixed,
-  // but it's a safe fallback to ensure we are exactly where we left off.
-  window.scrollTo(0, state.savedScrollY);
+
+  // FIX: Use { behavior: "instant" } to restore scroll position without any
+  // visible animation. This is the primary fix for the "scroll-to-top" jump:
+  // even if the browser reset scrollY to 0 during the lock, we jump back
+  // instantly rather than smoothly — making it imperceptible to the user.
+  //
+  // Fallback for legacy browsers (no ScrollOptions support): plain scrollTo.
+  try {
+    window.scrollTo({ top: state.savedScrollY, behavior: "instant" });
+  } catch (_) {
+    window.scrollTo(0, state.savedScrollY);
+  }
+
+  // Restore whatever scroll-behavior the page had, but only after the
+  // instant scroll has been committed (next frame), so the restore itself
+  // doesn't get caught by the page's smooth-scroll rules.
+  requestAnimationFrame(() => {
+    const prev = htmlEl.dataset.dvPrevScrollBehavior;
+    htmlEl.style.scrollBehavior = prev || "";
+    delete htmlEl.dataset.dvPrevScrollBehavior;
+  });
 }
 
 /**
