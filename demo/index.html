@@ -26,12 +26,14 @@
 
     <style>
         /* ── Hub landing page: body has no padding-top (hero is full-bleed) ── */
-        body { padding-top: 0; }
+        body {
+            padding-top: 0;
+        }
 
         .hero {
             padding: clamp(100px, 18vw, 160px) clamp(16px, 5vw, 40px) clamp(60px, 10vw, 100px);
             text-align: center;
-            background: radial-gradient(ellipse at top, rgba(59,130,246,.10) 0%, var(--bg) 65%);
+            background: radial-gradient(ellipse at top, rgba(59, 130, 246, .10) 0%, var(--bg) 65%);
         }
 
         .hero h1 {
@@ -74,17 +76,36 @@
             box-shadow: var(--shadow-md), 0 0 0 1px var(--accent-glow);
         }
 
-        .feature-icon { font-size: 2.2rem; margin-bottom: 16px; display: block; }
+        .feature-icon {
+            font-size: 2.2rem;
+            margin-bottom: 16px;
+            display: block;
+        }
 
         @keyframes fadeInUp {
-            from { opacity: 0; transform: translateY(12px); }
-            to   { opacity: 1; transform: translateY(0); }
+            from {
+                opacity: 0;
+                transform: translateY(12px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         @media (max-width: 600px) {
-            .hero { padding-top: clamp(80px, 15vw, 110px); }
-            .hero h1 { letter-spacing: -1px; }
-            .features { grid-template-columns: 1fr; }
+            .hero {
+                padding-top: clamp(80px, 15vw, 110px);
+            }
+
+            .hero h1 {
+                letter-spacing: -1px;
+            }
+
+            .features {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
     <script src="demo-runtime.js"></script>
@@ -94,7 +115,8 @@
 
     <header class="controls">
         <div class="brand">
-            <img src="images/logo.png" alt="DiagView" style="width:34px;height:34px;border-radius:9px;object-fit:cover;flex-shrink:0">
+            <img src="images/logo.png" alt="DiagView"
+                style="width:34px;height:34px;border-radius:9px;object-fit:cover;flex-shrink:0">
             <div class="brand-meta">
                 <span class="brand-label">Demo Hub</span>
                 <span class="brand-name">DiagView</span>
@@ -114,20 +136,45 @@
                 <input type="color" id="accentPicker" value="#3b82f6">
             </label>
             <button class="toggle-btn" onclick="toggleTheme()" title="Toggle Dark/Light Mode">🌓</button>
-            <a href="https://github.com/khadirullah/diagview" class="toggle-btn" target="_blank" rel="noopener">GitHub ↗</a>
+            <a href="https://github.com/khadirullah/diagview" class="toggle-btn" target="_blank" rel="noopener">GitHub
+                ↗</a>
         </div>
     </header>
 
     <style>
         @keyframes fadeIn {
-            from { opacity: 0; } to { opacity: 1; }
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
         }
-        .hero-badge { animation: fadeInUp 0.6s ease-out both; }
-        .hero h1    { animation: fadeInUp 0.7s ease-out 0.08s both; }
-        .hero .subtitle { animation: fadeInUp 0.7s ease-out 0.15s both; }
-        .hero .btn-group { animation: fadeInUp 0.7s ease-out 0.22s both; }
-        .hero-image-wrap { animation: fadeIn 1s ease-out 0.3s both; }
-        .hero-shortcuts  { animation: fadeInUp 0.7s ease-out 0.35s both; }
+
+        .hero-badge {
+            animation: fadeInUp 0.6s ease-out both;
+        }
+
+        .hero h1 {
+            animation: fadeInUp 0.7s ease-out 0.08s both;
+        }
+
+        .hero .subtitle {
+            animation: fadeInUp 0.7s ease-out 0.15s both;
+        }
+
+        .hero .btn-group {
+            animation: fadeInUp 0.7s ease-out 0.22s both;
+        }
+
+        .hero-image-wrap {
+            animation: fadeIn 1s ease-out 0.3s both;
+        }
+
+        .hero-shortcuts {
+            animation: fadeInUp 0.7s ease-out 0.35s both;
+        }
 
         .hero-image-wrap {
             margin: 48px auto 0;
@@ -135,19 +182,27 @@
             border-radius: 20px;
             overflow: hidden;
             border: 1px solid var(--border);
-            box-shadow: 0 24px 64px rgba(0,0,0,.45), 0 0 0 1px var(--border);
+            box-shadow: 0 24px 64px rgba(0, 0, 0, .45), 0 0 0 1px var(--border);
             position: relative;
         }
+
         .hero-image-wrap img {
-            width: 100%; display: block; height: auto;
+            width: 100%;
+            display: block;
+            height: auto;
         }
+
         /* Browser chrome overlay */
         .hero-image-wrap::before {
             content: '';
-            position: absolute; top: 0; left: 0; right: 0;
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
             height: 3px;
             background: linear-gradient(90deg, #6366f1, #3b82f6, #06b6d4);
         }
+
         .hero-shortcuts {
             margin-top: 32px;
             display: flex;
@@ -159,7 +214,12 @@
             padding-top: 24px;
             border-top: 1px solid var(--border);
         }
-        .hero-shortcuts span { display: flex; align-items: center; gap: 6px; }
+
+        .hero-shortcuts span {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
     </style>
 
     <section class="hero">
@@ -170,19 +230,20 @@
                 Zoom · Pan · Search · Export · Fullscreen. Framework-agnostic.</p>
 
             <div class="btn-group">
-                <a href="https://github.com/khadirullah/diagview" class="btn btn-primary" target="_blank" rel="noopener">
+                <a href="https://github.com/khadirullah/diagview" class="btn btn-primary" target="_blank"
+                    rel="noopener">
                     ⭐ Star on GitHub
                 </a>
                 <a href="#layouts" class="btn btn-secondary"
-                   onclick="document.getElementById('layouts').scrollIntoView({behavior:'smooth'});return false;">
+                    onclick="document.getElementById('layouts').scrollIntoView({behavior:'smooth'});return false;">
                     Explore Layouts ↓
                 </a>
             </div>
 
             <!-- Hero image -->
             <div class="hero-image-wrap">
-                <img src="images/hero.png" alt="DiagView interactive diagram viewer in action"
-                     width="860" height="484" loading="eager">
+                <img src="images/hero.png" alt="DiagView interactive diagram viewer in action" width="860" height="484"
+                    loading="eager">
             </div>
 
             <!-- Quick keyboard reference -->
@@ -190,9 +251,10 @@
                 <span><kbd>+</kbd> Zoom in</span>
                 <span><kbd>-</kbd> Zoom out</span>
                 <span><kbd>arrows</kbd> Pan</span>
-                <span><kbd>Space</kbd> Center</span>
-                <span><kbd>/</kbd> Search</span>
-                <span><kbd>E</kbd> Export PNG</span>
+                <span><kbd>Space / 0</kbd> Reset</span>
+                <span><kbd>F</kbd> Search</span>
+                <span><kbd>M</kbd> Meeting</span>
+                <span><kbd>R</kbd> Rotate</span>
                 <span><kbd>Esc</kbd> Close</span>
             </div>
         </div>
@@ -340,28 +402,40 @@
             <a href="./layout-compare.html" class="layout-card">
                 <div class="layout-info">
                     <h3>Layout Compare</h3>
-                    <p>All 3 layout modes side-by-side using per-diagram <code>data-diagview-layout</code> overrides on one page.</p>
+                    <p>All 3 layout modes side-by-side using per-diagram <code>data-diagview-layout</code> overrides on
+                        one page.</p>
                     <span class="layout-link">Compare Layouts →</span>
                 </div>
                 <div class="layout-demo">
                     <svg width="250" height="180" viewBox="0 0 250 180" xmlns="http://www.w3.org/2000/svg">
                         <!-- Floating FAB indicator -->
-                        <rect x="15" y="20" width="60" height="40" rx="6" fill="#f59e0b" fill-opacity=".12" stroke="#f59e0b" stroke-width="1.5"/>
-                        <circle cx="68" cy="53" r="7" fill="#f59e0b" opacity=".9"/>
-                        <text x="38" y="43" text-anchor="middle" font-size="8" font-family="sans-serif" fill="#f59e0b" font-weight="600">floating</text>
+                        <rect x="15" y="20" width="60" height="40" rx="6" fill="#f59e0b" fill-opacity=".12"
+                            stroke="#f59e0b" stroke-width="1.5" />
+                        <circle cx="68" cy="53" r="7" fill="#f59e0b" opacity=".9" />
+                        <text x="38" y="43" text-anchor="middle" font-size="8" font-family="sans-serif" fill="#f59e0b"
+                            font-weight="600">floating</text>
                         <!-- Header bar indicator -->
-                        <rect x="90" y="20" width="60" height="40" rx="6" fill="#6366f1" fill-opacity=".12" stroke="#6366f1" stroke-width="1.5"/>
-                        <rect x="90" y="20" width="60" height="11" rx="3" fill="#6366f1" opacity=".35"/>
-                        <text x="120" y="43" text-anchor="middle" font-size="8" font-family="sans-serif" fill="#6366f1" font-weight="600">header</text>
+                        <rect x="90" y="20" width="60" height="40" rx="6" fill="#6366f1" fill-opacity=".12"
+                            stroke="#6366f1" stroke-width="1.5" />
+                        <rect x="90" y="20" width="60" height="11" rx="3" fill="#6366f1" opacity=".35" />
+                        <text x="120" y="43" text-anchor="middle" font-size="8" font-family="sans-serif" fill="#6366f1"
+                            font-weight="600">header</text>
                         <!-- Off indicator -->
-                        <rect x="165" y="20" width="60" height="40" rx="6" fill="#10b981" fill-opacity=".12" stroke="#10b981" stroke-width="1.5"/>
-                        <text x="195" y="43" text-anchor="middle" font-size="8" font-family="sans-serif" fill="#10b981" font-weight="600">off</text>
+                        <rect x="165" y="20" width="60" height="40" rx="6" fill="#10b981" fill-opacity=".12"
+                            stroke="#10b981" stroke-width="1.5" />
+                        <text x="195" y="43" text-anchor="middle" font-size="8" font-family="sans-serif" fill="#10b981"
+                            font-weight="600">off</text>
                         <!-- Labels -->
-                        <text x="45" y="85" text-anchor="middle" font-size="7" font-family="sans-serif" fill="#94a3b8">FAB</text>
-                        <text x="120" y="85" text-anchor="middle" font-size="7" font-family="sans-serif" fill="#94a3b8">Toolbar</text>
-                        <text x="195" y="85" text-anchor="middle" font-size="7" font-family="sans-serif" fill="#94a3b8">Click-only</text>
-                        <text x="125" y="130" text-anchor="middle" font-size="10" font-family="sans-serif" fill="#94a3b8" font-weight="600">Per-diagram overrides</text>
-                        <text x="125" y="148" text-anchor="middle" font-size="8" font-family="sans-serif" fill="#64748b">data-diagview-layout=""</text>
+                        <text x="45" y="85" text-anchor="middle" font-size="7" font-family="sans-serif"
+                            fill="#94a3b8">FAB</text>
+                        <text x="120" y="85" text-anchor="middle" font-size="7" font-family="sans-serif"
+                            fill="#94a3b8">Toolbar</text>
+                        <text x="195" y="85" text-anchor="middle" font-size="7" font-family="sans-serif"
+                            fill="#94a3b8">Click-only</text>
+                        <text x="125" y="130" text-anchor="middle" font-size="10" font-family="sans-serif"
+                            fill="#94a3b8" font-weight="600">Per-diagram overrides</text>
+                        <text x="125" y="148" text-anchor="middle" font-size="8" font-family="sans-serif"
+                            fill="#64748b">data-diagview-layout=""</text>
                     </svg>
                 </div>
             </a>
@@ -400,10 +474,13 @@
                 </div>
                 <div class="layout-demo">
                     <svg width="250" height="180" viewBox="0 0 250 180" xmlns="http://www.w3.org/2000/svg">
-                        <rect x="40" y="40" width="170" height="100" rx="8" fill="#f59e0b" fill-opacity="0.05" stroke="#f59e0b" stroke-width="1.5" stroke-dasharray="4,2"/>
-                        <text x="125" y="95" text-anchor="middle" font-size="14" font-weight="bold" fill="#f59e0b">BRANDED EXPORT</text>
-                        <path d="M 50 130 L 200 130" stroke="#f59e0b" stroke-width="1" opacity="0.4"/>
-                        <text x="125" y="155" text-anchor="middle" font-size="9" fill="#94a3b8" font-style="italic">Invisible in browser</text>
+                        <rect x="40" y="40" width="170" height="100" rx="8" fill="#f59e0b" fill-opacity="0.05"
+                            stroke="#f59e0b" stroke-width="1.5" stroke-dasharray="4,2" />
+                        <text x="125" y="95" text-anchor="middle" font-size="14" font-weight="bold"
+                            fill="#f59e0b">BRANDED EXPORT</text>
+                        <path d="M 50 130 L 200 130" stroke="#f59e0b" stroke-width="1" opacity="0.4" />
+                        <text x="125" y="155" text-anchor="middle" font-size="9" fill="#94a3b8"
+                            font-style="italic">Invisible in browser</text>
                     </svg>
                 </div>
             </a>
@@ -448,10 +525,10 @@
 &lt;script src="https://cdn.jsdelivr.net/npm/@panzoom/panzoom@4.5.1/dist/panzoom.min.js"&gt;&lt;/script&gt;
 
 &lt;!-- Option A: Basic Usage (Auto-initializes) --&gt;
-&lt;script src="https://unpkg.com/diagview@1.0.5/dist/diagview.umd.js"&gt;&lt;/script&gt;
+&lt;script src="https://unpkg.com/diagview@1.0.6/dist/diagview.umd.js"&gt;&lt;/script&gt;
 
 &lt;!-- Option B: Custom Configuration --&gt;
-&lt;script src="https://unpkg.com/diagview@1.0.5/dist/diagview.umd.js" data-diagview-no-auto-init&gt;&lt;/script&gt;
+&lt;script src="https://unpkg.com/diagview@1.0.6/dist/diagview.umd.js" data-diagview-no-auto-init&gt;&lt;/script&gt;
 &lt;script&gt;
   DiagView.init({
     layout: 'floating',

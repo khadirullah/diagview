@@ -31,12 +31,12 @@ updateFile(
 const readmePath = 'README.md';
 if (fs.existsSync(readmePath)) {
   let readme = fs.readFileSync(readmePath, 'utf8');
-  
+
   // Remove the redundant 'rememberZoom' and 'animateOpen' under 'Feature toggles'
   // as they are already defined under 'Features'.
   const redundantBlock = /  \/\/ Feature toggles\n  showMinimap: true,            \/\/ Toggle minimap visibility\n  rememberZoom: false,         \/\/ Remember zoom per diagram\n  animateOpen: true,\n\n/g;
   const cleanBlock = '  // Feature toggles\n  showMinimap: true,            // Toggle minimap visibility\n\n';
-  
+
   const newReadme = readme.replace(redundantBlock, cleanBlock);
   if (readme !== newReadme) {
     fs.writeFileSync(readmePath, newReadme);

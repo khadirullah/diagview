@@ -6,18 +6,25 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 
 ---
 
-## [Unreleased]
+## [1.0.6] - 2026-05-10
 
 ### Added
 
-- **Silent Watermark Branding** — Configurable watermark system for exports (Overlay, Corner, or Both styles) with automatic theme-based contrast-aware strokes.
+- **Silent Watermark Branding** — Configurable watermark system for exports (`corner`, `background`, or `both` styles) with automatic theme-based contrast-aware strokes.
 - **Proportional Safe-Fit Scaling** — New boundary-aware math engine that automatically fits branding text into any aspect ratio without squashing or overflow.
 - **Support for 'four-sides' Position** — Ultimate protection mode that places attribution on all four edges of the exported image.
 
 ### Fixed
 
-- **Global Shortcut Reliability** — Re-engineered focus management to ensure keyboard shortcuts (M, Space, R, etc.) are 100% reliable even after interacting with Search, UI tools, or complex SVG nodes.
+- **Firefox Mobile UI Stability** — Resolved "Search bar jumping" bug by pinning the modal height to `window.innerHeight` and using GPU-accelerated `translate3d` positioning.
+- **Cross-Site UI Isolation** — Replaced native checkboxes with custom-styled, theme-isolated components to prevent host-site CSS bleeding (e.g. from Bootstrap/Tailwind resets).
+- **Z-Index Collision Protection** — Reinforced modal stacking context and background opacity with `!important` overrides to ensure DiagView always stays on top of sticky website headers.
+- **Global Shortcut Reliability** — Overhauled focus management to ensure keyboard shortcuts (M, Space, R, etc.) remain active after using Search, UI tools, or clicking complex diagram elements.
 - **Meeting Mode Cursor Artifacts** — Resolved "double pointer" bug by correctly hiding the system cursor in presentation mode.
+
+### Changed
+
+- **Mobile Troubleshooting Docs** — Documented known 3-finger gesture limitations in Firefox Mobile in the FAQ.
 
 ---
 
@@ -29,6 +36,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 - **Enterprise Security Overhaul** — New `DOMParser`-based recursive SVG sanitization engine (Strict/Permissive modes).
 - **Native Text Selection** — Added toggle to suspend Panzoom and enable native browser text selection over SVG labels.
 - **Shadow DOM Support** — Full support for diagrams inside Web Components/Shadow roots.
+- **Per-Diagram Overrides** — Support for mixing layout modes (`header`, `floating`, `off`), accent colors, and export scales on the same page via `data-diagview-layout`, `data-diagview-accent`, and `data-diagview-scale` attributes.
 - **Sync Version Script** — Automated version synchronization across README and demo files.
 
 ### Changed
@@ -114,7 +122,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 
 Initial public release.
 
-[Unreleased]: https://github.com/khadirullah/diagview/compare/v1.0.5...HEAD
+[Unreleased]: https://github.com/khadirullah/diagview/compare/v1.0.6...HEAD
+[1.0.6]: https://github.com/khadirullah/diagview/compare/v1.0.5...v1.0.6
 [1.0.5]: https://github.com/khadirullah/diagview/compare/v1.0.4...v1.0.5
 [1.0.4]: https://github.com/khadirullah/diagview/compare/v1.0.3...v1.0.4
 [1.0.3]: https://github.com/khadirullah/diagview/compare/v1.0.2...v1.0.3

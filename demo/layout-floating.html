@@ -8,7 +8,8 @@
     <link rel="apple-touch-icon" href="images/logo.png">
     <title>DiagView - Floating Layout</title>
     <meta property="og:image" content="images/hero.png">
-    <meta name="description" content="DiagView floating layout demo — HUD-style hover controls with static SVG rendering.">
+    <meta name="description"
+        content="DiagView floating layout demo — HUD-style hover controls with static SVG rendering.">
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -25,7 +26,7 @@
 
     <!-- Primary: CDN (Online) -->
     <!-- DiagView Core -->
-    <script src="https://unpkg.com/diagview@1.0.5/dist/diagview.umd.js" data-diagview-no-auto-init></script>
+    <script src="https://unpkg.com/diagview@1.0.6/dist/diagview.umd.js" data-diagview-no-auto-init></script>
 
     <!-- Development Mode: Uncomment below to use local file -->
     <!-- <script src="../dist/diagview.umd.js" data-diagview-no-auto-init></script> -->
@@ -33,7 +34,11 @@
 
 
 
-    <style>:root { --diagram-accent: #3b82f6; }</style>
+    <style>
+        :root {
+            --diagram-accent: #3b82f6;
+        }
+    </style>
 
     <script src="demo-runtime.js"></script>
 </head>
@@ -43,7 +48,8 @@
     <div class="controls">
         <div class="brand">
             <a href="index.html">
-                <img src="images/logo.png" alt="DiagView" style="width:32px;height:32px;border-radius:8px;object-fit:cover;flex-shrink:0">
+                <img src="images/logo.png" alt="DiagView"
+                    style="width:32px;height:32px;border-radius:8px;object-fit:cover;flex-shrink:0">
                 <div class="brand-meta">
                     <span class="brand-label">DiagView</span>
                     <span class="brand-name">Floating Layout</span>
@@ -209,10 +215,32 @@
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 200">
                     <defs>
                         <style>
-                            .p-stage { fill: #6366f1; stroke: #4f46e5; stroke-width: 2; }
-                            .p-text { fill: white; font-family: sans-serif; font-size: 12px; text-anchor: middle; }
-                            .p-arrow { stroke: #94a3b8; stroke-width: 2; fill: none; marker-end: url(#arrow-p); }
-                            .p-label { fill: #94a3b8; font-family: sans-serif; font-size: 9px; text-anchor: middle; }
+                            .p-stage {
+                                fill: #6366f1;
+                                stroke: #4f46e5;
+                                stroke-width: 2;
+                            }
+
+                            .p-text {
+                                fill: white;
+                                font-family: sans-serif;
+                                font-size: 12px;
+                                text-anchor: middle;
+                            }
+
+                            .p-arrow {
+                                stroke: #94a3b8;
+                                stroke-width: 2;
+                                fill: none;
+                                marker-end: url(#arrow-p);
+                            }
+
+                            .p-label {
+                                fill: #94a3b8;
+                                font-family: sans-serif;
+                                font-size: 9px;
+                                text-anchor: middle;
+                            }
                         </style>
                         <marker id="arrow-p" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto">
                             <polygon points="0 0, 8 3, 0 6" fill="#94a3b8" />
@@ -230,11 +258,14 @@
                     <text class="p-text" x="305" y="100">Stage</text>
                     <path class="p-arrow" d="M 350 95 L 380 95" />
                     <text class="p-label" x="365" y="88">approve</text>
-                    <rect class="p-stage" x="380" y="70" width="110" height="50" rx="8" style="fill: #10b981; stroke: #059669;" />
+                    <rect class="p-stage" x="380" y="70" width="110" height="50" rx="8"
+                        style="fill: #10b981; stroke: #059669;" />
                     <text class="p-text" x="435" y="100">Deploy ✓</text>
                     <!-- Failure path -->
-                    <path d="M 185 120 L 185 160 L 65 160 L 65 120" stroke="#ef4444" stroke-width="1.5" stroke-dasharray="4,3" fill="none" marker-end="url(#arrow-p)" />
-                    <text x="125" y="175" font-size="9" fill="#ef4444" font-family="sans-serif" text-anchor="middle">retry on fail</text>
+                    <path d="M 185 120 L 185 160 L 65 160 L 65 120" stroke="#ef4444" stroke-width="1.5"
+                        stroke-dasharray="4,3" fill="none" marker-end="url(#arrow-p)" />
+                    <text x="125" y="175" font-size="9" fill="#ef4444" font-family="sans-serif"
+                        text-anchor="middle">retry on fail</text>
                 </svg>
             </div>
         </div>
@@ -249,12 +280,43 @@
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 280">
                     <defs>
                         <style>
-                            .er-box { fill: #8b5cf6; stroke: #7c3aed; stroke-width: 2; }
-                            .er-text { fill: white; font-family: sans-serif; font-size: 13px; text-anchor: middle; font-weight: bold; }
-                            .er-field { fill: #e2e8f0; stroke: #cbd5e1; stroke-width: 1; }
-                            .er-fname { fill: #334155; font-family: sans-serif; font-size: 10px; }
-                            .er-conn { stroke: #94a3b8; stroke-width: 2; }
-                            .er-label { fill: #64748b; font-family: sans-serif; font-size: 9px; text-anchor: middle; }
+                            .er-box {
+                                fill: #8b5cf6;
+                                stroke: #7c3aed;
+                                stroke-width: 2;
+                            }
+
+                            .er-text {
+                                fill: white;
+                                font-family: sans-serif;
+                                font-size: 13px;
+                                text-anchor: middle;
+                                font-weight: bold;
+                            }
+
+                            .er-field {
+                                fill: #e2e8f0;
+                                stroke: #cbd5e1;
+                                stroke-width: 1;
+                            }
+
+                            .er-fname {
+                                fill: #334155;
+                                font-family: sans-serif;
+                                font-size: 10px;
+                            }
+
+                            .er-conn {
+                                stroke: #94a3b8;
+                                stroke-width: 2;
+                            }
+
+                            .er-label {
+                                fill: #64748b;
+                                font-family: sans-serif;
+                                font-size: 9px;
+                                text-anchor: middle;
+                            }
                         </style>
                     </defs>
                     <!-- Users entity -->
@@ -284,8 +346,10 @@
                     <line class="er-conn" x1="310" y1="57" x2="360" y2="57" />
                     <text class="er-label" x="335" y="50">N → N</text>
                     <!-- Junction table -->
-                    <rect x="215" y="190" width="90" height="30" rx="4" fill="#fbbf24" stroke="#f59e0b" stroke-width="1.5" />
-                    <text x="260" y="210" font-size="10" text-anchor="middle" fill="#78350f" font-family="sans-serif" font-weight="bold">OrderItems</text>
+                    <rect x="215" y="190" width="90" height="30" rx="4" fill="#fbbf24" stroke="#f59e0b"
+                        stroke-width="1.5" />
+                    <text x="260" y="210" font-size="10" text-anchor="middle" fill="#78350f" font-family="sans-serif"
+                        font-weight="bold">OrderItems</text>
                     <line class="er-conn" x1="250" y1="145" x2="260" y2="190" />
                     <line class="er-conn" x1="415" y1="145" x2="305" y2="200" stroke-dasharray="4,3" />
                 </svg>
@@ -310,7 +374,7 @@
         </div>
     </div>
 
-    
+
     <!-- ── Feature highlights ── -->
     <div class="page-section">
         <div class="section-header">
@@ -318,25 +382,29 @@
             <p class="section-subtitle">Designed for real-world use cases where control placement matters.</p>
         </div>
         <div class="info-grid">
-        <div class="info-card">
-            <div class="info-icon">⊙</div>
-            <h4>Non-Intrusive by Design</h4>
-            <p>The FAB button sits outside the diagram content flow. Users who just need to read never see it — controls appear only on hover.</p>
-        </div>
-        <div class="info-card">
-            <div class="info-icon">📐</div>
-            <h4>Works in Any Container</h4>
-            <p>Floating mode adapts to any parent container size. Embed in sidebars, modals, or full-width sections — the FAB always positions correctly.</p>
-        </div>
-        <div class="info-card">
-            <div class="info-icon">⌨️</div>
-            <h4>Full Keyboard Navigation</h4>
-            <p>Press / to search, + / − to zoom, arrows to pan, Esc to close. Every action is accessible without touching the mouse.</p>
-        </div>
+            <div class="info-card">
+                <div class="info-icon">⊙</div>
+                <h4>Non-Intrusive by Design</h4>
+                <p>The FAB button sits outside the diagram content flow. Users who just need to read never see it —
+                    controls appear only on hover.</p>
+            </div>
+            <div class="info-card">
+                <div class="info-icon">📐</div>
+                <h4>Works in Any Container</h4>
+                <p>Floating mode adapts to any parent container size. Embed in sidebars, modals, or full-width sections
+                    — the FAB always positions correctly.</p>
+            </div>
+            <div class="info-card">
+                <div class="info-icon">⌨️</div>
+                <h4>Full Keyboard Navigation</h4>
+                <p>Press / to search, + / − to zoom, arrows to pan, Esc to close. Every action is accessible without
+                    touching the mouse.</p>
+            </div>
         </div>
     </div>
 
 
+    <!-- ── Keyboard shortcuts ── -->
     <!-- ── Keyboard shortcuts ── -->
     <div class="shortcuts-section">
         <div class="section-header">
@@ -348,35 +416,37 @@
                 <div class="shortcut-group">Zoom</div>
                 <div class="shortcut-row"><kbd>+</kbd><span>Zoom in</span></div>
                 <div class="shortcut-row"><kbd>-</kbd><span>Zoom out</span></div>
-                <div class="shortcut-row"><kbd>Space</kbd><span>Reset &amp; center</span></div>
+                <div class="shortcut-row"><kbd>Space / 0</kbd><span>Reset &amp; center</span></div>
             </div>
             <div class="shortcut-card">
                 <div class="shortcut-group">Pan</div>
                 <div class="shortcut-row"><kbd>↑ ↓ ← →</kbd><span>Pan diagram</span></div>
-                <div class="shortcut-row"><kbd>Scroll</kbd><span>Vertical pan</span></div>
+                <div class="shortcut-row"><kbd>Shift</kbd><span>Fast pan</span></div>
                 <div class="shortcut-row"><kbd>Drag</kbd><span>Free pan</span></div>
             </div>
             <div class="shortcut-card">
                 <div class="shortcut-group">Search</div>
-                <div class="shortcut-row"><kbd>/</kbd><span>Open search</span></div>
+                <div class="shortcut-row"><kbd>F</kbd><span>Open search</span></div>
                 <div class="shortcut-row"><kbd>Esc</kbd><span>Clear / close</span></div>
             </div>
             <div class="shortcut-card">
-                <div class="shortcut-group">Export &amp; View</div>
-                <div class="shortcut-row"><kbd>E</kbd><span>Export PNG</span></div>
+                <div class="shortcut-group">Tools</div>
                 <div class="shortcut-row"><kbd>M</kbd><span>Meeting mode</span></div>
-                <div class="shortcut-row"><kbd>F</kbd><span>Hi-res snapshot</span></div>
+                <div class="shortcut-row"><kbd>R</kbd><span>Rotate 90°</span></div>
+                <div class="shortcut-row"><kbd>L</kbd><span>Share link</span></div>
             </div>
         </div>
     </div>
+
 
     <!-- ── Integration code ── -->
     <div class="code-section">
         <div class="section-header" style="margin-bottom:20px">
             <h2 class="section-title" style="font-size:1.3rem">Integration</h2>
         </div>
-        <div class="code-block"><pre><code><span class="c">// 1. CDN — drop into any HTML page</span>
-&lt;<span class="t">script</span> <span class="a">src</span>=<span class="v">"https://unpkg.com/diagview@1.0.5/dist/diagview.umd.js"</span>&gt;&lt;/<span class="t">script</span>&gt;
+        <div class="code-block">
+            <pre><code><span class="c">// 1. CDN — drop into any HTML page</span>
+&lt;<span class="t">script</span> <span class="a">src</span>=<span class="v">"https://unpkg.com/diagview@1.0.6/dist/diagview.umd.js"</span>&gt;&lt;/<span class="t">script</span>&gt;
 
 <span class="c">// 2. Init with floating FAB</span>
 <span class="kw">DiagView</span>.init({
@@ -391,14 +461,15 @@
      <span class="a">data-diagview-layout</span>=<span class="v">"floating"</span>
      <span class="a">data-diagview-accent</span>=<span class="v">"#f59e0b"</span>&gt;
   &lt;<span class="t">svg</span>&gt;...&lt;/<span class="t">svg</span>&gt;
-&lt;/<span class="t">div</span>&gt;</code></pre></div>
+&lt;/<span class="t">div</span>&gt;</code></pre>
+        </div>
         <div class="code-nav">
             <a href="layout-compare.html" class="code-nav-link">Compare all layouts →</a>
             <a href="layout-header.html" class="code-nav-link">Try Header Layout →</a>
         </div>
     </div>
 
-<footer>
+    <footer>
         <div class="container">
             <div class="footer-links">
                 <a href="index.html">← Back to Hub</a>

@@ -261,7 +261,7 @@ const cleanNode = DiagView.utils.sanitizeSVG(svgElement, "permissive");
 The current library version string.
 
 ```javascript
-console.log(DiagView.version); // "1.0.5"
+console.log(DiagView.version); // "1.0.6"
 ```
 
 ---

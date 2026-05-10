@@ -8,7 +8,8 @@
     <link rel="apple-touch-icon" href="images/logo.png">
     <title>DiagView - Header Layout</title>
     <meta property="og:image" content="images/hero.png">
-    <meta name="description" content="DiagView header layout demo — classic top-bar controls with Mermaid and SVG diagrams.">
+    <meta name="description"
+        content="DiagView header layout demo — classic top-bar controls with Mermaid and SVG diagrams.">
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -25,14 +26,20 @@
 
     <!-- Primary: CDN (Online) -->
     <!-- DiagView Core -->
-    <script src="https://unpkg.com/diagview@1.0.5/dist/diagview.umd.js" data-diagview-no-auto-init></script>
+    <script src="https://unpkg.com/diagview@1.0.6/dist/diagview.umd.js" data-diagview-no-auto-init></script>
 
     <!-- Development Mode: Uncomment below to use local file -->
     <!-- <script src="../dist/diagview.umd.js" data-diagview-no-auto-init></script> -->
 
     <style>
-        :root { --diagram-accent: #3b82f6; }
-        .mermaid { display: flex; justify-content: center; }
+        :root {
+            --diagram-accent: #3b82f6;
+        }
+
+        .mermaid {
+            display: flex;
+            justify-content: center;
+        }
     </style>
 
     <script src="demo-runtime.js"></script>
@@ -43,7 +50,8 @@
     <div class="controls">
         <div class="brand">
             <a href="index.html">
-                <img src="images/logo.png" alt="DiagView" style="width:32px;height:32px;border-radius:8px;object-fit:cover;flex-shrink:0">
+                <img src="images/logo.png" alt="DiagView"
+                    style="width:32px;height:32px;border-radius:8px;object-fit:cover;flex-shrink:0">
                 <div class="brand-meta">
                     <span class="brand-label">DiagView</span>
                     <span class="brand-name">Header Layout</span>
@@ -222,7 +230,7 @@
         </div>
     </div>
 
-    
+
     <!-- ── Feature highlights ── -->
     <div class="page-section">
         <div class="section-header">
@@ -230,21 +238,24 @@
             <p class="section-subtitle">Designed for real-world use cases where control placement matters.</p>
         </div>
         <div class="info-grid">
-        <div class="info-card">
-            <div class="info-icon">▬</div>
-            <h4>Always Visible Controls</h4>
-            <p>The toolbar is permanently rendered above each diagram. No hover required — users see search, export, and fullscreen at a glance on every load.</p>
-        </div>
-        <div class="info-card">
-            <div class="info-icon">♿</div>
-            <h4>WCAG 2.1 Compliant</h4>
-            <p>Header toolbar meets AA contrast ratios with full focus management, aria-labels, and keyboard operability out of the box.</p>
-        </div>
-        <div class="info-card">
-            <div class="info-icon">📄</div>
-            <h4>Ideal for Docs & Dashboards</h4>
-            <p>The classic toolbar pattern matches what users already know from Google Docs, Figma, and GitHub. Zero learning curve.</p>
-        </div>
+            <div class="info-card">
+                <div class="info-icon">▬</div>
+                <h4>Always Visible Controls</h4>
+                <p>The toolbar is permanently rendered above each diagram. No hover required — users see search, export,
+                    and fullscreen at a glance on every load.</p>
+            </div>
+            <div class="info-card">
+                <div class="info-icon">♿</div>
+                <h4>WCAG 2.1 Compliant</h4>
+                <p>Header toolbar meets AA contrast ratios with full focus management, aria-labels, and keyboard
+                    operability out of the box.</p>
+            </div>
+            <div class="info-card">
+                <div class="info-icon">📄</div>
+                <h4>Ideal for Docs & Dashboards</h4>
+                <p>The classic toolbar pattern matches what users already know from Google Docs, Figma, and GitHub. Zero
+                    learning curve.</p>
+            </div>
         </div>
     </div>
 
@@ -260,24 +271,24 @@
                 <div class="shortcut-group">Zoom</div>
                 <div class="shortcut-row"><kbd>+</kbd><span>Zoom in</span></div>
                 <div class="shortcut-row"><kbd>-</kbd><span>Zoom out</span></div>
-                <div class="shortcut-row"><kbd>Space</kbd><span>Reset &amp; center</span></div>
+                <div class="shortcut-row"><kbd>Space / 0</kbd><span>Reset &amp; center</span></div>
             </div>
             <div class="shortcut-card">
                 <div class="shortcut-group">Pan</div>
                 <div class="shortcut-row"><kbd>↑ ↓ ← →</kbd><span>Pan diagram</span></div>
-                <div class="shortcut-row"><kbd>Scroll</kbd><span>Vertical pan</span></div>
+                <div class="shortcut-row"><kbd>Shift</kbd><span>Fast pan</span></div>
                 <div class="shortcut-row"><kbd>Drag</kbd><span>Free pan</span></div>
             </div>
             <div class="shortcut-card">
                 <div class="shortcut-group">Search</div>
-                <div class="shortcut-row"><kbd>/</kbd><span>Open search</span></div>
+                <div class="shortcut-row"><kbd>F</kbd><span>Open search</span></div>
                 <div class="shortcut-row"><kbd>Esc</kbd><span>Clear / close</span></div>
             </div>
             <div class="shortcut-card">
-                <div class="shortcut-group">Export &amp; View</div>
-                <div class="shortcut-row"><kbd>E</kbd><span>Export PNG</span></div>
+                <div class="shortcut-group">Tools</div>
                 <div class="shortcut-row"><kbd>M</kbd><span>Meeting mode</span></div>
-                <div class="shortcut-row"><kbd>F</kbd><span>Hi-res snapshot</span></div>
+                <div class="shortcut-row"><kbd>R</kbd><span>Rotate 90°</span></div>
+                <div class="shortcut-row"><kbd>L</kbd><span>Share link</span></div>
             </div>
         </div>
     </div>
@@ -287,7 +298,8 @@
         <div class="section-header" style="margin-bottom:20px">
             <h2 class="section-title" style="font-size:1.3rem">Integration</h2>
         </div>
-        <div class="code-block"><pre><code><span class="c">// Works with Mermaid.js — render first, then init</span>
+        <div class="code-block">
+            <pre><code><span class="c">// Works with Mermaid.js — render first, then init</span>
 <span class="kw">await</span> mermaid.run();
 
 <span class="kw">DiagView</span>.init({
@@ -302,14 +314,15 @@
      <span class="a">data-diagview-layout</span>=<span class="v">"header"</span>
      <span class="a">data-diagview-accent</span>=<span class="v">"#8b5cf6"</span>&gt;
   graph TD; A--&gt;B;
-&lt;/<span class="t">div</span>&gt;</code></pre></div>
+&lt;/<span class="t">div</span>&gt;</code></pre>
+        </div>
         <div class="code-nav">
             <a href="layout-compare.html" class="code-nav-link">Compare all layouts →</a>
             <a href="layout-off.html" class="code-nav-link">Try Off Layout →</a>
         </div>
     </div>
 
-<footer>
+    <footer>
         <div class="container">
             <div class="footer-links">
                 <a href="index.html">← Back to Hub</a>

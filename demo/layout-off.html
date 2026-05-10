@@ -8,7 +8,8 @@
     <link rel="apple-touch-icon" href="images/logo.png">
     <title>DiagView - Off Layout</title>
     <meta property="og:image" content="images/hero.png">
-    <meta name="description" content="DiagView off layout demo — invisible UI, click diagram to open fullscreen viewer.">
+    <meta name="description"
+        content="DiagView off layout demo — invisible UI, click diagram to open fullscreen viewer.">
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -25,15 +26,21 @@
 
     <!-- Primary: CDN (Online) -->
     <!-- DiagView Core -->
-    <script src="https://unpkg.com/diagview@1.0.5/dist/diagview.umd.js" data-diagview-no-auto-init></script>
+    <script src="https://unpkg.com/diagview@1.0.6/dist/diagview.umd.js" data-diagview-no-auto-init></script>
 
     <!-- Development Mode: Uncomment below to use local file -->
     <!-- <script src="../dist/diagview.umd.js" data-diagview-no-auto-init></script> -->
 
 
     <style>
-        :root { --diagram-accent: #3b82f6; }
-        .mermaid { display: flex; justify-content: center; }
+        :root {
+            --diagram-accent: #3b82f6;
+        }
+
+        .mermaid {
+            display: flex;
+            justify-content: center;
+        }
     </style>
 
     <script src="demo-runtime.js"></script>
@@ -44,7 +51,8 @@
     <div class="controls">
         <div class="brand">
             <a href="index.html">
-                <img src="images/logo.png" alt="DiagView" style="width:32px;height:32px;border-radius:8px;object-fit:cover;flex-shrink:0">
+                <img src="images/logo.png" alt="DiagView"
+                    style="width:32px;height:32px;border-radius:8px;object-fit:cover;flex-shrink:0">
                 <div class="brand-meta">
                     <span class="brand-label">DiagView</span>
                     <span class="brand-name">Off Layout</span>
@@ -163,7 +171,7 @@
         </div>
     </div>
 
-    
+
     <!-- ── Feature highlights ── -->
     <div class="page-section">
         <div class="section-header">
@@ -171,21 +179,24 @@
             <p class="section-subtitle">Designed for real-world use cases where control placement matters.</p>
         </div>
         <div class="info-grid">
-        <div class="info-card">
-            <div class="info-icon">✕</div>
-            <h4>Zero DOM Overhead</h4>
-            <p>Off mode adds no wrapper elements, no toolbar, no buttons. The SVG is untouched — DiagView only attaches a click handler and cursor style.</p>
-        </div>
-        <div class="info-card">
-            <div class="info-icon">🎯</div>
-            <h4>Pointer Affordance</h4>
-            <p>A zoom-in cursor signals interactivity without any UI. Users discover the fullscreen viewer naturally, making diagrams feel embedded rather than decorated.</p>
-        </div>
-        <div class="info-card">
-            <div class="info-icon">🔗</div>
-            <h4>Perfect for Embeds & iFrames</h4>
-            <p>Use in blog posts, documentation pages, or iframes where toolbar chrome would look out of place. Clean SVG, full viewer on demand.</p>
-        </div>
+            <div class="info-card">
+                <div class="info-icon">✕</div>
+                <h4>Zero DOM Overhead</h4>
+                <p>Off mode adds no wrapper elements, no toolbar, no buttons. The SVG is untouched — DiagView only
+                    attaches a click handler and cursor style.</p>
+            </div>
+            <div class="info-card">
+                <div class="info-icon">🎯</div>
+                <h4>Pointer Affordance</h4>
+                <p>A zoom-in cursor signals interactivity without any UI. Users discover the fullscreen viewer
+                    naturally, making diagrams feel embedded rather than decorated.</p>
+            </div>
+            <div class="info-card">
+                <div class="info-icon">🔗</div>
+                <h4>Perfect for Embeds & iFrames</h4>
+                <p>Use in blog posts, documentation pages, or iframes where toolbar chrome would look out of place.
+                    Clean SVG, full viewer on demand.</p>
+            </div>
         </div>
     </div>
 
@@ -201,24 +212,24 @@
                 <div class="shortcut-group">Zoom</div>
                 <div class="shortcut-row"><kbd>+</kbd><span>Zoom in</span></div>
                 <div class="shortcut-row"><kbd>-</kbd><span>Zoom out</span></div>
-                <div class="shortcut-row"><kbd>Space</kbd><span>Reset &amp; center</span></div>
+                <div class="shortcut-row"><kbd>Space / 0</kbd><span>Reset &amp; center</span></div>
             </div>
             <div class="shortcut-card">
                 <div class="shortcut-group">Pan</div>
                 <div class="shortcut-row"><kbd>↑ ↓ ← →</kbd><span>Pan diagram</span></div>
-                <div class="shortcut-row"><kbd>Scroll</kbd><span>Vertical pan</span></div>
+                <div class="shortcut-row"><kbd>Shift</kbd><span>Fast pan</span></div>
                 <div class="shortcut-row"><kbd>Drag</kbd><span>Free pan</span></div>
             </div>
             <div class="shortcut-card">
                 <div class="shortcut-group">Search</div>
-                <div class="shortcut-row"><kbd>/</kbd><span>Open search</span></div>
+                <div class="shortcut-row"><kbd>F</kbd><span>Open search</span></div>
                 <div class="shortcut-row"><kbd>Esc</kbd><span>Clear / close</span></div>
             </div>
             <div class="shortcut-card">
-                <div class="shortcut-group">Export &amp; View</div>
-                <div class="shortcut-row"><kbd>E</kbd><span>Export PNG</span></div>
+                <div class="shortcut-group">Tools</div>
                 <div class="shortcut-row"><kbd>M</kbd><span>Meeting mode</span></div>
-                <div class="shortcut-row"><kbd>F</kbd><span>Hi-res snapshot</span></div>
+                <div class="shortcut-row"><kbd>R</kbd><span>Rotate 90°</span></div>
+                <div class="shortcut-row"><kbd>L</kbd><span>Share link</span></div>
             </div>
         </div>
     </div>
@@ -228,7 +239,8 @@
         <div class="section-header" style="margin-bottom:20px">
             <h2 class="section-title" style="font-size:1.3rem">Integration</h2>
         </div>
-        <div class="code-block"><pre><code><span class="c">// Off mode — zero toolbar DOM, pure click-to-open</span>
+        <div class="code-block">
+            <pre><code><span class="c">// Off mode — zero toolbar DOM, pure click-to-open</span>
 <span class="kw">DiagView</span>.init({
   diagramSelector: <span class="v">'.diagram'</span>,
   layout:          <span class="v">'off'</span>
@@ -240,14 +252,15 @@
 &lt;/<span class="t">div</span>&gt;
 &lt;<span class="t">div</span> <span class="a">class</span>=<span class="v">"diagram"</span> <span class="a">data-diagview-layout</span>=<span class="v">"floating"</span>&gt;
   &lt;<span class="t">svg</span>&gt;...&lt;/<span class="t">svg</span>&gt;   <span class="c">// floating FAB</span>
-&lt;/<span class="t">div</span>&gt;</code></pre></div>
+&lt;/<span class="t">div</span>&gt;</code></pre>
+        </div>
         <div class="code-nav">
             <a href="layout-compare.html" class="code-nav-link">Compare all layouts →</a>
             <a href="layout-compare.html" class="code-nav-link">Compare all Layouts →</a>
         </div>
     </div>
 
-<footer>
+    <footer>
         <div class="container">
             <div class="footer-links">
                 <a href="index.html">← Back to Hub</a>

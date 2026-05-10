@@ -177,6 +177,9 @@ This resets the viewport meta tag to `initial-scale=1.0` when the modal opens, s
 **Q: The minimap doesn't appear on my phone.**  
 A: The minimap is intentionally hidden on viewports narrower than 768 px to preserve screen real estate.
 
+**Q: Why does the diagram stutter or zoom wildly in Firefox Mobile after a 3-finger screenshot?**  
+A: This is a known browser-level limitation in Firefox Mobile (Gecko engine) on Android devices with system-level gestures (like 3-finger screenshots). When a system gesture is triggered, the browser enters a "Decision State" where it briefly blocks all touch events to the script. This can cause the internal pointer state to become desynchronized. DiagView includes "Safe-Recovery" logic to stabilize this, but you may still experience a momentary "stutter" as the browser hands control back to the viewer. For the most fluid multi-touch experience, Chromium-based browsers (Brave, Chrome) are recommended.
+
 ---
 
 ## Theming

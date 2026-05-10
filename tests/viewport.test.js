@@ -68,6 +68,13 @@ describe("Visual Viewport Sync", () => {
       addEventListener: jest.fn(),
       removeEventListener: jest.fn(),
     };
+
+    // Explicitly mock innerHeight to ensure predictable test results
+    Object.defineProperty(window, "innerHeight", {
+      writable: true,
+      configurable: true,
+      value: 800,
+    });
   });
 
   afterEach(() => {
@@ -91,11 +98,10 @@ describe("Visual Viewport Sync", () => {
     // Check initial sync styles
     // scale(1/2) = scale(0.5)
     // baseWidth = vv.width (1000) * vv.scale (2) = 2000
-    // x = vv.pageLeft (which is mocked as 100 in my previous test but I should update mock)
-    // Actually, I'll update the mock to be more realistic.
+    // baseHeight = window.innerHeight (800) * vv.scale (2) = 1600
     expect(modal.style.width).toBe("2000px");
     expect(modal.style.height).toBe("1600px");
-    expect(modal.style.transform).toBe("translate(100px, 50px) scale(0.5)");
+    expect(modal.style.transform).toBe("translate3d(100px, 50px, 0) scale(0.5)");
     expect(modal.style.position).toBe("absolute");
   });
 
