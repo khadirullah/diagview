@@ -6,7 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 
 ---
 
-## [1.0.6] - 2026-05-10
+## [1.0.6] - 2026-05-11
 
 ### Added
 
@@ -21,10 +21,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 - **Z-Index Collision Protection** — Reinforced modal stacking context and background opacity with `!important` overrides to ensure DiagView always stays on top of sticky website headers.
 - **Global Shortcut Reliability** — Overhauled focus management to ensure keyboard shortcuts (M, Space, R, etc.) remain active after using Search, UI tools, or clicking complex diagram elements.
 - **Meeting Mode Cursor Artifacts** — Resolved "double pointer" bug by correctly hiding the system cursor in presentation mode.
+- **Panzoom Sluggishness When Browser Zoomed** — Replaced the old counter-scaling viewport approach with a "Scale-Free" `position:fixed` layout. The modal now uses exact visual viewport dimensions with no scale transform, ensuring 1:1 CSS pixel interaction for Panzoom regardless of browser zoom level. Also fixes Firefox layout shifts caused by `pageLeft`/`pageTop` discrepancies.
+- **Viewport Test Regression** — Fixed pre-existing test failure in `viewport.test.js` by aligning expectations with the Scale-Free viewport refactor.
 
 ### Changed
 
 - **Mobile Troubleshooting Docs** — Documented known 3-finger gesture limitations in Firefox Mobile in the FAQ.
+- **Codebase Audit & Cleanup** — Removed 13 dead exported functions across 7 modules (`utils.js`, `svg-clone.js`, `panzoom-integration.js`, `rotate.js`, `minimap.js`, `button-factory.js`). Eliminated duplicate `addModalCleanupFunction` definition, removed redundant `LARGE_FILE_THRESHOLD_DEFAULT` constant, added missing `UI_SYNC_THROTTLE` timing constant. Net reduction: 220 lines deleted.
+- **Documentation Accuracy** — Updated Node.js version requirements in BUILD.md and CONTRIBUTING.md to match `package.json` engines (`>=20.17.0`). Corrected stale bundle size limits in BUILD.md.
 
 ---
 

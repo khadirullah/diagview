@@ -6,7 +6,7 @@
 
 | Tool    | Minimum Version |
 | ------- | --------------- |
-| Node.js | 16.0.0          |
+| Node.js | 20.17.0         |
 | npm     | 8.0.0           |
 
 ---
@@ -122,8 +122,8 @@ Size limits defined in `package.json` under `"size-limit"`:
 
 | Bundle       | Limit |
 | ------------ | ----- |
-| UMD minified | 32 KB |
-| ESM          | 36 KB |
+| UMD minified | 34 KB |
+| ESM          | 38 KB |
 
 ### Bundle analysis
 

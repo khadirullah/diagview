@@ -28,7 +28,7 @@ Be kind, constructive, and respectful. Harassment of any kind is not tolerated.
 
 ### Prerequisites
 
-- Node.js ≥ 16
+- Node.js ≥ 20.17
 - npm ≥ 8
 - Git
 

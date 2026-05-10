@@ -69,7 +69,7 @@
 
 <!-- 2. DiagView (latest stable) -->
 <script src="https://cdn.jsdelivr.net/npm/diagview@1.0.6/dist/diagview.umd.min.js"></script>
-<!-- For auto-updates within v1: diagview@1.0.6 -->
+<!-- For auto-updates within v1: use diagview@1.0.6 instead -->
 ```
 
 To disable auto-initialization and configure manually:
