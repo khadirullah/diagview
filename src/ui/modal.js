@@ -302,7 +302,7 @@ function _attachModalLifecycle(element, clone, viewport, panzoom, diagramId) {
     };
 
     // EVT-3: Throttle UI sync to prevent layout thrashing on high-frequency events
-    const throttledSyncUI = throttle(syncUI, TIMING.UI_SYNC_THROTTLE || 32);
+    const throttledSyncUI = throttle(syncUI, TIMING.UI_SYNC_THROTTLE);
 
     addModalListener(clone, "panzoomchange", (e) => {
       // Scale is needed immediately for some logic, but DOM updates can be throttled
@@ -459,8 +459,7 @@ function _createModalTopbar(content) {
   searchBackBtn.setAttribute("type", "button");
   setSVGContent(
     searchBackBtn,
-    ICONS.back ||
-      '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>',
+    '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>',
   );
   searchWrapper.appendChild(searchBackBtn);
 

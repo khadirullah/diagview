@@ -58,23 +58,18 @@ describe("Visual Viewport Sync", () => {
     modal.id = "diagview-modal";
     document.body.appendChild(modal);
 
-    // Mock visualViewport
+    // Mock visualViewport with the properties used by the Scale-Free approach:
+    // width/height = exact visual viewport dimensions (no scaling)
+    // offsetLeft/offsetTop = visual viewport offset from layout viewport
     window.visualViewport = {
       width: 1000,
       height: 800,
       scale: 2,
-      pageLeft: 100,
-      pageTop: 50,
+      offsetLeft: 100,
+      offsetTop: 50,
       addEventListener: jest.fn(),
       removeEventListener: jest.fn(),
     };
-
-    // Explicitly mock innerHeight to ensure predictable test results
-    Object.defineProperty(window, "innerHeight", {
-      writable: true,
-      configurable: true,
-      value: 800,
-    });
   });
 
   afterEach(() => {
@@ -95,14 +90,16 @@ describe("Visual Viewport Sync", () => {
       expect.any(Function),
     );
 
-    // Check initial sync styles
-    // scale(1/2) = scale(0.5)
-    // baseWidth = vv.width (1000) * vv.scale (2) = 2000
-    // baseHeight = window.innerHeight (800) * vv.scale (2) = 1600
-    expect(modal.style.width).toBe("2000px");
-    expect(modal.style.height).toBe("1600px");
-    expect(modal.style.transform).toBe("translate3d(100px, 50px, 0) scale(0.5)");
-    expect(modal.style.position).toBe("absolute");
+    // Scale-Free approach: modal is sized to exact visual viewport dimensions
+    // (no counter-scaling), positioned with translate3d using offsetLeft/offsetTop.
+    // width = vv.width = 1000px (NOT multiplied by scale)
+    // height = vv.height = 800px
+    // transform = translate3d(offsetLeft, offsetTop, 0) — NO scale()
+    // position = fixed (not absolute)
+    expect(modal.style.width).toBe("1000px");
+    expect(modal.style.height).toBe("800px");
+    expect(modal.style.transform).toBe("translate3d(100px, 50px, 0)");
+    expect(modal.style.position).toBe("fixed");
   });
 
   test("stopVisualViewportSync removes listeners and restores styles", async () => {

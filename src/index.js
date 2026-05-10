@@ -132,11 +132,13 @@ async function destroy() {
   // We use Promise.all to ensure all async cleanups finish before resetConfig()
   try {
     await Promise.all([
-      import("./features/lazy/search.js").then((m) => m.resetSearch?.()),
+      import("./features/lazy/search.js").then((m) => {
+        m.resetSearch?.();
+        m.clearSearch();
+      }),
       import("./features/lazy/meeting-mode.js").then((m) => m.resetMeetingState?.()),
       import("./ui/toast.js").then((m) => m.hideToast()),
       import("./features/lazy/minimap.js").then((m) => m.cleanupMinimap()),
-      import("./features/lazy/search.js").then((m) => m.clearSearch()),
     ]);
   } catch (e) {
     console.error("DiagView: Error during async cleanup:", e);
@@ -276,9 +278,7 @@ const DiagView = {
 // Auto-bootstrap (optional)
 if (typeof window !== "undefined") {
   // Defensive global assignment to prevent overwriting existing versions
-  if (typeof window !== "undefined") {
-    window.DiagView = window.DiagView || DiagView;
-  }
+  window.DiagView = window.DiagView || DiagView;
 
   // Auto-initialize on DOMContentLoaded
   const autoInit = () => {

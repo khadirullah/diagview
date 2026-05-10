@@ -32,17 +32,10 @@ import { showErrorToast, showInfoToast } from "../ui/toast.js";
 import { blurActiveElement } from "../ui/focus-manager.js";
 
 /**
- * Check if Panzoom is available
- */
-export function isPanzoomAvailable() {
-  return checkPanzoomDependency();
-}
-
-/**
  * Initialize Panzoom on element
  */
 export function initializePanzoom(element, options = {}) {
-  if (!isPanzoomAvailable()) {
+  if (!checkPanzoomDependency()) {
     console.warn("DiagView: Panzoom library not found. Zoom/pan disabled.");
     showInfoToast("Zoom/pan requires Panzoom library");
     return null;
@@ -75,17 +68,6 @@ export function initializePanzoom(element, options = {}) {
     showErrorToast("Zoom initialization failed");
     return null;
   }
-}
-
-/**
- * Force a re-render of the current transform
- * This is the proper, non-hacky way to apply external changes like rotation
- */
-export function refreshPanzoom(panzoom) {
-  if (!panzoom) return;
-  // The wrapper pattern (modal.js) handles rotation independently.
-  // We just let Panzoom handle its own transforms at 100% speed.
-  panzoom.reset();
 }
 
 /**
@@ -238,18 +220,6 @@ export function restoreZoomState(diagramId, panzoom) {
     return true;
   } catch (e) {
     return false;
-  }
-}
-
-/**
- * Clear zoom state for a diagram
- */
-export function clearZoomState(diagramId) {
-  if (!state.isStorageAvailable) return;
-  try {
-    sessionStorage.removeItem(getZoomKey(diagramId));
-  } catch (e) {
-    // Ignore errors
   }
 }
 

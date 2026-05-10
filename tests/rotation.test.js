@@ -5,7 +5,7 @@
 
 import { jest } from "@jest/globals";
 import { state, resetConfig, updateConfig } from "../src/core/config.js";
-import { rotateDiagram, resetRotation, getRotationAngle } from "../src/features/lazy/rotate.js";
+import { rotateDiagram, resetRotation } from "../src/features/lazy/rotate.js";
 import { saveZoomState, restoreZoomState } from "../src/features/panzoom-integration.js";
 
 // Mock DOM
@@ -42,7 +42,7 @@ describe("Rotation Logic", () => {
   test("rotateDiagram increments angle by 90 and triggers Panzoom update", () => {
     rotateDiagram();
     expect(state.rotationAngle).toBe(90);
-    expect(getRotationAngle()).toBe(90);
+    expect(state.rotationAngle).toBe(90);
     const rotGroup = document.querySelector(".dv-rot-g");
     expect(rotGroup.getAttribute("transform")).toContain("rotate(90");
   });

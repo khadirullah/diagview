@@ -5,17 +5,10 @@
  * @module core/lifecycle
  */
 
-import { state, addCleanupFunction } from "./config.js";
+import { state, addCleanupFunction, addModalCleanupFunction } from "./config.js";
+export { addModalCleanupFunction };
 
-/**
- * Add cleanup function to be called specifically when the modal closes
- * @param {Function} fn - Cleanup function
- */
-export function addModalCleanupFunction(fn) {
-  if (typeof fn === "function") {
-    state.modalCleanupFunctions.add(fn);
-  }
-}
+// addModalCleanupFunction is imported from config.js and re-exported above
 
 /**
  * Safely destroy an instance with error handling

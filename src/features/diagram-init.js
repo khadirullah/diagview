@@ -321,7 +321,6 @@ export function initializeDiagram(element, precalculatedIndex = -1) {
 
   // MAJ-1: We no longer mutate the original SVG's IDs to avoid "Double Prefixing"
   // and architectural fragility. IDs are now isolated only during cloning (Modal/Export).
-  const fixedSvg = svg;
 
   // Get layout configuration from element-local config
   const layout = elementConfig.layout;
@@ -341,9 +340,9 @@ export function initializeDiagram(element, precalculatedIndex = -1) {
     });
 
     // Apply minimal SVG styling
-    if (fixedSvg) {
-      fixedSvg.style.transition = "filter 0.3s ease";
-      fixedSvg.classList.add("dv-svg-content");
+    if (svg) {
+      svg.style.transition = "filter 0.3s ease";
+      svg.classList.add("dv-svg-content");
     }
     return;
   }
@@ -435,10 +434,10 @@ export function initializeDiagram(element, precalculatedIndex = -1) {
   });
 
   // Apply SVG theme
-  if (fixedSvg) {
-    fixedSvg.style.transition = "filter 0.3s ease";
-    fixedSvg.classList.add("dv-svg-content");
-    fixedSvg.style.color = "inherit";
+  if (svg) {
+    svg.style.transition = "filter 0.3s ease";
+    svg.classList.add("dv-svg-content");
+    svg.style.color = "inherit";
   }
 }
 

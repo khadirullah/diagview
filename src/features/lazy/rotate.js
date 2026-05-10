@@ -89,13 +89,6 @@ export function resetRotation() {
 }
 
 /**
- * Get current rotation angle
- */
-export function getRotationAngle() {
-  return state.rotationAngle;
-}
-
-/**
  * Cleanup rotation on modal close
  * Architecture Fix: Unwraps the inner rotation group wrapper.
  */

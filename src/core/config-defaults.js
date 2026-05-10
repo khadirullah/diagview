@@ -63,7 +63,7 @@ export const INITIAL_CONFIG = {
 
   // Performance & Safeguards
   performance: {
-    largeFileThreshold: EXPORT.LARGE_FILE_THRESHOLD_DEFAULT,
+    largeFileThreshold: EXPORT.LARGE_FILE_THRESHOLD,
     criticalFileLimit: EXPORT.CRITICAL_FILE_LIMIT_DEFAULT,
   },
 

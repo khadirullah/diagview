@@ -28,6 +28,7 @@ export const TIMING = {
   IDLE_TIMEOUT: 2000,
   PREWARM_DELAY: 200,
   RESOURCE_REVOKE_DELAY: 1000,
+  UI_SYNC_THROTTLE: 32,
 };
 
 /**
@@ -41,8 +42,7 @@ export const EXPORT = {
   MAX_PIXELS_DEFAULT: 16777216, // 16MP (4096×4096) — safe for all browsers including mobile
   MAX_PIXELS_LIMIT: 268435456, // 256MP (16384×16384) — ceiling for specialized high-res needs
   MIN_PIXELS_LIMIT: 1000000, // 1MP floor
-  LARGE_FILE_THRESHOLD: 1000000, // 1MB threshold for SVG/Data strings
-  LARGE_FILE_THRESHOLD_DEFAULT: 1000000, // 1MB for performance bypass
+  LARGE_FILE_THRESHOLD: 1000000, // 1MB threshold for SVG/Data strings and performance bypass
   CRITICAL_FILE_LIMIT_DEFAULT: 50000000, // 50MB for hard block
 };
 

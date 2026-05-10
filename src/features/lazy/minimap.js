@@ -187,16 +187,6 @@ export function updateMinimap(clone, viewport, panzoom) {
 }
 
 /**
- * Show minimap
- */
-export function showMinimap() {
-  const minimap = document.getElementById("diagview-minimap");
-  if (minimap) {
-    minimap.classList.add("show");
-  }
-}
-
-/**
  * Hide minimap
  */
 export function hideMinimap() {

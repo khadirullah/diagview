@@ -1,5 +1,5 @@
 import { jest } from "@jest/globals";
-import { cloneSVG, cloneSVGForExport, cloneSVGForModal } from "../src/core/svg-clone.js";
+import { cloneSVG, cloneSVGForExportAsync, cloneSVGForModal } from "../src/core/svg-clone.js";
 
 describe("SVG Cloning Utilities", () => {
   let svg;
@@ -52,8 +52,8 @@ describe("SVG Cloning Utilities", () => {
     expect(clone.hasAttribute("xmlns")).toBe(true);
   });
 
-  test("cloneSVGForExport bakes computed styles into inline styles", () => {
-    const clone = cloneSVGForExport(svg);
+  test("cloneSVGForExportAsync bakes computed styles into inline styles", async () => {
+    const clone = await cloneSVGForExportAsync(svg);
     const clonedRect = clone.querySelector(".test-rect");
 
     expect(clonedRect.style.fill).toBe("rgb(255, 0, 0)");

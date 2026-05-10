@@ -144,22 +144,6 @@ export function isClipboardAvailable() {
 }
 
 /**
- * Check if sessionStorage is available and functional
- * (May throw SecurityError in Safari Private Mode or if storage is full)
- */
-export function isSessionStorageAvailable() {
-  if (typeof window === "undefined" || typeof sessionStorage === "undefined") return false;
-  try {
-    const key = "__diagview_storage_test__";
-    sessionStorage.setItem(key, "1");
-    sessionStorage.removeItem(key);
-    return true;
-  } catch (e) {
-    return false;
-  }
-}
-
-/**
  * Generate safe filename from text
  */
 export function sanitizeFilename(text, fallback = "diagram") {
@@ -181,18 +165,6 @@ export function getTimestamp() {
   const d = `${n.getFullYear()}-${pad(n.getMonth() + 1)}-${pad(n.getDate())}`;
   const t = `${pad(n.getHours())}${pad(n.getMinutes())}${pad(n.getSeconds())}`;
   return `${d}_${t}`;
-}
-
-/**
- * Safe query selector
- */
-export function safeQuerySelector(selector, context = document) {
-  try {
-    return context.querySelector(selector);
-  } catch (e) {
-    console.warn(`DiagView: Invalid selector "${selector}"`, e);
-    return null;
-  }
 }
 
 /**
