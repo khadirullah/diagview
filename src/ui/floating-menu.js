@@ -158,6 +158,24 @@ function _createCanvasThemeSection(menuPanel) {
   const swatchGroup = document.createElement("div");
   swatchGroup.className = "dv-swatches";
 
+  const customWrapper = document.createElement("label");
+  customWrapper.className = "dv-swatch-btn dv-swatch-custom";
+  customWrapper.title = "Custom Color Picker";
+  customWrapper.textContent = "🎨";
+
+  const customInput = document.createElement("input");
+  customInput.type = "color";
+  customInput.value = state.customCanvasColor || "#0b0f19";
+  customInput.className = "dv-custom-color-input";
+
+  customInput.oninput = (e) => {
+    const val = e.target.value;
+    setCanvasTheme("custom", val);
+  };
+
+  customWrapper.appendChild(customInput);
+  swatchGroup.appendChild(customWrapper);
+
   const swatches = [
     { name: "White", color: "#ffffff" },
     { name: "Dark Slate", color: "#0b0f19" },
@@ -180,24 +198,6 @@ function _createCanvasThemeSection(menuPanel) {
     };
     swatchGroup.appendChild(sw);
   });
-
-  const customWrapper = document.createElement("label");
-  customWrapper.className = "dv-swatch-btn dv-swatch-custom";
-  customWrapper.title = "Custom Color Picker";
-  customWrapper.textContent = "🎨";
-
-  const customInput = document.createElement("input");
-  customInput.type = "color";
-  customInput.value = state.customCanvasColor || "#0b0f19";
-  customInput.className = "dv-custom-color-input";
-
-  customInput.oninput = (e) => {
-    const val = e.target.value;
-    setCanvasTheme("custom", val);
-  };
-
-  customWrapper.appendChild(customInput);
-  swatchGroup.appendChild(customWrapper);
 
   themeSec.appendChild(themeLbl);
   themeSec.appendChild(modeGroup);

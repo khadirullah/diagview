@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 
 ---
 
+## [1.0.8] - 2026-07-30
+
+### Fixed
+
+- **Chrome & Brave Fullscreen Color Picker Alignment** — Re-ordered swatch controls and adjusted input transform origin so the native OS color picker dialog anchors safely inside the screen in fullscreen mode on Chromium browsers (Chrome, Brave, Edge).
+
+---
+
 ## [1.0.7] - 2026-07-30
 
 ### Added
