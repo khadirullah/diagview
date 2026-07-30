@@ -170,4 +170,11 @@ describe("Modal System", () => {
     await new Promise((r) => setTimeout(r, 400));
     expect(panzoomMock.reset).toHaveBeenCalled();
   });
+
+  test("shows first-time theme hint toast when enabled", async () => {
+    localStorage.removeItem("diagview-canvas-hint-shown");
+    updateConfig({ showFirstTimeThemeHint: true });
+    await openFullscreen(container);
+    expect(localStorage.getItem("diagview-canvas-hint-shown")).toBe("true");
+  });
 });

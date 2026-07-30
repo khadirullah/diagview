@@ -238,17 +238,36 @@ export function detectTheme() {
     return state.themeCache;
   }
 
-  const isDark = isDarkMode();
-  const bg = detectBackground(isDark);
+  let isDark = isDarkMode();
+  let bg = detectBackground(isDark);
+
+  // Apply explicit Canvas Theme Mode overrides if set by user
+  if (state.activeCanvasThemeMode === "light") {
+    isDark = false;
+    bg = COLORS.BG_LIGHT;
+  } else if (state.activeCanvasThemeMode === "dark") {
+    isDark = true;
+    bg = COLORS.BG_DARK;
+  } else if (state.activeCanvasThemeMode === "custom" && state.customCanvasColor) {
+    bg = state.customCanvasColor;
+    const parsed = parseColor(bg);
+    if (parsed) {
+      const lum = getLuminance(...parsed);
+      isDark = lum < 0.5;
+    }
+  }
 
   // Detect text color with multiple fallbacks
-  let text = getCSSVariable("--diagram-text", COLORS.TEXT_LIGHT, COLORS.TEXT_DARK, isDark);
+  let text =
+    getCSSVariable("--diagram-text", COLORS.TEXT_LIGHT, COLORS.TEXT_DARK, isDark) ||
+    (isDark ? COLORS.TEXT_DARK : COLORS.TEXT_LIGHT);
 
   // Fallback to other common variable names
   if (!text || text === "inherit") {
     text =
       getCSSVariable("--text-color", COLORS.TEXT_LIGHT, COLORS.TEXT_DARK, isDark) ||
-      getCSSVariable("--foreground", COLORS.TEXT_LIGHT, COLORS.TEXT_DARK, isDark);
+      getCSSVariable("--foreground", COLORS.TEXT_LIGHT, COLORS.TEXT_DARK, isDark) ||
+      (isDark ? COLORS.TEXT_DARK : COLORS.TEXT_LIGHT);
   }
 
   // Ensure sufficient contrast (WCAG AA: 4.5:1)
@@ -264,7 +283,8 @@ export function detectTheme() {
   const accent =
     getCSSVariable("--diagram-accent", COLORS.ACCENT_LIGHT, COLORS.ACCENT_DARK, isDark) ||
     getCSSVariable("--primary", COLORS.ACCENT_LIGHT, COLORS.ACCENT_DARK, isDark) ||
-    getCSSVariable("--accent-color", COLORS.ACCENT_LIGHT, COLORS.ACCENT_DARK, isDark);
+    getCSSVariable("--accent-color", COLORS.ACCENT_LIGHT, COLORS.ACCENT_DARK, isDark) ||
+    COLORS.ACCENT_LIGHT;
 
   const theme = { isDark, bg, text, accent };
 
@@ -288,6 +308,64 @@ export function detectTheme() {
   }
 
   return theme;
+}
+
+/**
+ * Change the active canvas theme mode and color
+ * @param {'auto'|'light'|'dark'|'custom'} mode Active canvas theme mode
+ * @param {string|null} [customColor] Custom hex color string
+ */
+export function setCanvasTheme(mode, customColor = null) {
+  state.activeCanvasThemeMode = mode;
+  state.customCanvasColor = customColor;
+  clearThemeCache();
+
+  if (state.isStorageAvailable) {
+    try {
+      localStorage.setItem("diagview-canvas-theme-mode", mode);
+      if (customColor) {
+        localStorage.setItem("diagview-custom-canvas-color", customColor);
+      }
+    } catch (_e) {
+      // Ignore storage write errors
+    }
+  }
+
+  const theme = syncTheme();
+
+  const modal = document.getElementById("diagview-modal");
+  const svg = modal?.querySelector("svg");
+  if (svg) {
+    normalizeSvgTextContrast(svg, theme.bg);
+  }
+
+  return theme;
+}
+
+/**
+ * Normalize SVG text nodes for proper contrast against current canvas background
+ * @param {SVGElement} svg SVG container element
+ * @param {string} [bgOverride] Optional background color override
+ */
+export function normalizeSvgTextContrast(svg, bgOverride) {
+  if (!svg) return;
+  const isDarkCanvas =
+    state.activeCanvasThemeMode === "dark" ||
+    (state.activeCanvasThemeMode === "auto" && isDarkMode());
+  const activeBg = bgOverride || (isDarkCanvas ? COLORS.BG_DARK : COLORS.BG_LIGHT);
+
+  const textNodes = svg.querySelectorAll("text, tspan, .title, .titleText, .label text");
+  textNodes.forEach((el) => {
+    const computedFill = getComputedStyle(el).fill || el.getAttribute("fill") || "";
+
+    if (computedFill) {
+      const contrast = getContrastRatio(computedFill, activeBg);
+      if (contrast < 4.5) {
+        const normalized = ensureContrast(computedFill, activeBg);
+        el.style.fill = normalized;
+      }
+    }
+  });
 }
 
 /**

@@ -130,4 +130,28 @@ describe("Floating Menu UI", () => {
     await new Promise((r) => setTimeout(r, 10));
     expect(exportDiagram).toHaveBeenCalledWith(sourceElement, "png", expect.any(Object));
   });
+
+  test("Interaction: Transparent toggle switch disables JPEG and PDF buttons", () => {
+    createFloatingMenu(sourceElement, clonedSvg);
+    const transChk = document.getElementById("dv-exp-trans");
+    const jpegBtn = document.querySelector('[data-action="jpeg"]');
+    const pdfBtn = document.querySelector('[data-action="pdf"]');
+
+    expect(jpegBtn.hasAttribute("disabled")).toBe(false);
+    expect(pdfBtn.hasAttribute("disabled")).toBe(false);
+
+    // Toggle transparent ON
+    transChk.checked = true;
+    transChk.dispatchEvent(new Event("change"));
+
+    expect(jpegBtn.hasAttribute("disabled")).toBe(true);
+    expect(pdfBtn.hasAttribute("disabled")).toBe(true);
+
+    // Toggle transparent OFF
+    transChk.checked = false;
+    transChk.dispatchEvent(new Event("change"));
+
+    expect(jpegBtn.hasAttribute("disabled")).toBe(false);
+    expect(pdfBtn.hasAttribute("disabled")).toBe(false);
+  });
 });

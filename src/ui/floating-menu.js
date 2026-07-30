@@ -5,7 +5,7 @@
  */
 
 import { state, addModalCleanupFunction } from "../core/config.js";
-import { detectTheme } from "../core/theme.js";
+import { detectTheme, setCanvasTheme } from "../core/theme.js";
 import { sanitizeSVG } from "../core/utils.js";
 
 import { exportDiagram } from "../features/export.js";
@@ -36,6 +36,7 @@ export function createFloatingMenu(sourceElement, clonedSvg) {
 
   // 3. Sections
   const zoomElements = _createZoomSection(menuPanel);
+  _createCanvasThemeSection(menuPanel);
   const { transChk, expGrid } = _createExportSection(menuPanel);
   const toolsContainer = _createToolsSection(menuPanel);
   _createMenuFooter(menuPanel);
@@ -122,6 +123,88 @@ function _createZoomSection(menuPanel) {
   return { zoomInBtn, zoomOutBtn, resetBtn };
 }
 
+function _createCanvasThemeSection(menuPanel) {
+  const themeSec = document.createElement("div");
+  themeSec.className = "dv-menu-sec";
+
+  const themeLbl = document.createElement("div");
+  themeLbl.className = "dv-menu-lbl";
+  themeLbl.textContent = "Canvas Theme";
+
+  const modeGroup = document.createElement("div");
+  modeGroup.className = "dv-theme-modes";
+
+  const modes = [
+    { label: "☀️ Light", mode: "light" },
+    { label: "🌙 Dark", mode: "dark" },
+    { label: "🖥️ Auto", mode: "auto" },
+  ];
+
+  modes.forEach(({ label, mode }) => {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "dv-theme-btn";
+    btn.textContent = label;
+    if (state.activeCanvasThemeMode === mode) btn.classList.add("active");
+
+    btn.onclick = () => {
+      modeGroup.querySelectorAll(".dv-theme-btn").forEach((b) => b.classList.remove("active"));
+      btn.classList.add("active");
+      setCanvasTheme(mode);
+    };
+    modeGroup.appendChild(btn);
+  });
+
+  const swatchGroup = document.createElement("div");
+  swatchGroup.className = "dv-swatches";
+
+  const swatches = [
+    { name: "White", color: "#ffffff" },
+    { name: "Dark Slate", color: "#0b0f19" },
+    { name: "Navy", color: "#0f172a" },
+    { name: "Charcoal", color: "#1e293b" },
+  ];
+
+  swatches.forEach(({ name, color }) => {
+    const sw = document.createElement("button");
+    sw.type = "button";
+    sw.className = "dv-swatch-btn";
+    sw.title = name;
+    sw.style.backgroundColor = color;
+    if (color === "#ffffff") sw.style.border = "1px solid #cbd5e1";
+
+    sw.onclick = () => {
+      swatchGroup.querySelectorAll(".dv-swatch-btn").forEach((s) => s.classList.remove("active"));
+      sw.classList.add("active");
+      setCanvasTheme("custom", color);
+    };
+    swatchGroup.appendChild(sw);
+  });
+
+  const customWrapper = document.createElement("label");
+  customWrapper.className = "dv-swatch-btn dv-swatch-custom";
+  customWrapper.title = "Custom Color Picker";
+  customWrapper.textContent = "🎨";
+
+  const customInput = document.createElement("input");
+  customInput.type = "color";
+  customInput.value = state.customCanvasColor || "#0b0f19";
+  customInput.className = "dv-custom-color-input";
+
+  customInput.oninput = (e) => {
+    const val = e.target.value;
+    setCanvasTheme("custom", val);
+  };
+
+  customWrapper.appendChild(customInput);
+  swatchGroup.appendChild(customWrapper);
+
+  themeSec.appendChild(themeLbl);
+  themeSec.appendChild(modeGroup);
+  themeSec.appendChild(swatchGroup);
+  menuPanel.appendChild(themeSec);
+}
+
 function _createExportSection(menuPanel) {
   const expSec = document.createElement("div");
   expSec.className = "dv-menu-sec";
@@ -139,24 +222,48 @@ function _createExportSection(menuPanel) {
   transChk.className = "dv-exp-trans-chk";
 
   transLabel.appendChild(transChk);
-  transLabel.appendChild(document.createTextNode("Transparent "));
-
-  const transHint = document.createElement("span");
-  transHint.className = "dv-exp-trans-hint";
-  transHint.textContent = "(PNG/WebP/SVG)";
-  transLabel.appendChild(transHint);
+  transLabel.appendChild(document.createTextNode("Transparent"));
 
   expLbl.appendChild(transLabel);
   expSec.appendChild(expLbl);
 
   const expGrid = document.createElement("div");
   expGrid.className = "dv-exp";
-  ["PNG", "JPEG", "SVG", "WebP", "PDF", "Copy"].forEach((fmt) => {
+  [
+    { label: "PNG", action: "png" },
+    { label: "JPEG", action: "jpeg" },
+    { label: "SVG", action: "svg" },
+    { label: "Copy SVG", action: "copy-svg" },
+    { label: "WebP", action: "webp" },
+    { label: "PDF", action: "pdf" },
+    { label: "Copy Image", action: "copy" },
+  ].forEach((item) => {
     const btn = document.createElement("button");
-    btn.dataset.action = fmt.toLowerCase();
-    btn.textContent = fmt;
+    btn.dataset.action = item.action;
+    btn.textContent = item.label;
     expGrid.appendChild(btn);
   });
+
+  const updateDisabledStates = () => {
+    const isTransparent = transChk.checked;
+    ["jpeg", "pdf"].forEach((action) => {
+      const btn = expGrid.querySelector(`[data-action="${action}"]`);
+      if (btn) {
+        if (isTransparent) {
+          btn.setAttribute("disabled", "true");
+          btn.classList.add("disabled");
+          btn.title = "Not available with transparent background";
+        } else {
+          btn.removeAttribute("disabled");
+          btn.classList.remove("disabled");
+          btn.removeAttribute("title");
+        }
+      }
+    });
+  };
+
+  transChk.onchange = updateDisabledStates;
+
   expSec.appendChild(expGrid);
   menuPanel.appendChild(expSec);
 

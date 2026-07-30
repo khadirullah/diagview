@@ -46,6 +46,7 @@ export const INITIAL_CONFIG = {
   printFriendly: true,
   showBranding: true,
   immersiveMode: false,
+  showFirstTimeThemeHint: true,
 
   // Security & Sanitization
   sanitize: "auto", // "auto" | "strict" | "off"

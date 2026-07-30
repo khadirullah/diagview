@@ -27,6 +27,7 @@ import {
 import { closeModal, lockBodyScroll } from "./modal-controls.js";
 import { createFloatingMenu } from "./floating-menu.js";
 import { pushModalHistoryState, startVisualViewportSync } from "./viewport.js";
+import { showInfoToast } from "./toast.js";
 
 /**
  * Create modal structure
@@ -154,6 +155,21 @@ function _activateModalUI(modal) {
   // Prevent background scrolling
   lockBodyScroll();
   state.isModalOpen = true;
+
+  // Show first-time canvas theme hint toast if enabled and not previously shown
+  if (state.config.showFirstTimeThemeHint) {
+    try {
+      if (state.isStorageAvailable && !localStorage.getItem("diagview-canvas-hint-shown")) {
+        localStorage.setItem("diagview-canvas-hint-shown", "true");
+        showInfoToast(
+          "💡 Hint: Having visibility issues? Change canvas theme from the menu ☰",
+          6000,
+        );
+      }
+    } catch (_e) {
+      // Ignore storage errors
+    }
+  }
 
   // Set initial focus (use rAF to ensure modal is rendered and visible)
   requestAnimationFrame(() => {

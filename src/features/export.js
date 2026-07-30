@@ -472,6 +472,40 @@ export async function exportToSVG(sourceElement, options = {}) {
 }
 
 /**
+ * Copy raw SVG vector markup directly to clipboard
+ * @param {HTMLElement} sourceElement - Element containing SVG
+ * @param {object} [options={}] - Export options
+ */
+export async function copySVGCode(sourceElement, options = {}) {
+  const originalSvg = sourceElement.querySelector("svg");
+  if (!originalSvg) return showErrorToast("No SVG found");
+
+  const modalClone = options.modalClone || null;
+
+  try {
+    const { svg } = await prepareSvgForExport(originalSvg, modalClone);
+    const data = await serializeSVGAsync(svg);
+
+    if (navigator.clipboard && window.isSecureContext) {
+      await navigator.clipboard.writeText(data);
+      showSuccessToast("📋 SVG Code copied to clipboard!");
+    } else {
+      const input = document.createElement("textarea");
+      input.value = data;
+      input.style.position = "fixed";
+      input.style.opacity = "0";
+      document.body.appendChild(input);
+      input.select();
+      document.execCommand("copy");
+      document.body.removeChild(input);
+      showSuccessToast("📋 SVG Code copied to clipboard!");
+    }
+  } catch (e) {
+    showErrorToast("Copy SVG Failed", e.message);
+  }
+}
+
+/**
  * Internal Image Export Processor
  */
 async function processImageExport(
@@ -702,6 +736,9 @@ export async function exportDiagram(sourceElement, mode, options = {}) {
   switch (mode) {
     case "svg":
       await exportToSVG(sourceElement, { filename, transparent: isTransparent, modalClone });
+      break;
+    case "copy-svg":
+      await copySVGCode(sourceElement, { filename, modalClone });
       break;
     case "copy":
       await copyToClipboard(sourceElement, { filename, modalClone });

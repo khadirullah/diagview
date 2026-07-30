@@ -1,6 +1,6 @@
 import { jest } from "@jest/globals";
 import "jest-canvas-mock";
-import { exportDiagram, renderToCanvas } from "../src/features/export.js";
+import { exportDiagram, renderToCanvas, copySVGCode } from "../src/features/export.js";
 import { state, updateConfig } from "../src/core/config.js";
 
 describe("Export Functionality", () => {
@@ -95,5 +95,24 @@ describe("Export Functionality", () => {
 
     expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining("Exporting a hidden element"));
     consoleSpy.mockRestore();
+  });
+
+  test("copySVGCode serializes SVG markup to clipboard", async () => {
+    let copiedText = "";
+    Object.defineProperty(navigator, "clipboard", {
+      value: {
+        writeText: jest.fn().mockImplementation((text) => {
+          copiedText = text;
+          return Promise.resolve();
+        }),
+      },
+      configurable: true,
+    });
+    Object.defineProperty(window, "isSecureContext", { value: true, configurable: true });
+
+    await exportDiagram(container, "copy-svg");
+
+    expect(navigator.clipboard.writeText).toHaveBeenCalled();
+    expect(copiedText).toContain("<svg");
   });
 });

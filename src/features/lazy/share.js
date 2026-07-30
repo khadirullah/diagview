@@ -160,6 +160,14 @@ export function generateShareLink(diagramIndex) {
   url.searchParams.set("dv-cy", Math.round(svgCenter.y));
   if (rotation !== 0) url.searchParams.set("dv-r", rotation);
 
+  // Add canvas theme parameters if customized
+  if (state.activeCanvasThemeMode && state.activeCanvasThemeMode !== "auto") {
+    url.searchParams.set("dv-t", state.activeCanvasThemeMode);
+    if (state.activeCanvasThemeMode === "custom" && state.customCanvasColor) {
+      url.searchParams.set("dv-c", state.customCanvasColor.replace("#", ""));
+    }
+  }
+
   // Add search query if active
   const searchInput = document.getElementById("diagview-search");
   const query = searchInput?.value?.trim();
@@ -229,6 +237,12 @@ export function restoreViewFromURL(diagrams) {
     const rawY = params.get("dv-y") ? parseInt(params.get("dv-y"), 10) : null;
     const rawRot = params.get("dv-r") ? parseInt(params.get("dv-r"), 10) : null;
 
+    const rawTheme = params.get("dv-t");
+    const rawColor = params.get("dv-c");
+    const VALID_THEME_MODES = new Set(["light", "dark", "auto", "custom"]);
+    const themeMode = rawTheme && VALID_THEME_MODES.has(rawTheme) ? rawTheme : null;
+    const customColor = rawColor && /^[0-9a-fA-F]{3,8}$/.test(rawColor) ? `#${rawColor}` : null;
+
     const VALID_ROTATIONS = new Set([0, 90, 180, 270]);
 
     shareStates.set(diagram, {
@@ -242,6 +256,8 @@ export function restoreViewFromURL(diagrams) {
       cy: rawCy !== null && isFinite(rawCy) ? clampNum(rawCy, -100000, 100000) : null,
       rotation: rawRot !== null && VALID_ROTATIONS.has(rawRot) ? rawRot : null,
       query: params.get("dv-q") || null,
+      themeMode,
+      customColor,
     });
 
     return { diagram, index: idx };
@@ -265,7 +281,15 @@ export function applyRestoredViewState(diagram, panzoom) {
   const shareState = shareStates.get(diagram);
   if (!shareState || !panzoom) return false;
 
-  const { scale, x, y, cx, cy, rotation } = shareState;
+  const { scale, x, y, cx, cy, rotation, themeMode, customColor } = shareState;
+
+  if (themeMode) {
+    import("../../core/theme.js")
+      .then((m) => {
+        m.setCanvasTheme(themeMode, customColor);
+      })
+      .catch(() => {});
+  }
 
   if (rotation !== null) state.rotationAngle = rotation;
   if (scale !== null) panzoom.zoom(scale, { animate: false });

@@ -52,6 +52,8 @@ function createInitialState() {
     // Theme detection state
     themeCache: null,
     themeCacheTimestamp: 0,
+    activeCanvasThemeMode: "auto",
+    customCanvasColor: null,
     themeObserver: null,
     themeChangeHandler: null,
     mediaQueryList: null,
@@ -283,6 +285,8 @@ export { DEFAULT_CONFIG, INITIAL_CONFIG };
  * @property {object|null} activeMeetingHandlers - Active meeting mode handlers
  * @property {object|null} themeCache - Cached theme detection result
  * @property {number} themeCacheTimestamp - Timestamp of last theme detection
+ * @property {'auto'|'light'|'dark'|'custom'} activeCanvasThemeMode - Active canvas theme mode
+ * @property {string|null} customCanvasColor - Custom backdrop color hex
  * @property {MutationObserver|null} themeObserver - Observer for theme changes
  * @property {Function|null} themeChangeHandler - Handler for media query changes
  * @property {MediaQueryList|null} mediaQueryList - Media query list for theme detection

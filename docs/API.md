@@ -369,6 +369,7 @@ interface DiagViewConfig {
   // Notifications
   toastDuration: number; // default: 2500 (ms)
   errorToastDuration: number; // default: 5000 (ms)
+  showFirstTimeThemeHint: boolean; // default: true
 
   // PDF
   pdfLibraryUrl: string; // default: cdnjs jsPDF URL

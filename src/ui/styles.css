@@ -1179,6 +1179,10 @@
   gap: 0.375rem;
 }
 
+.dv-exp button[data-action="copy"] {
+  grid-column: 1 / -1;
+}
+
 .dv-exp button {
   min-height: 32px;
   padding: 0.25rem;
@@ -1216,63 +1220,162 @@
   justify-content: space-between;
 }
 
-/* Transparent-export checkbox label */
+/* Transparent-export toggle switch (Sleek Modern iOS-Style Toggle Switch) */
 .dv-exp-trans-label {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 4px;
-  font-size: 10px;
+  gap: 8px;
+  font-size: 0.75rem;
+  font-weight: 500;
   cursor: pointer;
   text-transform: none;
   letter-spacing: normal;
+  color: var(--dv-text-color);
+  user-select: none;
 }
 
-/* Transparent-export checkbox input (Premium Custom Checkbox) */
 .dv-exp-trans-chk {
   appearance: none;
   -webkit-appearance: none;
   margin: 0;
-  width: 14px;
-  height: 14px;
-  border: 1.5px solid var(--dv-border-color);
-  border-radius: 4px;
-  background: rgba(128, 128, 128, 0.1);
+  width: 38px;
+  height: 22px;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.2);
   cursor: pointer;
-  display: inline-grid;
-  place-content: center;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
+  transition:
+    background-color 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+    border-color 0.25s ease;
   flex-shrink: 0;
+  outline: none;
+}
+
+.dv-exp-trans-chk::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .dv-exp-trans-chk:checked {
-  background: var(--dv-primary, var(--dv-accent, #3b82f6));
-  border-color: var(--dv-primary, var(--dv-accent, #3b82f6));
+  background: var(--dv-primary, var(--dv-accent, #06b6d4));
+  border-color: transparent;
 }
 
-.dv-exp-trans-chk:checked::before {
-  content: "";
-  width: 8px;
-  height: 8px;
-  transform: scale(1);
-  background-color: #fff;
-  clip-path: polygon(14% 44%, 0 65%, 50% 100%, 100% 16%, 80% 0%, 43% 62%);
+.dv-exp-trans-chk:checked::after {
+  transform: translateX(16px);
 }
 
 .dv-exp-trans-chk:hover {
-  border-color: var(--dv-primary, var(--dv-accent, #3b82f6));
-  background: rgba(128, 128, 128, 0.2);
+  background: rgba(255, 255, 255, 0.25);
+}
+
+.dv-exp-trans-chk:checked:hover {
+  background: var(--dv-primary, var(--dv-accent, #0891b2));
 }
 
 .dv-exp-trans-chk:focus-visible {
-  outline: 2px solid var(--dv-primary, var(--dv-accent, #3b82f6));
+  outline: 2px solid var(--dv-primary, var(--dv-accent, #06b6d4));
   outline-offset: 2px;
+}
+
+.dv-exp button:disabled,
+.dv-exp button.disabled {
+  opacity: 0.4 !important;
+  cursor: not-allowed !important;
+  pointer-events: none !important;
+  transform: none !important;
+  box-shadow: none !important;
 }
 
 /* Transparent-export format hint "(PNG/WebP/SVG)" */
 .dv-exp-trans-hint {
   opacity: 0.5;
   font-size: 8px;
+}
+
+/* Canvas Theme Section */
+.dv-theme-modes {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.dv-theme-btn {
+  flex: 1;
+  padding: 5px 8px;
+  font-size: 11px;
+  font-weight: 500;
+  border-radius: 6px;
+  border: 1px solid var(--dv-border-color, rgba(255, 255, 255, 0.15));
+  background: transparent;
+  color: var(--dv-text-color);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.dv-theme-btn:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.dv-theme-btn.active {
+  background: var(--dv-primary, var(--dv-accent, #3b82f6));
+  color: #ffffff;
+  border-color: transparent;
+}
+
+.dv-swatches {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dv-swatch-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+  position: relative;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.dv-swatch-btn:hover {
+  transform: scale(1.15);
+}
+
+.dv-swatch-btn.active {
+  outline: 2px solid var(--dv-primary, var(--dv-accent, #3b82f6));
+  outline-offset: 2px;
+}
+
+.dv-swatch-custom {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--dv-surface, rgba(255, 255, 255, 0.1));
+  font-size: 14px;
+  overflow: hidden;
+}
+
+.dv-custom-color-input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
 }
 
 /* Menu List Items (Tools) */

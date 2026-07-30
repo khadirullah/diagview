@@ -318,19 +318,21 @@ Share the exact zoom level and pan position with anyone. The generated URL conta
 
 ### URL parameters
 
-| Parameter | Description                                  |
-| --------- | -------------------------------------------- |
-| `dv-idx`  | Diagram index on the page (zero-based)       |
-| `dv-z`    | Zoom scale (3 decimal places)                |
-| `dv-cx`   | SVG internal X coordinate at viewport center |
-| `dv-cy`   | SVG internal Y coordinate at viewport center |
-| `dv-r`    | Rotation angle (0, 90, 180, or 270)          |
-| `dv-q`    | Active search query                          |
+| Parameter | Description                                      |
+| --------- | ------------------------------------------------ |
+| `dv-idx`  | Diagram index on the page (zero-based)           |
+| `dv-z`    | Zoom scale (3 decimal places)                    |
+| `dv-cx`   | SVG internal X coordinate at viewport center     |
+| `dv-cy`   | SVG internal Y coordinate at viewport center     |
+| `dv-r`    | Rotation angle (0, 90, 180, or 270)              |
+| `dv-q`    | Active search query                              |
+| `dv-t`    | Canvas theme mode (`light`, `dark`, `custom`)    |
+| `dv-c`    | Custom canvas background hex value (without `#`) |
 
 ### Example URL
 
 ```
-https://example.com/docs#architecture?dv-idx=2&dv-z=2.500&dv-cx=450&dv-cy=300&dv-r=0&dv-q=auth
+https://example.com/docs#architecture?dv-idx=2&dv-z=2.500&dv-cx=450&dv-cy=300&dv-r=0&dv-q=auth&dv-t=dark&dv-c=0b0f19
 ```
 
 ### Activation

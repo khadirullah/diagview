@@ -245,4 +245,17 @@ describe("Share System", () => {
     expect(errorSpy).toHaveBeenCalled();
     errorSpy.mockRestore();
   });
+
+  test("generateShareLink and restoreViewFromURL handle theme mode parameters", () => {
+    state.activeCanvasThemeMode = "dark";
+    const link = generateShareLink(0);
+    expect(link).toContain("dv-t=dark");
+
+    window.location = new URL("http://localhost/test?dv-idx=0&dv-t=dark&dv-c=0b0f19");
+    const res = restoreViewFromURL([{}]);
+    expect(res).not.toBe(false);
+    const pending = getPendingShareState(res.diagram);
+    expect(pending.themeMode).toBe("dark");
+    expect(pending.customColor).toBe("#0b0f19");
+  });
 });

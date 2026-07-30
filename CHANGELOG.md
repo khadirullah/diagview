@@ -6,6 +6,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 
 ---
 
+## [Unreleased]
+
+### Added
+
+- **ShareLink Canvas Theme Retention** — Encodes and restores canvas theme mode (`dv-t`) and custom background hex (`dv-c`) in shareable URLs while preserving all existing parameters (`dv-idx`, `dv-z`, `dv-cx`, `dv-cy`, `dv-r`, `dv-q`).
+- **Canvas Theme Controls & Color Swatches** — Interactive canvas background customization menu with Light/Dark presets, 6 color swatches (`#ffffff`, `#000000`, `#0b0f19`, `#090d16`, `#0f172a`, `#18181b`), and custom `<input type="color">` hex picker.
+- **First-Time Theme Hint Toast** — 6-second informational hint toast (`showFirstTimeThemeHint: true`) with `localStorage` memory (`diagview-canvas-hint-shown`).
+- **iOS-Style Transparent Export Toggle** — Modern sliding toggle switch with dynamic disabling for raster background-dependent export formats (JPEG/PDF).
+
+### Changed
+
+- **SVG Text Contrast Normalization** — Stores original text fill in `data-original-fill` attribute. Automatically brightens low-contrast SVG text (< 4.5:1) in Dark mode with `important` priority and restores original colors when switching back to Light mode.
+- **Export Grid Layout** — Updated "Copy Image" button layout to span full width (`grid-column: 1 / -1`) in the export menu grid.
+
+---
+
 ## [1.0.6] - 2026-05-11
 
 ### Added

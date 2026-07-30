@@ -172,8 +172,8 @@ export function showErrorToast(message, details = null) {
 /**
  * Show info toast
  */
-export function showInfoToast(message) {
-  showToast(`ℹ ${message}`, "info");
+export function showInfoToast(message, duration = null) {
+  showToast(`ℹ ${message}`, "info", duration);
 }
 
 /**
