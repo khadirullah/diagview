@@ -43,3 +43,18 @@ if (fs.existsSync(readmePath)) {
     console.log('Fixed duplicate keys in README.md');
   }
 }
+
+// 4. Update CDN script tags in all demo HTML files
+const demoDir = 'demo';
+if (fs.existsSync(demoDir)) {
+  const files = fs.readdirSync(demoDir);
+  for (const file of files) {
+    if (file.endsWith('.html')) {
+      updateFile(
+        `${demoDir}/${file}`,
+        /unpkg\.com\/diagview@[0-9.]+/g,
+        `unpkg.com/diagview@${version}`
+      );
+    }
+  }
+}
