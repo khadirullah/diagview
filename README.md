@@ -68,15 +68,15 @@
 <script src="https://cdn.jsdelivr.net/npm/@panzoom/panzoom@4.5.1/dist/panzoom.min.js"></script>
 
 <!-- 2. DiagView (latest stable) -->
-<script src="https://cdn.jsdelivr.net/npm/diagview@1.0.8/dist/diagview.umd.min.js"></script>
-<!-- For auto-updates within v1: use diagview@1.0.8 instead -->
+<script src="https://cdn.jsdelivr.net/npm/diagview@1.0.9/dist/diagview.umd.min.js"></script>
+<!-- For auto-updates within v1: use diagview@1.0.9 instead -->
 ```
 
 To disable auto-initialization and configure manually:
 
 ```html
 <script
-  src="https://cdn.jsdelivr.net/npm/diagview@1.0.8/dist/diagview.umd.min.js"
+  src="https://cdn.jsdelivr.net/npm/diagview@1.0.9/dist/diagview.umd.min.js"
   data-diagview-no-auto-init
 ></script>
 <script>

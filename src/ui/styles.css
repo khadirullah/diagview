@@ -1093,9 +1093,12 @@
     opacity 0.2s cubic-bezier(0.16, 1, 0.3, 1),
     transform 0.2s cubic-bezier(0.16, 1, 0.3, 1),
     visibility 0s linear;
-  /* Restore scrolling when open — critical for heavy zoom levels where
+  /* Restore scrolling when open — critical for heavy zoom levels and mobile viewports where
      the menu content exceeds the viewport height */
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
+  overscroll-behavior: contain;
 }
 
 .dv-menu-sec {

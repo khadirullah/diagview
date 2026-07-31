@@ -39,13 +39,21 @@ export function lockBodyScroll() {
   const preventDefault = (e) => {
     if (!state.isModalOpen) return;
 
+    // Allow touch scrolling inside scrollable UI elements (e.g. floating menu, help modal)
+    const target = e.target;
+    const isScrollableUI =
+      target &&
+      (target.closest(".diagview-menu") ||
+        target.closest(".diagview-help-content") ||
+        target.closest("[data-scrollable]"));
+
     if (e.touches.length === 1) {
-      // Single-finger: prevent native scrolling everywhere
-      if (e.cancelable) e.preventDefault();
+      // Single-finger: prevent native body scrolling everywhere EXCEPT inside scrollable UI elements
+      if (!isScrollableUI && e.cancelable) e.preventDefault();
     } else if (e.touches.length >= 2) {
       // Multi-finger: only allow inside the viewport (Panzoom handles it)
-      const isInViewport = viewport && viewport.contains(e.target);
-      if (!isInViewport && e.cancelable) e.preventDefault();
+      const isInViewport = viewport && viewport.contains(target);
+      if (!isInViewport && !isScrollableUI && e.cancelable) e.preventDefault();
     }
   };
 
