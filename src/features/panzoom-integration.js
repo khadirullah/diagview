@@ -27,7 +27,7 @@ import { state } from "../core/config.js";
 import { ZOOM, TIMING } from "../core/constants.js";
 import { checkPanzoomDependency } from "../core/utils.js";
 
-import { addManagedListener, addModalListener } from "../core/lifecycle.js";
+import { addModalListener } from "../core/lifecycle.js";
 import { showErrorToast, showInfoToast } from "../ui/toast.js";
 import { blurActiveElement } from "../ui/focus-manager.js";
 
@@ -55,9 +55,11 @@ export function initializePanzoom(element, options = {}) {
 
     const panzoom = window.Panzoom(element, panzoomOptions);
 
-    // Notify on zoom change
+    // Notify on zoom change. Modal-scoped: a new panzoom instance (and a new
+    // cloned element) is created on every modal open, so a destroy-scoped
+    // listener would pin each discarded clone in memory until destroy().
     if (state.config.onZoomChange) {
-      addManagedListener(element, "panzoomchange", (e) => {
+      addModalListener(element, "panzoomchange", (e) => {
         state.config.onZoomChange(e.detail.scale);
       });
     }
