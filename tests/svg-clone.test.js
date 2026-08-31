@@ -81,4 +81,63 @@ describe("SVG Cloning Utilities", () => {
     expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining("No SVG provided"));
     consoleSpy.mockRestore();
   });
+
+  test("sanitizer-removed nodes do not shift baked styles onto wrong elements", () => {
+    // A blocked tag (<animate>, removed in strict mode) sits BEFORE the
+    // styled elements. With post-sanitization positional matching, its
+    // removal shifted every subsequent original<->clone pair by one.
+    const ns = "http://www.w3.org/2000/svg";
+    const dirty = document.createElementNS(ns, "svg");
+    dirty.setAttribute("viewBox", "0 0 100 100");
+
+    const animate = document.createElementNS(ns, "animate");
+    animate.setAttribute("attributeName", "x");
+    dirty.appendChild(animate);
+
+    const circleA = document.createElementNS(ns, "circle");
+    circleA.setAttribute("class", "a");
+    dirty.appendChild(circleA);
+    const circleB = document.createElementNS(ns, "circle");
+    circleB.setAttribute("class", "b");
+    dirty.appendChild(circleB);
+    document.body.appendChild(dirty);
+
+    window.getComputedStyle = jest.fn((el) => ({
+      getPropertyValue: (prop) => {
+        if (prop !== "fill") return "";
+        if (el === circleA) return "rgb(1, 1, 1)";
+        if (el === circleB) return "rgb(2, 2, 2)";
+        return "";
+      },
+    }));
+
+    const clone = cloneSVG(dirty, { preserveStyles: true, securityMode: "strict" });
+    document.body.removeChild(dirty);
+
+    expect(clone.querySelector("animate")).toBeNull(); // removed by sanitizer
+    expect(clone.querySelector(".a").style.fill).toBe("rgb(1, 1, 1)");
+    expect(clone.querySelector(".b").style.fill).toBe("rgb(2, 2, 2)");
+  });
+
+  test("style content removed by the sanitizer is not re-injected by copyStyleElements", () => {
+    const ns = "http://www.w3.org/2000/svg";
+    const dirty = document.createElementNS(ns, "svg");
+    dirty.setAttribute("viewBox", "0 0 10 10");
+
+    const evilStyle = document.createElementNS(ns, "style");
+    evilStyle.textContent = '@import url("javascript:alert(1)");';
+    dirty.appendChild(evilStyle);
+
+    const goodStyle = document.createElementNS(ns, "style");
+    goodStyle.textContent = ".safe { fill: red; }";
+    dirty.appendChild(goodStyle);
+    document.body.appendChild(dirty);
+
+    const clone = cloneSVG(dirty, { securityMode: "strict" });
+    document.body.removeChild(dirty);
+
+    const styles = Array.from(clone.querySelectorAll("style"));
+    expect(styles.some((s) => s.textContent.includes("javascript:"))).toBe(false);
+    expect(styles.some((s) => s.textContent.includes(".safe"))).toBe(true);
+  });
 });

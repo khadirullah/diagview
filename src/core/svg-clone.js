@@ -234,10 +234,46 @@ export function cloneSVG(svg, options = {}) {
   const largeFileThreshold = performance.largeFileThreshold || 1000000;
   const criticalFileLimit = performance.criticalFileLimit || 50000000;
 
-  // Create deep clone and sanitize to prevent XSS.
+  const rawClone = svg.cloneNode(true);
+
+  // Performance Bypass: If SVG is very large, skip the expensive computed style loop
+  let effectivePreserveStyles = preserveStyles;
+  const svgSize = svg.innerHTML?.length || 0;
+
+  if (preserveStyles && svgSize > largeFileThreshold) {
+    effectivePreserveStyles = false;
+    showInfoToast("Large diagram: Performance optimizations applied");
+  }
+
+  // All original<->clone operations pair nodes POSITIONALLY, so they must run
+  // on the raw clone, whose node list matches the original 1:1 by
+  // construction. Running them after sanitization (which can remove nodes)
+  // shifts every subsequent pair, copying styles and text attributes onto the
+  // wrong elements — and, worse, re-injecting <style> content the sanitizer
+  // removed. Sanitizing LAST also means inlined computed styles get scrubbed.
+
+  // Copy style elements
+  if (preserveStyleElements) {
+    copyStyleElements(svg, rawClone);
+  }
+
+  // Preserve text attributes and dimensions
+  if (preserveText) {
+    const originalTexts = svg.querySelectorAll("text, tspan");
+    const clonedTexts = rawClone.querySelectorAll("text, tspan");
+    preserveTextAttributes(originalTexts, clonedTexts);
+  }
+
+  // Copy computed styles to inline styles (for exports)
+  if (effectivePreserveStyles) {
+    const originalNodes = svg.querySelectorAll("*");
+    const clonedNodes = rawClone.querySelectorAll("*");
+    copyComputedStyles(originalNodes, clonedNodes, styleProps);
+  }
+
+  // Sanitize to prevent XSS — always the FINAL content transformation.
   // securityMode is passed from the diagram's elementConfig so that
   // per-element data-diagview-sanitize overrides reach the sanitizer.
-  const rawClone = svg.cloneNode(true);
   const clone = sanitizeSVG(rawClone, securityMode, {
     maxChars: criticalFileLimit,
     allowRemoteResources: allowRemoteResources,
@@ -249,15 +285,6 @@ export function cloneSVG(svg, options = {}) {
     return null;
   }
 
-  // Performance Bypass: If SVG is very large, skip the expensive computed style loop
-  let effectivePreserveStyles = preserveStyles;
-  const svgSize = svg.innerHTML?.length || 0;
-
-  if (preserveStyles && svgSize > largeFileThreshold) {
-    effectivePreserveStyles = false;
-    showInfoToast("Large diagram: Performance optimizations applied");
-  }
-
   // Ensure standard namespaces for external compatibility
   if (clone instanceof SVGElement) {
     if (!clone.hasAttribute("xmlns")) {
@@ -266,25 +293,6 @@ export function cloneSVG(svg, options = {}) {
     if (!clone.hasAttribute("xmlns:xlink")) {
       clone.setAttribute("xmlns:xlink", "http://www.w3.org/1999/xlink");
     }
-  }
-
-  // Copy style elements
-  if (preserveStyleElements) {
-    copyStyleElements(svg, clone);
-  }
-
-  // Preserve text attributes and dimensions
-  if (preserveText) {
-    const originalTexts = svg.querySelectorAll("text, tspan");
-    const clonedTexts = clone.querySelectorAll("text, tspan");
-    preserveTextAttributes(originalTexts, clonedTexts);
-  }
-
-  // Copy computed styles to inline styles (for exports)
-  if (effectivePreserveStyles) {
-    const originalNodes = svg.querySelectorAll("*");
-    const clonedNodes = clone.querySelectorAll("*");
-    copyComputedStyles(originalNodes, clonedNodes, styleProps);
   }
 
   // Final Step: Isolate IDs to prevent collisions (always done for safety unless skipped)
