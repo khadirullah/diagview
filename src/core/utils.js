@@ -281,9 +281,23 @@ const STRICT_BLOCKED_TAGS = new Set([
 /**
  * Matches dangerous URL protocols in href/src/action attributes.
  * Blocks javascript:, vbscript:, and data: URIs by default.
+ * Test only values passed through normalizeURLValue(); the scheme colon is
+ * anchored so benign names like "javascript-guide.html" are not stripped.
  * @private
  */
-const DANGEROUS_URL_RE = /^\s*(?:javascript|vbscript|data:)/i;
+const DANGEROUS_URL_RE = /^(?:javascript|vbscript|data):/i;
+
+/**
+ * Browsers strip ASCII control characters and whitespace (tab, CR, LF, ...)
+ * when parsing URLs, so "java\tscript:alert(1)" executes as "javascript:".
+ * Normalize attribute values the same way before scheme-testing them,
+ * otherwise embedded whitespace bypasses the check.
+ * @private
+ */
+function normalizeURLValue(value) {
+  // eslint-disable-next-line no-control-regex
+  return value.replace(/[\u0000-\u0020]/g, "");
+}
 
 /**
  * Matches dangerous patterns in inline style attribute values.
@@ -433,14 +447,15 @@ export function sanitizeSVG(input, mode = "strict", options = 0) {
 
       // Sanitize URL-bearing attributes for dangerous protocols
       if (["href", "xlink:href", "src", "action"].includes(name)) {
-        if (DANGEROUS_URL_RE.test(value)) {
+        const normalizedValue = normalizeURLValue(value);
+        if (DANGEROUS_URL_RE.test(normalizedValue)) {
           // Allow only safe raster data URIs (PNG, JPG, etc.)
           // This blocks data:image/svg+xml which is an XSS vector.
           const types = options.allowedImageTypes || ["png", "jpeg", "webp", "gif"];
           const typePattern = types.map((t) => t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|");
           const safeRasterRe = new RegExp(`^data:image\\/(?:${typePattern});base64,`, "i");
 
-          if (!safeRasterRe.test(value)) {
+          if (!safeRasterRe.test(normalizedValue)) {
             el.removeAttribute(attr.name);
             continue;
           }
@@ -448,7 +463,8 @@ export function sanitizeSVG(input, mode = "strict", options = 0) {
         // Strict only: block external URL references on <use> elements.
         // <use xlink:href="https://evil.com/xss.svg#payload"> is a
         // cross-origin SVG injection vector that bypasses same-origin policy.
-        if (isStrict && tagName === "use" && /^https?:\/\//i.test(value)) {
+        // Protocol-relative "//host/..." resolves to an external origin too.
+        if (isStrict && tagName === "use" && /^(?:https?:)?\/\//i.test(normalizedValue)) {
           el.removeAttribute(attr.name);
           continue;
         }
