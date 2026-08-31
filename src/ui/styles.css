@@ -972,10 +972,11 @@
   max-width: 100% !important;
   max-height: 100% !important;
   transform-origin: center center !important;
-  /* Promote to a compositor layer. Chromium does this on its own for
-     transformed elements, but Firefox re-rasterizes the whole SVG every
-     pan/zoom frame without the hint — the source of its mobile jank. */
-  will-change: transform;
+  /* NOTE: no static will-change here. A permanent will-change:transform
+     caches the SVG as a fixed-resolution compositor texture, so zooming
+     stretches a bitmap — blurry diagrams on mobile. The hint is applied
+     dynamically during gestures instead (see setupViewportInteractions),
+     which keeps Firefox pans smooth AND re-rasterizes sharp at rest. */
 }
 
 /* Floating Menu Container */

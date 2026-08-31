@@ -27,7 +27,7 @@ import { state } from "../core/config.js";
 import { ZOOM, TIMING } from "../core/constants.js";
 import { checkPanzoomDependency } from "../core/utils.js";
 
-import { addModalListener } from "../core/lifecycle.js";
+import { addModalListener, addModalCleanupFunction } from "../core/lifecycle.js";
 import { showErrorToast, showInfoToast } from "../ui/toast.js";
 import { blurActiveElement } from "../ui/focus-manager.js";
 
@@ -83,6 +83,36 @@ export function setupViewportInteractions(viewport, element, panzoom) {
   // Helper to check if text select mode is ON
   const isTextSelectActive = () => viewport.classList.contains("dv-text-select");
 
+  // Gesture-scoped compositor-layer promotion.
+  // A permanent will-change:transform makes browsers cache the SVG as a
+  // fixed-resolution texture, so zooming stretches a bitmap and diagrams go
+  // blurry (worst on mobile, where texture budgets are small). Without any
+  // hint, Firefox re-rasterizes the SVG on every pan frame and janks.
+  // Compromise: promote only WHILE a gesture is active, then drop the hint
+  // shortly after it ends so the browser re-rasterizes the vectors at the
+  // final scale — smooth during interaction, sharp at rest, on every engine.
+  const WILL_CHANGE_COOLDOWN = 400;
+  let willChangeTimer = null;
+  const armWillChange = () => {
+    if (willChangeTimer) {
+      clearTimeout(willChangeTimer);
+    } else {
+      element.style.willChange = "transform";
+    }
+    willChangeTimer = setTimeout(() => {
+      willChangeTimer = null;
+      element.style.willChange = "";
+    }, WILL_CHANGE_COOLDOWN);
+  };
+  addModalCleanupFunction(() => {
+    if (willChangeTimer) clearTimeout(willChangeTimer);
+    willChangeTimer = null;
+    element.style.willChange = "";
+  });
+  // panzoomchange covers every transform source: drag, pinch, wheel,
+  // keyboard pans, zoom buttons, and programmatic zooms.
+  addModalListener(element, "panzoomchange", armWillChange);
+
   // Desktop wheel zoom (with input blur and safety check)
   const handleWheel = (e) => {
     if (!state.isModalOpen || !panzoom || isTextSelectActive()) return;
@@ -91,6 +121,7 @@ export function setupViewportInteractions(viewport, element, panzoom) {
     // This is critical for stability in modern browsers when the viewport is not hard-locked.
     if (e.cancelable) e.preventDefault();
 
+    armWillChange();
     blurActiveElement();
 
     // Panzoom handles wheel normalization internally for modern versions.
@@ -102,6 +133,7 @@ export function setupViewportInteractions(viewport, element, panzoom) {
   // Desktop mouse down (blur inputs when starting to pan)
   const handleMouseDown = () => {
     if (isTextSelectActive()) return;
+    armWillChange();
     blurActiveElement();
   };
 
@@ -114,6 +146,7 @@ export function setupViewportInteractions(viewport, element, panzoom) {
   // Mobile touch handlers
   const handleTouchStart = (e) => {
     if (isTextSelectActive()) return;
+    armWillChange();
     blurActiveElement();
 
     if (e.touches.length >= 2) {
