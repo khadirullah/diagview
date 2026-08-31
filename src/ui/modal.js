@@ -142,6 +142,12 @@ function _activateModalUI(modal) {
   // Handles pinch-zoomed browsers by force-resetting scale.
   startVisualViewportSync();
 
+  // Re-establish focus management on every open: its teardown runs as
+  // modal-scoped cleanup on every close, but the modal DOM (and createModal's
+  // setup call) only happens once — without this, the focus trap and
+  // click-to-blur handlers are gone from the second session onward.
+  setupModalFocusManagement();
+
   // Save current focus and sync theme
   saveFocus();
   syncTheme();

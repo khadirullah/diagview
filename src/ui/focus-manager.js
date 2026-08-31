@@ -87,10 +87,10 @@ export function restoreFocus() {
  */
 export function setupModalFocusManagement() {
   if (state.focusManagementSetup) return;
-  state.focusManagementSetup = true;
 
   const modal = document.getElementById("diagview-modal");
   if (!modal) return;
+  state.focusManagementSetup = true;
 
   // OPTIMIZATION: Track last execution to prevent double-firing for pointerdown + mousedown
   let lastBlurTime = 0;
