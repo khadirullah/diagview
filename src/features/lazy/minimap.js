@@ -29,7 +29,6 @@ export function updateMinimap(clone, viewport, panzoom) {
   const svgRect = clone.getBoundingClientRect();
   const viewportRect = viewport.getBoundingClientRect();
   const scale = panzoom.getScale();
-  const pan = panzoom.getPan();
 
   // Minimap needed when the scaled diagram exceeds the viewport.
   // Both values in same CSS pixel space — browser zoom has zero effect.
@@ -110,39 +109,48 @@ export function updateMinimap(clone, viewport, panzoom) {
     const handleMinimapClick = (e) => {
       if (!panzoom || !state.minimapSvg) return;
 
-      const mmRect = minimap.getBoundingClientRect();
-      const mmSvgRect = state.minimapSvg.getBoundingClientRect();
+      // Map the click through the minimap SVG's own CTM to get exact viewBox
+      // coordinates — this accounts for the snapshot's letterboxing inside
+      // the minimap box and any CSS rotation, which rectangle arithmetic
+      // (offset + width ratios) gets wrong.
+      const mmCtm = state.minimapSvg.getScreenCTM();
+      if (!mmCtm) return;
+      const clickPt = state.minimapSvg.createSVGPoint();
+      clickPt.x = e.clientX;
+      clickPt.y = e.clientY;
+      const target = clickPt.matrixTransform(mmCtm.inverse());
+      const svgX = target.x;
+      const svgY = target.y;
 
-      // Get click position relative to the minimap container
-      const clickX = e.clientX - mmRect.left;
-      const clickY = e.clientY - mmRect.top;
-
-      // Get actual rendered offsets of the SVG within the container (accounts for object-fit)
-      const offsetX = mmSvgRect.left - mmRect.left;
-      const offsetY = mmSvgRect.top - mmRect.top;
-
-      // Recalculate current geometry
       const curScale = panzoom.getScale();
-      const curViewBox = clone.viewBox?.baseVal;
-      const curD = {
-        width: curViewBox?.width || clone.getBoundingClientRect().width / curScale || 800,
-        height: curViewBox?.height || clone.getBoundingClientRect().height / curScale || 600,
-      };
 
-      // Map click (adjusted for offset) to SVG coordinate space
-      const relX = clickX - offsetX;
-      const relY = clickY - offsetY;
+      // Pan so the clicked SVG point is centered in the viewport.
+      // Use the CTM to find where that point currently sits on screen, then
+      // pan by the remaining delta. Panzoom pan units are pre-scale pixels
+      // and the SVG is letterboxed inside a 100%-sized box, so viewBox units
+      // cannot simply be multiplied by the panzoom scale — the CTM accounts
+      // for the base render scale, letterbox offsets, and transform-origin.
+      const ctm = clone.getScreenCTM();
+      if (!ctm) return;
+      const pt = clone.createSVGPoint();
+      pt.x = svgX;
+      pt.y = svgY;
+      const screenPt = pt.matrixTransform(ctm);
 
-      // Use actual rendered dimensions for scaling
-      const svgX = relX * (curD.width / mmSvgRect.width);
-      const svgY = relY * (curD.height / mmSvgRect.height);
-
-      // Pan so the clicked SVG point is centered in the viewport
       const vpRect = viewport.getBoundingClientRect();
-      const targetPanX = -(svgX * curScale - vpRect.width / 2);
-      const targetPanY = -(svgY * curScale - vpRect.height / 2);
+      const screenDX = screenPt.x - (vpRect.left + vpRect.width / 2);
+      const screenDY = screenPt.y - (vpRect.top + vpRect.height / 2);
 
-      panzoom.pan(targetPanX, targetPanY, { animate: true });
+      // Rotate the screen delta into the SVG's local pan axes (the rotator
+      // wrapper rotates the whole viewport content; pan happens pre-rotation).
+      const angle = state.rotationAngle || 0;
+      const rad = (-angle * Math.PI) / 180;
+      const cos = Math.cos(rad);
+      const sin = Math.sin(rad);
+      const panDX = (-screenDX / curScale) * cos - (-screenDY / curScale) * sin;
+      const panDY = (-screenDX / curScale) * sin + (-screenDY / curScale) * cos;
+
+      panzoom.pan(panDX, panDY, { animate: true, relative: true });
     };
 
     // MAJ-6: Use a self-resetting cleanup wrapper. This ensures the module-level
@@ -163,26 +171,36 @@ export function updateMinimap(clone, viewport, panzoom) {
     state.minimapSvg.style.transform = `rotate(${state.rotationAngle}deg)`;
   }
 
-  // Calculate minimap scale
+  // Position the viewport indicator by mapping the visible screen rect into
+  // viewBox coordinates through the CTM — the same mapping the click handler
+  // uses — then into the rendered minimap snapshot's pixel box. Deriving it
+  // from pan/scale arithmetic instead drifts as zoom grows, because panzoom
+  // pan units are pre-scale pixels of a letterboxed 100%-sized SVG, not
+  // viewBox units.
   const minimapRect = minimap.getBoundingClientRect();
-  const minimapScale = Math.min(minimapRect.width / d.width, minimapRect.height / d.height) * 0.9;
-
-  // Calculate viewport indicator position
-  // We use the actual pan values from panzoom — these already reflect the
-  // correct physical offset regardless of the naturalPanning setting.
-  const vx = (-pan.x / scale + d.width / 2 - viewportRect.width / 2 / scale) * minimapScale;
-  const vy = (-pan.y / scale + d.height / 2 - viewportRect.height / 2 / scale) * minimapScale;
-  const vw = (viewportRect.width / scale) * minimapScale;
-  const vh = (viewportRect.height / scale) * minimapScale;
-
-  // Center offset
-  const ox = (minimapRect.width - d.width * minimapScale) / 2;
-  const oy = (minimapRect.height - d.height * minimapScale) / 2;
-
-  // Update viewport indicator
   const viewportIndicator = minimap.querySelector(".dv-mm-v");
-  if (viewportIndicator) {
-    viewportIndicator.style.cssText = `left:${ox + vx}px;top:${oy + vy}px;width:${vw}px;height:${vh}px`;
+  const ctm = clone.getScreenCTM();
+  const mmSvgRect = state.minimapSvg.getBoundingClientRect();
+  if (viewportIndicator && ctm && mmSvgRect.width > 0 && mmSvgRect.height > 0) {
+    const inv = ctm.inverse();
+    const toViewBox = (screenX, screenY) => {
+      const p = clone.createSVGPoint();
+      p.x = screenX;
+      p.y = screenY;
+      return p.matrixTransform(inv);
+    };
+    const p1 = toViewBox(viewportRect.left, viewportRect.top);
+    const p2 = toViewBox(viewportRect.right, viewportRect.bottom);
+    const clamp = (v, max) => Math.min(Math.max(v, 0), max);
+    const minX = clamp(Math.min(p1.x, p2.x), d.width);
+    const maxX = clamp(Math.max(p1.x, p2.x), d.width);
+    const minY = clamp(Math.min(p1.y, p2.y), d.height);
+    const maxY = clamp(Math.max(p1.y, p2.y), d.height);
+    const px = (v) => (v / d.width) * mmSvgRect.width;
+    const py = (v) => (v / d.height) * mmSvgRect.height;
+    const left = mmSvgRect.left - minimapRect.left + px(minX);
+    const top = mmSvgRect.top - minimapRect.top + py(minY);
+    viewportIndicator.style.cssText = `left:${left}px;top:${top}px;width:${px(maxX - minX)}px;height:${py(maxY - minY)}px`;
   }
 }
 
