@@ -130,7 +130,12 @@ describe("Share System", () => {
     expect(state.rotationAngle).toBe(180);
   });
 
-  test("applyRestoredViewState triggers matrix-based panning", (done) => {
+  // The corrective pan is deferred one macrotask + one frame so it runs after
+  // Panzoom's forced init pan(startX, startY) timer (which otherwise resets it).
+  const flushRestoreTiming = () =>
+    new Promise((resolve) => setTimeout(() => requestAnimationFrame(resolve)));
+
+  test("applyRestoredViewState triggers matrix-based panning", async () => {
     const diagram = { id: "diag1" };
     window.location = new URL("http://localhost/test?dv-idx=0&dv-cx=100&dv-cy=100");
     restoreViewFromURL([diagram]);
@@ -138,10 +143,8 @@ describe("Share System", () => {
     state.isModalOpen = true;
     applyRestoredViewState(diagram, state.activePanzoom);
 
-    requestAnimationFrame(() => {
-      expect(state.activePanzoom.pan).toHaveBeenCalled();
-      done();
-    });
+    await flushRestoreTiming();
+    expect(state.activePanzoom.pan).toHaveBeenCalled();
   });
 
   test("generateShareLink returns null if panzoom is missing", () => {
@@ -154,12 +157,15 @@ describe("Share System", () => {
     expect(restoreViewFromURL([])).toBe(false);
   });
 
-  test("applyRestoredViewState falls back to raw x/y if cx/cy missing", () => {
+  test("applyRestoredViewState falls back to raw x/y if cx/cy missing", async () => {
     const diagram = { id: "diag1" };
     window.location = new URL("http://localhost/test?dv-idx=0&dv-x=150&dv-y=250");
     restoreViewFromURL([diagram]);
 
+    state.isModalOpen = true;
     applyRestoredViewState(diagram, state.activePanzoom);
+
+    await flushRestoreTiming();
     expect(state.activePanzoom.pan).toHaveBeenCalledWith(150, 250, expect.any(Object));
   });
 
@@ -178,7 +184,7 @@ describe("Share System", () => {
     expect(showSuccessToast).toHaveBeenCalled();
   });
 
-  test("applyRestoredViewState falls back to x/y if cx/cy fails in RAF", (done) => {
+  test("applyRestoredViewState falls back to x/y if cx/cy fails in RAF", async () => {
     const diagram = { id: "diag1" };
     window.location = new URL("http://localhost/test?dv-idx=0&dv-cx=100&dv-cy=100&dv-x=50&dv-y=50");
     restoreViewFromURL([diagram]);
@@ -189,11 +195,8 @@ describe("Share System", () => {
     state.isModalOpen = true;
     applyRestoredViewState(diagram, state.activePanzoom);
 
-    requestAnimationFrame(() => {
-      // Should hit line 309: panzoom.pan(x, y, { animate: false });
-      expect(state.activePanzoom.pan).toHaveBeenCalledWith(50, 50, { animate: false });
-      done();
-    });
+    await flushRestoreTiming();
+    expect(state.activePanzoom.pan).toHaveBeenCalledWith(50, 50, { animate: false });
   });
 
   test("restoreViewFromURL returns false for out of bounds index", () => {

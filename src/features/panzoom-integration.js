@@ -211,11 +211,20 @@ export function restoreZoomState(diagramId, panzoom) {
     if (!stored) return false;
 
     const zoomState = JSON.parse(stored);
+    if (typeof zoomState?.scale !== "number" || typeof zoomState?.pan?.x !== "number") {
+      return false;
+    }
 
     // Apply saved state
     state.rotationAngle = zoomState.rotation !== undefined ? zoomState.rotation : 0;
     panzoom.zoom(zoomState.scale, { animate: false });
-    panzoom.pan(zoomState.pan.x, zoomState.pan.y, { animate: false });
+    // Panzoom's constructor schedules pan(startX, startY, {force: true}) on a
+    // 0ms timer; a pan applied before that fires is reset to (0,0) while the
+    // scale is kept. Queue the restored pan as a later macrotask so it wins.
+    setTimeout(() => {
+      if (!state.isModalOpen || state.activePanzoom !== panzoom) return;
+      panzoom.pan(zoomState.pan.x, zoomState.pan.y, { animate: false });
+    });
 
     return true;
   } catch (e) {
