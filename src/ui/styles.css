@@ -972,6 +972,10 @@
   max-width: 100% !important;
   max-height: 100% !important;
   transform-origin: center center !important;
+  /* Promote to a compositor layer. Chromium does this on its own for
+     transformed elements, but Firefox re-rasterizes the whole SVG every
+     pan/zoom frame without the hint — the source of its mobile jank. */
+  will-change: transform;
 }
 
 /* Floating Menu Container */
