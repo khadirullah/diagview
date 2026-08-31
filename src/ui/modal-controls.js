@@ -101,6 +101,11 @@ export function unlockBodyScroll() {
  */
 export async function closeModal() {
   if (!state.isModalOpen) return;
+  // Re-entrancy guard: this function awaits lazy imports, during which
+  // isModalOpen is still true — a second Escape/close-click in that window
+  // would run the whole teardown (including onClose) twice.
+  if (state.isModalClosing) return;
+  state.isModalClosing = true;
 
   try {
     // 1. Run modal-specific cleanup functions (event listeners, focus trap, etc.)
@@ -179,6 +184,7 @@ export async function closeModal() {
     // 7. Critical State Reset (Always run even if cleanup fails)
     state.isModalOpen = false;
     state.isModalOpening = false;
+    state.isModalClosing = false;
     state.activeSourceElement = null;
     state.touchState = {
       isPinching: false,

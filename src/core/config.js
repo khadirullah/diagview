@@ -24,6 +24,7 @@ function createInitialState() {
     isInitialized: false,
     isModalOpen: false,
     isModalOpening: false,
+    isModalClosing: false,
     cleanupFunctions: new Set(),
     modalCleanupFunctions: new Set(),
     hasCheckedShareLink: false,
@@ -270,6 +271,7 @@ export { DEFAULT_CONFIG, INITIAL_CONFIG };
  * @property {boolean} isInitialized - Whether DiagView has been initialised
  * @property {boolean} isModalOpen - Whether fullscreen modal is open
  * @property {boolean} isModalOpening - Whether modal is currently initializing
+ * @property {boolean} isModalClosing - Whether modal teardown is in progress (re-entrancy guard)
  * @property {Set<Function>} cleanupFunctions - Global cleanup functions
  * @property {Set<Function>} modalCleanupFunctions - Modal-scoped cleanup functions
  * @property {boolean} hasCheckedShareLink - Share link check flag
