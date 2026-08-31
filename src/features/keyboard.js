@@ -24,6 +24,25 @@ function handleKeyboardShortcut(e) {
       return;
     }
 
+    // Two-stage Escape while searching. This handler is window-level capture,
+    // so it runs BEFORE the search input's own Escape handler — without this
+    // guard, Escape while typing closes the whole modal instead of clearing
+    // the query.
+    const searchInput = document.getElementById("diagview-search");
+    if (searchInput && document.activeElement === searchInput) {
+      if (searchInput.value) {
+        // Stage 1: let the search input's own handler clear the query.
+        return;
+      }
+      // Stage 2: empty query — exit search mode; the next Escape closes the
+      // modal. Move focus off the (now hidden) input, or this branch would
+      // capture every subsequent Escape too.
+      document.getElementById("diagview-search-back")?.click();
+      searchInput.blur();
+      document.getElementById("diagview-modal")?.focus();
+      return;
+    }
+
     // Otherwise close the main modal
     closeModal();
     return;
