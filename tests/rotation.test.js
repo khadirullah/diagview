@@ -63,8 +63,10 @@ describe("Rotation Logic", () => {
     expect(stored.rotation).toBe(270);
   });
 
-  test("restoreZoomState restores rotation from sessionStorage", () => {
+  test("restoreZoomState restores rotation from sessionStorage", async () => {
     updateConfig({ rememberZoom: true });
+    state.isModalOpen = true;
+    state.activePanzoom = mockPanzoom;
     const zoomState = {
       scale: 1.5,
       pan: { x: 10, y: 20 },
@@ -74,6 +76,11 @@ describe("Rotation Logic", () => {
     sessionStorage.setItem("diagview-zoom-states:diag1", JSON.stringify(zoomState));
 
     restoreZoomState("diag1", mockPanzoom);
+
+    // Rotation is now APPLIED via a dynamic import of rotate.js before
+    // zoom/pan run — flush the async chain.
+    await new Promise((resolve) => setTimeout(resolve, 20));
+
     expect(state.rotationAngle).toBe(180);
     expect(mockPanzoom.zoom).toHaveBeenCalledWith(1.5, { animate: false });
   });

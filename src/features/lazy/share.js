@@ -291,70 +291,87 @@ export function applyRestoredViewState(diagram, panzoom) {
       .catch(() => {});
   }
 
-  if (rotation !== null) state.rotationAngle = rotation;
-  if (scale !== null) panzoom.zoom(scale, { animate: false });
+  const applyZoomAndPan = () => {
+    if (scale !== null) panzoom.zoom(scale, { animate: false });
+    schedulePanRestore();
+  };
 
-  if (cx !== null && cy !== null) {
-    // Panzoom's constructor schedules pan(startX, startY, {force: true}) on a
-    // 0ms timer ("Wait for scale to update" in @panzoom/panzoom init). Any pan
-    // applied before that timer fires is silently reset to (0,0) — scale is
-    // kept, so the restored view lands on the diagram center instead of the
-    // shared point. Queue our correction as a later macrotask so it wins.
-    //
-    // The correction converges over up to 3 frames: the modal layout can still
-    // be settling on the first frame, which makes a single measurement fall
-    // short. Each pass re-measures the on-screen error via the CTM and pans by
-    // the remainder, stopping once the target sits within 1px of center.
-    const MAX_CORRECTION_PASSES = 3;
-    const correctToCenter = (pass) => {
-      requestAnimationFrame(() => {
+  // Rotation must be APPLIED to the DOM, not just written to state — the
+  // minimap renders from state.rotationAngle, so a bare state write shows a
+  // rotated minimap over an unrotated diagram. applyRotationAngle rebuilds
+  // the .dv-rot-g group and rewrites the viewBox exactly like pressing R,
+  // which also puts the SVG's user space back in the same (rotated)
+  // coordinate system the shared cx/cy were captured in.
+  if (rotation !== null && rotation !== 0) {
+    import("./rotate.js")
+      .then((m) => {
+        if (state.isModalOpen) m.applyRotationAngle(rotation);
+      })
+      .catch(() => {})
+      .then(applyZoomAndPan);
+  } else {
+    applyZoomAndPan();
+  }
+
+  function schedulePanRestore() {
+    if (cx !== null && cy !== null) {
+      // Panzoom's constructor schedules pan(startX, startY, {force: true}) on a
+      // 0ms timer ("Wait for scale to update" in @panzoom/panzoom init). Any pan
+      // applied before that timer fires is silently reset to (0,0) — scale is
+      // kept, so the restored view lands on the diagram center instead of the
+      // shared point. Queue our correction as a later macrotask so it wins.
+      //
+      // The correction converges over up to 3 frames: the modal layout can still
+      // be settling on the first frame, which makes a single measurement fall
+      // short. Each pass re-measures the on-screen error via the CTM and pans by
+      // the remainder, stopping once the target sits within 1px of center.
+      const MAX_CORRECTION_PASSES = 3;
+      const correctToCenter = (pass) => {
+        requestAnimationFrame(() => {
+          if (!state.isModalOpen || state.activePanzoom !== panzoom) return;
+          const viewport = document.getElementById("diagview-modal-viewport");
+          const svg = viewport?.querySelector("svg");
+          if (!svg || !panzoom) return;
+
+          const screenPt = getSVGPointInScreenCoords(svg, cx, cy);
+
+          if (screenPt) {
+            const vRect = viewport.getBoundingClientRect();
+            const vcx = vRect.left + vRect.width / 2;
+            const vcy = vRect.top + vRect.height / 2;
+
+            // Calculate the screen-pixel delta between current point and center
+            const screenDX = screenPt.x - vcx;
+            const screenDY = screenPt.y - vcy;
+
+            if (Math.abs(screenDX) < 1 && Math.abs(screenDY) < 1) return;
+
+            // Map pixel delta to Panzoom units based on active scale.
+            // No rotation compensation: rotation lives on an inner SVG group
+            // applied AFTER panzoom's scale/translate in the transform chain,
+            // so pan always responds in raw screen axes (verified empirically
+            // at 0/90/180/270).
+            const currentScale = panzoom.getScale();
+
+            panzoom.pan(-screenDX / currentScale, -screenDY / currentScale, {
+              animate: false,
+              relative: true,
+            });
+            if (pass + 1 < MAX_CORRECTION_PASSES) correctToCenter(pass + 1);
+          } else if (x !== null && y !== null) {
+            // Fallback to legacy raw pan
+            panzoom.pan(x, y, { animate: false });
+          }
+        });
+      };
+      setTimeout(() => correctToCenter(0));
+    } else if (x !== null && y !== null) {
+      // Same deferral: outrun Panzoom's forced init pan (see comment above).
+      setTimeout(() => {
         if (!state.isModalOpen || state.activePanzoom !== panzoom) return;
-        const viewport = document.getElementById("diagview-modal-viewport");
-        const svg = viewport?.querySelector("svg");
-        if (!svg || !panzoom) return;
-
-        const screenPt = getSVGPointInScreenCoords(svg, cx, cy);
-
-        if (screenPt) {
-          const vRect = viewport.getBoundingClientRect();
-          const vcx = vRect.left + vRect.width / 2;
-          const vcy = vRect.top + vRect.height / 2;
-
-          // Calculate the screen-pixel delta between current point and center
-          const screenDX = screenPt.x - vcx;
-          const screenDY = screenPt.y - vcy;
-
-          if (Math.abs(screenDX) < 1 && Math.abs(screenDY) < 1) return;
-
-          // Map pixel delta to Panzoom units based on active scale
-          const currentScale = panzoom.getScale();
-
-          // Rotation Correction:
-          // Subtracting screen coordinates requires rotating the vector by the
-          // diagram's rotation angle to find the correct pan offset.
-          const angle = state.rotationAngle || 0;
-          const rad = (-angle * Math.PI) / 180;
-          const cos = Math.cos(rad);
-          const sin = Math.sin(rad);
-
-          const finalX = (-screenDX / currentScale) * cos - (-screenDY / currentScale) * sin;
-          const finalY = (-screenDX / currentScale) * sin + (-screenDY / currentScale) * cos;
-
-          panzoom.pan(finalX, finalY, { animate: false, relative: true });
-          if (pass + 1 < MAX_CORRECTION_PASSES) correctToCenter(pass + 1);
-        } else if (x !== null && y !== null) {
-          // Fallback to legacy raw pan
-          panzoom.pan(x, y, { animate: false });
-        }
+        panzoom.pan(x, y, { animate: false });
       });
-    };
-    setTimeout(() => correctToCenter(0));
-  } else if (x !== null && y !== null) {
-    // Same deferral: outrun Panzoom's forced init pan (see comment above).
-    setTimeout(() => {
-      if (!state.isModalOpen || state.activePanzoom !== panzoom) return;
-      panzoom.pan(x, y, { animate: false });
-    });
+    }
   }
 
   shareStates.delete(diagram);

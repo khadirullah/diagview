@@ -118,13 +118,17 @@ describe("Share System", () => {
     expect(shareState.query).toBe("foo");
   });
 
-  test("applyRestoredViewState applies zoom and rotation", () => {
+  test("applyRestoredViewState applies zoom and rotation", async () => {
     const diagram = { id: "diag1" };
     window.location = new URL("http://localhost/test?dv-idx=0&dv-z=2.5&dv-r=180");
     restoreViewFromURL([diagram]);
 
     state.isModalOpen = true;
     applyRestoredViewState(diagram, state.activePanzoom);
+
+    // Rotation is now APPLIED via a dynamic import of rotate.js before
+    // zoom/pan run — flush the async chain.
+    await new Promise((resolve) => setTimeout(resolve, 20));
 
     expect(state.activePanzoom.zoom).toHaveBeenCalledWith(2.5, expect.any(Object));
     expect(state.rotationAngle).toBe(180);

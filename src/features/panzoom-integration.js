@@ -250,16 +250,35 @@ export function restoreZoomState(diagramId, panzoom) {
       return false;
     }
 
-    // Apply saved state
-    state.rotationAngle = zoomState.rotation !== undefined ? zoomState.rotation : 0;
-    panzoom.zoom(zoomState.scale, { animate: false });
-    // Panzoom's constructor schedules pan(startX, startY, {force: true}) on a
-    // 0ms timer; a pan applied before that fires is reset to (0,0) while the
-    // scale is kept. Queue the restored pan as a later macrotask so it wins.
-    setTimeout(() => {
+    // Apply saved state. The saved pan/scale were captured with the rotation
+    // applied (rotate.js rewrites the viewBox), so the rotation must be
+    // re-APPLIED to the DOM first — writing state.rotationAngle alone rotates
+    // nothing and leaves the minimap rotated over an unrotated diagram.
+    const rotation = zoomState.rotation !== undefined ? zoomState.rotation : 0;
+    const applyZoomAndPan = () => {
       if (!state.isModalOpen || state.activePanzoom !== panzoom) return;
-      panzoom.pan(zoomState.pan.x, zoomState.pan.y, { animate: false });
-    });
+      panzoom.zoom(zoomState.scale, { animate: false });
+      // Panzoom's constructor schedules pan(startX, startY, {force: true}) on
+      // a 0ms timer; a pan applied before that fires is reset to (0,0) while
+      // the scale is kept. Queue the restored pan as a later macrotask.
+      setTimeout(() => {
+        if (!state.isModalOpen || state.activePanzoom !== panzoom) return;
+        panzoom.pan(zoomState.pan.x, zoomState.pan.y, { animate: false });
+      });
+    };
+    if (rotation !== 0) {
+      import("./lazy/rotate.js")
+        .then((m) => {
+          if (state.isModalOpen) m.applyRotationAngle(rotation);
+        })
+        .catch(() => {
+          state.rotationAngle = 0;
+        })
+        .then(applyZoomAndPan);
+    } else {
+      state.rotationAngle = 0;
+      applyZoomAndPan();
+    }
 
     return true;
   } catch (e) {

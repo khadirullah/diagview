@@ -9,16 +9,20 @@ import { showSuccessToast } from "../../ui/toast.js";
 import { centerSVGViewBox } from "../../core/utils.js";
 
 /**
- * Rotate diagram by 90 degrees
- * Architecture Fix: Rotates an inner <g> instead of the parent <div>.
+ * Apply a rotation angle to the modal diagram's DOM.
+ * Extracted from rotateDiagram so view restores (share links, rememberZoom)
+ * can apply a saved angle — writing state.rotationAngle alone rotates
+ * nothing, which left the minimap rotated over an unrotated diagram.
+ * @param {number} angle - 0, 90, 180, or 270
+ * @returns {boolean} true if the rotation was applied to the DOM
  */
-export function rotateDiagram() {
-  state.rotationAngle = (state.rotationAngle + 90) % 360;
+export function applyRotationAngle(angle) {
+  state.rotationAngle = ((angle % 360) + 360) % 360;
 
   const rotator = document.getElementById("diagview-rotator");
   const svgEl = rotator?.querySelector("svg");
 
-  if (!svgEl) return;
+  if (!svgEl) return false;
 
   // Ensure an inner rotation group exists
   let rotGroup = svgEl.querySelector(":scope > g.dv-rot-g");
@@ -45,6 +49,15 @@ export function rotateDiagram() {
   // RE-CENTER: Update the viewBox to match the new rotated bounds.
   // This prevents the diagram from being clipped by the original viewBox.
   centerSVGViewBox(svgEl);
+  return true;
+}
+
+/**
+ * Rotate diagram by 90 degrees
+ * Architecture Fix: Rotates an inner <g> instead of the parent <div>.
+ */
+export function rotateDiagram() {
+  if (!applyRotationAngle(state.rotationAngle + 90)) return;
 
   // Recalibrate panzoom so it recalculates bounds
   state.activePanzoom?.reset({ animate: true });
