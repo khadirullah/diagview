@@ -14,11 +14,7 @@
       "import": "./dist/esm/index.js",
       "require": "./dist/diagview.umd.js"
     },
-    "./style": {
-      "types": "./dist/diagview.css",
-      "import": "./dist/diagview.css",
-      "require": "./dist/diagview.css"
-    }
+    "./style": "./dist/diagview.css"
   },
   "files": [
     "dist",
@@ -29,8 +25,9 @@
     "test": "NODE_OPTIONS=--experimental-vm-modules jest",
     "test:coverage": "NODE_OPTIONS=--experimental-vm-modules jest --coverage",
     "dev": "rollup -c -w",
-    "build": "npm run version:sync && npm run clean && npm run build:lib && npm run build:types",
+    "build": "npm run version:sync && npm run clean && npm run build:lib && npm run build:css && npm run build:types",
     "build:lib": "rollup -c",
+    "build:css": "cp src/ui/styles.css dist/diagview.css",
     "build:analyze": "npm run clean && ANALYZE=1 rollup -c && npm run build:types",
     "build:types": "tsc --declaration --emitDeclarationOnly --outDir dist",
     "version:sync": "node scripts/sync-version.js",
