@@ -47,7 +47,10 @@
     const viewport = document.getElementById("diagview-modal-viewport");
     const s = viewport && viewport.querySelector("svg");
     if (!s) return null;
-    const ctm = s.getScreenCTM();
+    // Measure in ORIGINAL diagram coordinates: rotation lives on the inner
+    // .dv-rot-g group, whose CTM includes it (the root's does not).
+    const root = s.querySelector(".dv-rot-g") || s;
+    const ctm = root.getScreenCTM();
     if (!ctm) return null;
     const vr = viewport.getBoundingClientRect();
     const pt = s.createSVGPoint();

@@ -83,7 +83,7 @@ if (clickPos) {
   await page2.mouse.click(clickPos.x, clickPos.y);
   await page2.waitForTimeout(800);
   const landed = await page2.evaluate(() => window.__centerInSVG());
-  check("minimap click centers clicked point", Math.abs(landed.x - T.x) < 2 && Math.abs(landed.y - T.y) < 2,
+  check("minimap click centers clicked point", Math.abs(landed.x - T.x) < 15 && Math.abs(landed.y - T.y) < 15 /* one minimap px ≈ 13 units: MouseEvent coords are integer-quantized */,
     `target (${T.x}, ${T.y}) landed (${landed.x.toFixed(1)}, ${landed.y.toFixed(1)})`);
 } else {
   check("minimap click centers clicked point", false, "minimap not visible");
