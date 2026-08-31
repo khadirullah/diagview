@@ -6,6 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 
 ---
 
+## [1.0.11] - 2026-08-31
+
+### Fixed
+
+- **Blurry Diagrams at Zoom on Mobile** — The static `will-change: transform` introduced in v1.0.10 made browsers cache the SVG as a fixed-resolution texture, so zooming stretched a bitmap (worst on mobile). The compositor-layer hint is now gesture-scoped: applied on mouse/touch/wheel activity and released 400 ms after the last change, so the browser re-rasterizes the vectors at the final scale. Smooth panning (including Firefox) _and_ sharp rendering at rest, at any zoom.
+- **Escape While Searching Closed the Modal** — Escape is now two-stage during search: with a query it clears the query, with an empty query it exits search mode and returns focus to the modal, and the next Escape closes the modal.
+- **Double-Fired Close Sequence** — Rapid Escape presses during a slow close could run the entire modal teardown twice (`onClose` fired twice, focus restore double-ran). A re-entrancy guard makes the close sequence run exactly once.
+- **Minimap Broken While Rotated** — Clicking the minimap on a rotated diagram navigated to the wrong location and the viewport indicator was misplaced. Coordinate mapping now goes through the internal rotation group's CTM, pan no longer applies an incorrect rotation "correction" (pan responds in screen axes at every angle), the indicator maps through the snapshot's own CTM (correct at 90°/270° axis swaps) and re-positions after animated pans settle. Verified at 0/90/180/270 with a new e2e suite.
+- **Rotation Not Restored by Share Links / rememberZoom** — Restoring a view with `dv-r` (or a remembered rotation) only wrote `state.rotationAngle` without rotating the DOM: recipients saw a rotated minimap over an unrotated diagram at the shared zoom. The rotation is now actually applied (same code path as pressing R) before the zoom/pan restore, and the share corrective pan drops its incorrect rotation compensation. Verified end-to-end: a rotated+zoomed share restores rotation on both diagram and minimap with the center within 1 SVG unit.
+
+---
+
 ## [1.0.10] - 2026-08-31
 
 ### Fixed

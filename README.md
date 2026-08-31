@@ -68,15 +68,15 @@
 <script src="https://cdn.jsdelivr.net/npm/@panzoom/panzoom@4.5.1/dist/panzoom.min.js"></script>
 
 <!-- 2. DiagView (latest stable) -->
-<script src="https://cdn.jsdelivr.net/npm/diagview@1.0.10/dist/diagview.umd.min.js"></script>
-<!-- For auto-updates within v1: use diagview@1.0.10 instead -->
+<script src="https://cdn.jsdelivr.net/npm/diagview@1.0.11/dist/diagview.umd.min.js"></script>
+<!-- For auto-updates within v1: use diagview@1 instead -->
 ```
 
 To disable auto-initialization and configure manually:
 
 ```html
 <script
-  src="https://cdn.jsdelivr.net/npm/diagview@1.0.10/dist/diagview.umd.min.js"
+  src="https://cdn.jsdelivr.net/npm/diagview@1.0.11/dist/diagview.umd.min.js"
   data-diagview-no-auto-init
 ></script>
 <script>
@@ -218,20 +218,20 @@ Any diagram can override the global configuration using `data-diagview-*` attrib
 
 All shortcuts are active when the fullscreen modal is open.
 
-| Key              | Action                                          |
-| ---------------- | ----------------------------------------------- |
-| `Esc`            | Close fullscreen (or close keyboard help first) |
-| `Space` / `0`    | Reset zoom — fit diagram to screen              |
-| `+` / `=`        | Zoom in                                         |
-| `-` / `_`        | Zoom out                                        |
-| `↑` `↓` `←` `→`  | Pan diagram                                     |
-| `Shift` + `↑↓←→` | Fast pan (3× speed)                             |
-| `F`              | Focus search input                              |
-| `T`              | Toggle text-select mode (copy SVG labels)       |
-| `R`              | Rotate 90° clockwise                            |
-| `M`              | Toggle meeting mode (laser pointer)             |
-| `L`              | Copy share link to clipboard                    |
-| `?`              | Show/hide keyboard shortcuts panel              |
+| Key              | Action                                                  |
+| ---------------- | ------------------------------------------------------- |
+| `Esc`            | Close fullscreen (keyboard help and search close first) |
+| `Space` / `0`    | Reset zoom — fit diagram to screen                      |
+| `+` / `=`        | Zoom in                                                 |
+| `-` / `_`        | Zoom out                                                |
+| `↑` `↓` `←` `→`  | Pan diagram                                             |
+| `Shift` + `↑↓←→` | Fast pan (3× speed)                                     |
+| `F`              | Focus search input                                      |
+| `T`              | Toggle text-select mode (copy SVG labels)               |
+| `R`              | Rotate 90° clockwise                                    |
+| `M`              | Toggle meeting mode (laser pointer)                     |
+| `L`              | Copy share link to clipboard                            |
+| `?`              | Show/hide keyboard shortcuts panel                      |
 
 ---
 

@@ -21,9 +21,11 @@ updateFile(
 );
 
 // 2. Update version strings in README.md and docs/*.md (e.g. diagview@1.0.4)
+// Match full x.y.z versions only — a loose pattern would also rewrite the
+// intentional "diagview@1" auto-update examples.
 updateFile(
   'README.md',
-  /diagview@[0-9.]+/g,
+  /diagview@[0-9]+\.[0-9]+\.[0-9]+/g,
   `diagview@${version}`
 );
 if (fs.existsSync('docs')) {

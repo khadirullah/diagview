@@ -86,6 +86,19 @@ npx jest tests/search.test.js
 npx jest --watch
 ```
 
+### E2E geometry harness (real Chrome)
+
+Interaction paths JSDOM cannot test — pan/zoom geometry, share-link restore
+accuracy, minimap click precision, rotation, focus trapping — are verified by
+measurement scripts in `tests/e2e/`. They are a manual pre-release gate, not
+part of CI. See `tests/e2e/README.md` for setup and usage:
+
+```bash
+npm run build
+npm install --no-save playwright-core
+node tests/e2e/final-verify.mjs
+```
+
 Coverage thresholds are enforced. The build will fail if coverage drops below:
 
 | Metric     | Threshold |
