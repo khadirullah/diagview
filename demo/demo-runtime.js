@@ -8,7 +8,7 @@
  */
 (function () {
     /* ── Version (single source of truth for all demo pages) ── */
-    var DV_VERSION = '1.0.9';
+    var DV_VERSION = '1.0.10';
 
     /* ── Phase 1: Immediate — runs before first paint ── */
 

@@ -43,7 +43,7 @@ Complete guide from basic setup to advanced integration patterns.
 <script src="https://cdn.jsdelivr.net/npm/@panzoom/panzoom@4.5.1/dist/panzoom.min.js"></script>
 
 <!-- DiagView (latest stable) -->
-<script src="https://cdn.jsdelivr.net/npm/diagview@1.0.6/dist/diagview.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/diagview@1.0.10/dist/diagview.umd.min.js"></script>
 <!-- Or for auto-updates within v1: diagview@1 -->
 ```
 
@@ -332,7 +332,7 @@ Share the exact zoom level and pan position with anyone. The generated URL conta
 ### Example URL
 
 ```
-https://example.com/docs#architecture?dv-idx=2&dv-z=2.500&dv-cx=450&dv-cy=300&dv-r=0&dv-q=auth&dv-t=dark&dv-c=0b0f19
+https://example.com/docs?dv-idx=2&dv-z=2.500&dv-cx=450&dv-cy=300&dv-r=0&dv-q=auth&dv-t=dark&dv-c=0b0f19
 ```
 
 ### Activation

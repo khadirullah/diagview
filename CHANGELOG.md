@@ -6,6 +6,29 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 
 ---
 
+## [1.0.10] - 2026-08-31
+
+### Fixed
+
+- **Share Links Restoring the Wrong Position** — `@panzoom/panzoom`'s constructor schedules a forced `pan(0,0)` on a 0ms timer, which silently clobbered the restored pan of share links and `rememberZoom` (zoom was kept, position reset to the diagram center — most visible above ~200% zoom). The corrective pan is now deferred past that timer and converges over up to 3 frames; restore accuracy at 3× zoom improved from ~281 SVG units off to <1 unit.
+- **Minimap Click Navigation** — Clicks navigated to the wrong location (or blank space) at higher zoom levels because viewBox coordinates were multiplied by the panzoom scale, ignoring the base render scale and letterboxing. Clicks and the viewport indicator now map through the SVG's `ScreenCTM`, landing exactly on the clicked point at any zoom or rotation.
+- **Focus Trap Lost After First Modal Close** — Focus management was set up once at modal creation but torn down on every close, so from the second open onward Tab escaped the fullscreen dialog (WCAG failure) and single-key shortcuts died after clicking a toolbar button. It is now re-established on every open.
+- **Memory Leak with `onZoomChange`** — The `panzoomchange` listener was registered destroy-scoped per modal open, pinning each discarded SVG clone in memory. Now modal-scoped and cleaned up on close.
+- **Sanitizer URL Scheme Bypass** — `javascript:` URLs with embedded whitespace/control characters (e.g. `java&#9;script:`) passed the scheme check while browsers execute them. URL values are now normalized before testing; the anchored scheme colon also stops benign hrefs like `javascript-guide.html` from being stripped. Strict mode's external `<use>` block now also catches protocol-relative `//host/...` references.
+- **Cloned Diagram Style Corruption** — Original→clone style and text-attribute copies paired nodes by index _after_ sanitization; any removed node shifted every subsequent pair, corrupting rendering and re-injecting `<style>` content the sanitizer removed. Positional copies now run before sanitization, and inlined computed styles get scrubbed by the sanitizer.
+- **Broken `diagview/style` Package Export** — The exports map pointed at `dist/diagview.css`, which no build step produced; `import "diagview/style"` failed. The build now emits the CSS file and the invalid `types` condition was removed.
+- **Version Sync Drift** — `scripts/sync-version.js` now also syncs the jest `__DV_VERSION__` global (stale at 1.0.6 since three releases).
+
+### Performance
+
+- **Firefox Pan/Zoom Smoothness** — `will-change: transform` on the modal SVG promotes it to a compositor layer, eliminating Firefox's per-frame re-rasterization during panning (Chromium already did this on its own).
+
+### Testing
+
+- New sanitizer test suite, including a Mermaid-shaped fixture asserting strict mode preserves text labels, `foreignObject` htmlLabels, style blocks, classes, and marker references; clone-alignment regression tests (187 tests total, up from 175).
+
+---
+
 ## [1.0.9] - 2026-07-31
 
 ### Fixed

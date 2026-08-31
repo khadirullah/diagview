@@ -68,15 +68,15 @@
 <script src="https://cdn.jsdelivr.net/npm/@panzoom/panzoom@4.5.1/dist/panzoom.min.js"></script>
 
 <!-- 2. DiagView (latest stable) -->
-<script src="https://cdn.jsdelivr.net/npm/diagview@1.0.9/dist/diagview.umd.min.js"></script>
-<!-- For auto-updates within v1: use diagview@1.0.9 instead -->
+<script src="https://cdn.jsdelivr.net/npm/diagview@1.0.10/dist/diagview.umd.min.js"></script>
+<!-- For auto-updates within v1: use diagview@1.0.10 instead -->
 ```
 
 To disable auto-initialization and configure manually:
 
 ```html
 <script
-  src="https://cdn.jsdelivr.net/npm/diagview@1.0.9/dist/diagview.umd.min.js"
+  src="https://cdn.jsdelivr.net/npm/diagview@1.0.10/dist/diagview.umd.min.js"
   data-diagview-no-auto-init
 ></script>
 <script>
@@ -100,6 +100,12 @@ DiagView.init({ layout: "floating" });
 
 ```javascript
 import DiagView from "diagview"; // resolves dist/esm/index.js
+```
+
+Styles are injected automatically at runtime — no CSS import is required. The raw stylesheet is also exported for advanced setups (inspecting the rules, building theme overrides, or processing it through your build pipeline):
+
+```javascript
+import "diagview/style"; // optional: resolves dist/diagview.css
 ```
 
 ---

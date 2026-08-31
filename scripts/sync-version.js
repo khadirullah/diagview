@@ -20,12 +20,23 @@ updateFile(
   `var DV_VERSION = '${version}';`
 );
 
-// 2. Update README.md version strings (e.g. diagview@1.0.4)
+// 2. Update version strings in README.md and docs/*.md (e.g. diagview@1.0.4)
 updateFile(
   'README.md',
   /diagview@[0-9.]+/g,
   `diagview@${version}`
 );
+if (fs.existsSync('docs')) {
+  for (const file of fs.readdirSync('docs')) {
+    if (file.endsWith('.md')) {
+      updateFile(
+        `docs/${file}`,
+        /diagview@[0-9]+\.[0-9]+\.[0-9]+/g,
+        `diagview@${version}`
+      );
+    }
+  }
+}
 
 // 3. Fix README duplicate keys in configuration example
 const readmePath = 'README.md';
@@ -44,7 +55,16 @@ if (fs.existsSync(readmePath)) {
   }
 }
 
-// 4. Update CDN script tags in all demo HTML files
+// 4. Sync the jest global __DV_VERSION__ in package.json itself.
+// Without this it silently drifts every release (it sat at 1.0.6 through
+// three releases) and tests assert DiagView.version against a stale value.
+if (pkg.jest?.globals && pkg.jest.globals.__DV_VERSION__ !== version) {
+  pkg.jest.globals.__DV_VERSION__ = version;
+  fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2) + '\n');
+  console.log('Updated jest global __DV_VERSION__ in package.json');
+}
+
+// 5. Update CDN script tags in all demo HTML files
 const demoDir = 'demo';
 if (fs.existsSync(demoDir)) {
   const files = fs.readdirSync(demoDir);
