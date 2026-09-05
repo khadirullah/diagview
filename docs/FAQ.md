@@ -176,6 +176,16 @@ A: This is a known browser-level limitation in Firefox Mobile (Gecko engine) on 
 
 ---
 
+## Frameworks
+
+**Q: React throws `NotFoundError: The node to be removed is not a child of this node` when my component unmounts.**  
+A: With the `floating` or `header` layout, DiagView moves the diagram element into a wrapper to place the toolbar. If React later removes that exact element, it is no longer where React left it. Nest the diagram element inside a container div that your component renders, so React removes the container instead. Or use `layout: "off"`, which never touches the surrounding DOM. See USAGE.md § Framework Integration.
+
+**Q: In development, DiagView stops working after the first render (React StrictMode / hot reload).**  
+A: Fixed in the release after 1.0.11. `init()` now queues behind an in-flight `destroy()`, which is the sequence StrictMode produces. On older versions, await `destroy()` before calling `init()` again.
+
+---
+
 ## Theming
 
 **Q: Colors look wrong in dark mode.**  

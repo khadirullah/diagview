@@ -641,15 +641,21 @@ DiagView.init({
 
 ## 20. Framework Integration
 
+> **The one rule:** keep the diagram element (the one matching `diagramSelector`) nested inside a container that your component renders and owns. With the `floating` and `header` layouts DiagView moves the diagram element into a wrapper so it can place the toolbar next to it. Your framework still believes the element sits where it rendered it, so if it later removes that exact element (unmount, conditional render, key change) the browser throws `NotFoundError: The node to be removed is not a child of this node`. Removing the outer container instead is always safe, because the wrapper is inside it and goes away with it.
+>
+> Do not re-render the diagram element itself with new content once DiagView has initialized it. Render a new one (inside the container) or call `DiagView.refresh()` after replacing the SVG.
+>
+> If you would rather DiagView never touch the DOM around your element, use `layout: "off"`. It attaches a click handler and nothing else. Fullscreen, zoom, search, minimap and export all still work; only the inline toolbar is dropped. Pair it with `DiagView.openFullscreen(el)` / `DiagView.exportDiagram(el, ...)` from your own buttons if you need them.
+>
+> **React StrictMode / hot reload:** the development-only destroy-then-init sequence is handled by `init()` itself, which queues behind an in-flight `destroy()`. You do not need to await either call in an effect.
+
 ### React — with cleanup
 
 ```jsx
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 import DiagView from "diagview";
 
 function DiagramViewer({ svgContent }) {
-  const containerRef = useRef(null);
-
   useEffect(() => {
     DiagView.init({ layout: "floating" });
     return () => {
@@ -657,10 +663,28 @@ function DiagramViewer({ svgContent }) {
     };
   }, []);
 
+  // The outer div is owned by React and is what React removes on unmount.
+  // The inner .diagram div is what DiagView wraps; React never removes it directly.
   return (
-    <div ref={containerRef} className="diagram" dangerouslySetInnerHTML={{ __html: svgContent }} />
+    <div className="diagram-host">
+      <div className="diagram" dangerouslySetInnerHTML={{ __html: svgContent }} />
+    </div>
   );
 }
+```
+
+### React — no inline toolbar (`layout: "off"`)
+
+```jsx
+useEffect(() => {
+  DiagView.init({ layout: "off" });
+  return () => {
+    DiagView.destroy();
+  };
+}, []);
+
+// DiagView only attaches a click-to-fullscreen handler; the DOM is left as rendered.
+return <div className="diagram" dangerouslySetInnerHTML={{ __html: svgContent }} />;
 ```
 
 ### React — SSR (Next.js)
@@ -684,6 +708,12 @@ import DiagView from "diagview";
 onMounted(() => DiagView.init({ layout: "floating" }));
 onUnmounted(() => DiagView.destroy());
 </script>
+
+<template>
+  <div class="diagram-host">
+    <div class="diagram"><svg>...</svg></div>
+  </div>
+</template>
 ```
 
 ### Angular
@@ -693,7 +723,14 @@ import { Component, OnInit, OnDestroy } from "@angular/core";
 
 declare const DiagView: any;
 
-@Component({ selector: "app-root", templateUrl: "./app.component.html" })
+@Component({
+  selector: "app-root",
+  template: `
+    <div class="diagram-host">
+      <div class="diagram"><svg>...</svg></div>
+    </div>
+  `,
+})
 export class AppComponent implements OnInit, OnDestroy {
   ngOnInit() {
     DiagView.init({ layout: "floating" });
@@ -715,7 +752,9 @@ export class AppComponent implements OnInit, OnDestroy {
   onDestroy(() => DiagView.destroy());
 </script>
 
-<div class="diagram"><svg>...</svg></div>
+<div class="diagram-host">
+  <div class="diagram"><svg>...</svg></div>
+</div>
 ```
 
 ---

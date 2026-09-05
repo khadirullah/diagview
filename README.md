@@ -267,6 +267,8 @@ await DiagView.exportDiagram(el, "png", { transparent: true });
 
 ## 🌐 Framework Integration
 
+> **One rule for component frameworks (React, Vue, Svelte, Angular):** keep the diagram element nested inside a container that your component renders and owns, as in the examples below. With the `floating` and `header` layouts DiagView moves the diagram element into a wrapper to place the toolbar. Frameworks that later remove that exact element themselves will fail, because it is no longer where they left it. Removing the outer container is always safe. If you would rather DiagView never touch the surrounding DOM, use `layout: "off"`; fullscreen, zoom, search and export still work, only the inline toolbar is dropped.
+
 ### React
 
 ```jsx
@@ -282,8 +284,10 @@ export default function App() {
   }, []);
 
   return (
-    <div className="diagram">
-      <svg viewBox="0 0 400 300">{/* ... */}</svg>
+    <div className="diagram-host">
+      <div className="diagram">
+        <svg viewBox="0 0 400 300">{/* ... */}</svg>
+      </div>
     </div>
   );
 }
@@ -301,8 +305,10 @@ onUnmounted(() => DiagView.destroy());
 </script>
 
 <template>
-  <div class="diagram">
-    <svg viewBox="0 0 400 300"><!-- ... --></svg>
+  <div class="diagram-host">
+    <div class="diagram">
+      <svg viewBox="0 0 400 300"><!-- ... --></svg>
+    </div>
   </div>
 </template>
 ```
@@ -318,8 +324,10 @@ onUnmounted(() => DiagView.destroy());
   onDestroy(() => DiagView.destroy());
 </script>
 
-<div class="diagram">
-  <svg viewBox="0 0 400 300"><!-- ... --></svg>
+<div class="diagram-host">
+  <div class="diagram">
+    <svg viewBox="0 0 400 300"><!-- ... --></svg>
+  </div>
 </div>
 ```
 
