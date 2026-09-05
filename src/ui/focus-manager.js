@@ -92,6 +92,10 @@ export function setupModalFocusManagement() {
   if (!modal) return;
   state.focusManagementSetup = true;
 
+  // The focusable list depends on the current search/topbar state — rebuild
+  // it for every session rather than serving a list from the previous one.
+  invalidateFocusableCache();
+
   // OPTIMIZATION: Track last execution to prevent double-firing for pointerdown + mousedown
   let lastBlurTime = 0;
 
@@ -201,6 +205,36 @@ export function invalidateFocusableCache() {
 }
 
 /**
+ * True when the element is actually rendered. getComputedStyle(el).display
+ * only reflects the element's own declaration, so children of a display:none
+ * ancestor (the .dv-topbar-actions row on desktop) used to pass as focusable
+ * and the trap then "focused" elements the browser cannot focus.
+ * @private
+ */
+function isRendered(el) {
+  if (typeof el.checkVisibility === "function") {
+    return el.checkVisibility({ visibilityProperty: true });
+  }
+  return el.offsetParent !== null || el.getClientRects().length > 0;
+}
+
+/**
+ * The mobile search container collapses to opacity:0 / pointer-events:none
+ * while closed, which keeps its input and buttons in the tab order although
+ * they are invisible. On desktop the same container is always shown (the
+ * topbar never gets "search-open"), so only the collapsed styles disqualify.
+ * @private
+ */
+function isInClosedSearch(el) {
+  const container = el.closest(".diagview-search-container");
+  if (!container) return false;
+  const topbar = container.closest(".diagview-topbar");
+  if (topbar && topbar.classList.contains("search-open")) return false;
+  const style = window.getComputedStyle(container);
+  return style.opacity === "0" || style.pointerEvents === "none";
+}
+
+/**
  * Get all focusable elements within modal (with caching)
  */
 function getFocusableElements(modal) {
@@ -214,9 +248,9 @@ function getFocusableElements(modal) {
       'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
     ),
   ).filter((el) => {
-    // Include elements that are visible (not display:none or visibility:hidden)
     const style = window.getComputedStyle(el);
-    return style.display !== "none" && style.visibility !== "hidden";
+    if (style.display === "none" || style.visibility === "hidden") return false;
+    return isRendered(el) && !isInClosedSearch(el);
   });
 
   state.focusableElements = focusable;
@@ -251,25 +285,23 @@ export function setupFocusTrap() {
     const focusableElements = getFocusableElements(modal);
     if (focusableElements.length === 0) return;
 
-    const firstElement = focusableElements[0];
-    const lastElement = focusableElements[focusableElements.length - 1];
-    const activeElement = document.activeElement;
+    // Own every Tab step, not only the wrap-around: the browser's native
+    // order still stops on controls we filtered out (e.g. the collapsed
+    // mobile search input), so step through our own list instead.
+    const len = focusableElements.length;
+    const dir = e.shiftKey ? -1 : 1;
+    const idx = focusableElements.indexOf(document.activeElement);
+    // Unknown position (modal itself, or focus outside): enter at the
+    // matching end so Tab lands on the first and Shift+Tab on the last.
+    let i = idx >= 0 ? idx : dir > 0 ? -1 : len;
 
-    // Check if current focus is within modal
-    const isInModal = modal.contains(activeElement);
-
-    if (e.shiftKey) {
-      // Shift + Tab - going backwards
-      if (!isInModal || activeElement === firstElement || activeElement === modal) {
-        e.preventDefault();
-        lastElement.focus();
-      }
-    } else {
-      // Tab - going forwards
-      if (!isInModal || activeElement === lastElement) {
-        e.preventDefault();
-        firstElement.focus();
-      }
+    e.preventDefault();
+    for (let n = 0; n < len; n++) {
+      i = (i + dir + len) % len;
+      const candidate = focusableElements[i];
+      candidate.focus();
+      // Skip anything the browser refused to focus after all
+      if (document.activeElement === candidate) return;
     }
   };
 
