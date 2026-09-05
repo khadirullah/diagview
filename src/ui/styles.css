@@ -542,6 +542,8 @@
 
 /* ── CSS tooltip (desktop only) ───────────────────────── */
 /* Usage: data-tooltip="Your message here" on any element  */
+/* Placed BELOW the element: its only user sits in the topbar at the top   */
+/* of .diagview-modal{overflow:hidden}, where a tooltip above is clipped.  */
 @media (min-width: 640px) {
   [data-tooltip] {
     position: relative;
@@ -549,7 +551,7 @@
   [data-tooltip]::after {
     content: attr(data-tooltip);
     position: absolute;
-    bottom: calc(100% + 8px);
+    top: calc(100% + 8px);
     left: 50%;
     transform: translateX(-50%) scale(0.94);
     background: #1e293b;
