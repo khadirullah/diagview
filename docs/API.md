@@ -78,6 +78,8 @@ DiagView.configure({
 });
 ```
 
+Every option is validated on `init()` and `configure()`. An invalid value logs a warning and keeps the value that was in effect before: numeric options must be finite numbers within their documented range, `minZoomScale` may not exceed `maxZoomScale`, `diagramSelector` must be a selector the browser accepts, `backgroundColor`/`textColor` must be colours the browser accepts, `allowedImageTypes` must be an array of strings, and the `security`, `watermark`, `ui` and `performance` groups must be objects (they are merged, never replaced). Unknown keys are ignored with a warning.
+
 ---
 
 ### `DiagView.getConfiguration()`
@@ -167,11 +169,13 @@ await DiagView.exportToPDF(el, { filename: "report" });
 
 ### `DiagView.copyToClipboard(element, options?)`
 
-Copies a PNG to the system clipboard. Requires HTTPS or localhost.
+Copies a PNG to the system clipboard. Requires HTTPS or localhost. If the browser denies the write (Safari does once the click that started the export is over), the PNG is downloaded instead and the toast says so.
 
 ```javascript
 await DiagView.copyToClipboard(el);
 ```
+
+All export methods resolve without throwing when `element` contains no `<svg>`; they show a "No diagram found" toast instead. Per-diagram `data-diagview-scale` and `data-diagview-watermark-*` attributes on the element are honoured by every export path, inline or fullscreen.
 
 ### Export Options
 
@@ -209,6 +213,13 @@ await DiagView.openFullscreen(el, { searchQuery: "database" });
 await DiagView.openFullscreen(el, { zoom: 1.5, searchQuery: "auth" });
 ```
 
+While the modal is already open or still opening, `openFullscreen()` returns without doing anything. To switch to another diagram, close first:
+
+```javascript
+await DiagView.closeModal();
+await DiagView.openFullscreen(otherEl);
+```
+
 ---
 
 ### `DiagView.closeModal()`
@@ -241,7 +252,7 @@ sanitizeSVG(
 
 ```typescript
 interface SanitizeOptions {
-  maxChars?: number; // Block strings longer than this
+  maxChars?: number; // Block input longer than this (Nodes are measured by their serialized length)
   allowRemoteResources?: boolean; // Allow external CSS/fonts
   allowedImageTypes?: string[]; // Allowed data: URI image types
 }
@@ -258,6 +269,8 @@ const clean = DiagView.utils.sanitizeSVG(rawSvg, "strict", { maxChars: 500000 })
 const cleanNode = DiagView.utils.sanitizeSVG(svgElement, "permissive");
 ```
 
+Input over `maxChars` is blocked with a console error: a string returns `""`, a Node returns `null`. `options` may be omitted or `null`.
+
 ---
 
 ### `DiagView.version`
@@ -272,7 +285,7 @@ console.log(DiagView.version); // "1.0.6"
 
 ## State (read-only)
 
-`DiagView.state` is a read-only Proxy over the internal state object. Collections (Sets, Arrays, Maps) are returned as snapshots.
+`DiagView.state` is a read-only Proxy over the internal state object, at every depth: nested objects come back as read-only views, and collections (Sets, Arrays, Maps) as snapshots. Writes and deletes log a warning and are ignored. Two exceptions: `activePanzoom` is the live Panzoom instance while the modal is open (its methods are safe to call), and `events` exposes `on`, `off` and `emit` bound to the internal event bus.
 
 ```typescript
 interface PublicState {
@@ -300,7 +313,7 @@ console.log(DiagView.state.rotationAngle); // 0 | 90 | 180 | 270
 console.log(DiagView.state.searchMatches.length);
 ```
 
-> **Do not attempt to mutate `DiagView.state` directly.** All writes are silently ignored. Use `configure()`, `openFullscreen()`, and other API methods to change behaviour.
+> **Do not attempt to mutate `DiagView.state` directly.** Writes are ignored with a warning. Use `configure()`, `openFullscreen()`, and other API methods to change behaviour.
 
 ---
 

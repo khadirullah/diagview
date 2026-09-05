@@ -548,7 +548,7 @@ Diagrams inside shadow roots are numbered after the ones in the document, in the
 
 ## 16. Remember Zoom
 
-When enabled, DiagView saves each diagram's zoom level, pan position, and rotation to `sessionStorage` after each interaction. On the next open, the saved state is restored automatically.
+When enabled, DiagView saves each diagram's zoom level, pan position, and rotation to `sessionStorage` after every change, whether it comes from dragging, the mouse wheel, the keyboard or the toolbar buttons. On the next open, the saved state is restored automatically.
 
 ```javascript
 DiagView.init({ rememberZoom: true });
