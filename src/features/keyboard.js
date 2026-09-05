@@ -6,7 +6,7 @@
 
 import { state } from "../core/config.js";
 import { PAN, TIMING } from "../core/constants.js";
-import { shouldHandleKeyboardEvent } from "../ui/focus-manager.js";
+import { shouldHandleKeyboardEvent, isInputFocused } from "../ui/focus-manager.js";
 import { closeModal } from "../ui/modal-controls.js";
 import { toggleKeyboardHelp, isHelpVisible, hideKeyboardHelp } from "../ui/keyboard-help.js";
 
@@ -55,8 +55,10 @@ function handleKeyboardShortcut(e) {
     return;
   }
 
-  // ? key - show help (works even if input focused)
+  // ? key - show help. Not while typing: "?" must still be typeable into the
+  // search box (or any other input / contenteditable inside the modal).
   if (e.key === "?" && state.isModalOpen) {
+    if (isInputFocused()) return;
     e.preventDefault();
     toggleKeyboardHelp();
     return;
@@ -146,19 +148,25 @@ function handleKeyboardShortcut(e) {
     case "m":
     case "M":
       e.preventDefault();
-      import("./lazy/meeting-mode.js").then((m) => m.toggleMeetingMode());
+      import("./lazy/meeting-mode.js")
+        .then((m) => m.toggleMeetingMode())
+        .catch((err) => console.error("DiagView: Failed to load Meeting Mode", err));
       break;
 
     case "l":
     case "L":
       e.preventDefault();
-      import("./lazy/share.js").then((m) => m.shareLink(state.currentDiagramIndex));
+      import("./lazy/share.js")
+        .then((m) => m.shareLink(state.currentDiagramIndex))
+        .catch((err) => console.error("DiagView: Failed to load Share Link", err));
       break;
 
     case "r":
     case "R":
       e.preventDefault();
-      import("./lazy/rotate.js").then((m) => m.rotateDiagram());
+      import("./lazy/rotate.js")
+        .then((m) => m.rotateDiagram())
+        .catch((err) => console.error("DiagView: Failed to load Rotate", err));
       break;
 
     case "f":

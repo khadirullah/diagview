@@ -4,8 +4,16 @@
  */
 
 import { jest } from "@jest/globals";
-import { state, resetConfig } from "../src/core/config.js";
-import { setupKeyboardShortcuts, teardownKeyboardShortcuts } from "../src/features/keyboard.js";
+
+// The rotate chunk fails to load (simulates a missing code-split file in the ESM build)
+jest.unstable_mockModule("../src/features/lazy/rotate.js", () => {
+  throw new Error("chunk failed to load");
+});
+
+const { state, resetConfig } = await import("../src/core/config.js");
+const { setupKeyboardShortcuts, teardownKeyboardShortcuts } =
+  await import("../src/features/keyboard.js");
+const { isHelpVisible, cleanupKeyboardHelp } = await import("../src/ui/keyboard-help.js");
 
 describe("Keyboard Shortcuts Integration", () => {
   let mockPanzoom;
@@ -109,5 +117,39 @@ describe("Keyboard Shortcuts Integration", () => {
     const event = new KeyboardEvent("keydown", { key: "ArrowUp", shiftKey: true });
     window.dispatchEvent(event);
     expect(mockPanzoom.pan).toHaveBeenCalled();
+  });
+
+  test("? does not open help while typing in the search box (finding 10)", () => {
+    document.body.innerHTML = '<input id="diagview-search" value="">';
+    const input = document.getElementById("diagview-search");
+    input.focus();
+    expect(document.activeElement).toBe(input);
+
+    window.dispatchEvent(new KeyboardEvent("keydown", { key: "?" }));
+    expect(isHelpVisible()).toBe(false);
+
+    input.blur();
+    window.dispatchEvent(new KeyboardEvent("keydown", { key: "?" }));
+    expect(isHelpVisible()).toBe(true);
+
+    cleanupKeyboardHelp();
+  });
+
+  test("a failed lazy chunk is reported instead of rejecting unhandled (finding 10)", async () => {
+    const errorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
+    const unhandled = [];
+    const track = (reason) => unhandled.push(reason);
+    process.on("unhandledRejection", track);
+
+    window.dispatchEvent(new KeyboardEvent("keydown", { key: "r" }));
+    await new Promise((resolve) => setTimeout(resolve, 20));
+
+    process.off("unhandledRejection", track);
+    expect(unhandled).toHaveLength(0);
+    expect(errorSpy).toHaveBeenCalledWith(
+      expect.stringContaining("Failed to load"),
+      expect.any(Error),
+    );
+    errorSpy.mockRestore();
   });
 });
