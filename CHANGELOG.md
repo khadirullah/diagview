@@ -26,6 +26,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 ### Added
 
 - **React 18 + StrictMode demo and e2e check** — `demo/framework-react.html` is a real React dev-build tree (StrictMode on) with floating, header and off layout cards that mount, unmount, remount and replace DiagView diagrams, a "Detach DiagView" button that shows `destroy()`/`init()` with everything still mounted, and an "unsafe pattern" toggle that reproduces the DOM-ownership error the framework docs now warn about, contained per card by an error boundary and explained on the page. `tests/e2e/verify-react-strictmode.mjs` drives it in headless Chrome against the local build (21 checks) and, with `--cdn`, against the published version (1.0.11 fails 10 of 21).
+- **Browser sweep for every fix above** — `tests/e2e/verify-fixes.mjs` loads `tests/e2e/fixtures/fix-sweep.html` from `file://` (attribute, inline-style, `<style>`-block, sanitizer-override and Mermaid diagrams) and checks the modal clone and fullscreen export for dangling `url(#id)`/`href` references, the `allowOverrides` gate, `backgroundColor`/`textColor`/`panAnimationDuration`, arrow-key panning at every rotation, the `T` shortcut across reopen, the share link on `file://` (including restoring it), the `destroy()`/`init()` race and the UMD `state`/`utils` globals — 30 checks; with `--cdn` the published 1.0.11 passes 14 of 30.
 
 ### Removed
 

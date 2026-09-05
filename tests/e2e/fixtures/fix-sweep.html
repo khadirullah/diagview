@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>DiagView fix sweep</title>
+<link rel="stylesheet" href="../../../dist/diagview.css">
+<style>body{font-family:sans-serif;margin:24px} .diagram{border:1px solid #ccc;margin:12px 0;max-width:600px}</style>
+</head>
+<body>
+<h1>DiagView sweep</h1>
+
+<!-- 0: attribute refs: gradient, marker, clipPath, mask, filter, use href + xlink:href -->
+<div class="diagram" data-title="Attr refs">
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 300 160" width="300" height="160">
+  <defs>
+    <linearGradient id="grad"><stop offset="0" stop-color="red"/><stop offset="1" stop-color="orange"/></linearGradient>
+    <marker id="arrow" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="red"/></marker>
+    <clipPath id="clip"><rect x="0" y="0" width="150" height="160"/></clipPath>
+    <mask id="mask"><rect width="300" height="160" fill="white"/></mask>
+    <filter id="blur"><feGaussianBlur stdDeviation="1"/></filter>
+    <symbol id="sym" viewBox="0 0 10 10"><circle cx="5" cy="5" r="4" fill="blue"/></symbol>
+  </defs>
+  <rect id="box" x="10" y="10" width="120" height="60" fill="url(#grad)" clip-path="url(#clip)" mask="url(#mask)" filter="url(#blur)"/>
+  <path d="M20,120 L200,120" stroke="red" stroke-width="3" marker-end="url(#arrow)" marker-start="url(#arrow)"/>
+  <use href="#sym" x="220" y="20" width="30" height="30"/>
+  <use xlink:href="#sym" x="260" y="20" width="30" height="30"/>
+  <text x="10" y="150">attr refs</text>
+</svg>
+</div>
+
+<!-- 1: inline-style refs (Inkscape / Illustrator style), quoted forms, marker-mid -->
+<div class="diagram" data-title="Style refs">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 160" width="300" height="160">
+  <defs>
+    <linearGradient id="grad"><stop offset="0" stop-color="green"/><stop offset="1" stop-color="lime"/></linearGradient>
+    <marker id="arrow" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="green"/></marker>
+    <filter id="blur"><feGaussianBlur stdDeviation="0.5"/></filter>
+    <clipPath id="clip"><rect width="300" height="160"/></clipPath>
+  </defs>
+  <rect x="10" y="10" width="120" height="60" style="fill:url(#grad);stroke:url( '#grad' );stroke-width:4"/>
+  <path d="M20,120 L110,120 L200,120" style="stroke:green;stroke-width:3;marker-end:url(&quot;#arrow&quot;);marker-mid:url(#arrow); filter: url(#blur); clip-path:url(#clip)" fill="none"/>
+  <text x="10" y="150">style refs</text>
+</svg>
+</div>
+
+<!-- 2: <style> block refs (draw.io / Illustrator CSS classes) -->
+<div class="diagram" data-title="CSS refs">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 160" width="300" height="160">
+  <style>
+    .cls-1 { fill: url(#grad); stroke: #333; }
+    .cls-2 { marker-end: url(#arrow); stroke: purple; stroke-width: 3; }
+    #label { font-weight: bold; }
+  </style>
+  <defs>
+    <linearGradient id="grad"><stop offset="0" stop-color="purple"/><stop offset="1" stop-color="violet"/></linearGradient>
+    <marker id="arrow" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="purple"/></marker>
+  </defs>
+  <rect class="cls-1" x="10" y="10" width="120" height="60"/>
+  <path class="cls-2" d="M20,120 L200,120" fill="none"/>
+  <text id="label" x="10" y="150">css refs</text>
+</svg>
+</div>
+
+<!-- 3: sanitizer gate: per-element override to off, with an inline handler -->
+<div class="diagram" data-title="Sanitize off" data-diagview-sanitize="off">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 100" width="300" height="100">
+  <rect id="hot" x="10" y="10" width="200" height="60" fill="teal" onclick="window.__hot=1"/>
+  <text x="10" y="90">sanitize off</text>
+</svg>
+</div>
+
+<!-- 4: Mermaid -->
+<div class="mermaid" data-title="Mermaid">
+flowchart LR
+  A[Start] --> B{Check}
+  B -->|yes| C[Done]
+  B -->|no| D[Retry]
+  D --> B
+</div>
+
+<script src="../../../node_modules/@panzoom/panzoom/dist/panzoom.min.js"></script>
+<script src="../../../dist/diagview.umd.js"></script>
+<script type="module">
+  window.__warns = [];
+  const origWarn = console.warn;
+  console.warn = (...a) => { window.__warns.push(a.join(" ")); origWarn.apply(console, a); };
+  window.__downloads = [];
+  const origClick = HTMLAnchorElement.prototype.click;
+  HTMLAnchorElement.prototype.click = function () {
+    if (this.hasAttribute("download")) { window.__downloads.push({ href: this.href, name: this.download }); return; }
+    return origClick.call(this);
+  };
+  window.__mermaid = "skipped";
+  try {
+    const m = await import("https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs");
+    m.default.initialize({ startOnLoad: false });
+    await m.default.run({ querySelector: ".mermaid" });
+    window.__mermaid = "ok";
+  } catch (e) { window.__mermaid = "failed: " + e.message; }
+  await DiagView.init({ diagramSelector: ".diagram, .mermaid", showKeyboardHelp: false });
+  window.__ready = true;
+</script>
+</body>
+</html>
