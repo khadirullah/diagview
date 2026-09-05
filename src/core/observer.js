@@ -189,14 +189,28 @@ export function observeDiagrams() {
 
   state.observer = new MutationObserver((mutations) => {
     let addedAny = false;
+    const selector = state.config.diagramSelector;
 
     for (const mutation of mutations) {
       if (mutation.type !== "childList") continue;
 
       for (const node of mutation.addedNodes) {
-        if (node.nodeType === 1) {
-          state.nodesToProcess.add(node);
-          addedAny = true;
+        if (node.nodeType !== 1) continue;
+
+        state.nodesToProcess.add(node);
+        addedAny = true;
+
+        // The node may be the SVG (or a fragment) arriving inside a container
+        // that already existed but was skipped for having no SVG yet. Queue
+        // that container too, otherwise it is never initialized.
+        let container = null;
+        try {
+          container = node.parentElement?.closest(selector) ?? null;
+        } catch (_e) {
+          container = null;
+        }
+        if (container && !container.dataset.diagviewInit) {
+          state.nodesToProcess.add(container);
         }
       }
     }

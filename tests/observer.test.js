@@ -91,6 +91,21 @@ describe("Observer Module", () => {
     expect(initializeDiagram).toHaveBeenCalledWith(nested, 0);
   });
 
+  test("an SVG arriving later inside an existing empty container initializes it", async () => {
+    const div = document.createElement("div");
+    div.className = "diagram";
+    document.body.appendChild(div);
+
+    observeDiagrams();
+    expect(initializeDiagram).not.toHaveBeenCalled(); // no SVG yet
+
+    div.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg"><rect width="1" height="1"/></svg>';
+
+    await wait(200);
+
+    expect(initializeDiagram).toHaveBeenCalledWith(div, 0);
+  });
+
   test("stopObserving disconnects the observer", () => {
     observeDiagrams();
     const observer = state.observer;
