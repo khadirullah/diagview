@@ -245,7 +245,11 @@ export function restoreViewFromURL(diagrams) {
     const rawColor = params.get("dv-c");
     const VALID_THEME_MODES = new Set(["light", "dark", "auto", "custom"]);
     const themeMode = rawTheme && VALID_THEME_MODES.has(rawTheme) ? rawTheme : null;
-    const customColor = rawColor && /^[0-9a-fA-F]{3,8}$/.test(rawColor) ? `#${rawColor}` : null;
+    // Hex colours are 3, 4, 6 or 8 digits; 5 or 7 digits is not a colour
+    const customColor =
+      rawColor && /^(?:[0-9a-fA-F]{3,4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/.test(rawColor)
+        ? `#${rawColor}`
+        : null;
 
     const VALID_ROTATIONS = new Set([0, 90, 180, 270]);
 
