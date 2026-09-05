@@ -8,6 +8,7 @@ import { setupFocusTrap, invalidateFocusableCache } from "../src/ui/focus-manage
 import { createModal, openFullscreen } from "../src/ui/modal.js";
 import { closeModal } from "../src/ui/modal-controls.js";
 import { setupViewportInteractions, resetTouchState } from "../src/features/panzoom-integration.js";
+import { ICONS } from "../src/ui/icons.js";
 
 // ---------------------------------------------------------------------------
 // Shared harness: drive the REAL modal with a fake Panzoom implementation
@@ -407,6 +408,29 @@ describe("initial-focus rAF is cancelled on close", () => {
     expect(document.activeElement).toBe(trigger);
     expect(document.getElementById("diagview-modal").contains(document.activeElement)).toBe(false);
     expect(instances.length).toBe(1);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// 12. icons.js only ships the icons something actually renders
+// ---------------------------------------------------------------------------
+describe("ICONS contains only referenced icons", () => {
+  test("exactly the icons used by the UI are exported", () => {
+    expect(Object.keys(ICONS).sort()).toEqual(
+      [
+        "close",
+        "copy",
+        "dl",
+        "fs",
+        "laser",
+        "menu",
+        "reset",
+        "rotate",
+        "search",
+        "share",
+        "textSelect",
+      ].sort(),
+    );
   });
 });
 

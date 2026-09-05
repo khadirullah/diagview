@@ -286,11 +286,14 @@ function injectWatermark(svg, d) {
 
 /**
  * Prepare SVG for export.
- * KEY CHANGES vs original:
- *  1. Always clone from ORIGINAL page SVG (not modal clone) → correct CSS context
+ *  1. Clone from the modal clone when one is given (the floating menu always
+ *     passes it) so the export matches what the user sees; fall back to the
+ *     original page SVG otherwise
  *  2. Set explicit px dimensions, never "100%" (avoids intrinsic-size=0 in <img>)
  *  3. Wait for fonts → embed them → consistent text metrics
  * @private
+ * @param {SVGSVGElement} svg - Original page SVG
+ * @param {SVGSVGElement|null} modalClone - Modal clone, preferred as the source when present
  */
 async function prepareSvgForExport(svg, modalClone) {
   const theme = detectTheme();
@@ -368,7 +371,11 @@ async function serializeSVGAsync(svgEl) {
 
 /**
  * Render to canvas.
- * CHANGE: always pass null as modalClone — use original SVG only.
+ * Uses the modal clone as the source when one is provided (fullscreen
+ * exports), otherwise the original SVG inside sourceElement.
+ * @param {HTMLElement} sourceElement - Element containing the SVG
+ * @param {SVGSVGElement|null} modalClone - Modal clone to render from, if open
+ * @param {boolean} [transparent=false] - Skip the background fill
  */
 export async function renderToCanvas(sourceElement, modalClone, transparent = false) {
   const originalSvg = sourceElement.querySelector("svg");
