@@ -8,6 +8,7 @@ import { openFullscreen } from "../ui/modal.js";
 import { exportDiagram } from "./export.js";
 import { state } from "../core/config.js";
 import { generateUniqueId, setSVGContent } from "../core/utils.js";
+import { resolveElementSecurity } from "../core/svg-clone.js";
 import { ICONS } from "../ui/icons.js";
 import { LAYOUTS, BUTTON_STYLES } from "../core/constants.js";
 import { createButtonGroup } from "../ui/button-factory.js";
@@ -219,32 +220,17 @@ function readElementOverrides(element) {
     }
   }
 
-  // data-diagview-sanitize="strict|permissive|off"
+  // data-diagview-sanitize="strict|permissive|off" and
+  // data-diagview-allow-remote="true|false".
   // Only respected if the global config has allowOverrides: true (default).
-  // Use "off" only for diagrams from a fully trusted, controlled source.
-  if (dataset.diagviewSanitize && state.config.security?.allowOverrides) {
-    const v = dataset.diagviewSanitize.toLowerCase();
-    if (["strict", "permissive", "off"].includes(v)) {
-      if (v === "off") {
-        console.warn(
-          `DiagView: SVG sanitization disabled on element via data-diagview-sanitize="off". Ensure the SVG source is trusted.`,
-        );
-      }
-      // Shallow-merge so other security properties (allowOverrides) are preserved
-      cfg.security = { ...state.config.security, mode: v };
-    } else {
-      console.warn(
-        `DiagView: Unknown data-diagview-sanitize value "${dataset.diagviewSanitize}". Must be "strict", "permissive", or "off". Ignoring.`,
-      );
-    }
-  }
-
-  // data-diagview-allow-remote="true|false"
-  // Allows external CSS/@import/remote URLs for this diagram only.
-  if (dataset.diagviewAllowRemote && state.config.security?.allowOverrides) {
-    const v = dataset.diagviewAllowRemote.toLowerCase() === "true";
-    cfg.security = { ...cfg.security, allowRemoteResources: v };
-  }
+  // Resolved through the same gate the modal uses (see svg-clone.js), so
+  // init-time and open-time can never disagree. Warnings are emitted here once.
+  const security = resolveElementSecurity(element, { warn: true });
+  cfg.security = {
+    ...state.config.security,
+    mode: security.mode,
+    allowRemoteResources: security.allowRemoteResources,
+  };
 
   // --- Watermark Overrides ---
   // data-diagview-watermark="true|false"

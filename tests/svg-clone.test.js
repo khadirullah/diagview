@@ -1,5 +1,11 @@
 import { jest } from "@jest/globals";
-import { cloneSVG, cloneSVGForExportAsync, cloneSVGForModal } from "../src/core/svg-clone.js";
+import {
+  cloneSVG,
+  cloneSVGForExportAsync,
+  cloneSVGForModal,
+  resolveElementSecurity,
+} from "../src/core/svg-clone.js";
+import { state, resetConfig, updateConfig } from "../src/core/config.js";
 
 describe("SVG Cloning Utilities", () => {
   let svg;
@@ -139,5 +145,66 @@ describe("SVG Cloning Utilities", () => {
     const styles = Array.from(clone.querySelectorAll("style"));
     expect(styles.some((s) => s.textContent.includes("javascript:"))).toBe(false);
     expect(styles.some((s) => s.textContent.includes(".safe"))).toBe(true);
+  });
+});
+
+describe("Per-element security overrides (allowOverrides gate)", () => {
+  let container, svg;
+
+  beforeEach(() => {
+    resetConfig();
+    container = document.createElement("div");
+    container.className = "diagram";
+    svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    const script = document.createElementNS("http://www.w3.org/2000/svg", "script");
+    script.textContent = "alert(1)";
+    svg.appendChild(script);
+    container.appendChild(svg);
+    document.body.appendChild(container);
+  });
+
+  afterEach(() => {
+    container.remove();
+    resetConfig();
+  });
+
+  test("resolveElementSecurity honours data attributes when allowOverrides is true", () => {
+    container.dataset.diagviewSanitize = "permissive";
+    container.dataset.diagviewAllowRemote = "true";
+    const sec = resolveElementSecurity(container);
+    expect(sec.mode).toBe("permissive");
+    expect(sec.allowRemoteResources).toBe(true);
+  });
+
+  test("resolveElementSecurity ignores data attributes when allowOverrides is false", () => {
+    updateConfig({ security: { allowOverrides: false } });
+    container.dataset.diagviewSanitize = "off";
+    container.dataset.diagviewAllowRemote = "true";
+    const sec = resolveElementSecurity(container);
+    expect(sec.mode).toBe("strict");
+    expect(sec.allowRemoteResources).toBe(false);
+  });
+
+  test("resolveElementSecurity ignores unknown modes and non-true remote values", () => {
+    container.dataset.diagviewSanitize = "yolo";
+    container.dataset.diagviewAllowRemote = "yes";
+    const sec = resolveElementSecurity(container);
+    expect(sec.mode).toBe("strict");
+    expect(sec.allowRemoteResources).toBe(false);
+    expect(resolveElementSecurity(null).mode).toBe("strict");
+  });
+
+  test("cloneSVGForModal still sanitizes when allowOverrides is false and element says off", () => {
+    updateConfig({ security: { allowOverrides: false } });
+    container.dataset.diagviewSanitize = "off";
+    const clone = cloneSVGForModal(svg);
+    expect(clone.querySelector("script")).toBeNull();
+    expect(state.config.security.allowOverrides).toBe(false);
+  });
+
+  test("cloneSVGForModal honours element off when allowOverrides is true", () => {
+    container.dataset.diagviewSanitize = "off";
+    const clone = cloneSVGForModal(svg);
+    expect(clone.querySelector("script")).not.toBeNull();
   });
 });

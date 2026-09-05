@@ -303,6 +303,57 @@ export function cloneSVG(svg, options = {}) {
   return clone;
 }
 
+const SECURITY_MODES = ["strict", "permissive", "off"];
+
+/**
+ * Resolve the effective security settings for one diagram container.
+ *
+ * Per-element `data-diagview-sanitize` / `data-diagview-allow-remote`
+ * attributes are honoured ONLY when `security.allowOverrides` is true, and
+ * only with a recognised value. Anything else falls back to the global config.
+ * This is the single gate for both init-time and modal-time resolution so the
+ * modal can never be more permissive than the documented rules allow.
+ *
+ * @param {Element|null|undefined} container - Diagram container (may be null)
+ * @param {{ warn?: boolean }} [options] - warn: emit console warnings for
+ *   "off" and for unrecognised values (init-time only, to avoid log spam)
+ * @returns {{ mode: string, allowRemoteResources: boolean, allowOverrides: boolean }} Effective security settings
+ */
+export function resolveElementSecurity(container, options = {}) {
+  const global = state.config.security || {};
+  const resolved = {
+    mode: SECURITY_MODES.includes(global.mode) ? global.mode : "strict",
+    allowRemoteResources: global.allowRemoteResources === true,
+    allowOverrides: global.allowOverrides === true,
+  };
+
+  if (!resolved.allowOverrides) return resolved;
+  const dataset = container?.dataset;
+  if (!dataset) return resolved;
+
+  if (dataset.diagviewSanitize) {
+    const v = String(dataset.diagviewSanitize).toLowerCase();
+    if (SECURITY_MODES.includes(v)) {
+      resolved.mode = v;
+      if (v === "off" && options.warn) {
+        console.warn(
+          `DiagView: SVG sanitization disabled on element via data-diagview-sanitize="off". Ensure the SVG source is trusted.`,
+        );
+      }
+    } else if (options.warn) {
+      console.warn(
+        `DiagView: Unknown data-diagview-sanitize value "${dataset.diagviewSanitize}". Must be "strict", "permissive", or "off". Ignoring.`,
+      );
+    }
+  }
+
+  if (dataset.diagviewAllowRemote) {
+    resolved.allowRemoteResources = String(dataset.diagviewAllowRemote).toLowerCase() === "true";
+  }
+
+  return resolved;
+}
+
 /**
  * Clone SVG specifically for modal display
  * Optimized preset for interactive viewing
@@ -316,22 +367,17 @@ export function cloneSVGForModal(svg) {
   // the modal is isolated from both the host page and other diagrams
   // without "Double Prefixing".
 
-  // Determine security mode (per-element override > global config)
+  // Security: per-element override > global config, gated by allowOverrides.
   const container = svg.closest(state.config.diagramSelector || ".diagram, .mermaid, .chart");
-  const localMode = container?.dataset?.diagviewSanitize;
-  const securityMode = localMode || state.config.security.mode || "strict";
-
-  const allowRemote =
-    container?.dataset?.diagviewAllowRemote === "true" ||
-    state.config.security.allowRemoteResources;
+  const security = resolveElementSecurity(container);
 
   return cloneSVG(svg, {
     preserveText: true,
     preserveStyles: false,
     preserveStyleElements: true,
-    securityMode: securityMode,
+    securityMode: security.mode,
     skipIdFix: false, // SVG-1: Isolate IDs even for modal to prevent cross-diagram filter breakage
-    allowRemoteResources: allowRemote,
+    allowRemoteResources: security.allowRemoteResources,
   });
 }
 
