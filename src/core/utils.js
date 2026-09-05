@@ -252,10 +252,23 @@ export function loadScript(url, integrity = null) {
 /**
  * Tag blocklist for PERMISSIVE mode.
  * Covers only the most critical, universally-dangerous injection tags.
- * This matches the legacy (v0.x) sanitization behavior.
+ * This matches the legacy (v0.x) sanitization behavior, plus the HTML
+ * head elements (<link>, <base>, <meta>) that can load stylesheets,
+ * rebase relative URLs or trigger redirects from inside <foreignObject>.
+ * They are never legitimate inside an SVG diagram.
  * @private
  */
-const PERMISSIVE_BLOCKED_TAGS = new Set(["script", "iframe", "object", "applet", "embed", "form"]);
+const PERMISSIVE_BLOCKED_TAGS = new Set([
+  "script",
+  "iframe",
+  "object",
+  "applet",
+  "embed",
+  "form",
+  "link",
+  "base",
+  "meta",
+]);
 
 /**
  * Tag blocklist for STRICT mode (default).

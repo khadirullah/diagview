@@ -469,7 +469,7 @@ Blocks all known SVG XSS vectors:
 
 Blocks only the most critical vectors:
 
-- Tags: `<script>`, `<iframe>`, `<object>`, `<applet>`, `<embed>`, `<form>`
+- Tags: `<script>`, `<iframe>`, `<object>`, `<applet>`, `<embed>`, `<form>`, `<link>`, `<base>`, `<meta>`
 - All `on*` event attributes
 - `javascript:`/`vbscript:`/`data:` URIs
 - SMIL animations (`<animate>`, `<set>`, `<animateTransform>`, ...) whose `attributeName` is `href`/`xlink:href` or an `on*` handler; all other animations are kept

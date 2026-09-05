@@ -144,3 +144,39 @@ describe("sanitizeSVG SMIL animation of href/on* attributes (permissive)", () =>
     expect(out).toContain("<rect");
   });
 });
+
+describe("sanitizeSVG <link>, <base>, <meta> inside foreignObject", () => {
+  const payload = wrap(
+    `<foreignObject><link xmlns="${XHTML_NS}" rel="stylesheet" href="https://evil.com/x.css"/><base xmlns="${XHTML_NS}" href="https://evil.com/"/><meta xmlns="${XHTML_NS}" http-equiv="refresh" content="0;url=https://evil.com"/><div xmlns="${XHTML_NS}">label</div></foreignObject>`,
+  );
+
+  test.each(["strict", "permissive"])("none of the three survive in %s mode", (mode) => {
+    const out = sanitizeToString(payload, mode);
+    expect(out).not.toMatch(/<(?:\w+:)?link\b/);
+    expect(out).not.toMatch(/<(?:\w+:)?base\b/);
+    expect(out).not.toMatch(/<(?:\w+:)?meta\b/);
+    expect(out).not.toContain("evil.com");
+    expect(out).toContain("label");
+  });
+
+  test("prefixed <h:link> and <h:meta> are removed too", () => {
+    const out = sanitizeToString(
+      wrap(
+        `<foreignObject><h:link xmlns:h="${XHTML_NS}" rel="stylesheet" href="https://evil.com/x.css"/><h:meta xmlns:h="${XHTML_NS}" http-equiv="refresh" content="0;url=https://evil.com"/></foreignObject>`,
+      ),
+      "permissive",
+    );
+    expect(out).not.toContain("evil.com");
+    expect(out).not.toMatch(/<(?:\w+:)?link\b/);
+    expect(out).not.toMatch(/<(?:\w+:)?meta\b/);
+  });
+
+  test("Node input path removes them as well", () => {
+    const doc = new DOMParser().parseFromString(payload, "image/svg+xml");
+    const result = sanitizeSVG(doc.documentElement, "strict");
+    expect(result.querySelectorAll("link, base, meta")).toHaveLength(0);
+    expect(result.outerHTML).not.toContain("evil.com");
+    // Original node untouched
+    expect(doc.documentElement.querySelectorAll("link, base, meta")).toHaveLength(3);
+  });
+});
