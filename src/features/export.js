@@ -309,16 +309,6 @@ async function prepareSvgForExport(svg, modalClone) {
   exportSvg.style.cssText = "";
   exportSvg.removeAttribute("transform");
 
-  // Prevent stale Panzoom matrix on root (defensive)
-  const firstGroup = exportSvg.querySelector("g[style*='transform']");
-  if (firstGroup) {
-    const ts = firstGroup.style.transform;
-    if (ts && ts !== "none" && !ts.includes("rotate")) {
-      // Only clear Panzoom matrix transforms; preserve SVG structural transforms
-      firstGroup.style.removeProperty("transform");
-    }
-  }
-
   // Fix cross-origin images inside the SVG
   exportSvg.querySelectorAll("image").forEach((img) => {
     const href = img.getAttribute("href") || img.getAttribute("xlink:href") || "";

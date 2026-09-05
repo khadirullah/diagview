@@ -116,3 +116,45 @@ describe("Export Functionality", () => {
     expect(copiedText).toContain("<svg");
   });
 });
+
+// ---------------------------------------------------------------------------
+// review2 findings (one describe per commit on the review2/modal branch)
+// ---------------------------------------------------------------------------
+describe("Export keeps structural <g> transforms", () => {
+  let container, svg;
+
+  beforeEach(() => {
+    container = document.createElement("div");
+    svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    svg.setAttribute("viewBox", "0 0 100 100");
+    const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+    g.setAttribute("style", "transform: translate(40px, 0px)");
+    const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+    rect.setAttribute("width", "10");
+    rect.setAttribute("height", "10");
+    g.appendChild(rect);
+    svg.appendChild(g);
+    container.appendChild(svg);
+    document.body.appendChild(container);
+    updateConfig({ security: { mode: "strict" } });
+  });
+
+  afterEach(() => {
+    container.remove();
+    jest.clearAllMocks();
+  });
+
+  test("a <g style='transform: translate(...)'> survives into the exported SVG", async () => {
+    let copiedText = "";
+    Object.defineProperty(navigator, "clipboard", {
+      value: { writeText: jest.fn((t) => ((copiedText = t), Promise.resolve())) },
+      configurable: true,
+    });
+    Object.defineProperty(window, "isSecureContext", { value: true, configurable: true });
+
+    await copySVGCode(container);
+
+    expect(copiedText).toContain("<svg");
+    expect(copiedText).toMatch(/translate\(40px/);
+  });
+});
