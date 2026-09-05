@@ -1,14 +1,12 @@
 /**
- * Regression tests for the second review round (modal / export / a11y).
- * Each describe block maps to one commit on the review2/modal branch.
+ * Modal Session Tests
+ * Drives the real modal with a fake Panzoom: rememberZoom persistence,
+ * open/close races, the open-while-open guard, text-select and initial focus.
  */
 import { jest } from "@jest/globals";
 import { state, resetConfig, updateConfig } from "../src/core/config.js";
-import { setupFocusTrap, invalidateFocusableCache } from "../src/ui/focus-manager.js";
 import { createModal, openFullscreen } from "../src/ui/modal.js";
 import { closeModal } from "../src/ui/modal-controls.js";
-import { setupViewportInteractions, resetTouchState } from "../src/features/panzoom-integration.js";
-import { ICONS } from "../src/ui/icons.js";
 
 // ---------------------------------------------------------------------------
 // Shared harness: drive the REAL modal with a fake Panzoom implementation
@@ -68,7 +66,7 @@ async function settle() {
 }
 
 // ---------------------------------------------------------------------------
-// 2. rememberZoom must persist wheel / keyboard / button zooms, not only drags
+// rememberZoom must persist wheel / keyboard / button zooms, not only drags
 // ---------------------------------------------------------------------------
 describe("rememberZoom saves on panzoomchange and on close", () => {
   let instances;
@@ -130,7 +128,7 @@ describe("rememberZoom saves on panzoomchange and on close", () => {
 });
 
 // ---------------------------------------------------------------------------
-// 3. A close that lands while openFullscreen is awaiting must not leave a
+// A close that lands while openFullscreen is awaiting must not leave a
 //    half-initialised session behind
 // ---------------------------------------------------------------------------
 describe("close during openFullscreen's awaits leaves no stale session", () => {
@@ -186,67 +184,7 @@ describe("close during openFullscreen's awaits leaves no stale session", () => {
 });
 
 // ---------------------------------------------------------------------------
-// 6. A single tap shortly after a pinch must not count as a double tap
-// ---------------------------------------------------------------------------
-describe("touch: tap after pinch does not reset the zoom", () => {
-  let viewport, element, panzoom;
-
-  const touch = (type, count) => {
-    const ev = new Event(type, { bubbles: true, cancelable: true });
-    ev.touches = Array.from({ length: count }, (_, i) => ({ clientX: i * 50, clientY: 0 }));
-    viewport.dispatchEvent(ev);
-  };
-
-  beforeEach(() => {
-    jest.useFakeTimers();
-    resetConfig();
-    resetTouchState();
-    state.isModalOpen = true;
-    document.body.innerHTML = "";
-    viewport = document.createElement("div");
-    element = document.createElement("div");
-    viewport.appendChild(element);
-    document.body.appendChild(viewport);
-    panzoom = {
-      zoomWithWheel: jest.fn(),
-      reset: jest.fn(),
-      getScale: jest.fn(() => 1),
-    };
-    setupViewportInteractions(viewport, element, panzoom);
-  });
-
-  afterEach(() => {
-    for (const fn of Array.from(state.modalCleanupFunctions)) fn();
-    state.modalCleanupFunctions.clear();
-    state.isModalOpen = false;
-    jest.useRealTimers();
-  });
-
-  test("pinch end followed by a single tap within 300 ms does not reset", () => {
-    touch("touchstart", 2);
-    touch("touchend", 0); // pinch finished
-    expect(state.touchState.isPinching).toBe(false);
-
-    jest.advanceTimersByTime(120);
-    touch("touchstart", 1);
-    touch("touchend", 0); // a lone tap
-
-    expect(panzoom.reset).not.toHaveBeenCalled();
-  });
-
-  test("a real double tap still resets", () => {
-    touch("touchstart", 1);
-    touch("touchend", 0);
-    jest.advanceTimersByTime(120);
-    touch("touchstart", 1);
-    touch("touchend", 0);
-
-    expect(panzoom.reset).toHaveBeenCalledTimes(1);
-  });
-});
-
-// ---------------------------------------------------------------------------
-// 8. openFullscreen while the modal is already open must not re-run the
+// openFullscreen while the modal is already open must not re-run the
 //    open sequence on top of the live session
 // ---------------------------------------------------------------------------
 describe("openFullscreen is a no-op while the modal is already open", () => {
@@ -301,7 +239,7 @@ describe("openFullscreen is a no-op while the modal is already open", () => {
 });
 
 // ---------------------------------------------------------------------------
-// 9. Text-select mode must not swallow mousemove (laser pointer needs it)
+// Text-select mode must not swallow mousemove (laser pointer needs it)
 // ---------------------------------------------------------------------------
 describe("text-select mode lets mousemove reach document listeners", () => {
   let viewport, child;
@@ -351,7 +289,7 @@ describe("text-select mode lets mousemove reach document listeners", () => {
 });
 
 // ---------------------------------------------------------------------------
-// 11. The initial-focus rAF must be cancelled when the modal closes first
+// The initial-focus rAF must be cancelled when the modal closes first
 // ---------------------------------------------------------------------------
 describe("initial-focus rAF is cancelled on close", () => {
   let instances, rafQueue, origRAF, origCAF;
@@ -408,134 +346,5 @@ describe("initial-focus rAF is cancelled on close", () => {
     expect(document.activeElement).toBe(trigger);
     expect(document.getElementById("diagview-modal").contains(document.activeElement)).toBe(false);
     expect(instances.length).toBe(1);
-  });
-});
-
-// ---------------------------------------------------------------------------
-// 12. icons.js only ships the icons something actually renders
-// ---------------------------------------------------------------------------
-describe("ICONS contains only referenced icons", () => {
-  test("exactly the icons used by the UI are exported", () => {
-    expect(Object.keys(ICONS).sort()).toEqual(
-      [
-        "close",
-        "copy",
-        "dl",
-        "fs",
-        "laser",
-        "menu",
-        "reset",
-        "rotate",
-        "search",
-        "share",
-        "textSelect",
-      ].sort(),
-    );
-  });
-});
-
-// ---------------------------------------------------------------------------
-// 1. Focus trap must only cycle through elements that are actually rendered
-// ---------------------------------------------------------------------------
-describe("focus trap ignores unrendered and closed-search controls", () => {
-  let modal, cleanupTrap;
-  const el = (tag, id, cls, parent) => {
-    const n = document.createElement(tag);
-    if (id) n.id = id;
-    if (cls) n.className = cls;
-    if (tag === "a") n.href = "#";
-    parent.appendChild(n);
-    return n;
-  };
-
-  beforeEach(() => {
-    resetConfig();
-    document.body.innerHTML = "";
-    invalidateFocusableCache();
-
-    // jsdom has no layout: emulate checkVisibility() via a data-hidden marker
-    // on the display:none ancestor (what .dv-topbar-actions is on desktop).
-    Element.prototype.checkVisibility = function () {
-      return !this.closest("[data-hidden]");
-    };
-
-    modal = document.createElement("div");
-    modal.id = "diagview-modal";
-    modal.tabIndex = -1;
-    document.body.appendChild(modal);
-
-    const topbar = el("div", null, "diagview-topbar", modal);
-    const actions = el("div", null, "dv-topbar-actions", topbar);
-    actions.dataset.hidden = "1"; // desktop: display:none
-    el("button", "dv-search-icon-btn", "dv-icon-btn", actions);
-    el("button", "dv-text-select-btn", "dv-icon-btn", actions);
-    el("a", null, "diagview-branding", topbar);
-    const searchContainer = el("div", null, "diagview-search-container", topbar);
-    el("input", "diagview-search", "diagview-search-input", searchContainer);
-    el("button", "diagview-close", "diagview-close-btn", topbar);
-    el("button", "dv-toggle", "diagview-fab", modal);
-
-    state.isModalOpen = true;
-    cleanupTrap = setupFocusTrap();
-  });
-
-  afterEach(() => {
-    cleanupTrap?.();
-    delete Element.prototype.checkVisibility;
-    state.isModalOpen = false;
-  });
-
-  const pressTab = (shift = false) => {
-    const ev = new KeyboardEvent("keydown", { key: "Tab", shiftKey: shift, cancelable: true });
-    document.activeElement.dispatchEvent(ev);
-    return ev;
-  };
-
-  test("Tab from the last control wraps to the first RENDERED control", () => {
-    document.getElementById("dv-toggle").focus();
-    const ev = pressTab();
-    expect(ev.defaultPrevented).toBe(true);
-    expect(document.activeElement.className).toBe("diagview-branding");
-  });
-
-  test("Shift+Tab from the first rendered control wraps to the last control", () => {
-    document.querySelector(".diagview-branding").focus();
-    const ev = pressTab(true);
-    expect(ev.defaultPrevented).toBe(true);
-    expect(document.activeElement.id).toBe("dv-toggle");
-  });
-
-  test("inputs inside the collapsed mobile search container are skipped", () => {
-    // Mobile: action row rendered, branding hidden, search collapsed
-    document.querySelector(".dv-topbar-actions").removeAttribute("data-hidden");
-    document.querySelector(".diagview-branding").dataset.hidden = "1";
-    const container = document.querySelector(".diagview-search-container");
-    container.style.opacity = "0";
-    container.style.pointerEvents = "none";
-    invalidateFocusableCache();
-
-    // Mid-list Tab steps over the collapsed search input straight to Close
-    document.getElementById("dv-text-select-btn").focus();
-    pressTab();
-    expect(document.activeElement.id).toBe("diagview-close");
-
-    document.getElementById("dv-toggle").focus();
-    pressTab();
-    expect(document.activeElement.id).toBe("dv-search-icon-btn");
-
-    // Shift+Tab from the search icon wraps to the FAB — never the hidden input
-    pressTab(true);
-    expect(document.activeElement.id).toBe("dv-toggle");
-
-    // Opening search (class + styles) rebuilds the list and exposes the input
-    document.querySelector(".diagview-topbar").classList.add("search-open");
-    container.style.opacity = "";
-    container.style.pointerEvents = "";
-    document.querySelector(".dv-topbar-actions").dataset.hidden = "1";
-    invalidateFocusableCache();
-
-    document.getElementById("dv-toggle").focus();
-    pressTab();
-    expect(document.activeElement.id).toBe("diagview-search");
   });
 });

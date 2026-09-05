@@ -10,7 +10,16 @@ jest.unstable_mockModule("../src/features/lazy/rotate.js", () => {
   throw new Error("chunk failed to load");
 });
 
+// Keep the real modal out of it: Escape handling is asserted through this mock
+jest.unstable_mockModule("../src/ui/modal-controls.js", () => ({
+  closeModal: jest.fn(),
+  syncBrandingVisibility: jest.fn(),
+  lockBodyScroll: jest.fn(),
+  unlockBodyScroll: jest.fn(),
+}));
+
 const { state, resetConfig } = await import("../src/core/config.js");
+const { closeModal: closeModalMock } = await import("../src/ui/modal-controls.js");
 const { setupKeyboardShortcuts, teardownKeyboardShortcuts } =
   await import("../src/features/keyboard.js");
 const { isHelpVisible, cleanupKeyboardHelp } = await import("../src/ui/keyboard-help.js");
@@ -119,7 +128,7 @@ describe("Keyboard Shortcuts Integration", () => {
     expect(mockPanzoom.pan).toHaveBeenCalled();
   });
 
-  test("? does not open help while typing in the search box (finding 10)", () => {
+  test("? does not open help while typing in the search box", () => {
     document.body.innerHTML = '<input id="diagview-search" value="">';
     const input = document.getElementById("diagview-search");
     input.focus();
@@ -135,7 +144,7 @@ describe("Keyboard Shortcuts Integration", () => {
     cleanupKeyboardHelp();
   });
 
-  test("a failed lazy chunk is reported instead of rejecting unhandled (finding 10)", async () => {
+  test("a failed lazy chunk is reported instead of rejecting unhandled", async () => {
     const errorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
     const unhandled = [];
     const track = (reason) => unhandled.push(reason);
@@ -151,5 +160,65 @@ describe("Keyboard Shortcuts Integration", () => {
       expect.any(Error),
     );
     errorSpy.mockRestore();
+  });
+});
+
+describe("Two-stage Escape while searching", () => {
+  let searchInput;
+  let backBtn;
+
+  beforeEach(() => {
+    resetConfig();
+    state.isModalOpen = true;
+    document.body.innerHTML = "";
+
+    searchInput = document.createElement("input");
+    searchInput.id = "diagview-search";
+    document.body.appendChild(searchInput);
+
+    backBtn = document.createElement("button");
+    backBtn.id = "diagview-search-back";
+    document.body.appendChild(backBtn);
+
+    closeModalMock.mockClear();
+    setupKeyboardShortcuts();
+  });
+
+  afterEach(() => {
+    teardownKeyboardShortcuts();
+  });
+
+  const pressEscape = () => {
+    window.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
+  };
+
+  test("Escape with a query in the focused search input does NOT close the modal", () => {
+    searchInput.value = "deploy";
+    searchInput.focus();
+
+    pressEscape();
+
+    expect(closeModalMock).not.toHaveBeenCalled();
+  });
+
+  test("Escape with an empty focused search input exits search mode, not the modal", () => {
+    const backClick = jest.fn();
+    backBtn.addEventListener("click", backClick);
+    searchInput.value = "";
+    searchInput.focus();
+
+    pressEscape();
+
+    expect(backClick).toHaveBeenCalledTimes(1);
+    expect(closeModalMock).not.toHaveBeenCalled();
+    expect(document.activeElement).not.toBe(searchInput);
+  });
+
+  test("Escape outside of search closes the modal", () => {
+    searchInput.blur();
+
+    pressEscape();
+
+    expect(closeModalMock).toHaveBeenCalledTimes(1);
   });
 });

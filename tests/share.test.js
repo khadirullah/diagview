@@ -283,7 +283,7 @@ describe("Share System", () => {
     expect(pending.customColor).toBe("#0b0f19");
   });
 
-  test("dv-c only accepts 3, 4, 6 or 8 hex digits (review 2, finding 11)", () => {
+  test("dv-c only accepts 3, 4, 6 or 8 hex digits", () => {
     const restore = (color) => {
       window.location = new URL(`http://localhost/test?dv-idx=0&dv-t=custom&dv-c=${color}`);
       const res = restoreViewFromURL([{}]);

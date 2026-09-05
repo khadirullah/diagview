@@ -108,7 +108,7 @@ describe("Core Config", () => {
   });
 });
 
-describe("Core Config: validateConfig gaps (review 2, finding 8)", () => {
+describe("Core Config: validateConfig gaps", () => {
   let warn;
 
   beforeEach(() => {
@@ -192,7 +192,7 @@ describe("Core Config: validateConfig gaps (review 2, finding 8)", () => {
   });
 });
 
-describe("Core Config: publicState is read-only all the way down (review 2, finding 9)", () => {
+describe("Core Config: publicState is read-only all the way down", () => {
   let warn;
 
   beforeEach(() => {

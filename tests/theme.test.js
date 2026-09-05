@@ -177,7 +177,7 @@ describe("Theme Module", () => {
   });
 });
 
-describe("Theme Module: modern colour syntax and rejected colours (review 2, findings 4 and 8)", () => {
+describe("Theme Module: modern colour syntax and rejected colours", () => {
   const originalGetComputedStyle = window.getComputedStyle;
   const originalCSS = window.CSS;
   const originalGetContext = HTMLCanvasElement.prototype.getContext;

@@ -1,8 +1,7 @@
 /**
- * v1.0.11 regression test: closeModal re-entrancy guard.
+ * Modal Controls Tests
  * closeModal awaits lazy imports while isModalOpen is still true; a second
  * Escape/close-click in that window used to run the whole teardown twice.
- * Kept separate from v1011-fixes.test.js, which mocks modal-controls.
  */
 import { jest } from "@jest/globals";
 import { state, resetConfig, updateConfig } from "../src/core/config.js";

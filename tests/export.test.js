@@ -162,7 +162,7 @@ describe("Export Functionality", () => {
 });
 
 // ---------------------------------------------------------------------------
-// review2 findings (one describe per commit on the review2/modal branch)
+// Export regressions (one describe per fix)
 // ---------------------------------------------------------------------------
 describe("Export keeps structural <g> transforms", () => {
   let container, svg;
