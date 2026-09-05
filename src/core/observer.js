@@ -14,11 +14,26 @@ import { restoreViewFromURL } from "../features/lazy/share.js";
 // Share Link Handling (State managed via config.js)
 
 /**
- * Check for share link and open if needed.
- * This MUST use a global query of the document to ensure the 'dvIdx'
- * parameter correctly matches the diagram's index on the whole page.
+ * Every diagram DiagView knows about, in a stable order: the document first,
+ * then each shadow root passed to initShadowRoot() in registration order.
+ * This is the list data-diagview-index and share links (dv-idx) refer to.
+ * @returns {Element[]}
  */
-function checkShareLink() {
+export function collectAllDiagrams() {
+  const selector = state.config.diagramSelector;
+  const all = [...safeQuerySelectorAll(selector, document)];
+  state.shadowRoots.forEach((root) => {
+    if (root?.querySelectorAll) all.push(...safeQuerySelectorAll(selector, root));
+  });
+  return all;
+}
+
+/**
+ * Check for share link and open if needed.
+ * This MUST use the global diagram list (document + shadow roots) so the
+ * 'dvIdx' parameter matches the index stamped on each diagram.
+ */
+export function checkShareLink() {
   if (state.hasCheckedShareLink) return;
 
   // Fast Path: If no DiagView parameters are in the URL, we never need to check again
@@ -27,8 +42,7 @@ function checkShareLink() {
     return;
   }
 
-  const selector = state.config.diagramSelector;
-  const allDiagrams = safeQuerySelectorAll(selector, document);
+  const allDiagrams = collectAllDiagrams();
 
   if (allDiagrams.length === 0) return;
 
@@ -106,10 +120,11 @@ export function processDiagrams(root = document) {
     diagrams.push(...safeQuerySelectorAll(selector, root));
   }
 
-  const allDiagrams = safeQuerySelectorAll(selector, document);
-
   // MAJ-3: Use a Map for O(1) index lookups to avoid O(N^2) complexity on large pages.
   // This ensures the library scales linearly even with hundreds of diagrams.
+  // Diagrams in shadow roots come after the document's, so they get a real
+  // index instead of -1 and share links can find them again.
+  const allDiagrams = collectAllDiagrams();
   const indexMap = new Map(allDiagrams.map((d, i) => [d, i]));
 
   diagrams.forEach((diagram) => {

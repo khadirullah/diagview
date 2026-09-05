@@ -253,3 +253,56 @@ describe("teardown safety and diagramSelector validation (finding 3)", () => {
     expect(warnSpy).not.toHaveBeenCalledWith(expect.stringContaining("Already initialized"));
   });
 });
+
+describe("shadow DOM styles and indexing (finding 6)", () => {
+  let warnSpy;
+  let host;
+  let shadow;
+
+  const shadowHasStyles = (root) =>
+    !!root.querySelector("style[data-diagview-styles]") ||
+    (Array.isArray(root.adoptedStyleSheets) && root.adoptedStyleSheets.length > 0);
+
+  beforeEach(() => {
+    document.body.innerHTML = `<div class="diagram">${SVG}</div>`;
+    document.head.innerHTML = "";
+    host = document.createElement("div");
+    document.body.appendChild(host);
+    shadow = host.attachShadow({ mode: "open" });
+    shadow.innerHTML = `<div class="diagram">${SVG}</div>`;
+    warnSpy = jest.spyOn(console, "warn").mockImplementation(() => {});
+  });
+
+  afterEach(async () => {
+    await DiagView.destroy();
+    jest.runAllTimers();
+    warnSpy.mockRestore();
+  });
+
+  test("initShadowRoot injects the stylesheet into the shadow root and destroy removes it", async () => {
+    DiagView.init({ layout: "header" });
+    expect(shadowHasStyles(shadow)).toBe(false);
+
+    DiagView.initShadowRoot(shadow);
+    expect(shadowHasStyles(shadow)).toBe(true);
+
+    // Idempotent
+    DiagView.initShadowRoot(shadow);
+    expect(shadow.querySelectorAll("style[data-diagview-styles]").length).toBeLessThanOrEqual(1);
+
+    await DiagView.destroy();
+    expect(shadowHasStyles(shadow)).toBe(false);
+  });
+
+  test("shadow diagrams get a stable index after the document diagrams", () => {
+    DiagView.init({ layout: "header" });
+    DiagView.initShadowRoot(shadow);
+
+    const pageDiagram = document.querySelector(".diagram");
+    const shadowDiagram = shadow.querySelector(".diagram");
+
+    expect(pageDiagram.dataset.diagviewIndex).toBe("0");
+    expect(shadowDiagram.dataset.diagviewIndex).toBe("1");
+    expect(shadowDiagram.dataset.diagviewIndex).not.toBe("-1");
+  });
+});

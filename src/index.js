@@ -26,7 +26,7 @@ import {
   syncTheme,
   clearThemeCache,
 } from "./core/theme.js";
-import { injectStyles, removeStyles } from "./ui/styles.js";
+import { injectStyles, removeStyles, injectStylesInto, removeStylesFrom } from "./ui/styles.js";
 import { createModal, openFullscreen } from "./ui/modal.js";
 import { closeModal, syncBrandingVisibility } from "./ui/modal-controls.js";
 import { resetViewportState } from "./ui/viewport.js";
@@ -37,6 +37,7 @@ import {
   refreshDiagrams,
   resetShareLinkCheck,
   processDiagrams,
+  checkShareLink,
 } from "./core/observer.js";
 import {
   exportDiagram,
@@ -197,6 +198,7 @@ async function _teardown() {
         delete el.dataset.diagviewIndex;
       });
     });
+    state.shadowRoots.forEach((root) => removeStylesFrom(root));
   } catch (e) {
     console.error("DiagView: Error during teardown:", e);
   } finally {
@@ -257,7 +259,10 @@ function initShadowRoot(shadowRoot) {
   }
 
   state.shadowRoots.add(shadowRoot);
+  injectStylesInto(shadowRoot);
   processDiagrams(shadowRoot);
+  // A share link may point at a diagram that only exists in this shadow root
+  checkShareLink();
 }
 
 /**

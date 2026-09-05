@@ -540,7 +540,9 @@ DiagView.init();
 DiagView.initShadowRoot(shadow);
 ```
 
-The modal and styles are injected into the main document, not the shadow root — this ensures the fullscreen overlay works correctly.
+The modal lives in the main document so the fullscreen overlay works correctly. The inline toolbar is built inside the shadow root, so `initShadowRoot()` also installs the DiagView stylesheet there (through `adoptedStyleSheets`, or a `<style>` tag in browsers without it); `destroy()` removes it again together with the wrappers.
+
+Diagrams inside shadow roots are numbered after the ones in the document, in the order the roots were passed to `initShadowRoot()`. Share links (`dv-idx`) use that numbering, so a link to a shadow diagram opens again as long as the page calls `initShadowRoot()` for the same roots in the same order.
 
 ---
 
