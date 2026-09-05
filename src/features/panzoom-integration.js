@@ -163,19 +163,26 @@ export function setupViewportInteractions(viewport, element, panzoom) {
   };
 
   const handleTouchEnd = (e) => {
+    if (e.touches.length !== 0) return;
+
+    // The last finger of a pinch lifting is not a tap: end the pinch and
+    // forget any pending tap so the next single tap cannot complete a
+    // "double tap" and reset the zoom the user just pinched to.
+    if (state.touchState.isPinching) {
+      state.touchState.isPinching = false;
+      lastTapTime = 0;
+      return;
+    }
+
     const now = Date.now();
     const gap = now - lastTapTime;
 
     // Double tap to reset
-    if (!state.touchState.isPinching && gap < 300 && gap > 0 && e.touches.length === 0) {
+    if (gap < 300 && gap > 0) {
       panzoom.reset({ animate: true, duration: 250 });
       lastTapTime = 0;
-    } else if (e.touches.length === 0) {
+    } else {
       lastTapTime = now;
-    }
-
-    if (e.touches.length === 0) {
-      state.touchState.isPinching = false;
     }
   };
 

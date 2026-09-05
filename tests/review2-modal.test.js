@@ -7,6 +7,7 @@ import { state, resetConfig, updateConfig } from "../src/core/config.js";
 import { setupFocusTrap, invalidateFocusableCache } from "../src/ui/focus-manager.js";
 import { createModal, openFullscreen } from "../src/ui/modal.js";
 import { closeModal } from "../src/ui/modal-controls.js";
+import { setupViewportInteractions, resetTouchState } from "../src/features/panzoom-integration.js";
 
 // ---------------------------------------------------------------------------
 // Shared harness: drive the REAL modal with a fake Panzoom implementation
@@ -180,6 +181,66 @@ describe("close during openFullscreen's awaits leaves no stale session", () => {
     expect(state.isModalOpen).toBe(true);
     expect(document.getElementById("diagview-temp-menu")).not.toBeNull();
     expect(instances.length).toBe(2);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// 6. A single tap shortly after a pinch must not count as a double tap
+// ---------------------------------------------------------------------------
+describe("touch: tap after pinch does not reset the zoom", () => {
+  let viewport, element, panzoom;
+
+  const touch = (type, count) => {
+    const ev = new Event(type, { bubbles: true, cancelable: true });
+    ev.touches = Array.from({ length: count }, (_, i) => ({ clientX: i * 50, clientY: 0 }));
+    viewport.dispatchEvent(ev);
+  };
+
+  beforeEach(() => {
+    jest.useFakeTimers();
+    resetConfig();
+    resetTouchState();
+    state.isModalOpen = true;
+    document.body.innerHTML = "";
+    viewport = document.createElement("div");
+    element = document.createElement("div");
+    viewport.appendChild(element);
+    document.body.appendChild(viewport);
+    panzoom = {
+      zoomWithWheel: jest.fn(),
+      reset: jest.fn(),
+      getScale: jest.fn(() => 1),
+    };
+    setupViewportInteractions(viewport, element, panzoom);
+  });
+
+  afterEach(() => {
+    for (const fn of Array.from(state.modalCleanupFunctions)) fn();
+    state.modalCleanupFunctions.clear();
+    state.isModalOpen = false;
+    jest.useRealTimers();
+  });
+
+  test("pinch end followed by a single tap within 300 ms does not reset", () => {
+    touch("touchstart", 2);
+    touch("touchend", 0); // pinch finished
+    expect(state.touchState.isPinching).toBe(false);
+
+    jest.advanceTimersByTime(120);
+    touch("touchstart", 1);
+    touch("touchend", 0); // a lone tap
+
+    expect(panzoom.reset).not.toHaveBeenCalled();
+  });
+
+  test("a real double tap still resets", () => {
+    touch("touchstart", 1);
+    touch("touchend", 0);
+    jest.advanceTimersByTime(120);
+    touch("touchstart", 1);
+    touch("touchend", 0);
+
+    expect(panzoom.reset).toHaveBeenCalledTimes(1);
   });
 });
 
