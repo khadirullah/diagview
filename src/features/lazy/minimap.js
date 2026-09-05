@@ -99,11 +99,16 @@ export function updateMinimap(clone, viewport, panzoom) {
     // Use the ORIGINAL SVG's viewBox: the snapshot is of the unrotated page
     // SVG, while the live clone's viewBox may already be rewritten to rotated
     // bounds by rotate.js (axis-swapped at 90°/270°).
+    // Keep the viewBox ORIGIN too: Mermaid sequence/gitGraph/mindmap output
+    // starts at negative x/y, and a "0 0 W H" thumbnail shifts click-to-navigate
+    // and the indicator by exactly (x, y).
     const srcVb = originalSvg.viewBox?.baseVal;
+    const vbX = srcVb?.x || 0;
+    const vbY = srcVb?.y || 0;
     const vbW = srcVb?.width || d.width;
     const vbH = srcVb?.height || d.height;
     if (!state.minimapSvg.getAttribute("viewBox") && vbW && vbH) {
-      state.minimapSvg.setAttribute("viewBox", `0 0 ${vbW} ${vbH}`);
+      state.minimapSvg.setAttribute("viewBox", `${vbX} ${vbY} ${vbW} ${vbH}`);
     }
     state.minimapSvg.setAttribute("preserveAspectRatio", "xMidYMid meet");
     state.minimapSvg.removeAttribute("width");
@@ -207,13 +212,15 @@ export function updateMinimap(clone, viewport, panzoom) {
     // Clamp in the SNAPSHOT's coordinate space (rotate.js rewrites the live
     // clone's viewBox to the rotated bounds, so d may be axis-swapped).
     const mmVb = state.minimapSvg.viewBox?.baseVal;
+    const spanX = mmVb?.x || 0;
+    const spanY = mmVb?.y || 0;
     const spanW = mmVb?.width || d.width;
     const spanH = mmVb?.height || d.height;
-    const clamp = (v, max) => Math.min(Math.max(v, 0), max);
-    const minX = clamp(Math.min(p1.x, p2.x), spanW);
-    const maxX = clamp(Math.max(p1.x, p2.x), spanW);
-    const minY = clamp(Math.min(p1.y, p2.y), spanH);
-    const maxY = clamp(Math.max(p1.y, p2.y), spanH);
+    const clamp = (v, min, max) => Math.min(Math.max(v, min), max);
+    const minX = clamp(Math.min(p1.x, p2.x), spanX, spanX + spanW);
+    const maxX = clamp(Math.max(p1.x, p2.x), spanX, spanX + spanW);
+    const minY = clamp(Math.min(p1.y, p2.y), spanY, spanY + spanH);
+    const maxY = clamp(Math.max(p1.y, p2.y), spanY, spanY + spanH);
 
     // Forward-map the visible rect through the minimap snapshot's own CTM
     // (which includes its CSS rotation), then take the screen bounding box.
