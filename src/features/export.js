@@ -583,16 +583,28 @@ async function processImageExport(
       });
 
       if (copy) {
-        // Clipboard (PNG only usually)
-        if (!isClipboardAvailable() || isWebP) {
-          // Fallback to download if clipboard fails
+        // Fallback when the clipboard cannot be used: hand the file over as a download
+        const downloadInstead = () => {
           const url = URL.createObjectURL(blob);
           downloadFile(url, `${filename}.${ext}`);
           setTimeout(() => URL.revokeObjectURL(url), TIMING.CLEANUP_DELAY);
           showSuccessToast(`${label} downloaded (Clipboard unavailable)`);
+        };
+
+        // Clipboard (PNG only usually)
+        if (!isClipboardAvailable() || isWebP) {
+          downloadInstead();
         } else {
-          await navigator.clipboard.write([new ClipboardItem({ [mime]: blob })]);
-          showSuccessToast("Copied to clipboard!");
+          try {
+            await navigator.clipboard.write([new ClipboardItem({ [mime]: blob })]);
+            showSuccessToast("Copied to clipboard!");
+          } catch (err) {
+            // Safari requires the write to happen inside the user gesture; by
+            // the time the canvas has rendered that window has closed and it
+            // rejects with NotAllowedError. Treat it like a missing clipboard.
+            if (err?.name !== "NotAllowedError") throw err;
+            downloadInstead();
+          }
         }
       } else {
         // Download: Use BlobURL for maximum stability

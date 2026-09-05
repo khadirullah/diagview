@@ -263,3 +263,74 @@ describe("Per-format export functions guard against elements without an <svg>", 
     empty.remove();
   });
 });
+
+describe("copyToClipboard falls back to download when the clipboard write is denied", () => {
+  let container;
+  const toastTexts = () =>
+    Array.from(document.querySelectorAll("#diagview-toast-container .diagview-toast")).map(
+      (t) => t.textContent,
+    );
+
+  beforeEach(() => {
+    container = document.createElement("div");
+    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    svg.setAttribute("width", "100");
+    svg.setAttribute("height", "100");
+    svg.setAttribute("viewBox", "0 0 100 100");
+    container.appendChild(svg);
+    document.body.appendChild(container);
+    updateConfig({ highResScale: 1, maxPixels: 16000000, security: { mode: "strict" } });
+
+    global.URL.createObjectURL = jest.fn().mockReturnValue("blob:mock-url");
+    global.URL.revokeObjectURL = jest.fn();
+    global.Image = jest.fn(() => {
+      const img = document.createElement("img");
+      Object.defineProperty(img, "src", {
+        set(val) {
+          this._src = val;
+          setTimeout(() => this.onload && this.onload(), 5);
+        },
+        get() {
+          return this._src;
+        },
+      });
+      return img;
+    });
+    global.ClipboardItem = class {
+      constructor(items) {
+        this.items = items;
+      }
+    };
+    HTMLCanvasElement.prototype.toBlob = function (cb, type) {
+      cb(new Blob(["png"], { type: type || "image/png" }));
+    };
+    Object.defineProperty(navigator, "clipboard", {
+      value: {
+        write: jest.fn(() => Promise.reject(new DOMException("Denied", "NotAllowedError"))),
+      },
+      configurable: true,
+    });
+  });
+
+  afterEach(() => {
+    container.remove();
+    hideToast();
+    document.getElementById("diagview-toast-container")?.remove();
+    delete global.ClipboardItem;
+    jest.clearAllMocks();
+  });
+
+  test("NotAllowedError triggers the download path and a success toast", async () => {
+    const clickSpy = jest.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => {});
+
+    await copyToClipboard(container, { filename: "denied" });
+
+    expect(navigator.clipboard.write).toHaveBeenCalledTimes(1);
+    expect(global.URL.createObjectURL).toHaveBeenCalled();
+    expect(clickSpy).toHaveBeenCalled();
+    const texts = toastTexts();
+    expect(texts.some((t) => /downloaded/i.test(t))).toBe(true);
+    expect(texts.some((t) => /Export Failed/i.test(t))).toBe(false);
+    clickSpy.mockRestore();
+  });
+});
