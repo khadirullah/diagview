@@ -56,6 +56,61 @@ describe("Utils API", () => {
     );
   });
 
+  test("fixIds rewrites href on textPath, a and feImage plus aria id lists", () => {
+    document.body.innerHTML = `
+      <svg id="ref-svg">
+        <defs>
+          <path id="p1" d="M0 0 L10 10"/>
+          <filter id="f1"><feImage href="#p1"/><feImage xlink:href="#p1"/></filter>
+        </defs>
+        <title id="t1">Title</title>
+        <desc id="d1">Desc</desc>
+        <text><textPath href="#p1">on path</textPath></text>
+        <text><textPath xlink:href="#p1">on path</textPath></text>
+        <a href="#p1"><text>link</text></a>
+        <a xlink:href="#p1"><text>link</text></a>
+        <a href="#nope"><text>unknown</text></a>
+        <g aria-labelledby="t1 d1" aria-describedby="d1 missing"></g>
+      </svg>
+    `;
+
+    const svg = document.getElementById("ref-svg");
+    fixIds(svg, "dv-1");
+
+    const textPaths = svg.querySelectorAll("textPath");
+    expect(textPaths[0].getAttribute("href")).toBe("#dv-1-p1");
+    expect(textPaths[1].getAttribute("xlink:href")).toBe("#dv-1-p1");
+
+    const anchors = svg.querySelectorAll("a");
+    expect(anchors[0].getAttribute("href")).toBe("#dv-1-p1");
+    expect(anchors[1].getAttribute("xlink:href")).toBe("#dv-1-p1");
+    // Ids that are not in the map stay untouched
+    expect(anchors[2].getAttribute("href")).toBe("#nope");
+
+    const feImages = svg.querySelectorAll("feImage");
+    expect(feImages[0].getAttribute("href")).toBe("#dv-1-p1");
+    expect(feImages[1].getAttribute("xlink:href")).toBe("#dv-1-p1");
+
+    const g = svg.querySelector("g");
+    expect(g.getAttribute("aria-labelledby")).toBe("dv-1-t1 dv-1-d1");
+    expect(g.getAttribute("aria-describedby")).toBe("dv-1-d1 missing");
+  });
+
+  test("fixIds records aria id list rewrites for restoration", () => {
+    document.body.innerHTML = `
+      <svg id="aria-svg">
+        <title id="t1">Title</title>
+        <g aria-labelledby="t1"></g>
+      </svg>
+    `;
+    const svg = document.getElementById("aria-svg");
+    const changes = { elements: new Map(), attributes: [], styles: new Map() };
+    fixIds(svg, "dv-2", changes);
+    const g = svg.querySelector("g");
+    expect(g.getAttribute("aria-labelledby")).toBe("dv-2-t1");
+    expect(changes.attributes).toEqual([{ el: g, name: "aria-labelledby", value: "t1" }]);
+  });
+
   test("sanitizeFilename preserves Unicode letters and numbers", () => {
     expect(sanitizeFilename("héllo world")).toBe("héllo_world");
     expect(sanitizeFilename("你好世界")).toBe("你好世界");

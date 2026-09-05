@@ -564,6 +564,7 @@ export function fixIds(svg, uniqueId, changes = null) {
   // Illustrator and hand-authored SVGs, where no fill/stroke attribute exists.
   const REF_SELECTOR =
     "use,image,pattern,linearGradient,radialGradient,filter,mask,clipPath," +
+    "textPath,a,feImage,[aria-labelledby],[aria-describedby]," +
     "[fill*='url'],[stroke*='url'],[filter*='url'],[clip-path*='url'],[mask*='url']," +
     "[marker-start*='url'],[marker-end*='url'],[marker-mid*='url'],[style*='url']";
 
@@ -573,7 +574,24 @@ export function fixIds(svg, uniqueId, changes = null) {
       const attr = el.attributes[i];
       const value = attr.value;
 
-      if (!value || !value.includes("#")) continue;
+      if (!value) continue;
+
+      // Case C: space-separated id lists (no "#" prefix) used by ARIA
+      if (attr.name === "aria-labelledby" || attr.name === "aria-describedby") {
+        const newList = value
+          .split(/\s+/)
+          .map((id) => (idMap.has(id) ? idMap.get(id) : id))
+          .join(" ");
+        if (newList !== value) {
+          if (changes && changes.attributes) {
+            changes.attributes.push({ el, name: attr.name, value });
+          }
+          attr.value = newList;
+        }
+        continue;
+      }
+
+      if (!value.includes("#")) continue;
 
       let newValue = value;
 
