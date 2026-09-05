@@ -4,7 +4,7 @@
  * @module ui/modal
  */
 
-import { state } from "../core/config.js";
+import { state, addCleanupFunction } from "../core/config.js";
 import { detectTheme, syncTheme } from "../core/theme.js";
 import { throttle, setSVGContent, centerSVGViewBox } from "../core/utils.js";
 import { addModalListener, addModalCleanupFunction } from "../core/lifecycle.js";
@@ -674,9 +674,13 @@ function _wireModalEvents(elements, viewport) {
       .catch(() => {});
   }
 
-  // Text Selection
+  // Text Selection (keyboard "T" emits this event).
+  // _wireModalEvents runs once per modal DOM (createModal is idempotent), so
+  // the subscription must live for the instance and be released on destroy().
+  // Registering it as modal-scoped cleanup removed it on the first close and
+  // nothing re-subscribed, which silently killed the shortcut afterwards.
   const textSelectCleanup = state.events.on("dv:toggle-text-select", () => _doTextSelectToggle());
-  addModalCleanupFunction(() => {
+  addCleanupFunction(() => {
     if (typeof textSelectCleanup === "function") textSelectCleanup();
   });
 
