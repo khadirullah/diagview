@@ -12,7 +12,7 @@ import { EventEmitter } from "./events.js";
 
 /**
  * Initialize the global state singleton
- * @returns {DiagViewState}
+ * @returns {DiagViewState} Fresh internal state with default config
  */
 function createInitialState() {
   return {

@@ -36,7 +36,7 @@ function supportsAdoptedSheets(root) {
 /**
  * Inject the DiagView stylesheet into a shadow root so toolbars built inside
  * it are styled. Uses adoptedStyleSheets when available, else a <style> tag.
- * @param {ShadowRoot} root
+ * @param {ShadowRoot} root - Shadow root to style
  */
 export function injectStylesInto(root) {
   if (!root) return;
@@ -61,7 +61,7 @@ export function injectStylesInto(root) {
 
 /**
  * Remove the stylesheet injected by injectStylesInto().
- * @param {ShadowRoot} root
+ * @param {ShadowRoot} root - Shadow root previously passed to injectStylesInto()
  */
 export function removeStylesFrom(root) {
   if (!root) return;

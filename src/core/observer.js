@@ -17,7 +17,7 @@ import { restoreViewFromURL } from "../features/lazy/share.js";
  * Every diagram DiagView knows about, in a stable order: the document first,
  * then each shadow root passed to initShadowRoot() in registration order.
  * This is the list data-diagview-index and share links (dv-idx) refer to.
- * @returns {Element[]}
+ * @returns {Element[]} Diagram containers in index order
  */
 export function collectAllDiagrams() {
   const selector = state.config.diagramSelector;
@@ -72,7 +72,7 @@ export function checkShareLink() {
 /**
  * Get or create the global IntersectionObserver for lazy initialization.
  * OPT-2: Defers initialization until diagrams are near the viewport.
- * @returns {IntersectionObserver|null}
+ * @returns {IntersectionObserver|null} The shared observer, or null when unsupported
  */
 function getLazyObserver() {
   if (state.lazyObserver) return state.lazyObserver;

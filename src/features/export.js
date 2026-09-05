@@ -42,8 +42,8 @@ export function generateFilename(svg) {
  * The public per-format functions used to dereference the missing SVG in
  * generateFilename() before their try/catch and rejected with a TypeError.
  * @private
- * @param {HTMLElement} sourceElement
- * @returns {SVGSVGElement|null}
+ * @param {HTMLElement} sourceElement - Diagram container passed to the export
+ * @returns {SVGSVGElement|null} The SVG, or null after showing the error toast
  */
 function resolveSourceSvg(sourceElement) {
   const svg = sourceElement?.querySelector?.("svg") ?? null;

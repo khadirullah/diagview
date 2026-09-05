@@ -43,8 +43,8 @@ let _openSession = 0;
  * Whether the open session identified by `token` is still the live one:
  * no newer open has started and no close has begun in the meantime.
  * @private
- * @param {number} token
- * @returns {boolean}
+ * @param {number} token - Session token captured at the start of openFullscreen
+ * @returns {boolean} True while that session is still the current one
  */
 function _isSessionLive(token) {
   return token === _openSession && state.isModalOpen && !state.isModalClosing;

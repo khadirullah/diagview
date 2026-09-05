@@ -245,7 +245,7 @@ function refresh() {
 
 /**
  * Initialize diagrams inside a Shadow DOM root.
- * @param {ShadowRoot} shadowRoot
+ * @param {ShadowRoot} shadowRoot - Open shadow root containing diagram elements
  */
 function initShadowRoot(shadowRoot) {
   if (!state.isInitialized) {
