@@ -300,6 +300,56 @@ describe("openFullscreen is a no-op while the modal is already open", () => {
 });
 
 // ---------------------------------------------------------------------------
+// 9. Text-select mode must not swallow mousemove (laser pointer needs it)
+// ---------------------------------------------------------------------------
+describe("text-select mode lets mousemove reach document listeners", () => {
+  let viewport, child;
+
+  beforeEach(() => {
+    resetConfig();
+    document.body.innerHTML = "";
+    createModal();
+    viewport = document.getElementById("diagview-modal-viewport");
+    child = document.createElement("div");
+    viewport.appendChild(child);
+    viewport.classList.add("dv-text-select");
+  });
+
+  afterEach(() => {
+    viewport.classList.remove("dv-text-select");
+    // createModal registered modal-scoped handlers (focus trap); drop them
+    for (const fn of Array.from(state.modalCleanupFunctions)) fn();
+    state.modalCleanupFunctions.clear();
+  });
+
+  test("mousemove and pointermove bubble to document while dv-text-select is on", () => {
+    const onMove = jest.fn();
+    document.addEventListener("mousemove", onMove);
+    document.addEventListener("pointermove", onMove);
+
+    child.dispatchEvent(new MouseEvent("mousemove", { bubbles: true }));
+    child.dispatchEvent(new MouseEvent("pointermove", { bubbles: true }));
+
+    document.removeEventListener("mousemove", onMove);
+    document.removeEventListener("pointermove", onMove);
+    expect(onMove).toHaveBeenCalledTimes(2);
+  });
+
+  test("events that would start a pan are still stopped", () => {
+    const onDown = jest.fn();
+    document.addEventListener("mousedown", onDown);
+    document.addEventListener("pointerdown", onDown);
+
+    child.dispatchEvent(new MouseEvent("mousedown", { bubbles: true }));
+    child.dispatchEvent(new MouseEvent("pointerdown", { bubbles: true }));
+
+    document.removeEventListener("mousedown", onDown);
+    document.removeEventListener("pointerdown", onDown);
+    expect(onDown).not.toHaveBeenCalled();
+  });
+});
+
+// ---------------------------------------------------------------------------
 // 1. Focus trap must only cycle through elements that are actually rendered
 // ---------------------------------------------------------------------------
 describe("focus trap ignores unrendered and closed-search controls", () => {

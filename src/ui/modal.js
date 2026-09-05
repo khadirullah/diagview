@@ -639,7 +639,10 @@ function _createModalMainContent(modal, content) {
     "Diagram viewer. Use arrow keys to pan, plus and minus to zoom, Space to reset.",
   );
 
-  // Intercept events before they reach Panzoom to allow native text selection
+  // Intercept the events that would START a pan before they reach Panzoom,
+  // so native text selection can begin. Move events must keep bubbling:
+  // Panzoom ignores them without a preceding pointerdown, and other
+  // features (meeting-mode's laser pointer) listen for them on document.
   const stopPropIfTextSelect = (e) => {
     if (viewport.classList.contains("dv-text-select")) {
       e.stopPropagation();
@@ -648,9 +651,6 @@ function _createModalMainContent(modal, content) {
   viewport.addEventListener("pointerdown", stopPropIfTextSelect, true);
   viewport.addEventListener("mousedown", stopPropIfTextSelect, true);
   viewport.addEventListener("touchstart", stopPropIfTextSelect, true);
-  viewport.addEventListener("pointermove", stopPropIfTextSelect, true);
-  viewport.addEventListener("mousemove", stopPropIfTextSelect, true);
-  viewport.addEventListener("touchmove", stopPropIfTextSelect, true);
 
   content.appendChild(viewport);
 
