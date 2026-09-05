@@ -1,6 +1,17 @@
 import { jest } from "@jest/globals";
 import "jest-canvas-mock";
-import { exportDiagram, renderToCanvas, copySVGCode } from "../src/features/export.js";
+import {
+  exportDiagram,
+  renderToCanvas,
+  copySVGCode,
+  exportToSVG,
+  exportToPNG,
+  exportToJPEG,
+  exportToWebP,
+  exportToPDF,
+  copyToClipboard,
+} from "../src/features/export.js";
+import { hideToast } from "../src/ui/toast.js";
 import { state, updateConfig } from "../src/core/config.js";
 
 describe("Export Functionality", () => {
@@ -225,5 +236,30 @@ describe("Export embeds self-hosted fonts referenced by relative urls", () => {
     expect(text).toContain("data:font/woff2;base64,QUJD");
     // a failed fetch leaves that url alone and does not fail the export
     expect(text).toContain("https://cdn.example.com/z.woff2");
+  });
+});
+
+describe("Per-format export functions guard against elements without an <svg>", () => {
+  const lastToastText = () =>
+    document.getElementById("diagview-toast-container")?.lastChild?.textContent || "";
+
+  afterEach(() => {
+    hideToast();
+    document.getElementById("diagview-toast-container")?.remove();
+  });
+
+  test.each([
+    ["exportToSVG", exportToSVG],
+    ["exportToPNG", exportToPNG],
+    ["exportToJPEG", exportToJPEG],
+    ["exportToWebP", exportToWebP],
+    ["exportToPDF", exportToPDF],
+    ["copyToClipboard", copyToClipboard],
+  ])("%s resolves and shows a toast instead of throwing", async (_name, fn) => {
+    const empty = document.createElement("div");
+    document.body.appendChild(empty);
+    await expect(fn(empty)).resolves.toBeUndefined();
+    expect(lastToastText()).toContain("No diagram found");
+    empty.remove();
   });
 });

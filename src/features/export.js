@@ -38,6 +38,20 @@ export function generateFilename(svg) {
 }
 
 /**
+ * Find the <svg> inside a source element, or report the problem to the user.
+ * The public per-format functions used to dereference the missing SVG in
+ * generateFilename() before their try/catch and rejected with a TypeError.
+ * @private
+ * @param {HTMLElement} sourceElement
+ * @returns {SVGSVGElement|null}
+ */
+function resolveSourceSvg(sourceElement) {
+  const svg = sourceElement?.querySelector?.("svg") ?? null;
+  if (!svg) showErrorToast("No diagram found");
+  return svg;
+}
+
+/**
  * Fetch a URL and return a base64 data URI, or null on failure.
  * Used to embed fonts so export SVGs render consistently.
  * @private
@@ -437,12 +451,14 @@ export async function renderToCanvas(sourceElement, modalClone, transparent = fa
  * @param {object} [options={}] - Export options
  */
 export async function exportToSVG(sourceElement, options = {}) {
-  const filename = options.filename || generateFilename(sourceElement.querySelector("svg"));
+  const originalSvg = resolveSourceSvg(sourceElement);
+  if (!originalSvg) return;
+
+  const filename = options.filename || generateFilename(originalSvg);
   const isTransparent = options.transparent || false;
   const modalClone = options.modalClone || null;
 
   try {
-    const originalSvg = sourceElement.querySelector("svg");
     const { bg, svg } = await prepareSvgForExport(originalSvg, modalClone);
 
     // Add bg rect for non-transparent SVG
@@ -613,7 +629,9 @@ async function processImageExport(
  * Export as PNG
  */
 export async function exportToPNG(sourceElement, options = {}) {
-  const filename = options.filename || generateFilename(sourceElement.querySelector("svg"));
+  const sourceSvg = resolveSourceSvg(sourceElement);
+  if (!sourceSvg) return;
+  const filename = options.filename || generateFilename(sourceSvg);
   return processImageExport(
     sourceElement,
     filename,
@@ -629,7 +647,9 @@ export async function exportToPNG(sourceElement, options = {}) {
  * Export as JPEG
  */
 export async function exportToJPEG(sourceElement, options = {}) {
-  const filename = options.filename || generateFilename(sourceElement.querySelector("svg"));
+  const sourceSvg = resolveSourceSvg(sourceElement);
+  if (!sourceSvg) return;
+  const filename = options.filename || generateFilename(sourceSvg);
   return processImageExport(
     sourceElement,
     filename,
@@ -645,7 +665,9 @@ export async function exportToJPEG(sourceElement, options = {}) {
  * Export as WebP
  */
 export async function exportToWebP(sourceElement, options = {}) {
-  const filename = options.filename || generateFilename(sourceElement.querySelector("svg"));
+  const sourceSvg = resolveSourceSvg(sourceElement);
+  if (!sourceSvg) return;
+  const filename = options.filename || generateFilename(sourceSvg);
   return processImageExport(
     sourceElement,
     filename,
@@ -660,7 +682,9 @@ export async function exportToWebP(sourceElement, options = {}) {
  * Copy to Clipboard (PNG)
  */
 export async function copyToClipboard(sourceElement, options = {}) {
-  const filename = options.filename || generateFilename(sourceElement.querySelector("svg"));
+  const sourceSvg = resolveSourceSvg(sourceElement);
+  if (!sourceSvg) return;
+  const filename = options.filename || generateFilename(sourceSvg);
   return processImageExport(sourceElement, filename, "png", false, true, options.modalClone);
 }
 
@@ -668,7 +692,9 @@ export async function copyToClipboard(sourceElement, options = {}) {
  * Export as PDF
  */
 export async function exportToPDF(sourceElement, options = {}) {
-  const filename = options.filename || generateFilename(sourceElement.querySelector("svg"));
+  const sourceSvg = resolveSourceSvg(sourceElement);
+  if (!sourceSvg) return;
+  const filename = options.filename || generateFilename(sourceSvg);
   const transparent = options.transparent || false;
   const modalClone = options.modalClone || null;
 
