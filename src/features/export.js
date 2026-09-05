@@ -79,9 +79,12 @@ async function embedDocumentFonts(svgEl) {
   const fontFaceRules = [];
   for (const sheet of document.styleSheets) {
     try {
+      // Relative url()s inside a rule resolve against the stylesheet that
+      // declares it (or the page for inline <style> blocks), not the export.
+      const base = sheet.href || document.baseURI;
       for (const rule of sheet.cssRules) {
         if (rule instanceof CSSFontFaceRule) {
-          fontFaceRules.push(rule.cssText);
+          fontFaceRules.push({ cssText: rule.cssText, base });
         }
       }
     } catch {
@@ -93,12 +96,21 @@ async function embedDocumentFonts(svgEl) {
 
   // Fetch and inline font files referenced by url(...)
   const inlined = await Promise.all(
-    fontFaceRules.map(async (cssText) => {
-      // Replace each url("https://...") with a base64 data URI
-      const urlMatches = [...cssText.matchAll(/url\(['"]?(https?:\/\/[^'")\s]+)['"]?\)/gi)];
+    fontFaceRules.map(async ({ cssText, base }) => {
+      // Replace each url(...) with a base64 data URI. Relative and
+      // root-relative references (self-hosted fonts) are made absolute
+      // first: copied verbatim they cannot resolve inside a data:/blob: image.
+      const urlMatches = [...cssText.matchAll(/url\((['"]?)([^'")\s]+)\1\)/gi)];
       let result = cssText;
-      for (const [match, rawUrl] of urlMatches) {
-        const dataURI = await fetchAsDataURI(rawUrl);
+      for (const [match, , rawUrl] of urlMatches) {
+        if (/^data:/i.test(rawUrl)) continue;
+        let absolute;
+        try {
+          absolute = new URL(rawUrl, base).href;
+        } catch {
+          continue;
+        }
+        const dataURI = await fetchAsDataURI(absolute);
         if (dataURI) {
           result = result.replace(match, `url('${dataURI}')`);
         }

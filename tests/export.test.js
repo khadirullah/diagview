@@ -158,3 +158,72 @@ describe("Export keeps structural <g> transforms", () => {
     expect(copiedText).toMatch(/translate\(40px/);
   });
 });
+
+describe("Export embeds self-hosted fonts referenced by relative urls", () => {
+  let container, styleEl, fetchMock;
+
+  beforeEach(() => {
+    container = document.createElement("div");
+    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    svg.setAttribute("viewBox", "0 0 100 100");
+    container.appendChild(svg);
+    document.body.appendChild(container);
+
+    styleEl = document.createElement("style");
+    styleEl.textContent =
+      "@font-face { font-family: DvTest; src: url(fonts/x.woff2) format('woff2'), " +
+      "url('/fonts/y.woff') format('woff'), url(data:font/woff2;base64,QUJD) format('woff2'), " +
+      "url(https://cdn.example.com/z.woff2) format('woff2'); }";
+    document.head.appendChild(styleEl);
+
+    // jsdom has neither document.fonts nor a global CSSFontFaceRule
+    const rule = document.styleSheets[document.styleSheets.length - 1].cssRules[0];
+    global.CSSFontFaceRule = Object.getPrototypeOf(rule).constructor;
+    Object.defineProperty(document, "fonts", {
+      value: { ready: Promise.resolve() },
+      configurable: true,
+    });
+
+    fetchMock = jest.fn(async (url) => {
+      if (url.includes("cdn.example.com")) throw new TypeError("Failed to fetch");
+      return { ok: true, blob: async () => new Blob(["font"], { type: "font/woff2" }) };
+    });
+    global.fetch = fetchMock;
+
+    Object.defineProperty(navigator, "clipboard", {
+      value: { writeText: jest.fn(() => Promise.resolve()) },
+      configurable: true,
+    });
+    Object.defineProperty(window, "isSecureContext", { value: true, configurable: true });
+    updateConfig({ security: { mode: "strict" } });
+  });
+
+  afterEach(() => {
+    container.remove();
+    styleEl.remove();
+    delete global.CSSFontFaceRule;
+    delete global.fetch;
+    delete document.fonts;
+    jest.clearAllMocks();
+  });
+
+  test("relative and root-relative urls are resolved against the page and inlined", async () => {
+    await copySVGCode(container);
+
+    const requested = fetchMock.mock.calls.map((c) => c[0]);
+    expect(requested).toContain("http://localhost/fonts/x.woff2");
+    expect(requested).toContain("http://localhost/fonts/y.woff");
+    // data: URLs are never fetched
+    expect(requested.some((u) => u.startsWith("data:"))).toBe(false);
+
+    const text = navigator.clipboard.writeText.mock.calls[0][0];
+    expect(text).toContain("@font-face");
+    expect(text).not.toContain("url(fonts/x.woff2)");
+    expect(text).not.toContain("url('/fonts/y.woff')");
+    expect(text).toMatch(/url\('data:font\/woff2;base64,[A-Za-z0-9+/=]+'\)/);
+    // the pre-existing data: URL is kept untouched
+    expect(text).toContain("data:font/woff2;base64,QUJD");
+    // a failed fetch leaves that url alone and does not fail the export
+    expect(text).toContain("https://cdn.example.com/z.woff2");
+  });
+});
