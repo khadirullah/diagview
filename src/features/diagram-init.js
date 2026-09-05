@@ -63,9 +63,14 @@ function isValidSvg(svg) {
   // 4. Check for specific library error IDs (Mermaid v10+)
   if (svg.querySelector('[id*="mermaid-"][id*="-error"]')) return false;
 
-  // 5. Check for zero dimensions in viewBox (empty content area)
-  const vb = svg.viewBox?.baseVal;
-  if (vb && (vb.width === 0 || vb.height === 0)) return false;
+  // 5. Check for zero dimensions in an explicit viewBox (empty content area).
+  // Only when the attribute is present: without one, viewBox.baseVal is a
+  // 0x0 SVGRect in browsers, which rejected every width/height-only SVG.
+  const vb = (svg.getAttribute("viewBox") || "")
+    .trim()
+    .split(/[\s,]+/)
+    .map(Number);
+  if (vb.length === 4 && (vb[2] === 0 || vb[3] === 0)) return false;
 
   // 6. Check for text-only error fragments (often returned by failed backend renders)
   const shapes = svg.querySelector("path, rect, circle, line, polygon, polyline");
