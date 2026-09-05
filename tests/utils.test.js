@@ -52,7 +52,7 @@ describe("Utils API", () => {
       "fill:url(#dv-prefix-grad);stroke:url(#dv-prefix-grad)",
     );
     expect(document.getElementById("dv-prefix-p1").getAttribute("style")).toBe(
-      "marker-end:url(#dv-prefix-arrow); filter: url(#dv-prefix-blur)",
+      "marker-end:url(#dv-prefix-arrow); filter: url( '#dv-prefix-blur' )",
     );
   });
 
@@ -109,6 +109,62 @@ describe("Utils API", () => {
     const g = svg.querySelector("g");
     expect(g.getAttribute("aria-labelledby")).toBe("dv-2-t1");
     expect(changes.attributes).toEqual([{ el: g, name: "aria-labelledby", value: "t1" }]);
+  });
+
+  test("fixIds rewrites hex-looking ids in <style> selectors and url() refs", () => {
+    document.body.innerHTML = `
+      <svg id="hex-svg">
+        <defs>
+          <linearGradient id="fade"><stop offset="0"/></linearGradient>
+          <linearGradient id="cafe"><stop offset="0"/></linearGradient>
+        </defs>
+        <style>#bed{fill:red} .x{fill:url(#fade)} .y{fill:URL( '#cafe' )} .z{fill:#bed;stroke:#fade;color:#1234}</style>
+        <rect id="bed"/>
+        <rect id="1234"/>
+      </svg>
+    `;
+    const svg = document.getElementById("hex-svg");
+    fixIds(svg, "dv-1");
+    const css = svg.querySelector("style").textContent;
+
+    // Bare #id selectors whose id is a known element are rewritten
+    expect(css).toContain("#dv-1-bed{fill:red}");
+    // url(#...) is never a colour, even when it looks like hex
+    expect(css).toContain("url(#dv-1-fade)");
+    expect(css).toContain("URL( '#dv-1-cafe' )");
+    // Property values that look like hex colours stay colours
+    expect(css).toContain("fill:#bed;stroke:#fade;color:#1234");
+  });
+
+  test("fixIds rewrites ids containing dots and colons in <style> and inline style", () => {
+    document.body.innerHTML = `
+      <svg id="dot-svg">
+        <defs>
+          <linearGradient id="my.grad"><stop offset="0"/></linearGradient>
+          <linearGradient id="ns:grad"><stop offset="0"/></linearGradient>
+        </defs>
+        <style>.a{fill:url(#my.grad)} .b{fill:url(#ns:grad)} #my\\.grad{opacity:1} #ns\\:grad{opacity:1}</style>
+        <rect style="fill:URL(#my.grad)"/>
+        <rect id="node1"/>
+        <style>#node1.label{fill:blue} #node1:hover{fill:green}</style>
+      </svg>
+    `;
+    const svg = document.getElementById("dot-svg");
+    fixIds(svg, "dv-1");
+    const styles = svg.querySelectorAll("style");
+    const css = styles[0].textContent;
+
+    expect(css).toContain("url(#dv-1-my.grad)");
+    expect(css).toContain("url(#dv-1-ns:grad)");
+    // Escaped selectors keep their escaping
+    expect(css).toContain("#dv-1-my\\.grad{opacity:1}");
+    expect(css).toContain("#dv-1-ns\\:grad{opacity:1}");
+    // Inline style attribute with upper-case URL( is rewritten too
+    expect(svg.querySelector("rect[style]").getAttribute("style")).toBe("fill:URL(#dv-1-my.grad)");
+    // "#id.class" and "#id:pseudo" selectors still rewrite the id part only
+    expect(styles[1].textContent).toBe(
+      "#dv-1-node1.label{fill:blue} #dv-1-node1:hover{fill:green}",
+    );
   });
 
   test("sanitizeFilename preserves Unicode letters and numbers", () => {

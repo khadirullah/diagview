@@ -518,6 +518,22 @@ export function checkPanzoomDependency() {
 }
 
 /**
+ * url(#id) reference in an attribute value: optional whitespace, optional
+ * quote, the fragment, and the matching closing quote. Case-insensitive so
+ * URL(#id) is rewritten as well.
+ * @private
+ */
+const URL_REF_RE = /(url\s*\(\s*(['"]?)\s*)#([^)'"]+)(\2\s*\))/gi;
+
+/**
+ * "#token" inside a <style> block. The token may contain "." and ":" as
+ * well as CSS backslash escapes so ids such as "my.grad" are matched whole
+ * (url(#my.grad)) or escaped (#my\.grad selector).
+ * @private
+ */
+const CSS_ID_RE = /#((?:\\.|[a-zA-Z0-9_.:-])+)/g;
+
+/**
  * Fix ID collisions in SVG elements using a secure DOM-walking approach.
  * Replaces the unsafe and slow outerHTML/RegExp strategy with direct attribute manipulation.
  * This prevents XSS (no innerHTML parsing) and is significantly faster.
@@ -560,13 +576,13 @@ export function fixIds(svg, uniqueId, changes = null) {
   // 2. Walk the DOM and update attribute references (url(#id), href, etc.)
   // Optimize: Only query elements that can actually contain ID references (href, fill, filters, etc.)
   // instead of every single node in the SVG tree.
-  // [style*='url'] covers inline style="fill:url(#id)" as written by Inkscape,
+  // [style*='#'] covers inline style="fill:url(#id)" as written by Inkscape,
   // Illustrator and hand-authored SVGs, where no fill/stroke attribute exists.
   const REF_SELECTOR =
     "use,image,pattern,linearGradient,radialGradient,filter,mask,clipPath," +
     "textPath,a,feImage,[aria-labelledby],[aria-describedby]," +
-    "[fill*='url'],[stroke*='url'],[filter*='url'],[clip-path*='url'],[mask*='url']," +
-    "[marker-start*='url'],[marker-end*='url'],[marker-mid*='url'],[style*='url']";
+    "[fill*='#'],[stroke*='#'],[filter*='#'],[clip-path*='#'],[mask*='#']," +
+    "[marker-start*='#'],[marker-mid*='#'],[marker-end*='#'],[style*='#']";
 
   const allElements = svg.querySelectorAll(REF_SELECTOR);
   allElements.forEach((el) => {
@@ -595,12 +611,10 @@ export function fixIds(svg, uniqueId, changes = null) {
 
       let newValue = value;
 
-      // Case A: Functional notation like url(#id), including the quoted and
-      // padded forms url('#id') / url( "#id" ) that appear in style attributes.
-      if (value.includes("url(")) {
-        newValue = newValue.replace(/url\(\s*(['"]?)#([^'")]+)\1\s*\)/g, (match, _q, id) => {
-          const trimmedId = id.trim();
-          return idMap.has(trimmedId) ? `url(#${idMap.get(trimmedId)})` : match;
+      // Case A: Functional notation like url(#id), url('#id') or URL(#id)
+      if (/url\s*\(/i.test(value)) {
+        newValue = newValue.replace(URL_REF_RE, (match, open, _quote, id, close) => {
+          return idMap.has(id) ? `${open}#${idMap.get(id)}${close}` : match;
         });
       }
 
@@ -631,15 +645,36 @@ export function fixIds(svg, uniqueId, changes = null) {
     if (!css || !css.includes("#")) return;
 
     // Replace #id selectors and url(#id) in CSS using the idMap
-    const newCss = css.replace(/#([a-zA-Z0-9_-]+)/g, (match, id) => {
-      // SEC-5: Improved hex color detection to avoid accidental ID replacement.
-      // Skips #rgb, #rgba, #rrggbb, #rrggbbaa and prevents collisions with 3/4/6/8 char IDs.
-      const isHexColor = /^[0-9a-fA-F]{3}$|^[0-9a-fA-F]{4}$|^[0-9a-fA-F]{6}$|^[0-9a-fA-F]{8}$/.test(
-        id,
-      );
+    const newCss = css.replace(CSS_ID_RE, (match, rawId, offset) => {
+      const before = css.slice(0, offset);
+      const insideUrl = /url\s*\(\s*['"]?\s*$/i.test(before);
 
-      // Only replace if it's in our map and NOT a valid hex color
-      return !isHexColor && idMap.has(id) ? `#${idMap.get(id)}` : match;
+      // SEC-5: hex colour detection to avoid accidental ID replacement of
+      // #rgb, #rgba, #rrggbb, #rrggbbaa. Only applies in a property value
+      // (a "prop:" follows the last "{", "}" or ";" before the match) and
+      // never inside url(#...), which can only be an id reference.
+      if (!insideUrl && /^(?:[0-9a-f]{3,4}|[0-9a-f]{6}|[0-9a-f]{8})$/i.test(rawId)) {
+        const declStart = Math.max(
+          before.lastIndexOf("{"),
+          before.lastIndexOf("}"),
+          before.lastIndexOf(";"),
+        );
+        if (before.slice(declStart + 1).includes(":")) return match;
+      }
+
+      // Try the whole token first, then shorter prefixes ending before an
+      // unescaped "." or ":" so "#node.label" and "#node:hover" still match.
+      let candidate = rawId;
+      while (candidate) {
+        const id = candidate.replace(/\\(.)/g, "$1");
+        if (idMap.has(id)) {
+          return `#${uniqueId}-${candidate}${rawId.slice(candidate.length)}`;
+        }
+        const cut = candidate.search(/[.:](?=[^.:]*$)/);
+        if (cut <= 0 || candidate[cut - 1] === "\\") break;
+        candidate = candidate.slice(0, cut);
+      }
+      return match;
     });
 
     if (newCss !== css) {
