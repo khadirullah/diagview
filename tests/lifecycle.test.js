@@ -48,6 +48,40 @@ describe("DiagView Lifecycle", () => {
     warnSpy.mockRestore();
   });
 
+  test("init() returns a promise and still initializes synchronously", async () => {
+    const result = init();
+    expect(result).toBeInstanceOf(Promise);
+    expect(state.isInitialized).toBe(true);
+    await result;
+    expect(state.isInitialized).toBe(true);
+  });
+
+  test("init() issued while destroy() is in flight waits for it, then initializes", async () => {
+    // React StrictMode / HMR sequence: cleanup starts destroy(), effect re-runs init()
+    init();
+    const teardown = destroy();
+    const reinit = init({ layout: "off" });
+
+    // init must not have bailed out with the "Already initialized" warning
+    expect(warnSpy).not.toHaveBeenCalledWith(expect.stringContaining("Already initialized"));
+
+    await teardown;
+    await reinit;
+
+    expect(state.isInitialized).toBe(true);
+    expect(state.config.layout).toBe("off");
+    expect(document.getElementById("diagview-modal")).not.toBeNull();
+  });
+
+  test("destroy() called twice during teardown returns the same promise", async () => {
+    init();
+    const first = destroy();
+    const second = destroy();
+    expect(second).toBe(first);
+    await first;
+    expect(state.isInitialized).toBe(false);
+  });
+
   test("init() sets up DOM elements and updates state", () => {
     expect(state.isInitialized).toBe(false);
     expect(document.getElementById("diagview-modal")).toBeNull();

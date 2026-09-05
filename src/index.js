@@ -55,14 +55,31 @@ import { clearAllZoomStates } from "./features/panzoom-integration.js";
 // Global auto-init handle
 let autoInitTimeout = null;
 
+// In-flight destroy() promise. destroy() is async (it awaits modal close and
+// lazy-module resets before resetting state), so a synchronous init() issued
+// right after it would still see isInitialized === true and bail out, after
+// which the pending destroy finishes and leaves nothing initialized. React
+// StrictMode and HMR produce exactly that destroy → init sequence.
+/** @type {Promise<void>|null} */
+let pendingDestroy = null;
+
 /**
  * Initialize DiagView
+ *
+ * Runs synchronously when nothing is pending. If a destroy() is still in
+ * flight, the initialization is queued behind it. Either way the returned
+ * promise resolves once DiagView is initialized.
  * @param {object} options - Configuration options
+ * @returns {Promise<void>} Resolves when initialization has completed
  */
 function init(options = {}) {
   if (!isBrowser()) {
     console.warn("DiagView: Not running in browser environment");
-    return;
+    return Promise.resolve();
+  }
+
+  if (pendingDestroy) {
+    return pendingDestroy.then(() => init(options));
   }
 
   // Cancel any pending auto-init if manual init is called
@@ -73,7 +90,7 @@ function init(options = {}) {
 
   if (state.isInitialized) {
     console.warn("DiagView: Already initialized. Call destroy() first.");
-    return;
+    return Promise.resolve();
   }
 
   updateConfig(options);
@@ -98,17 +115,35 @@ function init(options = {}) {
   import("./features/lazy/share.js").catch(() => {});
   import("./features/lazy/search.js").catch(() => {});
   // Note: Share link check is done in observer.js processDiagrams()
+  return Promise.resolve();
 }
 
 /**
  * Destroy and clean up DiagView
+ *
+ * Idempotent while in flight: a second call during teardown returns the same
+ * promise instead of starting a concurrent teardown.
+ * @returns {Promise<void>} Resolves when teardown has completed
  */
-async function destroy() {
+function destroy() {
+  if (pendingDestroy) return pendingDestroy;
+
   if (!state.isInitialized) {
     console.warn("DiagView: Not initialized");
-    return;
+    return Promise.resolve();
   }
 
+  pendingDestroy = _teardown().finally(() => {
+    pendingDestroy = null;
+  });
+  return pendingDestroy;
+}
+
+/**
+ * Full teardown sequence. Only ever invoked through destroy().
+ * @private
+ */
+async function _teardown() {
   // 0. If modal is open, close it first to release scroll locks and global listeners
   if (state.isModalOpen) {
     await closeModal();

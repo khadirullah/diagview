@@ -22,12 +22,14 @@ All methods are available on the `DiagView` global (UMD) or the default export (
 
 Initialize DiagView. Injects styles, creates the modal DOM, sets up keyboard shortcuts, starts the MutationObserver, and processes all matching diagrams on the page.
 
-**Signature:** `init(options?: Partial<DiagViewConfig>): void`
+**Signature:** `init(options?: Partial<DiagViewConfig>): Promise<void>`
 
 ```javascript
 DiagView.init();
 DiagView.init({ layout: "header", accentColor: "#6366f1" });
 ```
+
+Initialization runs synchronously, so you do not need to await it in normal use. The returned promise exists for one case: if a `destroy()` is still in flight when `init()` is called, the initialization is queued behind it and the promise resolves once DiagView is ready. This is what happens under React StrictMode and hot module reload, where cleanup calls `destroy()` and the effect immediately calls `init()` again.
 
 Calling `init()` more than once without an intervening `destroy()` is a no-op (logs a warning).
 
@@ -44,6 +46,8 @@ await DiagView.destroy();
 // Safe to call init() again afterward
 DiagView.init({ layout: "floating" });
 ```
+
+Calling `destroy()` again while a teardown is in flight returns the same promise rather than starting a second teardown. Calling `init()` during that window is also safe; see `init()` above.
 
 ---
 
