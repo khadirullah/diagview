@@ -131,10 +131,10 @@
     "transform": {},
     "coverageThreshold": {
       "global": {
-        "statements": 53,
-        "lines": 53,
-        "functions": 48,
-        "branches": 38
+        "statements": 80,
+        "lines": 83,
+        "functions": 78,
+        "branches": 65
       }
     }
   },
