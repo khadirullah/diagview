@@ -229,16 +229,11 @@ function readElementOverrides(element) {
   }
 
   // data-diagview-sanitize="strict|permissive|off" and
-  // data-diagview-allow-remote="true|false".
-  // Only respected if the global config has allowOverrides: true (default).
-  // Resolved through the same gate the modal uses (see svg-clone.js), so
-  // init-time and open-time can never disagree. Warnings are emitted here once.
-  const security = resolveElementSecurity(element, { warn: true });
-  cfg.security = {
-    ...state.config.security,
-    mode: security.mode,
-    allowRemoteResources: security.allowRemoteResources,
-  };
+  // data-diagview-allow-remote="true|false" are NOT merged into cfg: the
+  // modal and the exporter resolve them themselves through the same gate
+  // (see svg-clone.js) at the moment the SVG is cloned. The call here only
+  // serves to emit the "override ignored" warnings once, at init time.
+  resolveElementSecurity(element, { warn: true });
 
   // --- Watermark Overrides ---
   // data-diagview-watermark="true|false"

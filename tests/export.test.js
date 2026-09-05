@@ -126,6 +126,39 @@ describe("Export Functionality", () => {
     expect(navigator.clipboard.writeText).toHaveBeenCalled();
     expect(copiedText).toContain("<svg");
   });
+
+  test("renderToCanvas honours data-diagview-scale on the exported element", async () => {
+    container.dataset.diagviewScale = "3";
+
+    const { canvas, scale } = await renderToCanvas(container);
+
+    expect(scale).toBe(3);
+    expect(canvas.width).toBe(420); // (100 + 40 padding) * 3
+  });
+
+  test("exportToSVG(el) applies the element's data-diagview-watermark-* overrides", async () => {
+    updateConfig({ watermark: { enabled: false, text: "GLOBALMARK" } });
+    state.activeSourceElement = null; // no modal open: inline toolbar / public API path
+    container.dataset.diagviewWatermark = "true";
+    container.dataset.diagviewWatermarkText = "LOCALMARK";
+
+    let downloaded = "";
+    const click = jest.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(function () {
+      downloaded = this.href;
+    });
+
+    await exportToSVG(container, { filename: "wm" });
+
+    click.mockRestore();
+    delete container.dataset.diagviewWatermark;
+    delete container.dataset.diagviewWatermarkText;
+
+    const markup = decodeURIComponent(
+      downloaded.replace(/^data:image\/svg\+xml;charset=utf-8,/, ""),
+    );
+    expect(markup).toContain("LOCALMARK");
+    expect(markup).not.toContain("GLOBALMARK");
+  });
 });
 
 // ---------------------------------------------------------------------------

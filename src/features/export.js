@@ -148,15 +148,26 @@ async function embedDocumentFonts(svgEl) {
  * Supports "background" (centered/rotated) and "corner" styles.
  * @private
  */
-function injectWatermark(svg, d) {
+function injectWatermark(svg, d, sourceSvg = null) {
   if (!(svg instanceof SVGElement)) return;
 
   // 1. Start with global config
   const config = { ...state.config.watermark };
 
   // 2. Apply element-level overrides if available (A1)
-  // We use state.activeSourceElement as it's the original diagram container
-  const el = state.activeSourceElement;
+  // Resolve the diagram container from the SVG being exported so the inline
+  // toolbar and the public exportTo*(el) API see the same overrides as the
+  // modal; state.activeSourceElement is only set while the modal is open.
+  let el = null;
+  if (sourceSvg?.closest) {
+    try {
+      el = sourceSvg.closest(state.config.diagramSelector);
+    } catch (_e) {
+      el = null;
+    }
+    el = el || sourceSvg.parentElement;
+  }
+  el = el || state.activeSourceElement;
   if (el && el.dataset) {
     const dataset = el.dataset;
     if (dataset.diagviewWatermark) config.enabled = dataset.diagviewWatermark === "true";
@@ -345,7 +356,7 @@ async function prepareSvgForExport(svg, modalClone) {
   });
 
   // Inject watermark if enabled (Silent Branding)
-  injectWatermark(exportSvg, d);
+  injectWatermark(exportSvg, d, svg);
 
   return { width, height, bg: theme.bg, svg: exportSvg };
 }
@@ -393,9 +404,17 @@ export async function renderToCanvas(sourceElement, modalClone, transparent = fa
   const { width, height, bg, svg: finalSvg } = result;
 
   const isMobile = isMobileDevice();
+
+  // data-diagview-scale on the exported element (or the diagram open in the
+  // modal) overrides the global highResScale
+  const overrideSource = sourceElement?.dataset ? sourceElement : state.activeSourceElement;
+  const elementScale = parseInt(overrideSource?.dataset?.diagviewScale ?? "", 10);
+  const highResScale =
+    elementScale >= 1 && elementScale <= 10 ? elementScale : state.config.highResScale;
+
   let scale = isMobile
     ? state.config.mobileScale || EXPORT.MOBILE_SCALE_DEFAULT
-    : state.config.highResScale || EXPORT.HIGH_RES_SCALE_DEFAULT;
+    : highResScale || EXPORT.HIGH_RES_SCALE_DEFAULT;
 
   const targetPixels = width * scale * (height * scale);
   if (targetPixels > state.config.maxPixels) {
