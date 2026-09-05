@@ -93,6 +93,23 @@ describe("Share System", () => {
     expect(link).toContain("dv-q=test-query");
   });
 
+  test("generateShareLink drops existing query and hash", () => {
+    window.location = new URL("http://localhost/docs/page?token=secret#section");
+    const link = generateShareLink(0);
+    expect(link).toContain("http://localhost/docs/page?");
+    expect(link).not.toContain("token=");
+    expect(link).not.toContain("#section");
+    expect(link).toContain("dv-idx=0");
+  });
+
+  test("generateShareLink works on file:// pages (origin is 'null')", () => {
+    window.location = new URL("file:///home/user/docs/index.html");
+    expect(window.location.origin).toBe("null");
+    const link = generateShareLink(0);
+    expect(link).toContain("file:///home/user/docs/index.html?");
+    expect(link).toContain("dv-idx=0");
+  });
+
   test("shareLink copies to clipboard", async () => {
     await shareLink(0);
     expect(navigator.clipboard.writeText).toHaveBeenCalled();

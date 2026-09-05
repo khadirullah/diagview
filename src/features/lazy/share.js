@@ -139,9 +139,13 @@ export function generateShareLink(diagramIndex) {
   const svg = viewport?.querySelector("svg");
   if (!viewport || !svg) return null;
 
-  // Build from origin + pathname only — never copy existing query params
-  // (avoids leaking auth tokens, session IDs, or other host-app parameters).
-  const url = new URL(window.location.origin + window.location.pathname);
+  // Start from the page URL and drop its query and hash — never copy existing
+  // params (avoids leaking auth tokens, session IDs, or other host-app parameters).
+  // Built from href rather than origin + pathname because file:// pages report
+  // the origin as the string "null", which made the URL constructor throw.
+  const url = new URL(window.location.href);
+  url.search = "";
+  url.hash = "";
 
   const scale = state.activePanzoom.getScale();
   const rotation = state.rotationAngle || 0;
