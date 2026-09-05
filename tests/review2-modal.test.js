@@ -245,6 +245,61 @@ describe("touch: tap after pinch does not reset the zoom", () => {
 });
 
 // ---------------------------------------------------------------------------
+// 8. openFullscreen while the modal is already open must not re-run the
+//    open sequence on top of the live session
+// ---------------------------------------------------------------------------
+describe("openFullscreen is a no-op while the modal is already open", () => {
+  let instances;
+  const rafCallbacks = [];
+
+  beforeEach(() => {
+    resetConfig();
+    document.body.innerHTML = "";
+    document.documentElement.style.scrollBehavior = "";
+    delete document.documentElement.dataset.dvPrevScrollBehavior;
+    sessionStorage.clear();
+    instances = installFakePanzoom();
+    updateConfig({ showFirstTimeThemeHint: false, animateOpen: false });
+    createModal();
+  });
+
+  afterEach(async () => {
+    if (state.isModalOpen) await closeModal();
+    await settle();
+    delete window.Panzoom;
+    document.documentElement.style.scrollBehavior = "";
+    rafCallbacks.length = 0;
+  });
+
+  test("second open keeps the first session; close restores scroll-behavior", async () => {
+    document.documentElement.style.scrollBehavior = "smooth";
+    const d0 = makeDiagram("d-first", 0);
+    const d1 = makeDiagram("d-second", 1);
+
+    await openFullscreen(d0);
+    await settle();
+    expect(state.isModalOpen).toBe(true);
+    expect(instances.length).toBe(1);
+    expect(state.activeSourceElement).toBe(d0);
+
+    await openFullscreen(d1);
+    await settle();
+    // The live session is untouched: no second panzoom, same source element
+    expect(instances.length).toBe(1);
+    expect(instances[0].destroyed).toBe(false);
+    expect(state.activePanzoom).toBe(instances[0]);
+    expect(state.activeSourceElement).toBe(d0);
+
+    await closeModal();
+    await settle();
+    // unlockBodyScroll restores the stash on the next frame
+    await new Promise((r) => requestAnimationFrame(r));
+    expect(document.documentElement.style.scrollBehavior).toBe("smooth");
+    expect(instances[0].destroyed).toBe(true);
+  });
+});
+
+// ---------------------------------------------------------------------------
 // 1. Focus trap must only cycle through elements that are actually rendered
 // ---------------------------------------------------------------------------
 describe("focus trap ignores unrendered and closed-search controls", () => {

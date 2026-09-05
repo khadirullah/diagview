@@ -869,6 +869,13 @@ DiagView.openFullscreen(diagram, { searchQuery: "database" });
 DiagView.openFullscreen(diagram, { zoom: 1.5, searchQuery: "auth" });
 ```
 
+`openFullscreen()` does nothing while the modal is already open. To switch to another diagram, close first:
+
+```javascript
+await DiagView.closeModal();
+DiagView.openFullscreen(otherDiagram);
+```
+
 ### Close from code
 
 ```javascript

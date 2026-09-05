@@ -404,6 +404,12 @@ function _attachModalLifecycle(element, clone, viewport, panzoom, diagramId) {
 
 /**
  * Open fullscreen modal
+ *
+ * No-op while a session is already open or opening: the open sequence is
+ * not re-entrant (it would stash the already-overridden scroll-behavior,
+ * leak the first visualViewport listeners and orphan the first Panzoom
+ * instance). To switch diagrams, `await closeModal()` first, then open.
+ *
  * @param {HTMLElement} element - Diagram container element
  * @param {object} [options={}] - Optional overrides
  * @param {number} [options.zoom] - Initial zoom scale to apply after opening
@@ -411,7 +417,7 @@ function _attachModalLifecycle(element, clone, viewport, panzoom, diagramId) {
  */
 export async function openFullscreen(element, options = {}) {
   // CRIT-3: Prevent concurrent execution of openFullscreen
-  if (state.isModalOpening) return;
+  if (state.isModalOpening || state.isModalOpen) return;
 
   const originalSvg = element.querySelector("svg");
   if (!originalSvg) return;
