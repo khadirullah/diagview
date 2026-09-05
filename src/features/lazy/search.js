@@ -7,7 +7,7 @@
 import { state } from "../../core/config.js";
 import { TIMING, SELECTORS } from "../../core/constants.js";
 import { throttle } from "../../core/utils.js";
-import { addModalListener, registerRAF } from "../../core/lifecycle.js";
+import { addModalListener } from "../../core/lifecycle.js";
 
 /**
  * Module-level reference to the active search throttle.
@@ -37,6 +37,11 @@ function getSearchCandidates(clone) {
 
   for (let i = 0; i < elements.length; i++) {
     const el = elements[i];
+    // Mermaid nests g.node > g.label > text. An ancestor candidate's text
+    // contains the descendant's, so it always matches too — keep only the
+    // outermost candidate or one node reports "3 matches found".
+    const outer = el.parentElement?.closest(SELECTORS.SEARCH_NODES);
+    if (outer && outer !== clone && clone.contains(outer)) continue;
     cache.push({
       el: el,
       text: (el.textContent || "").toLowerCase(),
@@ -54,18 +59,26 @@ function getSearchCandidates(clone) {
 function clearHighlights(clone) {
   if (!clone) return;
 
-  if (state.searchRafId) cancelAnimationFrame(state.searchRafId);
-  state.searchRafId = registerRAF(state, () => {
-    if (!clone) return;
-    // CRIT-5: Use cached matches instead of expensive querySelectorAll
-    // This is O(k) instead of O(n), dramatically faster for large SVGs
-    const toClean = state.searchMatches;
-    for (let i = 0; i < toClean.length; i++) {
-      toClean[i].classList.remove("dv-search-match");
-    }
+  // A pending search frame has not applied its classes yet — drop it
+  if (state.searchRafId) {
+    cancelAnimationFrame(state.searchRafId);
     state.searchRafId = null;
-    state.searchMatches = []; // EVT-2: Clear state matches
-  });
+  }
+
+  // CRIT-5: Use cached matches instead of expensive querySelectorAll
+  // This is O(k) instead of O(n), dramatically faster for large SVGs.
+  // Remove synchronously: callers reset state.searchMatches right after
+  // this call, and the clear button fires clearSearch() and handleClear()
+  // back to back, so a deferred frame would either see an empty list or be
+  // cancelled by the second call before it runs.
+  const toClean = state.searchMatches;
+  state.searchMatches = []; // EVT-2: Clear state matches
+  for (let i = 0; i < toClean.length; i++) {
+    toClean[i].classList.remove("dv-search-match");
+  }
+
+  const statusEl = document.getElementById("diagview-search-status");
+  if (statusEl) statusEl.textContent = "";
 }
 
 /**
@@ -75,8 +88,9 @@ export function performSearch(clone, query) {
   const gen = ++searchGeneration;
   if (state.searchRafId) cancelAnimationFrame(state.searchRafId);
 
-  // If query is empty, clear everything immediately
-  if (!query || !clone) {
+  // If query is empty (or whitespace only), clear everything immediately
+  const lq = (query || "").toLowerCase().trim();
+  if (!lq || !clone) {
     if (clone) {
       clearHighlights(clone);
       clone.classList.remove("dv-searching");
@@ -85,12 +99,12 @@ export function performSearch(clone, query) {
     return;
   }
 
-  const lq = query.toLowerCase().trim();
   const candidates = getSearchCandidates(clone); // O(1) retrieval
   const newMatches = [];
 
   // Batch DOM updates in next frame
   state.searchRafId = requestAnimationFrame(() => {
+    state.searchRafId = null;
     if (gen !== searchGeneration) return;
     clone.classList.add("dv-searching");
 
@@ -120,9 +134,7 @@ export function performSearch(clone, query) {
       statusEl.textContent =
         newMatches.length > 0
           ? `${newMatches.length} match${newMatches.length === 1 ? "" : "es"} found`
-          : lq
-            ? "No matches found"
-            : "";
+          : "No matches found";
     }
   });
 }

@@ -145,6 +145,63 @@ describe("Search: performSearch", () => {
       expect(el.classList.contains("dv-search-match")).toBe(true);
     });
   });
+
+  test("nested candidates count once: only the outermost .node matches", () => {
+    // Mermaid flowchart markup: g.node > g.label > text
+    const NS = "http://www.w3.org/2000/svg";
+    const node = document.createElementNS(NS, "g");
+    node.classList.add("node");
+    const label = document.createElementNS(NS, "g");
+    label.classList.add("label");
+    const text = document.createElementNS(NS, "text");
+    text.textContent = "Deploy Service";
+    label.appendChild(text);
+    node.appendChild(label);
+    svg.appendChild(node);
+    const status = document.createElement("div");
+    status.id = "diagview-search-status";
+    document.body.appendChild(status);
+
+    performSearch(svg, "deploy");
+    flushRaf();
+
+    expect(state.searchMatches).toEqual([node]);
+    expect(node.classList.contains("dv-search-match")).toBe(true);
+    expect(label.classList.contains("dv-search-match")).toBe(false);
+    expect(text.classList.contains("dv-search-match")).toBe(false);
+    expect(status.textContent).toBe("1 match found");
+  });
+
+  test("whitespace-only query clears instead of matching everything", () => {
+    const status = document.createElement("div");
+    status.id = "diagview-search-status";
+    status.textContent = "3 matches found";
+    document.body.appendChild(status);
+    performSearch(svg, "auth");
+    flushRaf();
+    expect(svg.querySelectorAll(".dv-search-match").length).toBe(1);
+
+    performSearch(svg, "   ");
+    flushRaf();
+
+    expect(state.searchMatches).toEqual([]);
+    expect(svg.querySelectorAll(".dv-search-match").length).toBe(0);
+    expect(svg.classList.contains("dv-searching")).toBe(false);
+    expect(status.textContent).toBe("");
+  });
+
+  test("clearing removes dv-search-match classes from previous matches", () => {
+    performSearch(svg, "auth");
+    flushRaf();
+    const matched = svg.querySelectorAll(".dv-search-match");
+    expect(matched.length).toBe(1);
+
+    performSearch(svg, "");
+    flushRaf();
+
+    expect(svg.querySelectorAll(".dv-search-match").length).toBe(0);
+    expect(state.searchMatches).toEqual([]);
+  });
 });
 
 describe("Search: clearSearch", () => {
@@ -192,5 +249,18 @@ describe("Search: clearSearch", () => {
     clearSearch();
     const svg = document.querySelector("#diagview-modal-viewport svg");
     expect(svg.classList.contains("dv-searching")).toBe(false);
+  });
+
+  test("removes dv-search-match classes from the highlighted elements", () => {
+    const svg = document.querySelector("#diagview-modal-viewport svg");
+    const node = document.createElementNS("http://www.w3.org/2000/svg", "g");
+    node.classList.add("node", "dv-search-match");
+    svg.appendChild(node);
+    state.searchMatches = [node];
+
+    clearSearch();
+
+    expect(node.classList.contains("dv-search-match")).toBe(false);
+    expect(state.searchMatches).toEqual([]);
   });
 });
