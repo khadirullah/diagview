@@ -100,27 +100,7 @@ function createInitialState() {
  */
 export const state = createInitialState();
 
-/**
- * Public Read-Only Proxy for DiagView state.
- * SEC-4: Ensures external consumers cannot mutate library internals.
- */
-export const publicState = new Proxy(state, {
-  get(target, prop) {
-    // @ts-ignore - Dynamic indexing for Proxy
-    const value = target[prop];
-
-    // MAJ-4: Return snapshots for mutable collections to prevent external state pollution.
-    // This ensures that DiagView.state.cleanupFunctions.add() won't affect the internal state.
-    if (value instanceof Set) return new Set(value);
-    if (value instanceof Map) return new Map(value);
-    if (Array.isArray(value)) return [...value];
-
-    // If it's a function (like events.emit), bind it to the target
-    if (typeof value === "function") {
-      return value.bind(target);
-    }
-    return value;
-  },
+const READ_ONLY_HANDLER = {
   set() {
     console.warn("DiagView: State is read-only. Modification ignored.");
     return true; // Silent fail in non-strict, consistent with Proxy expectations
@@ -128,6 +108,76 @@ export const publicState = new Proxy(state, {
   deleteProperty() {
     console.warn("DiagView: State is read-only. Deletion ignored.");
     return true;
+  },
+};
+
+/**
+ * @param {*} value - Candidate value
+ * @returns {boolean} True for a plain object literal (not null, array or class instance)
+ */
+function isPlainObject(value) {
+  if (!value || typeof value !== "object") return false;
+  const proto = Object.getPrototypeOf(value);
+  return proto === Object.prototype || proto === null;
+}
+
+/**
+ * Wrap a state value so that nothing reachable from it can mutate internals.
+ * Collections are snapshots, plain objects become nested read-only proxies,
+ * class instances (DOM nodes, observers, the panzoom instance) stay live.
+ * @param {*} value - Value read from the internal state
+ * @param {object} owner - Object the value was read from (for binding methods)
+ * @returns {*} Read-only view of the value
+ */
+function readOnlyView(value, owner) {
+  // MAJ-4: Return snapshots for mutable collections to prevent external state pollution.
+  // This ensures that DiagView.state.cleanupFunctions.add() won't affect the internal state.
+  if (value instanceof Set) return new Set(value);
+  if (value instanceof Map) return new Map(value);
+  if (Array.isArray(value)) return [...value];
+
+  // If it's a function (like events.emit), bind it to its owner
+  if (typeof value === "function") return value.bind(owner);
+
+  // Frozen objects (config) are immutable already; a proxy over them would
+  // violate the Proxy invariants for non-configurable properties
+  if (isPlainObject(value) && !Object.isFrozen(value)) {
+    return new Proxy(value, {
+      ...READ_ONLY_HANDLER,
+      get(target, prop) {
+        // @ts-ignore - Dynamic indexing for Proxy
+        return readOnlyView(target[prop], target);
+      },
+    });
+  }
+
+  return value;
+}
+
+/**
+ * Public Read-Only Proxy for DiagView state.
+ * SEC-4: Ensures external consumers cannot mutate library internals, at any depth.
+ * Exceptions: `activePanzoom` is the live instance (its methods are meant to be
+ * called) and `events` supports on/off/emit but not clear().
+ */
+export const publicState = new Proxy(state, {
+  ...READ_ONLY_HANDLER,
+  get(target, prop) {
+    // @ts-ignore - Dynamic indexing for Proxy
+    const value = target[prop];
+
+    if (prop === "activePanzoom") return value;
+
+    if (prop === "events") {
+      const bus = target.events;
+      return {
+        on: bus.on.bind(bus),
+        off: bus.off.bind(bus),
+        emit: bus.emit.bind(bus),
+      };
+    }
+
+    return readOnlyView(value, target);
   },
 });
 

@@ -1,6 +1,7 @@
 import { jest } from "@jest/globals";
 import {
   state,
+  publicState,
   updateConfig,
   getConfig,
   resetConfig,
@@ -188,5 +189,75 @@ describe("Core Config: validateConfig gaps (review 2, finding 8)", () => {
     updateConfig({ allowedImageTypes: ["png"] });
     expect(warn).not.toHaveBeenCalled();
     expect(state.config.allowedImageTypes).toEqual(["png"]);
+  });
+});
+
+describe("Core Config: publicState is read-only all the way down (review 2, finding 9)", () => {
+  let warn;
+
+  beforeEach(() => {
+    resetConfig();
+    warn = jest.spyOn(console, "warn").mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    warn.mockRestore();
+  });
+
+  test("nested plain objects cannot be mutated through the public state", () => {
+    publicState.touchState.isPinching = true;
+    expect(state.touchState.isPinching).toBe(false);
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining("read-only"));
+
+    warn.mockClear();
+    delete publicState.touchState.isPinching;
+    expect(state.touchState.isPinching).toBe(false);
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining("read-only"));
+
+    // Values are still readable
+    expect(publicState.touchState.isPinching).toBe(false);
+  });
+
+  test("Sets and Maps nested inside objects are snapshots", () => {
+    publicState.asyncTasks.timeouts.add(123);
+    expect(state.asyncTasks.timeouts.size).toBe(0);
+    expect(publicState.asyncTasks.timeouts.has(123)).toBe(false);
+  });
+
+  test("events stays usable for on/off/emit but cannot be cleared from outside", () => {
+    const internal = jest.fn();
+    state.events.on("dv:internal", internal);
+
+    // clear() is not offered (or is a no-op) on the public view
+    if (typeof publicState.events.clear === "function") publicState.events.clear();
+    state.events.emit("dv:internal");
+    expect(internal).toHaveBeenCalledTimes(1);
+
+    const external = jest.fn();
+    const off = publicState.events.on("dv:external", external);
+    publicState.events.emit("dv:external", 42);
+    expect(external).toHaveBeenCalledWith(42);
+    off();
+    publicState.events.emit("dv:external");
+    expect(external).toHaveBeenCalledTimes(1);
+  });
+
+  test("activePanzoom is exposed live", () => {
+    const panzoom = { getScale: jest.fn(() => 2.5), destroy: jest.fn() };
+    state.activePanzoom = panzoom;
+
+    expect(publicState.activePanzoom).toBe(panzoom);
+    expect(publicState.activePanzoom.getScale()).toBe(2.5);
+
+    state.activePanzoom = null;
+  });
+
+  test("config groups are immutable through the public state", () => {
+    // config is deep-frozen: strict-mode code throws, sloppy-mode code no-ops
+    expect(() => {
+      publicState.config.watermark.enabled = true;
+    }).toThrow(TypeError);
+    expect(state.config.watermark.enabled).toBe(false);
+    expect(publicState.config.watermark.enabled).toBe(false);
   });
 });
