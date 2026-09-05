@@ -176,3 +176,115 @@ describe("Theme Module", () => {
     expect(text.style.fill.toLowerCase()).toBe("#ffffff");
   });
 });
+
+describe("Theme Module: modern colour syntax and rejected colours (review 2, findings 4 and 8)", () => {
+  const originalGetComputedStyle = window.getComputedStyle;
+  const originalCSS = window.CSS;
+  const originalGetContext = HTMLCanvasElement.prototype.getContext;
+  let warn;
+
+  // Emulates Chrome: computed colours keep oklch()/lab()/color() verbatim, a
+  // rejected assignment leaves the previous colour in place, and CSS.supports
+  // knows which strings are colours.
+  const chromeLike = ({ bodyBg = "rgb(255, 255, 255)", parserColor = "rgb(0, 0, 0)" } = {}) => {
+    window.getComputedStyle = (el) => {
+      const style = originalGetComputedStyle(el);
+      if (el === document.body) {
+        Object.defineProperty(style, "backgroundColor", { value: bodyBg, configurable: true });
+      } else if (el.tagName === "META") {
+        Object.defineProperty(style, "color", { value: parserColor, configurable: true });
+      }
+      return style;
+    };
+  };
+
+  beforeEach(() => {
+    resetConfig();
+    clearThemeCache();
+    document.documentElement.className = "";
+    document.body.className = "";
+    document.documentElement.removeAttribute("data-theme");
+    document.documentElement.style.cssText = "";
+    window.matchMedia = jest.fn().mockImplementation((query) => ({
+      matches: false,
+      media: query,
+      addListener: jest.fn(),
+      removeListener: jest.fn(),
+      addEventListener: jest.fn(),
+      removeEventListener: jest.fn(),
+    }));
+    window.CSS = {
+      supports: (prop, value) =>
+        prop === "color" &&
+        /^(oklch|lab|color|rgb|rgba)\(|^#[0-9a-f]{3,8}$|^rebeccapurple$/i.test(value),
+    };
+    // 1x1 canvas readback used for colour spaces getComputedStyle keeps verbatim
+    HTMLCanvasElement.prototype.getContext = () => ({
+      fillStyle: "",
+      fillRect() {},
+      clearRect() {},
+      getImageData: () => ({ data: new Uint8ClampedArray([247, 249, 253, 255]) }),
+    });
+    warn = jest.spyOn(console, "warn").mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    window.getComputedStyle = originalGetComputedStyle;
+    window.CSS = originalCSS;
+    HTMLCanvasElement.prototype.getContext = originalGetContext;
+    warn.mockRestore();
+    document.querySelectorAll("meta[aria-hidden]").forEach((m) => m.remove());
+  });
+
+  test("an oklch() page background is parsed as light and keeps dark text", () => {
+    chromeLike({ bodyBg: "oklch(0.98 0.01 250)", parserColor: "oklch(0.98 0.01 250)" });
+
+    const theme = detectTheme();
+
+    expect(theme.isDark).toBe(false);
+    expect(theme.text).toBe("#1e293b");
+    expect(theme.text).not.toBe("#ffffff");
+    expect(warn).not.toHaveBeenCalledWith(expect.stringContaining("Low contrast"));
+  });
+
+  test("a #-prefixed non-hex backgroundColor is rejected with a warning", () => {
+    chromeLike();
+    updateConfig({ backgroundColor: "#zzzzzz" });
+    clearThemeCache();
+
+    const theme = detectTheme();
+
+    expect(theme.bg).not.toBe("#zzzzzz");
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining("backgroundColor"));
+    expect(document.documentElement.style.getPropertyValue("--dv-bg")).toBe("");
+  });
+
+  test("an unknown textColor name is rejected every time, never cached as a colour", () => {
+    // Chrome-like: the parser element keeps its previous colour after a rejected assignment
+    chromeLike({ parserColor: "rgb(0, 0, 0)" });
+    updateConfig({ textColor: "notacolour" });
+
+    clearThemeCache();
+    let theme = detectTheme();
+    expect(theme.text).not.toBe("notacolour");
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining("textColor"));
+
+    warn.mockClear();
+    clearThemeCache();
+    theme = detectTheme();
+    expect(theme.text).not.toBe("notacolour");
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining("textColor"));
+  });
+
+  test("a named colour still resolves through computed style", () => {
+    chromeLike({ parserColor: "rgb(102, 51, 153)" });
+    updateConfig({ backgroundColor: "rebeccapurple" });
+    clearThemeCache();
+
+    const theme = detectTheme();
+
+    expect(theme.bg).toBe("rebeccapurple");
+    expect(theme.isDark).toBe(true);
+    expect(warn).not.toHaveBeenCalledWith(expect.stringContaining("backgroundColor"));
+  });
+});

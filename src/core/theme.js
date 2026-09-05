@@ -28,19 +28,101 @@ function getLuminance(r, g, b) {
 
 // Singleton element for parsing named colors via CSS (Handled via state.colorParserEl)
 
+const HEX_RE = /^#(?:[0-9a-f]{3,4}|[0-9a-f]{6}|[0-9a-f]{8})$/;
+const RGB_FN_RE = /^rgba?\(/;
+
+/**
+ * Read the first three channels out of an "rgb(r, g, b)" / "rgba(...)" string.
+ * @private
+ * @returns {number[]|null}
+ */
+function parseRgbString(value) {
+  if (!value || !RGB_FN_RE.test(value) || value.includes("%")) return null;
+  const match = value.match(/\d+(?:\.\d+)?/g);
+  return match && match.length >= 3 ? match.slice(0, 3).map((n) => Math.round(Number(n))) : null;
+}
+
+/**
+ * Ask the engine whether a string is a colour at all. CSS.supports() is the
+ * authority where it exists; otherwise a detached element's style is used,
+ * which drops values it cannot parse.
+ * @private
+ */
+function isSupportedColor(value) {
+  if (typeof CSS !== "undefined" && typeof CSS.supports === "function") {
+    return CSS.supports("color", value);
+  }
+  if (typeof document === "undefined") return false;
+  const probe = document.createElement("span");
+  probe.style.color = value;
+  return probe.style.color !== "";
+}
+
+/**
+ * Resolve a colour to sRGB by painting it on a 1x1 canvas. This is the only
+ * conversion engines agree on for oklch()/lab()/lch()/color(), which
+ * getComputedStyle returns verbatim.
+ * @private
+ */
+function parseColorViaCanvas(value) {
+  try {
+    const canvas = document.createElement("canvas");
+    canvas.width = 1;
+    canvas.height = 1;
+    const ctx = canvas.getContext("2d", { willReadFrequently: true });
+    if (!ctx) return null;
+    ctx.fillStyle = value;
+    ctx.fillRect(0, 0, 1, 1);
+    const data = ctx.getImageData(0, 0, 1, 1).data;
+    return [data[0], data[1], data[2]];
+  } catch (_e) {
+    return null;
+  }
+}
+
+/**
+ * Resolve any CSS colour the browser accepts to RGB.
+ * @private
+ */
+function parseColorViaBrowser(value) {
+  if (typeof document === "undefined") return null;
+  if (!isSupportedColor(value)) return null;
+
+  if (!state.colorParserEl) {
+    // Use <meta> instead of <div> and append to <html> to avoid body layout flushes
+    state.colorParserEl = document.createElement("meta");
+    state.colorParserEl.setAttribute("aria-hidden", "true");
+    state.colorParserEl.style.cssText =
+      "display:none!important;position:absolute!important;visibility:hidden!important;";
+    document.documentElement.appendChild(state.colorParserEl);
+  }
+
+  // Legacy sRGB syntaxes (names, hsl(), hwb(), ...) compute to rgb()/rgba()
+  state.colorParserEl.style.color = "";
+  state.colorParserEl.style.color = value;
+  const computed =
+    typeof getComputedStyle === "function" ? getComputedStyle(state.colorParserEl).color : "";
+  const rgb = parseRgbString(computed);
+  if (rgb) return rgb;
+
+  // Modern colour spaces stay in their own notation; let the canvas convert
+  return parseColorViaCanvas(value);
+}
+
 /**
  * Parse color string to RGB array
  * @private
  */
 function parseColor(color) {
-  if (!color) return null;
+  if (!color || typeof color !== "string") return null;
 
   const trimmed = color.trim().toLowerCase();
 
-  // 1. Hex color (Fast path)
+  // 1. Hex color (Fast path). Anything else starting with "#" is not a colour.
   if (trimmed.startsWith("#")) {
+    if (!HEX_RE.test(trimmed)) return null;
     const hex = trimmed.slice(1);
-    if (hex.length === 3) {
+    if (hex.length <= 4) {
       return [
         parseInt(hex[0] + hex[0], 16),
         parseInt(hex[1] + hex[1], 16),
@@ -55,40 +137,21 @@ function parseColor(color) {
   }
 
   // 2. RGB/RGBA color (Fast path)
-  if (trimmed.startsWith("rgb")) {
-    const match = trimmed.match(/\d+/g);
-    return match ? match.slice(0, 3).map(Number) : null;
-  }
+  const fast = parseRgbString(trimmed);
+  if (fast) return fast;
 
-  // 3. Named colors - convert via CSS computed style (Faster than Canvas)
+  // 3. Everything else goes through the engine. Cache hits only, so a
+  // rejected value is re-checked (and re-warned) every time.
   // OPT-7: Use a targeted cache for named colors to prevent layout thrashing
   if (NAMED_COLOR_CACHE.has(trimmed)) {
     return NAMED_COLOR_CACHE.get(trimmed);
   }
 
-  if (!state.colorParserEl && typeof document !== "undefined") {
-    // Use <meta> instead of <div> and append to <html> to avoid body layout flushes
-    state.colorParserEl = document.createElement("meta");
-    state.colorParserEl.setAttribute("aria-hidden", "true");
-    state.colorParserEl.style.cssText =
-      "display:none!important;position:absolute!important;visibility:hidden!important;";
-    document.documentElement.appendChild(state.colorParserEl);
+  const result = parseColorViaBrowser(trimmed);
+  if (result) {
+    NAMED_COLOR_CACHE.set(trimmed, result);
   }
-
-  if (state.colorParserEl) {
-    state.colorParserEl.style.color = trimmed;
-    const computed = getComputedStyle(state.colorParserEl).color;
-    // Returns "rgb(r, g, b)"
-    const match = computed.match(/\d+/g);
-    const result = match ? match.slice(0, 3).map(Number) : null;
-
-    if (result) {
-      NAMED_COLOR_CACHE.set(trimmed, result);
-    }
-    return result;
-  }
-
-  return null;
+  return result;
 }
 
 /**

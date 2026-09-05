@@ -450,6 +450,8 @@ DiagView.init({
 });
 ```
 
+`backgroundColor` and `textColor` accept any colour the browser accepts, including `oklch()`, `lab()` and `color(display-p3 ...)`. A value the browser rejects (a typo such as `#zzzzzz` or an unknown name) is ignored with a console warning and detection continues as if it were `null`.
+
 ### WCAG contrast enforcement
 
 DiagView automatically checks that the detected text color achieves at least a 4.5:1 contrast ratio against the background. If not, it falls back to white (`#ffffff`) or black (`#000000`) as appropriate.
