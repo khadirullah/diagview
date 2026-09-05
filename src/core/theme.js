@@ -219,6 +219,19 @@ function detectBackground(isDark) {
 }
 
 /**
+ * Read a colour override from config, returning it only if it parses.
+ * @param {"backgroundColor"|"textColor"} key - Config key to read
+ * @returns {string|null} The colour string, or null when unset/invalid
+ */
+function validConfigColor(key) {
+  const value = state.config?.[key];
+  if (!value || typeof value !== "string") return null;
+  if (parseColor(value)) return value;
+  console.warn(`DiagView: ${key} "${value}" is not a valid colour, ignoring.`);
+  return null;
+}
+
+/**
  * Enhanced theme detection with caching and robust fallbacks
  * @returns {object} Theme object with isDark, bg, text, accent
  */
@@ -241,6 +254,15 @@ export function detectTheme() {
   let isDark = isDarkMode();
   let bg = detectBackground(isDark);
 
+  // Explicit config override (backgroundColor: null = auto-detect).
+  // A parseable colour replaces detection and re-derives isDark from its
+  // luminance; an unparseable value is ignored with a warning.
+  const cfgBg = validConfigColor("backgroundColor");
+  if (cfgBg) {
+    bg = cfgBg;
+    isDark = getLuminance(...parseColor(cfgBg)) < 0.5;
+  }
+
   // Apply explicit Canvas Theme Mode overrides if set by user
   if (state.activeCanvasThemeMode === "light") {
     isDark = false;
@@ -257,8 +279,11 @@ export function detectTheme() {
     }
   }
 
-  // Detect text color with multiple fallbacks
+  // Detect text color with multiple fallbacks.
+  // Explicit config override (textColor: null = auto-detect) wins over
+  // detection but still goes through the WCAG contrast guard below.
   let text =
+    validConfigColor("textColor") ||
     getCSSVariable("--diagram-text", COLORS.TEXT_LIGHT, COLORS.TEXT_DARK, isDark) ||
     (isDark ? COLORS.TEXT_DARK : COLORS.TEXT_LIGHT);
 

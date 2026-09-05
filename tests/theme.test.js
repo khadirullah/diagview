@@ -11,7 +11,7 @@ import {
   setCanvasTheme,
   normalizeSvgTextContrast,
 } from "../src/core/theme.js";
-import { resetConfig } from "../src/core/config.js";
+import { resetConfig, updateConfig } from "../src/core/config.js";
 
 describe("Theme Module", () => {
   beforeEach(() => {
@@ -92,6 +92,40 @@ describe("Theme Module", () => {
     expect(theme.text.toLowerCase()).toBe("#ffffff");
 
     document.body.style.backgroundColor = originalBodyBg;
+  });
+
+  test("backgroundColor config override replaces detection and sets isDark", () => {
+    updateConfig({ backgroundColor: "#0f172a" });
+    clearThemeCache();
+    const theme = detectTheme();
+    expect(theme.bg).toBe("#0f172a");
+    expect(theme.isDark).toBe(true);
+  });
+
+  test("textColor config override is used when it has enough contrast", () => {
+    updateConfig({ backgroundColor: "#ffffff", textColor: "#1e293b" });
+    clearThemeCache();
+    const theme = detectTheme();
+    expect(theme.text).toBe("#1e293b");
+  });
+
+  test("textColor override still goes through the WCAG contrast guard", () => {
+    const warn = jest.spyOn(console, "warn").mockImplementation(() => {});
+    updateConfig({ backgroundColor: "#ffffff", textColor: "#fafafa" });
+    clearThemeCache();
+    const theme = detectTheme();
+    expect(theme.text).not.toBe("#fafafa");
+    warn.mockRestore();
+  });
+
+  test("invalid colour overrides are ignored with a warning", () => {
+    const warn = jest.spyOn(console, "warn").mockImplementation(() => {});
+    updateConfig({ backgroundColor: "not-a-colour" });
+    clearThemeCache();
+    const theme = detectTheme();
+    expect(theme.bg).not.toBe("not-a-colour");
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining("backgroundColor"));
+    warn.mockRestore();
   });
 
   test("syncTheme updates root CSS variables", () => {

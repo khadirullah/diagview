@@ -20,7 +20,12 @@ import {
 } from "./core/config.js";
 import { isBrowser, sanitizeSVG, clearSVGContentCache } from "./core/utils.js";
 import { safeDestroy, clearAsyncTasks } from "./core/lifecycle.js";
-import { setupThemeWatchers, teardownThemeWatchers, syncTheme } from "./core/theme.js";
+import {
+  setupThemeWatchers,
+  teardownThemeWatchers,
+  syncTheme,
+  clearThemeCache,
+} from "./core/theme.js";
 import { injectStyles, removeStyles } from "./ui/styles.js";
 import { createModal, openFullscreen } from "./ui/modal.js";
 import { closeModal, syncBrandingVisibility } from "./ui/modal-controls.js";
@@ -219,6 +224,7 @@ function configure(options = {}) {
   }
 
   updateConfig(options);
+  clearThemeCache(); // colour overrides must not wait for the cache to expire
   syncTheme();
   syncBrandingVisibility();
 }

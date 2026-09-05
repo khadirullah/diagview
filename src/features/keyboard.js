@@ -5,7 +5,7 @@
  */
 
 import { state } from "../core/config.js";
-import { PAN } from "../core/constants.js";
+import { PAN, TIMING } from "../core/constants.js";
 import { shouldHandleKeyboardEvent } from "../ui/focus-manager.js";
 import { closeModal } from "../ui/modal-controls.js";
 import { toggleKeyboardHelp, isHelpVisible, hideKeyboardHelp } from "../ui/keyboard-help.js";
@@ -137,6 +137,7 @@ function handleKeyboardShortcut(e) {
     state.activePanzoom.pan(dx, dy, {
       relative: true,
       animate: true,
+      duration: state.config.panAnimationDuration || TIMING.PAN_ANIMATION_DURATION,
     });
     return;
   }

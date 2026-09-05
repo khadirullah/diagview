@@ -93,6 +93,16 @@ describe("Keyboard Shortcuts Integration", () => {
     state.rotationAngle = 0;
   });
 
+  test("Arrow pan honours panAnimationDuration", () => {
+    state.config = { ...state.config, panAnimationDuration: 350 };
+    window.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowDown" }));
+    expect(mockPanzoom.pan).toHaveBeenLastCalledWith(
+      0,
+      -40,
+      expect.objectContaining({ duration: 350 }),
+    );
+  });
+
   test("Shift key uses faster panning steps", () => {
     // We can't easily check the internal moveStep value here,
     // but we verify the pan function is called regardless.
