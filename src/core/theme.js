@@ -34,7 +34,7 @@ const RGB_FN_RE = /^rgba?\(/;
 /**
  * Read the first three channels out of an "rgb(r, g, b)" / "rgba(...)" string.
  * @private
- * @returns {number[]|null}
+ * @returns {number[]|null} [r, g, b] or null when the string is not rgb()/rgba()
  */
 function parseRgbString(value) {
   if (!value || !RGB_FN_RE.test(value) || value.includes("%")) return null;
@@ -232,14 +232,7 @@ function getCSSVariable(varName, fallbackLight, fallbackDark, isDark) {
   const root = getComputedStyle(document.documentElement);
   const body = getComputedStyle(document.body);
 
-  // Try standard variable name
-  let value = root.getPropertyValue(varName) || body.getPropertyValue(varName);
-
-  // Try without dashes (some frameworks)
-  if (!value || !value.trim()) {
-    const altName = varName.replace(/^--/, "");
-    value = root.getPropertyValue(`--${altName}`) || body.getPropertyValue(`--${altName}`);
-  }
+  const value = root.getPropertyValue(varName) || body.getPropertyValue(varName);
 
   // Use fallback
   if (!value || !value.trim()) {
@@ -380,21 +373,6 @@ export function detectTheme() {
   state.themeCache = theme;
   state.themeCacheTimestamp = now;
 
-  // Store in sessionStorage for persistence
-  if (state.isStorageAvailable) {
-    try {
-      const safe = {
-        isDark: !!theme.isDark,
-        bg: String(theme.bg || ""),
-        text: String(theme.text || ""),
-        accent: String(theme.accent || ""),
-      };
-      sessionStorage.setItem("diagview-theme", JSON.stringify(safe));
-    } catch (e) {
-      // Ignore storage errors (safety fallback)
-    }
-  }
-
   return theme;
 }
 
@@ -407,17 +385,6 @@ export function setCanvasTheme(mode, customColor = null) {
   state.activeCanvasThemeMode = mode;
   state.customCanvasColor = customColor;
   clearThemeCache();
-
-  if (state.isStorageAvailable) {
-    try {
-      localStorage.setItem("diagview-canvas-theme-mode", mode);
-      if (customColor) {
-        localStorage.setItem("diagview-custom-canvas-color", customColor);
-      }
-    } catch (_e) {
-      // Ignore storage write errors
-    }
-  }
 
   const theme = syncTheme();
 
