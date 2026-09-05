@@ -199,6 +199,39 @@
             </div>
         </div>
 
+        <!-- Width/height-only SVG (no viewBox attribute) -->
+        <div class="card">
+            <div class="card-header">
+                <h3>No viewBox Attribute</h3>
+                <span class="card-badge svg-badge">SVG</span>
+            </div>
+            <div class="diagram" data-title="Width/Height Only SVG">
+                <svg xmlns="http://www.w3.org/2000/svg" width="480" height="220">
+                    <defs>
+                        <marker id="nvb-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6"
+                            markerHeight="6" orient="auto-start-reverse">
+                            <path d="M 0 0 L 10 5 L 0 10 z" fill="#4a5568" />
+                        </marker>
+                    </defs>
+                    <rect x="20" y="80" width="120" height="60" rx="8" fill="#38b2ac" />
+                    <text x="80" y="115" text-anchor="middle" font-family="sans-serif" font-size="14"
+                        fill="white">Inkscape</text>
+                    <rect x="180" y="80" width="120" height="60" rx="8" fill="#805ad5" />
+                    <text x="240" y="115" text-anchor="middle" font-family="sans-serif" font-size="14"
+                        fill="white">Hand-written</text>
+                    <rect x="340" y="80" width="120" height="60" rx="8" fill="#f56565" />
+                    <text x="400" y="115" text-anchor="middle" font-family="sans-serif" font-size="14"
+                        fill="white">Exported</text>
+                    <path d="M 140 110 L 178 110" stroke="#4a5568" stroke-width="2" marker-end="url(#nvb-arrow)" />
+                    <path d="M 300 110 L 338 110" stroke="#4a5568" stroke-width="2" marker-end="url(#nvb-arrow)" />
+                    <text x="240" y="40" text-anchor="middle" font-family="sans-serif" font-size="12"
+                        fill="#4a5568">width="480" height="220", no viewBox — must stay visible and open fullscreen</text>
+                    <text x="240" y="190" text-anchor="middle" font-family="sans-serif" font-size="12"
+                        fill="#4a5568">Was hidden with an error box before the fix</text>
+                </svg>
+            </div>
+        </div>
+
         <div class="card">
             <div class="card-header">
                 <h3>Analytics</h3>
@@ -371,7 +404,8 @@
                 highResScale: 4,
                 accentColor: localStorage.getItem('dv-accent') || null,
                 layout: 'header',
-                showBranding: true
+                showBranding: true,
+                rememberZoom: true
             });
             dvInit();
             if (window.setupDiagViewToggle) setupDiagViewToggle(dvInit);
