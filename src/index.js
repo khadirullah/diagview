@@ -276,6 +276,11 @@ function getConfiguration() {
 const version = __DV_VERSION__;
 
 // Public API
+/** Utility functions for SVG processing and security (also a named export). */
+const utils = {
+  sanitizeSVG,
+};
+
 const DiagView = {
   // Core methods
   init,
@@ -301,9 +306,7 @@ const DiagView = {
   // Utilities
   closeModal,
   /** Utility functions for SVG processing and security */
-  utils: {
-    sanitizeSVG,
-  },
+  utils,
 
   /**
    * Open a diagram in fullscreen programmatically.
@@ -357,6 +360,8 @@ if (typeof window !== "undefined") {
 // Export for module systems
 export default DiagView;
 export {
+  publicState as state,
+  utils,
   init,
   initShadowRoot,
   destroy,
