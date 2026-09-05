@@ -106,3 +106,87 @@ describe("Core Config", () => {
     spy.mockRestore();
   });
 });
+
+describe("Core Config: validateConfig gaps (review 2, finding 8)", () => {
+  let warn;
+
+  beforeEach(() => {
+    resetConfig();
+    warn = jest.spyOn(console, "warn").mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    warn.mockRestore();
+  });
+
+  test.each([
+    ["NaN", NaN],
+    ["a string", "3"],
+    ["null", null],
+    ["Infinity", Infinity],
+  ])("numeric keys reject %s and keep the previous value", (_label, value) => {
+    updateConfig({ highResScale: 3 });
+    warn.mockClear();
+
+    updateConfig({ highResScale: value });
+
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining("highResScale"));
+    expect(state.config.highResScale).toBe(3);
+  });
+
+  test("timing keys reject non-numbers", () => {
+    updateConfig({ toastDuration: "fast" });
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining("toastDuration"));
+    expect(typeof state.config.toastDuration).toBe("number");
+  });
+
+  test.each([
+    ["security", "off"],
+    ["watermark", null],
+    ["ui", 5],
+    ["performance", []],
+  ])("nested key %s cannot be replaced by a non-object", (key, value) => {
+    const before = JSON.stringify(state.config[key]);
+
+    updateConfig({ [key]: value });
+
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining(key));
+    expect(JSON.stringify(state.config[key])).toBe(before);
+  });
+
+  test("nested objects are still merged, not replaced", () => {
+    updateConfig({ security: { mode: "permissive" } });
+    expect(state.config.security.mode).toBe("permissive");
+    expect(state.config.security.allowOverrides).toBe(true);
+    expect(warn).not.toHaveBeenCalled();
+  });
+
+  test("minZoomScale can never end up above maxZoomScale", () => {
+    updateConfig({ minZoomScale: 0.5, maxZoomScale: 0.2 });
+
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining("ZoomScale"));
+    expect(state.config.minZoomScale).toBeLessThanOrEqual(state.config.maxZoomScale);
+
+    warn.mockClear();
+    updateConfig({ minZoomScale: 1, maxZoomScale: 1 }); // equal is allowed
+    expect(warn).not.toHaveBeenCalled();
+    expect(state.config.minZoomScale).toBe(1);
+    expect(state.config.maxZoomScale).toBe(1);
+  });
+
+  test("allowedImageTypes must be an array of strings", () => {
+    updateConfig({ allowedImageTypes: "png" });
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining("allowedImageTypes"));
+    expect(Array.isArray(state.config.allowedImageTypes)).toBe(true);
+
+    warn.mockClear();
+    updateConfig({ allowedImageTypes: ["png", 3] });
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining("allowedImageTypes"));
+    expect(state.config.allowedImageTypes.every((t) => typeof t === "string")).toBe(true);
+
+    warn.mockClear();
+    updateConfig({ allowedImageTypes: ["png"] });
+    expect(warn).not.toHaveBeenCalled();
+    expect(state.config.allowedImageTypes).toEqual(["png"]);
+  });
+});

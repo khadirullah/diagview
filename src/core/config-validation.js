@@ -1,5 +1,6 @@
 import { ZOOM, LAYOUTS, EXPORT } from "./constants.js";
 import { DEFAULT_CONFIG } from "./config-defaults.js";
+import { deepMerge } from "./state-utils.js";
 
 /**
  * Check that a selector string can actually be used with querySelector.
@@ -18,6 +19,16 @@ function isValidSelector(selector) {
 }
 
 /**
+ * @param {*} value - Candidate value
+ * @returns {boolean} True for a plain object (not null, array or class instance)
+ */
+function isPlainObject(value) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return false;
+  const proto = Object.getPrototypeOf(value);
+  return proto === Object.prototype || proto === null;
+}
+
+/**
  * Validate entire configuration
  * @param {Record<string, *>} config - The config object to validate (mutated in place)
  * @param {Record<string, *>} [previous] - Config in effect before this update; invalid
@@ -29,22 +40,35 @@ export function validateConfig(config, previous = DEFAULT_CONFIG) {
   const fallback = (key) => (previous && key in previous ? previous[key] : defaults[key]);
 
   /**
+   * Numeric keys must be finite numbers inside [min, max].
    * @param {string} key - Config key to validate
    * @param {number} min - Minimum allowed value (inclusive)
    * @param {number} max - Maximum allowed value (inclusive)
    */
-  const checkRange = (key, min, max) => {
-    if (/** @type {number} */ (config[key]) < min || /** @type {number} */ (config[key]) > max) {
+  const checkNumber = (key, min, max) => {
+    const value = config[key];
+    if (typeof value !== "number" || !Number.isFinite(value)) {
+      console.warn(`DiagView: ${key} must be a number, keeping ${fallback(key)}`);
+      config[key] = fallback(key);
+    } else if (value < min || value > max) {
       console.warn(`DiagView: ${key} should be between ${min} and ${max}`);
-      config[key] = defaults[key];
+      config[key] = fallback(key);
     }
   };
 
-  checkRange("highResScale", 1, 10);
-  checkRange("mobileScale", 1, 5);
-  checkRange("maxZoomScale", 1, ZOOM.MAX_SCALE_LIMIT);
-  checkRange("minZoomScale", ZOOM.MIN_SCALE_LIMIT, 1);
-  checkRange("maxPixels", EXPORT.MIN_PIXELS_LIMIT, EXPORT.MAX_PIXELS_LIMIT);
+  checkNumber("highResScale", 1, 10);
+  checkNumber("mobileScale", 1, 5);
+  checkNumber("maxZoomScale", 1, ZOOM.MAX_SCALE_LIMIT);
+  checkNumber("minZoomScale", ZOOM.MIN_SCALE_LIMIT, 1);
+  checkNumber("maxPixels", EXPORT.MIN_PIXELS_LIMIT, EXPORT.MAX_PIXELS_LIMIT);
+
+  if (config["minZoomScale"] > config["maxZoomScale"]) {
+    console.warn(
+      `DiagView: minZoomScale (${config["minZoomScale"]}) must not exceed maxZoomScale (${config["maxZoomScale"]}), keeping previous values`,
+    );
+    config["minZoomScale"] = fallback("minZoomScale");
+    config["maxZoomScale"] = fallback("maxZoomScale");
+  }
 
   if (
     ![LAYOUTS.HEADER, LAYOUTS.FLOATING, LAYOUTS.OFF].includes(
@@ -62,17 +86,27 @@ export function validateConfig(config, previous = DEFAULT_CONFIG) {
     config["diagramSelector"] = fallback("diagramSelector");
   }
 
-  // Ensure positive values for timings
+  // Nested option groups must stay objects: a scalar, null or array would
+  // replace the whole group and break every `config.group.key` read.
+  ["security", "watermark", "ui", "performance"].forEach((key) => {
+    if (!isPlainObject(config[key])) {
+      console.warn(`DiagView: ${key} must be an object, keeping previous settings`);
+      config[key] = deepMerge({}, fallback(key));
+    }
+  });
+
+  const types = config["allowedImageTypes"];
+  if (!Array.isArray(types) || !types.every((t) => typeof t === "string")) {
+    console.warn("DiagView: allowedImageTypes must be an array of strings, keeping previous value");
+    config["allowedImageTypes"] = [...fallback("allowedImageTypes")];
+  }
+
+  // Timings must be non-negative numbers
   [
     "helpTimeout",
     "toastDuration",
     "errorToastDuration",
     "zoomAnimationDuration",
     "panAnimationDuration",
-  ].forEach((key) => {
-    if (/** @type {number} */ (config[key]) < 0) {
-      console.warn(`DiagView: ${key} must be positive`);
-      config[key] = defaults[key];
-    }
-  });
+  ].forEach((key) => checkNumber(key, 0, Infinity));
 }
