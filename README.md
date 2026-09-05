@@ -267,6 +267,8 @@ await DiagView.exportDiagram(el, "png", { transparent: true });
 
 ## 🌐 Framework Integration
 
+Live example: **[React 18 + StrictMode demo](https://khadirullah.github.io/diagview/framework-react.html)** (mount, unmount, remount, replace).
+
 > **One rule for component frameworks (React, Vue, Svelte, Angular):** keep the diagram element nested inside a container that your component renders and owns, as in the examples below. With the `floating` and `header` layouts DiagView moves the diagram element into a wrapper to place the toolbar. Frameworks that later remove that exact element themselves will fail, because it is no longer where they left it. Removing the outer container is always safe. If you would rather DiagView never touch the surrounding DOM, use `layout: "off"`; fullscreen, zoom, search and export still work, only the inline toolbar is dropped.
 
 ### React

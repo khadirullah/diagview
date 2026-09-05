@@ -641,6 +641,8 @@ DiagView.init({
 
 ## 20. Framework Integration
 
+Live example: [React 18 + StrictMode demo](https://khadirullah.github.io/diagview/framework-react.html) — a real React dev-build tree that mounts, unmounts, remounts and replaces diagrams, with an "unsafe pattern" toggle that shows the error the rule below prevents. `demo/framework-react.html` in the repo, verified by `tests/e2e/verify-react-strictmode.mjs`.
+
 > **The one rule:** keep the diagram element (the one matching `diagramSelector`) nested inside a container that your component renders and owns. With the `floating` and `header` layouts DiagView moves the diagram element into a wrapper so it can place the toolbar next to it. Your framework still believes the element sits where it rendered it, so if it later removes that exact element (unmount, conditional render, key change) the browser throws `NotFoundError: The node to be removed is not a child of this node`. Removing the outer container instead is always safe, because the wrapper is inside it and goes away with it.
 >
 > Do not re-render the diagram element itself with new content once DiagView has initialized it. Render a new one (inside the container) or call `DiagView.refresh()` after replacing the SVG.
@@ -648,6 +650,8 @@ DiagView.init({
 > If you would rather DiagView never touch the DOM around your element, use `layout: "off"`. It attaches a click handler and nothing else. Fullscreen, zoom, search, minimap and export all still work; only the inline toolbar is dropped. Pair it with `DiagView.openFullscreen(el)` / `DiagView.exportDiagram(el, ...)` from your own buttons if you need them.
 >
 > **React StrictMode / hot reload:** the development-only destroy-then-init sequence is handled by `init()` itself, which queues behind an in-flight `destroy()`. You do not need to await either call in an effect.
+>
+> **Unmount vs detach:** unmounting a component removes its DOM, diagram included, in every layout; DiagView is not deleting anything, its toolbar just goes with the diagram. Call `destroy()` in the cleanup so handlers are released. To remove only the viewer and keep the diagram on the page, leave the component mounted and call `destroy()`; the diagram is returned to where your framework rendered it, and `init()` enhances it again.
 
 ### React — with cleanup
 
