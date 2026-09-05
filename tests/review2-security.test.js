@@ -65,3 +65,34 @@ describe("sanitizeSVG prefixed XML names (strict)", () => {
     expect(out).toContain('width="1"');
   });
 });
+
+describe("sanitizeSVG CSS escape and syntax variants (strict, remote blocked)", () => {
+  // Same CSS in a <style> block and in a style attribute; both must be scrubbed.
+  const styleBlock = (css) =>
+    wrap(`<style>${css}</style><rect style="${css.replace(/"/g, "&quot;")}"/>`);
+
+  test.each([
+    ["backslash-escaped protocol-relative url", ".a{background:url(\\/\\/evil.com/x.png)}"],
+    ["single-char escape inside the scheme", "@font-face{src:url(h\\ttps://evil.com/f.woff)}"],
+    ["escaped @import keyword", '@\\import "https://evil.com/x.css";'],
+    ["@import with no whitespace before the string", '@import"https://evil.com/x.css";'],
+    [
+      "whitespace after the opening quote in url()",
+      ".a{background:url(' https://evil.com/x.png')}",
+    ],
+  ])("removes remote resource written as %s", (_label, css) => {
+    const out = sanitizeToString(styleBlock(css));
+    expect(out).toContain("<rect"); // parsed fine, not rejected wholesale
+    expect(out).not.toContain("evil.com");
+    expect(out).not.toContain("import");
+  });
+
+  test("local url(#grad) and raster data: URIs still survive", () => {
+    const css = ".a{fill:url(#grad)} .b{background:url(data:image/png;base64,iVBORw0KGgo=)}";
+    const out = sanitizeToString(styleBlock(css));
+    expect(out).toContain("url(#grad)");
+    expect(out).toContain("data:image/png;base64,iVBORw0KGgo=");
+    expect(out.match(/<style>/g)).toHaveLength(1);
+    expect(out).toContain("<rect style=");
+  });
+});

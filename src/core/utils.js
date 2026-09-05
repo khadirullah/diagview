@@ -322,21 +322,26 @@ const INTERNAL_DANGER_RE =
  */
 function decodeCSSEscapes(str) {
   if (!str || !str.includes("\\")) return str;
-  return str
-    .replace(/\\([0-9a-fA-F]{1,6})\s?/g, (_, hex) => {
-      try {
-        return String.fromCodePoint(parseInt(hex, 16));
-      } catch (e) {
-        return "";
-      }
-    })
-    .replace(/\\u([0-9a-fA-F]{4})/gi, (_, hex) => {
-      try {
-        return String.fromCodePoint(parseInt(hex, 16));
-      } catch (e) {
-        return "";
-      }
-    });
+  return (
+    str
+      .replace(/\\([0-9a-fA-F]{1,6})\s?/g, (_, hex) => {
+        try {
+          return String.fromCodePoint(parseInt(hex, 16));
+        } catch (e) {
+          return "";
+        }
+      })
+      .replace(/\\u([0-9a-fA-F]{4})/gi, (_, hex) => {
+        try {
+          return String.fromCodePoint(parseInt(hex, 16));
+        } catch (e) {
+          return "";
+        }
+      })
+      // Single-character escapes (\/ -> "/", \i -> "i") are the literal
+      // character in CSS and would otherwise split "//" or "@import".
+      .replace(/\\([^0-9a-fA-F\r\n])/g, "$1")
+  );
 }
 
 /**
@@ -352,7 +357,7 @@ function stripCSSComments(str) {
  * Patterns that represent remote resource loading in CSS.
  * @private
  */
-const REMOTE_RESOURCE_RE = /(?:@import\s+|url\s*\(\s*['"]?(?:https?:|\/\/))/i;
+const REMOTE_RESOURCE_RE = /(?:@import\b|url\s*\(\s*['"]?\s*(?:https?:|\/\/))/i;
 
 /**
  * Lower-cased local name of an element or attribute with any namespace
