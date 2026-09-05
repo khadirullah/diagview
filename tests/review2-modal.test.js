@@ -350,6 +350,67 @@ describe("text-select mode lets mousemove reach document listeners", () => {
 });
 
 // ---------------------------------------------------------------------------
+// 11. The initial-focus rAF must be cancelled when the modal closes first
+// ---------------------------------------------------------------------------
+describe("initial-focus rAF is cancelled on close", () => {
+  let instances, rafQueue, origRAF, origCAF;
+
+  beforeEach(() => {
+    resetConfig();
+    document.body.innerHTML = "";
+    sessionStorage.clear();
+    instances = installFakePanzoom();
+    updateConfig({ showFirstTimeThemeHint: false, animateOpen: false });
+    createModal();
+
+    // Capture rAF callbacks so the test decides when frames run
+    rafQueue = new Map();
+    let nextId = 1;
+    origRAF = window.requestAnimationFrame;
+    origCAF = window.cancelAnimationFrame;
+    window.requestAnimationFrame = jest.fn((cb) => {
+      const id = nextId++;
+      rafQueue.set(id, cb);
+      return id;
+    });
+    window.cancelAnimationFrame = jest.fn((id) => rafQueue.delete(id));
+  });
+
+  afterEach(async () => {
+    window.requestAnimationFrame = origRAF;
+    window.cancelAnimationFrame = origCAF;
+    if (state.isModalOpen) await closeModal();
+    await settle();
+    delete window.Panzoom;
+  });
+
+  test("closing right after open leaves focus where restoreFocus put it", async () => {
+    const trigger = document.createElement("button");
+    trigger.id = "outside-trigger";
+    document.body.appendChild(trigger);
+    trigger.focus();
+    expect(document.activeElement).toBe(trigger);
+
+    const el = makeDiagram("d-raf");
+    const opening = openFullscreen(el);
+    await closeModal();
+    await opening;
+    await settle();
+
+    expect(state.isModalOpen).toBe(false);
+    expect(document.activeElement).toBe(trigger);
+
+    // Now run every frame callback that is still pending
+    for (const cb of Array.from(rafQueue.values())) cb(performance.now());
+    rafQueue.clear();
+
+    expect(document.activeElement).toBe(trigger);
+    expect(document.getElementById("diagview-modal").contains(document.activeElement)).toBe(false);
+    expect(instances.length).toBe(1);
+  });
+});
+
+// ---------------------------------------------------------------------------
 // 1. Focus trap must only cycle through elements that are actually rendered
 // ---------------------------------------------------------------------------
 describe("focus trap ignores unrendered and closed-search controls", () => {

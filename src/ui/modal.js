@@ -198,10 +198,13 @@ function _activateModalUI(modal) {
     }
   }
 
-  // Set initial focus (use rAF to ensure modal is rendered and visible)
-  requestAnimationFrame(() => {
-    setInitialFocus();
+  // Set initial focus (use rAF to ensure modal is rendered and visible).
+  // Modal-scoped so a close that lands before the frame cancels it; otherwise
+  // it would fire after restoreFocus and pull focus back into the closed modal.
+  const focusFrame = requestAnimationFrame(() => {
+    if (state.isModalOpen && !state.isModalClosing) setInitialFocus();
   });
+  addModalCleanupFunction(() => cancelAnimationFrame(focusFrame));
 
   // Push history state so mobile back button closes modal
   pushModalHistoryState(() => closeModal());
