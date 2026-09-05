@@ -1,3 +1,4 @@
+import { jest } from "@jest/globals";
 import { sanitizeSVG } from "../src/core/utils.js";
 
 /**
@@ -178,5 +179,64 @@ describe("sanitizeSVG <link>, <base>, <meta> inside foreignObject", () => {
     expect(result.outerHTML).not.toContain("evil.com");
     // Original node untouched
     expect(doc.documentElement.querySelectorAll("link, base, meta")).toHaveLength(3);
+  });
+});
+
+describe("sanitizeSVG size guard and options handling", () => {
+  const big = wrap(`<rect width="1"/>`.repeat(20));
+  let errorSpy;
+
+  beforeEach(() => {
+    errorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
+  });
+  afterEach(() => {
+    errorSpy.mockRestore();
+  });
+
+  test("string input above maxChars is rejected", () => {
+    expect(sanitizeSVG(big, "strict", { maxChars: 50 })).toBe("");
+    expect(errorSpy).toHaveBeenCalled();
+  });
+
+  test("Node input above maxChars is rejected the same way (options object)", () => {
+    const node = new DOMParser().parseFromString(big, "image/svg+xml").documentElement;
+    const result = sanitizeSVG(node, "strict", { maxChars: 50 });
+    expect(result).toBeFalsy();
+    expect(errorSpy).toHaveBeenCalled();
+    // Original node untouched
+    expect(node.querySelectorAll("rect")).toHaveLength(20);
+  });
+
+  test("Node input above maxChars is rejected the same way (numeric shorthand)", () => {
+    const node = new DOMParser().parseFromString(big, "image/svg+xml").documentElement;
+    expect(sanitizeSVG(node, "strict", 50)).toBeFalsy();
+  });
+
+  test("Node input below maxChars is sanitized normally", () => {
+    const node = new DOMParser().parseFromString(big, "image/svg+xml").documentElement;
+    const result = sanitizeSVG(node, "strict", { maxChars: big.length + 100 });
+    expect(result).toBeInstanceOf(Node);
+    expect(result.querySelectorAll("rect")).toHaveLength(20);
+    expect(errorSpy).not.toHaveBeenCalled();
+  });
+
+  test("maxChars of 0 or unset never blocks Node input", () => {
+    const node = new DOMParser().parseFromString(big, "image/svg+xml").documentElement;
+    expect(sanitizeSVG(node, "strict", { maxChars: 0 })).toBeInstanceOf(Node);
+    expect(sanitizeSVG(node, "strict")).toBeInstanceOf(Node);
+  });
+
+  test("options=null behaves like no options for string and Node input", () => {
+    const node = new DOMParser().parseFromString(big, "image/svg+xml").documentElement;
+    expect(() => sanitizeSVG(big, "strict", null)).not.toThrow();
+    expect(sanitizeSVG(big, "strict", null)).toBe(sanitizeSVG(big, "strict"));
+    expect(() => sanitizeSVG(node, "strict", null)).not.toThrow();
+    expect(sanitizeSVG(node, "strict", null).querySelectorAll("rect")).toHaveLength(20);
+  });
+
+  test("options=null still lets raster data: URIs through (allowedImageTypes default)", () => {
+    const svg = wrap(`<image href="data:image/png;base64,iVBORw0KGgo="/>`);
+    expect(() => sanitizeSVG(svg, "strict", null)).not.toThrow();
+    expect(sanitizeSVG(svg, "strict", null)).toContain("data:image/png");
   });
 });

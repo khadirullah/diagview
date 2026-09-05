@@ -263,3 +263,55 @@ describe("Per-element security overrides (allowOverrides gate)", () => {
     expect(clone.querySelector("script")).not.toBeNull();
   });
 });
+
+describe("criticalFileLimit size guard in clone presets", () => {
+  const ns = "http://www.w3.org/2000/svg";
+  let svg;
+  let errorSpy;
+
+  beforeEach(() => {
+    svg = document.createElementNS(ns, "svg");
+    svg.setAttribute("viewBox", "0 0 10 10");
+    for (let i = 0; i < 20; i++) {
+      const rect = document.createElementNS(ns, "rect");
+      rect.setAttribute("width", "1");
+      svg.appendChild(rect);
+    }
+    document.body.appendChild(svg);
+    errorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    errorSpy.mockRestore();
+    resetConfig();
+    document.body.innerHTML = "";
+  });
+
+  test("cloneSVG returns null when the SVG exceeds performance.criticalFileLimit", () => {
+    updateConfig({ performance: { criticalFileLimit: 50 } });
+    expect(cloneSVG(svg)).toBeNull();
+    expect(errorSpy).toHaveBeenCalled();
+    // Original untouched
+    expect(svg.querySelectorAll("rect")).toHaveLength(20);
+  });
+
+  test("cloneSVG accepts an explicit maxChars option", () => {
+    expect(cloneSVG(svg, { maxChars: 50 })).toBeNull();
+    expect(cloneSVG(svg, { maxChars: svg.outerHTML.length + 100 })).not.toBeNull();
+  });
+
+  test("cloneSVG clones normally under the limit", () => {
+    const clone = cloneSVG(svg);
+    expect(clone).not.toBeNull();
+    expect(clone.querySelectorAll("rect")).toHaveLength(20);
+    expect(errorSpy).not.toHaveBeenCalled();
+  });
+
+  test("modal and export presets resolve null over the limit", async () => {
+    updateConfig({ performance: { criticalFileLimit: 50 } });
+    expect(cloneSVGForModal(svg)).toBeNull();
+    await expect(cloneSVGForExportAsync(svg)).resolves.toBeNull();
+    // Export path must clean its match-id markers off the original even when blocked
+    expect(svg.querySelectorAll("[data-dv-match-id]")).toHaveLength(0);
+  });
+});

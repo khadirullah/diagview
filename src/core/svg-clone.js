@@ -38,6 +38,15 @@ const DEFAULT_STYLE_PROPS = [
   "vector-effect",
 ];
 
+/**
+ * Maximum number of nodes whose computed styles are captured for export.
+ * A node count, deliberately decoupled from performance.largeFileThreshold
+ * (which is measured in characters); keeps the previous effective cap so
+ * large diagrams still export fully styled. The sync path has its own cap.
+ * @private
+ */
+const MAX_EXPORT_STYLED_NODES = 1_000_000;
+
 // ─── NEW HELPER ──────────────────────────────────────────────────────────────
 /**
  * Browsers return absolute URLs for url(#id) refs in getComputedStyle.
@@ -211,9 +220,15 @@ function copyStyleElements(originalSvg, clonedSvg) {
  * @param {Array<string>} options.styleProps - Style properties to copy (default: DEFAULT_STYLE_PROPS)
  * @param {boolean} options.preserveStyleElements - Copy <style> tags (default: true)
  * @param {'strict'|'permissive'|'off'} options.securityMode - SVG sanitization mode (default: 'strict')
- * @returns {SVGElement} Cloned SVG element
+ * @param {number} options.maxChars - Hard size limit in serialized chars (default: performance.criticalFileLimit)
+ * @returns {SVGElement|null} Cloned SVG element, or null when blocked by the size limit
  */
 export function cloneSVG(svg, options = {}) {
+  // Security & Performance: Get thresholds from config
+  const { performance = {} } = state.config;
+  const largeFileThreshold = performance.largeFileThreshold || 1000000;
+  const criticalFileLimit = performance.criticalFileLimit || 50000000;
+
   const {
     preserveText = true,
     preserveStyles = false,
@@ -222,17 +237,13 @@ export function cloneSVG(svg, options = {}) {
     securityMode = "strict",
     skipIdFix = false,
     allowRemoteResources = state.config.security.allowRemoteResources,
+    maxChars = criticalFileLimit,
   } = options;
 
   if (!svg) {
     console.warn("DiagView: No SVG provided to cloneSVG");
     return null;
   }
-
-  // Security & Performance: Get thresholds from config
-  const { performance = {} } = state.config;
-  const largeFileThreshold = performance.largeFileThreshold || 1000000;
-  const criticalFileLimit = performance.criticalFileLimit || 50000000;
 
   const rawClone = svg.cloneNode(true);
 
@@ -275,7 +286,7 @@ export function cloneSVG(svg, options = {}) {
   // securityMode is passed from the diagram's elementConfig so that
   // per-element data-diagview-sanitize overrides reach the sanitizer.
   const clone = sanitizeSVG(rawClone, securityMode, {
-    maxChars: criticalFileLimit,
+    maxChars,
     allowRemoteResources: allowRemoteResources,
     allowedImageTypes: state.config.allowedImageTypes,
   });
@@ -410,8 +421,15 @@ export function cloneSVGForModal(svg) {
 export function cloneSVGForExportAsync(svg) {
   return new Promise((resolve) => {
     const originalNodes = Array.from(svg.querySelectorAll("*"));
-    const limit = state.config.performance?.largeFileThreshold || 10000;
-    const nodeCount = Math.min(originalNodes.length, limit); // Safety cap
+    // Safety cap on the number of nodes whose computed styles are read.
+    // This is a node count, distinct from performance.largeFileThreshold
+    // (which is measured in characters).
+    const nodeCount = Math.min(originalNodes.length, MAX_EXPORT_STYLED_NODES);
+    if (originalNodes.length > MAX_EXPORT_STYLED_NODES) {
+      console.warn(
+        `DiagView: Styling ${MAX_EXPORT_STYLED_NODES}/${originalNodes.length} nodes for export (Performance Cap)`,
+      );
+    }
 
     // ─── PHASE 1: Synchronous style READ ──────────────────────────────────
     // Must happen before cloning and before any async work.
@@ -454,9 +472,7 @@ export function cloneSVGForExportAsync(svg) {
     }
 
     // ─── PHASE 2: Clone ──────────────────────────────────────────────────
-    const { performance: perfCfg = {} } = state.config;
-    const criticalFileLimit = perfCfg.criticalFileLimit || 50_000_000;
-
+    // cloneSVG applies performance.criticalFileLimit as its size guard.
     // Security: per-element override > global config, gated by allowOverrides
     // (same resolution as the modal preset so both paths sanitize alike).
     const container = svg.closest?.(state.config.diagramSelector || ".diagram, .mermaid, .chart");
@@ -468,7 +484,6 @@ export function cloneSVGForExportAsync(svg) {
       securityMode: security.mode,
       allowRemoteResources: security.allowRemoteResources,
       skipIdFix: true,
-      maxChars: criticalFileLimit,
     });
 
     // Remove match-ids from ORIGINAL immediately (before any awaits)

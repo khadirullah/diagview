@@ -429,18 +429,33 @@ function localNameOf(node) {
  *
  * @param {string|Node} input - The SVG string or DOM Node to sanitize.
  * @param {'strict'|'permissive'|'off'} [mode='strict'] - Sanitization mode.
- * @param {number|object} [options=0] - Character limit (number) or options object.
- * @returns {string|Node} The sanitized string or Node.
+ * @param {number|object|null} [options=0] - Character limit (number) or options object.
+ * @returns {string|Node|null} The sanitized string or Node; "" (string input)
+ *   or null (Node input) when the input exceeds maxChars.
  */
 export function sanitizeSVG(input, mode = "strict", options = 0) {
-  const maxChars = typeof options === "number" ? options : options.maxChars || 0;
-  const allowRemote = typeof options === "object" ? options.allowRemoteResources : false;
+  // Accept a number, an options object, or null/undefined (treated as none).
+  if (typeof options !== "object" || options === null) {
+    options = { maxChars: typeof options === "number" ? options : 0 };
+  }
+  const maxChars = options.maxChars || 0;
+  const allowRemote = options.allowRemoteResources;
   if (!input) return typeof input === "string" ? "" : input;
 
-  // Hard Block for massive strings (Security/Stability)
-  if (maxChars > 0 && typeof input === "string" && input.length > maxChars) {
-    console.error(`DiagView: SVG exceeds safety limit of ${maxChars} chars. Processing blocked.`);
-    return "";
+  // Hard Block for massive input (Security/Stability). Node input is
+  // measured by its serialized length so the limit applies to both paths;
+  // the serialization only happens when a limit is set.
+  if (maxChars > 0) {
+    const isNode = typeof input !== "string" && input instanceof Node;
+    const size = isNode
+      ? (input.outerHTML || "").length
+      : typeof input === "string"
+        ? input.length
+        : 0;
+    if (size > maxChars) {
+      console.error(`DiagView: SVG exceeds safety limit of ${maxChars} chars. Processing blocked.`);
+      return isNode ? null : "";
+    }
   }
 
   // 'off' mode: bypass entirely — caller guarantees source is trusted
