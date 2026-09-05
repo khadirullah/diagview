@@ -128,6 +128,62 @@ describe("rememberZoom saves on panzoomchange and on close", () => {
 });
 
 // ---------------------------------------------------------------------------
+// 3. A close that lands while openFullscreen is awaiting must not leave a
+//    half-initialised session behind
+// ---------------------------------------------------------------------------
+describe("close during openFullscreen's awaits leaves no stale session", () => {
+  let instances;
+
+  beforeEach(() => {
+    resetConfig();
+    document.body.innerHTML = "";
+    sessionStorage.clear();
+    instances = installFakePanzoom();
+    updateConfig({ showFirstTimeThemeHint: false, animateOpen: false });
+    createModal();
+  });
+
+  afterEach(async () => {
+    if (state.isModalOpen) await closeModal();
+    await settle();
+    delete window.Panzoom;
+  });
+
+  test("open immediately followed by close in the same tick settles clean", async () => {
+    const calls = [];
+    updateConfig({
+      onOpen: () => calls.push("open"),
+      onClose: () => calls.push("close"),
+    });
+    const el = makeDiagram("d-race");
+
+    const opening = openFullscreen(el);
+    const closing = closeModal();
+    await Promise.all([opening, closing]);
+    await settle();
+
+    expect(state.isModalOpen).toBe(false);
+    expect(state.isModalOpening).toBe(false);
+    expect(state.isModalClosing).toBe(false);
+    expect(document.getElementById("diagview-temp-menu")).toBeNull();
+    expect(state.modalCleanupFunctions.size).toBe(0);
+    expect(state.activePanzoom).toBeNull();
+    // onOpen must never run after onClose
+    const closeIdx = calls.indexOf("close");
+    const openIdx = calls.lastIndexOf("open");
+    expect(closeIdx).toBeGreaterThanOrEqual(0);
+    expect(openIdx).toBeLessThan(closeIdx);
+
+    // ...and a later open must still work (isModalOpening was reset)
+    await openFullscreen(el);
+    await settle();
+    expect(state.isModalOpen).toBe(true);
+    expect(document.getElementById("diagview-temp-menu")).not.toBeNull();
+    expect(instances.length).toBe(2);
+  });
+});
+
+// ---------------------------------------------------------------------------
 // 1. Focus trap must only cycle through elements that are actually rendered
 // ---------------------------------------------------------------------------
 describe("focus trap ignores unrendered and closed-search controls", () => {

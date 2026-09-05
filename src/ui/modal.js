@@ -33,6 +33,24 @@ import { showInfoToast } from "./toast.js";
 const ZOOM_SAVE_DEBOUNCE = 150;
 
 /**
+ * Monotonic open-session token. openFullscreen captures it before its awaits
+ * and bails out afterwards if a close (or a newer open) happened meanwhile.
+ * @type {number}
+ */
+let _openSession = 0;
+
+/**
+ * Whether the open session identified by `token` is still the live one:
+ * no newer open has started and no close has begun in the meantime.
+ * @private
+ * @param {number} token
+ * @returns {boolean}
+ */
+function _isSessionLive(token) {
+  return token === _openSession && state.isModalOpen && !state.isModalClosing;
+}
+
+/**
  * Create modal structure
  */
 export function createModal() {
@@ -202,7 +220,7 @@ function _activateModalUI(modal) {
  * @private
  * @returns {Promise<{panzoom: any, diagramId: string}>} The initialized panzoom instance and diagram ID.
  */
-async function _initCoreInteractions(element, clone, viewport, options) {
+async function _initCoreInteractions(element, clone, viewport, options, session) {
   // Calculate diagram index for share links
   // MAJ-7: Use cached index to avoid expensive global DOM queries
   const diagramIndex = parseInt(element.dataset.diagviewIndex ?? "-1", 10);
@@ -231,7 +249,7 @@ async function _initCoreInteractions(element, clone, viewport, options) {
       ]);
 
       // Guard: If the user closed the modal while we were loading, bail out
-      if (!state.isModalOpen) return { panzoom, diagramId };
+      if (!_isSessionLive(session)) return { panzoom, diagramId };
 
       const pending = shareMod.getPendingShareState(element);
       const query = options.searchQuery ?? pending?.query ?? "";
@@ -258,13 +276,13 @@ async function _initCoreInteractions(element, clone, viewport, options) {
 
       // Task 48: Sync minimap after zoom restore to avoid visual lag
       const m = await import("../features/lazy/minimap.js");
-      if (state.isModalOpen) m.updateMinimap(clone, viewport, panzoom);
+      if (_isSessionLive(session)) m.updateMinimap(clone, viewport, panzoom);
     } catch (err) {
       console.warn("DiagView: Failed to load lazy features", err);
       // Fallback: at least try to setup search if one failed
       try {
         const m = await import("../features/lazy/search.js");
-        m.setupSearch(clone);
+        if (_isSessionLive(session)) m.setupSearch(clone);
       } catch (e) {
         // Silent fallback: Search failure is non-critical for core viewing
       }
@@ -403,6 +421,7 @@ export async function openFullscreen(element, options = {}) {
   if (!modal || !viewport) return;
 
   state.isModalOpening = true;
+  const session = ++_openSession;
 
   try {
     state.activeSourceElement = element;
@@ -418,7 +437,18 @@ export async function openFullscreen(element, options = {}) {
     centerSVGViewBox(clone);
 
     // Phase 3: Core Interactions
-    const { panzoom, diagramId } = await _initCoreInteractions(element, clone, viewport, options);
+    const { panzoom, diagramId } = await _initCoreInteractions(
+      element,
+      clone,
+      viewport,
+      options,
+      session,
+    );
+
+    // A close (or a newer open) may have started while we were awaiting:
+    // closeModal has already run the modal-scoped cleanups, so anything
+    // registered from here on would outlive the session. Bail out.
+    if (!_isSessionLive(session)) return;
 
     // Phase 4: Lifecycle
     _attachModalLifecycle(element, clone, viewport, panzoom, diagramId);
@@ -440,7 +470,8 @@ export async function openFullscreen(element, options = {}) {
       }
     }
   } finally {
-    state.isModalOpening = false;
+    // A newer open may already be in flight; only the live session owns the flag
+    if (session === _openSession) state.isModalOpening = false;
   }
 }
 /**
