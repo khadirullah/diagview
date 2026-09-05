@@ -129,18 +129,10 @@ function handleKeyboardShortcut(e) {
     if (e.key === "ArrowLeft") dx = state.config.naturalPanning ? -moveStep : moveStep;
     if (e.key === "ArrowRight") dx = state.config.naturalPanning ? moveStep : -moveStep;
 
-    // FIX: compensate for visual rotation so arrow direction matches screen direction
-    const angle = state.rotationAngle || 0;
-    if (angle !== 0) {
-      const rad = (angle * Math.PI) / 180;
-      const cos = Math.cos(rad);
-      const sin = Math.sin(rad);
-      // Inverse-rotate the delta: rotate by -angle
-      const ndx = dx * cos + dy * sin;
-      const ndy = -dx * sin + dy * cos;
-      dx = ndx;
-      dy = ndy;
-    }
+    // No rotation compensation: rotation is applied on an inner <g> inside the
+    // SVG (see rotate.js) while Panzoom transforms the outer element, so pan
+    // deltas are already in screen axes. Minimap and share-restore rely on the
+    // same fact; compensating here inverted the arrows at 90/180/270.
 
     state.activePanzoom.pan(dx, dy, {
       relative: true,

@@ -77,6 +77,22 @@ describe("Keyboard Shortcuts Integration", () => {
     expect(mockPanzoom.zoomIn).not.toHaveBeenCalled();
   });
 
+  test("Arrow keys pan in screen axes regardless of rotation", () => {
+    // Rotation lives on an inner <g> inside the SVG, so panzoom deltas are
+    // already screen-space. Any compensation here inverts the arrows.
+    for (const angle of [0, 90, 180, 270]) {
+      mockPanzoom.pan.mockClear();
+      state.rotationAngle = angle;
+      window.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowUp" }));
+      window.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowRight" }));
+      const [upDx, upDy] = mockPanzoom.pan.mock.calls[0];
+      const [rightDx, rightDy] = mockPanzoom.pan.mock.calls[1];
+      expect([upDx, upDy]).toEqual([0, 40]);
+      expect([rightDx, rightDy]).toEqual([-40, 0]);
+    }
+    state.rotationAngle = 0;
+  });
+
   test("Shift key uses faster panning steps", () => {
     // We can't easily check the internal moveStep value here,
     // but we verify the pan function is called regardless.
