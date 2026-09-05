@@ -560,10 +560,12 @@ export function fixIds(svg, uniqueId, changes = null) {
   // 2. Walk the DOM and update attribute references (url(#id), href, etc.)
   // Optimize: Only query elements that can actually contain ID references (href, fill, filters, etc.)
   // instead of every single node in the SVG tree.
+  // [style*='url'] covers inline style="fill:url(#id)" as written by Inkscape,
+  // Illustrator and hand-authored SVGs, where no fill/stroke attribute exists.
   const REF_SELECTOR =
     "use,image,pattern,linearGradient,radialGradient,filter,mask,clipPath," +
     "[fill*='url'],[stroke*='url'],[filter*='url'],[clip-path*='url'],[mask*='url']," +
-    "[marker-start*='url'],[marker-end*='url']";
+    "[marker-start*='url'],[marker-end*='url'],[marker-mid*='url'],[style*='url']";
 
   const allElements = svg.querySelectorAll(REF_SELECTOR);
   allElements.forEach((el) => {
@@ -575,10 +577,11 @@ export function fixIds(svg, uniqueId, changes = null) {
 
       let newValue = value;
 
-      // Case A: Functional notation like url(#id) or attr(#id)
+      // Case A: Functional notation like url(#id), including the quoted and
+      // padded forms url('#id') / url( "#id" ) that appear in style attributes.
       if (value.includes("url(")) {
-        newValue = newValue.replace(/url\(#([^)]+)\)/g, (match, id) => {
-          const trimmedId = id.trim().replace(/['"]/g, "");
+        newValue = newValue.replace(/url\(\s*(['"]?)#([^'")]+)\1\s*\)/g, (match, _q, id) => {
+          const trimmedId = id.trim();
           return idMap.has(trimmedId) ? `url(#${idMap.get(trimmedId)})` : match;
         });
       }
