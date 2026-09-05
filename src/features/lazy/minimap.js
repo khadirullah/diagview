@@ -7,9 +7,9 @@
 import { state } from "../../core/config.js";
 import { addModalListener } from "../../core/lifecycle.js";
 
-// Stores the cleanup fn for the minimap click handler so it can be
-// removed on modal close without duplicating handlers across frames
-let _minimapClickCleanup = null;
+// Stores the cleanup fn for the minimap click and window resize handlers so
+// they can be removed on modal close without duplicating handlers across frames
+let _minimapListenerCleanup = null;
 
 // Trailing timer that re-positions the viewport indicator after an animated
 // pan's CSS transition settles (a CTM read mid-transition is stale)
@@ -31,15 +31,91 @@ export function updateMinimap(clone, viewport, panzoom) {
   // baseVal (SVG intrinsic units) was compared against CSS pixels, causing
   // false-positive minimap visibility at high browser zoom levels.
   const svgRect = clone.getBoundingClientRect();
-  const viewportRect = viewport.getBoundingClientRect();
   const scale = panzoom.getScale();
 
   // Minimap needed when the scaled diagram exceeds the viewport.
   // Both values in same CSS pixel space — browser zoom has zero effect.
-  const needsMinimap =
-    svgRect.width > viewportRect.width * 1.05 || svgRect.height > viewportRect.height * 1.05;
+  const diagramExceedsViewport = () => {
+    const s = clone.getBoundingClientRect();
+    const v = viewport.getBoundingClientRect();
+    return s.width > v.width * 1.05 || s.height > v.height * 1.05;
+  };
+  const needsMinimap = diagramExceedsViewport();
 
   minimap.classList.toggle("show", needsMinimap);
+
+  // Attach click-to-navigate and resize handlers once per minimap lifetime (A7)
+  // Guard prevents duplicate listeners across updateMinimap calls
+  if (!_minimapListenerCleanup) {
+    const handleMinimapClick = (e) => {
+      if (!panzoom || !state.minimapSvg) return;
+
+      // Map the click through the minimap SVG's own CTM to get exact viewBox
+      // coordinates — this accounts for the snapshot's letterboxing inside
+      // the minimap box and any CSS rotation, which rectangle arithmetic
+      // (offset + width ratios) gets wrong.
+      const mmCtm = state.minimapSvg.getScreenCTM();
+      if (!mmCtm) return;
+      const clickPt = state.minimapSvg.createSVGPoint();
+      clickPt.x = e.clientX;
+      clickPt.y = e.clientY;
+      const target = clickPt.matrixTransform(mmCtm.inverse());
+      const svgX = target.x;
+      const svgY = target.y;
+
+      const curScale = panzoom.getScale();
+
+      // Pan so the clicked SVG point is centered in the viewport.
+      // The snapshot's coordinates are the ORIGINAL (unrotated) diagram's:
+      // rotation lives on an inner <g class="dv-rot-g"> (see rotate.js), so
+      // the point's on-screen position must be read through that group's CTM,
+      // which includes the rotation — the SVG root's CTM does not.
+      const contentRoot = clone.querySelector(".dv-rot-g") || clone;
+      const ctm = contentRoot.getScreenCTM();
+      if (!ctm) return;
+      const pt = clone.createSVGPoint();
+      pt.x = svgX;
+      pt.y = svgY;
+      const screenPt = pt.matrixTransform(ctm);
+
+      const vpRect = viewport.getBoundingClientRect();
+      const screenDX = screenPt.x - (vpRect.left + vpRect.width / 2);
+      const screenDY = screenPt.y - (vpRect.top + vpRect.height / 2);
+
+      // No rotation compensation: rotation is applied INSIDE the SVG (after
+      // panzoom's scale/translate in the transform chain), so pan always
+      // responds in screen axes — verified empirically at 0/90/180/270.
+      panzoom.pan(-screenDX / curScale, -screenDY / curScale, { animate: true, relative: true });
+    };
+
+    // Window resizes under modal.js's 20% threshold do not reset panzoom, so
+    // no panzoomchange fires — re-evaluate visibility and the indicator here.
+    let resizeFrame = null;
+    const handleResize = () => {
+      if (resizeFrame) return;
+      resizeFrame = requestAnimationFrame(() => {
+        resizeFrame = null;
+        if (state.isModalOpen) updateMinimap(clone, viewport, panzoom);
+      });
+    };
+
+    // MAJ-6: Use a self-resetting cleanup wrapper. This ensures the module-level
+    // variable is nulled out even if the cleanup is triggered externally by
+    // runModalCleanupFunctions during modal closure.
+    const cleanupClick = addModalListener(minimap, "click", handleMinimapClick);
+    const cleanupResize = addModalListener(window, "resize", handleResize);
+    _minimapListenerCleanup = () => {
+      if (typeof cleanupClick === "function") cleanupClick();
+      if (typeof cleanupResize === "function") cleanupResize();
+      if (resizeFrame) cancelAnimationFrame(resizeFrame);
+      resizeFrame = null;
+      _minimapListenerCleanup = null;
+    };
+
+    // Make minimap visually indicate it's clickable
+    minimap.style.cursor = "crosshair";
+  }
+
   if (!needsMinimap) return;
 
   // Get intrinsic SVG dimensions for minimap scale calculation.
@@ -94,7 +170,8 @@ export function updateMinimap(clone, viewport, panzoom) {
 
     state.minimapSvg.appendChild(imgEl);
 
-    state.minimapSvg.style.cssText = `max-width:100%; max-height:100%; width:auto; height:auto; display:block; object-fit:contain; transform:rotate(${state.rotationAngle}deg);`;
+    state.minimapSvg.style.cssText =
+      "max-width:100%; max-height:100%; width:auto; height:auto; display:block;";
 
     // Use the ORIGINAL SVG's viewBox: the snapshot is of the unrotated page
     // SVG, while the live clone's viewBox may already be rewritten to rotated
@@ -118,66 +195,25 @@ export function updateMinimap(clone, viewport, panzoom) {
     minimap.insertBefore(state.minimapSvg, mmIndicator);
   }
 
-  // Attach click-to-navigate handler once per minimap lifetime (A7)
-  // Guard prevents duplicate listeners across updateMinimap calls
-  if (!_minimapClickCleanup) {
-    const handleMinimapClick = (e) => {
-      if (!panzoom || !state.minimapSvg) return;
-
-      // Map the click through the minimap SVG's own CTM to get exact viewBox
-      // coordinates — this accounts for the snapshot's letterboxing inside
-      // the minimap box and any CSS rotation, which rectangle arithmetic
-      // (offset + width ratios) gets wrong.
-      const mmCtm = state.minimapSvg.getScreenCTM();
-      if (!mmCtm) return;
-      const clickPt = state.minimapSvg.createSVGPoint();
-      clickPt.x = e.clientX;
-      clickPt.y = e.clientY;
-      const target = clickPt.matrixTransform(mmCtm.inverse());
-      const svgX = target.x;
-      const svgY = target.y;
-
-      const curScale = panzoom.getScale();
-
-      // Pan so the clicked SVG point is centered in the viewport.
-      // The snapshot's coordinates are the ORIGINAL (unrotated) diagram's:
-      // rotation lives on an inner <g class="dv-rot-g"> (see rotate.js), so
-      // the point's on-screen position must be read through that group's CTM,
-      // which includes the rotation — the SVG root's CTM does not.
-      const contentRoot = clone.querySelector(".dv-rot-g") || clone;
-      const ctm = contentRoot.getScreenCTM();
-      if (!ctm) return;
-      const pt = clone.createSVGPoint();
-      pt.x = svgX;
-      pt.y = svgY;
-      const screenPt = pt.matrixTransform(ctm);
-
-      const vpRect = viewport.getBoundingClientRect();
-      const screenDX = screenPt.x - (vpRect.left + vpRect.width / 2);
-      const screenDY = screenPt.y - (vpRect.top + vpRect.height / 2);
-
-      // No rotation compensation: rotation is applied INSIDE the SVG (after
-      // panzoom's scale/translate in the transform chain), so pan always
-      // responds in screen axes — verified empirically at 0/90/180/270.
-      panzoom.pan(-screenDX / curScale, -screenDY / curScale, { animate: true, relative: true });
-    };
-
-    // MAJ-6: Use a self-resetting cleanup wrapper. This ensures the module-level
-    // variable is nulled out even if the cleanup is triggered externally by
-    // runModalCleanupFunctions during modal closure.
-    const cleanup = addModalListener(minimap, "click", handleMinimapClick);
-    _minimapClickCleanup = () => {
-      if (typeof cleanup === "function") cleanup();
-      _minimapClickCleanup = null;
-    };
-
-    // Make minimap visually indicate it's clickable
-    minimap.style.cursor = "crosshair";
+  // Fit the thumbnail so its ROTATED bounding box fits the minimap box. The
+  // CSS rotation turns about the thumbnail's centre, so at 90°/270° the width
+  // is limited by the box height and vice versa — a landscape thumbnail fitted
+  // to the unrotated box would overflow and be clipped by overflow:hidden.
+  const mmVbFit = state.minimapSvg.viewBox?.baseVal;
+  const mmRect = minimap.getBoundingClientRect();
+  const boxW = minimap.clientWidth || mmRect.width;
+  const boxH = minimap.clientHeight || mmRect.height;
+  if (mmVbFit?.width && mmVbFit?.height && boxW && boxH) {
+    const sideways = state.rotationAngle % 180 !== 0;
+    const limitW = sideways ? boxH : boxW;
+    const limitH = sideways ? boxW : boxH;
+    const fit = Math.min(limitW / mmVbFit.width, limitH / mmVbFit.height);
+    state.minimapSvg.style.width = `${mmVbFit.width * fit}px`;
+    state.minimapSvg.style.height = `${mmVbFit.height * fit}px`;
   }
-
-  // Update minimap rotation if it changed
-  if (state.minimapSvg.style.transform !== `rotate(${state.rotationAngle}deg)`) {
-    state.minimapSvg.style.transform = `rotate(${state.rotationAngle}deg)`;
+  const rotation = `rotate(${state.rotationAngle}deg)`;
+  if (state.minimapSvg.style.transform !== rotation) {
+    state.minimapSvg.style.transform = rotation;
   }
 
   // Position the viewport indicator by mapping the visible screen rect into
@@ -248,14 +284,18 @@ export function updateMinimap(clone, viewport, panzoom) {
   };
 
   positionIndicator();
-  // Animated pans (minimap clicks, double-tap reset) change the transform via
-  // a CSS transition, but only fire one panzoomchange at call time — a CTM
-  // read then captures a mid-flight position. Re-position once after the
-  // longest animation (~300ms) settles.
+  // Animated pans (minimap clicks, double-tap reset, rotate's reset) change
+  // the transform via a CSS transition, but only fire one panzoomchange at
+  // call time — a rect/CTM read then captures a mid-flight position. Once the
+  // longest animation (~300ms) settles, re-check whether the minimap is still
+  // needed (a rotate resets to 1x, where it must hide) and re-position.
   if (_indicatorSettleTimer) clearTimeout(_indicatorSettleTimer);
   _indicatorSettleTimer = setTimeout(() => {
     _indicatorSettleTimer = null;
-    if (state.isModalOpen) positionIndicator();
+    if (!state.isModalOpen) return;
+    const stillNeeded = diagramExceedsViewport();
+    minimap.classList.toggle("show", stillNeeded);
+    if (stillNeeded) positionIndicator();
   }, 350);
 }
 
@@ -279,8 +319,8 @@ export function hideMinimap() {
  */
 export function cleanupMinimap() {
   hideMinimap();
-  // Clear click handler reference so next modal open re-attaches fresh
-  _minimapClickCleanup = null;
+  // Remove click/resize handlers so next modal open re-attaches fresh
+  if (_minimapListenerCleanup) _minimapListenerCleanup();
   if (_indicatorSettleTimer) {
     clearTimeout(_indicatorSettleTimer);
     _indicatorSettleTimer = null;

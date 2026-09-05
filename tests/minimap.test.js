@@ -335,4 +335,78 @@ describe("Minimap geometry (viewBox origin, rotation fit, resize)", () => {
     expect(box.width).toBeCloseTo(90, 6);
     expect(box.height).toBeCloseTo(50, 6);
   });
+
+  test("rotated thumbnail is re-fitted so the indicator stays inside the box", () => {
+    state.rotationAngle = 90;
+    // Clone at scale 2 rotated 90° about the viewBox centre (325,240): the
+    // rotated diagram is 1000x1500 on screen, centred in the 1000x600 viewport.
+    const ctm = translate(500, 300)
+      .multiply(scaleM(2))
+      .multiply(rotateM(90))
+      .multiply(translate(-325, -240));
+    const { clone, viewport } = makeScene({ ctm, cloneRect: rect(0, -450, 1000, 1500) });
+    updateMinimap(clone, viewport, panzoom);
+
+    // The 750x500 thumbnail rotated by 90° must fit the 160x100 box: its
+    // unrotated height is limited by the box width and vice versa.
+    const thumb = state.minimapSvg.style;
+    expect(parseFloat(thumb.width)).toBeLessThanOrEqual(100);
+    expect(parseFloat(thumb.height)).toBeLessThanOrEqual(160);
+
+    const box = indicatorBox();
+    expect(box.width).toBeGreaterThan(0);
+    expect(box.height).toBeGreaterThan(0);
+    expect(box.left).toBeGreaterThanOrEqual(-1e-6);
+    expect(box.top).toBeGreaterThanOrEqual(-1e-6);
+    expect(box.left + box.width).toBeLessThanOrEqual(160 + 1e-6);
+    expect(box.top + box.height).toBeLessThanOrEqual(100 + 1e-6);
+  });
+
+  test("settle timer hides the minimap once an animated reset lands at 1x", () => {
+    jest.useFakeTimers();
+    try {
+      let cloneRect = rect(100, 100, 1500, 1000);
+      const { clone, viewport } = makeScene();
+      clone.getBoundingClientRect = () => cloneRect;
+      updateMinimap(clone, viewport, panzoom);
+      expect(minimap.classList.contains("show")).toBe(true);
+
+      // rotate.js resets panzoom with an animation: at t=0 the clone is still
+      // zoomed, once the transition settles the diagram fits the viewport
+      cloneRect = rect(0, 0, 1000, 600);
+      jest.advanceTimersByTime(400);
+      expect(minimap.classList.contains("show")).toBe(false);
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  test("window resize re-evaluates the minimap until cleanup", () => {
+    jest.useFakeTimers();
+    try {
+      let cloneRect = rect(100, 100, 1500, 1000);
+      const { clone, viewport } = makeScene();
+      clone.getBoundingClientRect = () => cloneRect;
+      updateMinimap(clone, viewport, panzoom);
+      jest.advanceTimersByTime(400);
+      expect(minimap.classList.contains("show")).toBe(true);
+
+      cloneRect = rect(0, 0, 1000, 600);
+      window.dispatchEvent(new Event("resize"));
+      jest.advanceTimersByTime(100);
+      expect(minimap.classList.contains("show")).toBe(false);
+
+      cloneRect = rect(100, 100, 1500, 1000);
+      window.dispatchEvent(new Event("resize"));
+      jest.advanceTimersByTime(100);
+      expect(minimap.classList.contains("show")).toBe(true);
+
+      cleanupMinimap();
+      window.dispatchEvent(new Event("resize"));
+      jest.advanceTimersByTime(100);
+      expect(minimap.classList.contains("show")).toBe(false);
+    } finally {
+      jest.useRealTimers();
+    }
+  });
 });
