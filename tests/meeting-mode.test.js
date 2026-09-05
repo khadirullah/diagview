@@ -35,20 +35,45 @@ describe("Meeting Mode", () => {
     expect(showSuccessToast).toHaveBeenCalledWith(expect.stringContaining("Laser pointer active"));
   });
 
-  test("mouse movement updates laser position", () => {
+  test("mouse movement centres the laser on the cursor", () => {
     enableMeetingMode();
-    const event = new MouseEvent("mousemove", { clientX: 100, clientY: 200, bubbles: true });
+    const event = new MouseEvent("mousemove", { clientX: 500, clientY: 400, bubbles: true });
     viewport.dispatchEvent(event);
-    expect(laser.style.transform).toBe("translate3d(100px, 200px, 0)");
+    // The stylesheet centres the 28px dot with translate(-50%, -50%); the
+    // inline transform must keep that or the dot's top-left lands on the cursor
+    expect(laser.style.transform).toBe("translate3d(500px, 400px, 0) translate(-50%, -50%)");
   });
 
-  test("touch movement updates laser position", () => {
+  test("touch movement centres the laser on the touch point", () => {
     enableMeetingMode();
     // JSDOM might need specific TouchEvent constructor support
     const event = new CustomEvent("touchmove", { bubbles: true });
     event.touches = [{ clientX: 150, clientY: 250 }];
     viewport.dispatchEvent(event);
-    expect(laser.style.transform).toBe("translate3d(150px, 250px, 0)");
+    expect(laser.style.transform).toBe("translate3d(150px, 250px, 0) translate(-50%, -50%)");
+  });
+
+  test("laser position ignores visualViewport.scale (modal is not counter-scaled)", () => {
+    const original = Object.getOwnPropertyDescriptor(window, "visualViewport");
+    Object.defineProperty(window, "visualViewport", {
+      configurable: true,
+      value: { scale: 2, offsetLeft: 0, offsetTop: 0 },
+    });
+    try {
+      enableMeetingMode();
+      viewport.dispatchEvent(
+        new MouseEvent("mousemove", { clientX: 500, clientY: 400, bubbles: true }),
+      );
+      expect(laser.style.transform).toBe("translate3d(500px, 400px, 0) translate(-50%, -50%)");
+    } finally {
+      if (original) Object.defineProperty(window, "visualViewport", original);
+      else delete window.visualViewport;
+    }
+  });
+
+  test("does not write the unused state.laserPointer", () => {
+    enableMeetingMode();
+    expect(state.laserPointer).toBeNull();
   });
 
   test("touch movement does nothing if touches array is empty", () => {

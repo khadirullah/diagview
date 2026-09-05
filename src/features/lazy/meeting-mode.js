@@ -25,26 +25,25 @@ export function enableMeetingMode() {
   viewport.classList.add("meeting");
   laser.style.display = "block";
 
+  // The laser is position:fixed, so clientX/Y already are its coordinates
+  // (the modal is no longer counter-scaled under pinch zoom, so
+  // visualViewport.scale must NOT be applied). Keep the stylesheet's
+  // translate(-50%, -50%) so the dot is centred on the cursor rather than
+  // hanging off its top-left corner.
+  const moveLaser = (x, y) => {
+    // OPT-5: Use transform instead of top/left to avoid layout thrashing
+    laser.style.transform = `translate3d(${x}px, ${y}px, 0) translate(-50%, -50%)`;
+  };
+
   // Track mouse movement for laser pointer
   const handleMouseMove = (e) => {
-    // SEC-7: We must multiply by visualViewport.scale because the modal
-    // is counter-scaled by (1 / scale). This ensures the laser pointer
-    // matches the actual screen position even when background is zoomed.
-    const scale = window.visualViewport ? window.visualViewport.scale : 1;
-    const x = e.clientX * scale;
-    const y = e.clientY * scale;
-
-    // OPT-5: Use transform instead of top/left to avoid layout thrashing
-    laser.style.transform = `translate3d(${x}px, ${y}px, 0)`;
+    moveLaser(e.clientX, e.clientY);
   };
 
   // Track touch movement for mobile support
   const handleTouchMove = (e) => {
     if (e.touches && e.touches[0]) {
-      const scale = window.visualViewport ? window.visualViewport.scale : 1;
-      const x = e.touches[0].clientX * scale;
-      const y = e.touches[0].clientY * scale;
-      laser.style.transform = `translate3d(${x}px, ${y}px, 0)`;
+      moveLaser(e.touches[0].clientX, e.touches[0].clientY);
     }
   };
 
@@ -65,7 +64,6 @@ export function enableMeetingMode() {
     });
   }
 
-  state.laserPointer = handleMouseMove;
   showSuccessToast("Meeting mode ON - Laser pointer active");
 }
 
@@ -87,7 +85,6 @@ export function disableMeetingMode(silent = false) {
   }
 
   state.meetingMode = false;
-  state.laserPointer = null;
 
   if (viewport) viewport.classList.remove("meeting");
   if (laser) laser.style.display = "none";
