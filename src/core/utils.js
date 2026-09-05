@@ -355,6 +355,20 @@ function stripCSSComments(str) {
 const REMOTE_RESOURCE_RE = /(?:@import\s+|url\s*\(\s*['"]?(?:https?:|\/\/))/i;
 
 /**
+ * Lower-cased local name of an element or attribute with any namespace
+ * prefix removed. DOMParser exposes the prefix separately (localName is
+ * already bare); the HTML parser keeps "svg:script" as the localName, so
+ * strip up to the last colon in both cases.
+ * @param {Element|Attr} node - Element or attribute node
+ * @returns {string} Bare lower-case name
+ * @private
+ */
+function localNameOf(node) {
+  const raw = node.localName || node.name || node.tagName || "";
+  return raw.slice(raw.lastIndexOf(":") + 1).toLowerCase();
+}
+
+/**
  * Sanitize an SVG string or DOM Node to prevent XSS.
  *
  * Uses a secure DOM-walking approach (DOMParser + attribute walker) rather
@@ -413,7 +427,10 @@ export function sanitizeSVG(input, mode = "strict", options = 0) {
   const cleanElement = (el) => {
     if (el.nodeType !== 1) return;
 
-    const tagName = el.tagName.toLowerCase();
+    // Compare the local name so prefixed forms (<svg:script>, <h:iframe>)
+    // are treated like their unprefixed counterparts. The HTML parser keeps
+    // the prefix inside localName, so strip anything before the last colon.
+    const tagName = localNameOf(el);
 
     // Remove blocked tags entirely — no further processing needed
     if (blockedTags.has(tagName)) {
@@ -436,7 +453,8 @@ export function sanitizeSVG(input, mode = "strict", options = 0) {
     // indices when attributes are removed, causing items to be skipped.
     const attrs = Array.from(el.attributes);
     for (const attr of attrs) {
-      const name = attr.name.toLowerCase();
+      // Local name again: xl:href bound to the XLink namespace, svg:onclick
+      const name = localNameOf(attr);
       const value = attr.value;
 
       // Remove all event handler attributes (onclick, onload, onerror, etc.)
