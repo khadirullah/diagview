@@ -11,6 +11,7 @@ jest.unstable_mockModule("../src/features/diagram-init.js", () => ({
     el.dataset.diagviewInit = "true";
   }),
   deinitializeDiagram: jest.fn(),
+  recoverErrorDiagram: jest.fn(() => false),
 }));
 
 jest.unstable_mockModule("../src/ui/modal.js", () => ({

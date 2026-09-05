@@ -29,6 +29,7 @@ function createInitialState() {
     modalCleanupFunctions: new Set(),
     hasCheckedShareLink: false,
     isInitialProcessDone: false,
+    shadowRoots: new Set(),
 
     // Navigation and Zoom state
     rotationAngle: 0,
@@ -276,6 +277,7 @@ export { DEFAULT_CONFIG, INITIAL_CONFIG };
  * @property {Set<Function>} modalCleanupFunctions - Modal-scoped cleanup functions
  * @property {boolean} hasCheckedShareLink - Share link check flag
  * @property {boolean} isInitialProcessDone - Initial scan completed flag
+ * @property {Set<ShadowRoot>} shadowRoots - Shadow roots passed to initShadowRoot()
  * @property {{isPinching:boolean,lastTouchCount:number,initialDistance:number}} touchState - Touch gesture state
  * @property {Element|null} lastActiveElement - Element focused before modal opened
  * @property {boolean} meetingMode - Whether laser pointer is active

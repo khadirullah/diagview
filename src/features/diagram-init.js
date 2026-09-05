@@ -16,6 +16,11 @@ import { createButtonGroup } from "../ui/button-factory.js";
 // Map to store per-diagram cleanup functions (for SPA-safe teardown)
 const cleanupMap = new WeakMap();
 
+// Every element initializeDiagram() has touched and not yet released, so that
+// destroy() can restore all of them (including layout "off", error-boundary
+// and shadow-root diagrams that have no wrapper to find them by).
+const trackedElements = new Set();
+
 /**
  * Check if SVG is valid and renderable
  */
@@ -80,6 +85,7 @@ function isValidSvg(svg) {
 
 /**
  * Show error boundary UI for broken diagrams
+ * @returns {HTMLElement} The error UI element that was appended
  */
 function showErrorBoundary(element, svg) {
   // Mark as error state
@@ -142,6 +148,8 @@ function showErrorBoundary(element, svg) {
       console.error("DiagView: onError callback threw:", e);
     }
   }
+
+  return errorDiv;
 }
 
 /**
@@ -278,6 +286,24 @@ export function initializeDiagram(element, precalculatedIndex = -1) {
 
   element.dataset.diagviewInit = "1";
 
+  // Record everything we are about to change on the element and its SVG so
+  // deinitializeDiagram() can put it all back exactly as it was.
+  const record = {
+    fn: null,
+    wrapper: null,
+    errorDiv: null,
+    svg,
+    hadAccent: !!element.dataset.diagviewAccent,
+    prev: {
+      cursor: element.style.cursor,
+      display: svg ? svg.style.display : "",
+      transition: svg ? svg.style.transition : "",
+      color: svg ? svg.style.color : "",
+    },
+  };
+  cleanupMap.set(element, record);
+  trackedElements.add(element);
+
   // Resolve config for this element: global config + any data-diagview-* overrides (A1)
   const elementConfig = readElementOverrides(element);
 
@@ -289,7 +315,7 @@ export function initializeDiagram(element, precalculatedIndex = -1) {
 
   // Error boundary: Check for valid SVG
   if (!svg || !isValidSvg(svg)) {
-    showErrorBoundary(element, svg);
+    record.errorDiv = showErrorBoundary(element, svg);
     return;
   }
 
@@ -319,11 +345,8 @@ export function initializeDiagram(element, precalculatedIndex = -1) {
     const openHandler = () => openFullscreen(element);
     element.addEventListener("click", openHandler);
 
-    // Store cleanup for this specific element
-    cleanupMap.set(element, {
-      fn: () => element.removeEventListener("click", openHandler),
-      wrapper: null, // No wrapper used in 'off' layout
-    });
+    // Store cleanup for this specific element (no wrapper in 'off' layout)
+    record.fn = () => element.removeEventListener("click", openHandler);
 
     // Apply minimal SVG styling
     if (svg) {
@@ -414,10 +437,8 @@ export function initializeDiagram(element, precalculatedIndex = -1) {
   viewport.addEventListener("click", viewportHandler);
 
   // Store cleanup function and wrapper reference for this specific element
-  cleanupMap.set(element, {
-    fn: () => viewport.removeEventListener("click", viewportHandler),
-    wrapper: wrapper,
-  });
+  record.fn = () => viewport.removeEventListener("click", viewportHandler);
+  record.wrapper = wrapper;
 
   // Apply SVG theme
   if (svg) {
@@ -428,7 +449,8 @@ export function initializeDiagram(element, precalculatedIndex = -1) {
 }
 
 /**
- * Remove diagram enhancements
+ * Remove diagram enhancements, returning the element (and its SVG) to the
+ * exact state it was in before initializeDiagram() ran.
  */
 export function deinitializeDiagram(element) {
   if (!element?.dataset.diagviewInit) return;
@@ -436,7 +458,7 @@ export function deinitializeDiagram(element) {
   // Run per-element cleanup
   const data = cleanupMap.get(element);
   if (data) {
-    const { fn, wrapper } = data;
+    const { fn, wrapper, errorDiv, svg, hadAccent, prev } = data;
 
     // Always use the stored wrapper reference (bulletproof against DOM moves)
     if (wrapper && wrapper.parentNode) {
@@ -445,9 +467,53 @@ export function deinitializeDiagram(element) {
     }
 
     if (fn) fn();
+    if (errorDiv) errorDiv.remove();
+
+    if (svg) {
+      svg.classList.remove("dv-svg-content");
+      svg.style.display = prev.display;
+      svg.style.transition = prev.transition;
+      svg.style.color = prev.color;
+    }
+
+    element.style.cursor = prev.cursor;
+    if (hadAccent) element.style.removeProperty("--dv-accent");
+
     cleanupMap.delete(element);
   }
 
+  trackedElements.delete(element);
+
   delete element.dataset.diagviewInit;
   delete element.dataset.diagviewId;
+  delete element.dataset.diagviewIndex;
+  delete element.dataset.diagviewError;
+}
+
+/**
+ * Release every diagram initializeDiagram() has touched (used by destroy()).
+ */
+export function deinitializeAllDiagrams() {
+  Array.from(trackedElements).forEach((element) => deinitializeDiagram(element));
+  trackedElements.clear();
+}
+
+/**
+ * Give an error-boundary diagram another chance: if its SVG has been replaced
+ * with a valid one since, drop the error UI and the init flag so the normal
+ * initialization path can pick it up again.
+ * @param {HTMLElement} element - Diagram container marked data-diagview-error
+ * @returns {boolean} True if the element was released for re-initialization
+ */
+export function recoverErrorDiagram(element) {
+  if (!element?.dataset.diagviewError) return false;
+
+  // Skip the icon inside our own error UI
+  const svg = Array.from(element.querySelectorAll("svg")).find(
+    (candidate) => !candidate.closest(".diagview-error"),
+  );
+  if (!svg || !isValidSvg(svg)) return false;
+
+  deinitializeDiagram(element);
+  return true;
 }

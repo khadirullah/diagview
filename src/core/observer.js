@@ -7,7 +7,7 @@
 import { state } from "./config.js";
 import { TIMING } from "./constants.js";
 import { debounce, safeQuerySelectorAll, stripDiagViewParams } from "./utils.js";
-import { initializeDiagram } from "../features/diagram-init.js";
+import { initializeDiagram, recoverErrorDiagram } from "../features/diagram-init.js";
 import { createModal, openFullscreen } from "../ui/modal.js";
 import { restoreViewFromURL } from "../features/lazy/share.js";
 
@@ -113,6 +113,11 @@ export function processDiagrams(root = document) {
   const indexMap = new Map(allDiagrams.map((d, i) => [d, i]));
 
   diagrams.forEach((diagram) => {
+    // A diagram that hit the error boundary keeps its init flag; if its SVG
+    // has since been replaced with a valid one, release it so it can be
+    // initialized like a new diagram (refresh() after replacing the SVG).
+    if (diagram.dataset.diagviewError) recoverErrorDiagram(diagram);
+
     // Check if diagram is ready (has SVG) and not already initialized
     const hasSvg = diagram.querySelector("svg");
     const isInitialized = diagram.dataset.diagviewInit;

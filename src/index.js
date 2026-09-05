@@ -47,7 +47,7 @@ import {
   exportToPDF,
   copyToClipboard,
 } from "./features/export.js";
-import { deinitializeDiagram } from "./features/diagram-init.js";
+import { deinitializeAllDiagrams } from "./features/diagram-init.js";
 import { cleanupKeyboardHelp } from "./ui/keyboard-help.js";
 import { resetFocusManagement } from "./ui/focus-manager.js";
 import { clearAllZoomStates } from "./features/panzoom-integration.js";
@@ -184,10 +184,14 @@ async function _teardown() {
     console.error("DiagView: Error during async cleanup:", e);
   }
 
-  // Clean up diagram wrappers
-  document.querySelectorAll(".diagview-wrapper").forEach((wrapper) => {
-    const diagram = wrapper.querySelector(state.config.diagramSelector);
-    if (diagram) deinitializeDiagram(diagram);
+  // Restore every diagram we touched (wrapped, layout "off", error-boundary
+  // and shadow-root ones alike), then drop the index the observer stamps on
+  // diagrams that were only queued for lazy initialization.
+  deinitializeAllDiagrams();
+  [document, ...state.shadowRoots].forEach((root) => {
+    root.querySelectorAll("[data-diagview-index]").forEach((el) => {
+      delete el.dataset.diagviewIndex;
+    });
   });
 
   // Remove DOM elements
@@ -245,6 +249,7 @@ function initShadowRoot(shadowRoot) {
     return;
   }
 
+  state.shadowRoots.add(shadowRoot);
   processDiagrams(shadowRoot);
 }
 

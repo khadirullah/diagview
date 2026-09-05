@@ -604,6 +604,8 @@ DiagView.refresh();
 
 > **Note:** DiagView also uses a `MutationObserver` to detect and initialize newly added diagrams automatically (with a 100 ms debounce). You only need `refresh()` if you want immediate initialization.
 
+`refresh()` also re-checks diagrams that hit the error boundary ("Diagram Error" placeholder). Replace the broken SVG with a valid one and call `refresh()`; the placeholder is removed and the diagram is initialized normally.
+
 ### Teardown and reinitialize
 
 ```javascript
@@ -612,6 +614,8 @@ await DiagView.destroy();
 // Configure differently and reinitialize
 DiagView.init({ layout: "header", accentColor: "#ff6b6b" });
 ```
+
+`destroy()` returns every diagram to its pre-init state: wrappers and toolbars are removed, the `data-diagview-*` attributes, the `dv-svg-content` class, inline styles, click handlers, error placeholders and the `--dv-*` variables on `<html>` are all cleared, in every layout and in shadow roots as well. The next `init()` therefore applies its own options to all diagrams again.
 
 ---
 

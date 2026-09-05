@@ -499,5 +499,11 @@ export function teardownThemeWatchers() {
     state.colorParserEl = null;
   }
 
+  // Remove the CSS variables syncTheme() put on <html>
+  const root = document.documentElement;
+  root.style.removeProperty("--dv-bg");
+  root.style.removeProperty("--dv-text-color");
+  root.style.removeProperty("--dv-accent");
+
   clearThemeCache();
 }
