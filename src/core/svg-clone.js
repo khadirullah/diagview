@@ -457,11 +457,16 @@ export function cloneSVGForExportAsync(svg) {
     const { performance: perfCfg = {} } = state.config;
     const criticalFileLimit = perfCfg.criticalFileLimit || 50_000_000;
 
+    // Security: per-element override > global config, gated by allowOverrides
+    // (same resolution as the modal preset so both paths sanitize alike).
+    const container = svg.closest?.(state.config.diagramSelector || ".diagram, .mermaid, .chart");
+    const security = resolveElementSecurity(container);
     const clone = cloneSVG(svg, {
       preserveText: true,
       preserveStyles: false,
       preserveStyleElements: true,
-      securityMode: state.config.security?.mode || "strict",
+      securityMode: security.mode,
+      allowRemoteResources: security.allowRemoteResources,
       skipIdFix: true,
       maxChars: criticalFileLimit,
     });

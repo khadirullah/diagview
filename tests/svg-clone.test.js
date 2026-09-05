@@ -7,6 +7,61 @@ import {
 } from "../src/core/svg-clone.js";
 import { state, resetConfig, updateConfig } from "../src/core/config.js";
 
+describe("per-element security overrides in clone presets", () => {
+  const ns = "http://www.w3.org/2000/svg";
+  let dirty;
+
+  beforeEach(() => {
+    const container = document.createElement("div");
+    container.className = "diagram";
+    container.dataset.diagviewSanitize = "permissive";
+    container.dataset.diagviewAllowRemote = "true";
+
+    dirty = document.createElementNS(ns, "svg");
+    dirty.setAttribute("viewBox", "0 0 10 10");
+    const style = document.createElementNS(ns, "style");
+    style.textContent = "@import url(https://fonts.googleapis.com/css?family=Inter);";
+    dirty.appendChild(style);
+    const animate = document.createElementNS(ns, "animate");
+    animate.setAttribute("attributeName", "x");
+    animate.setAttribute("values", "0;1");
+    dirty.appendChild(animate);
+
+    container.appendChild(dirty);
+    document.body.appendChild(container);
+  });
+
+  afterEach(() => {
+    resetConfig();
+    document.body.innerHTML = "";
+  });
+
+  const hasRemoteImport = (clone) =>
+    Array.from(clone.querySelectorAll("style")).some((s) => s.textContent.includes("@import"));
+
+  test("export clone honours data-diagview-sanitize and data-diagview-allow-remote like the modal clone", async () => {
+    const modal = cloneSVGForModal(dirty);
+    expect(modal.querySelector("animate")).not.toBeNull();
+    expect(hasRemoteImport(modal)).toBe(true);
+
+    const exported = await cloneSVGForExportAsync(dirty);
+    expect(exported.querySelector("animate")).not.toBeNull();
+    expect(hasRemoteImport(exported)).toBe(true);
+  });
+
+  test("security.allowOverrides:false ignores per-element overrides in both paths", async () => {
+    updateConfig({ security: { allowOverrides: false } });
+
+    const modal = cloneSVGForModal(dirty);
+    expect(modal.querySelector("animate")).toBeNull();
+    expect(hasRemoteImport(modal)).toBe(false);
+
+    const exported = await cloneSVGForExportAsync(dirty);
+    expect(exported.querySelector("animate")).toBeNull();
+    expect(hasRemoteImport(exported)).toBe(false);
+  });
+});
+
 describe("SVG Cloning Utilities", () => {
   let svg;
 
