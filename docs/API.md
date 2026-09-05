@@ -332,11 +332,9 @@ interface DiagViewConfig {
   showKeyboardHelp: boolean; // default: true
   helpTimeout: number; // default: 8000 (ms); 0 = never
   animateOpen: boolean; // default: true
-  printFriendly: boolean; // default: true
 
   // Interaction
   naturalPanning: boolean; // default: false
-  immersiveMode: boolean; // default: false
   rememberZoom: boolean; // default: false
   showMinimap: boolean; // default: true
 
@@ -358,7 +356,6 @@ interface DiagViewConfig {
     allowRemoteResources: boolean; // default: false
   };
   allowedImageTypes: string[]; // default: ['png', 'jpeg', 'webp', 'gif']
-  sanitize: "auto" | "strict" | "off"; // legacy alias; prefer security.mode
 
   // Performance
   performance: {

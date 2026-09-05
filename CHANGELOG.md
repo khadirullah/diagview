@@ -6,6 +6,25 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 
 ---
 
+## [Unreleased]
+
+### Fixed
+
+- **Arrow Keys Panned the Wrong Way While Rotated** — Rotation lives on an inner SVG group while Panzoom moves the outer element, so pan deltas are already in screen axes. The leftover inverse-rotation of the arrow-key delta made `ArrowUp` pan sideways at 90°/270° and inverted every arrow at 180°. Removed; arrows now match the screen at every angle.
+- **`T` Text-Select Shortcut Stopped Working After the First Close** — The shortcut's event subscription is created once per modal DOM but was torn down by the per-session modal cleanup, so it silently died from the second fullscreen session onward (the toolbar button kept working). The subscription now lives until `destroy()`.
+- **`security.allowOverrides: false` Was Bypassed in the Modal** — The fullscreen clone read `data-diagview-sanitize` / `data-diagview-allow-remote` directly, ignoring `allowOverrides` and accepting any value. Per-element overrides are now resolved through a single gate shared by init and modal: honoured only when `allowOverrides` is `true` and the value is `strict`, `permissive` or `off`; otherwise the global mode applies.
+- **`backgroundColor`, `textColor` and `panAnimationDuration` Did Nothing** — All three were documented and validated but never read. `backgroundColor` and `textColor` now override auto-detection (text still passes the WCAG contrast guard); `panAnimationDuration` is applied to arrow-key panning. `configure()` clears the theme cache so colour changes apply immediately.
+
+### Removed
+
+- **`immersiveMode`** — Documented as rewriting the host page's viewport meta tag, but never implemented. The pinch-zoom drift it was meant to fix is already handled by the visual-viewport sync on modal open, so the option is removed rather than implemented. Docs and FAQ updated.
+- **`printFriendly`** — Never read; the print stylesheet always hides DiagView controls and the modal, which is what the default already promised.
+- **`sanitize: "auto"`** — Legacy key that nothing mapped to `security.mode`. Use `security.mode` (`strict` | `permissive` | `off`).
+
+> Passing a removed key logs `DiagView: Unknown config key "…" ignored.` and has no other effect, since none of them ever did anything.
+
+---
+
 ## [1.0.11] - 2026-08-31
 
 ### Fixed

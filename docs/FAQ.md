@@ -166,13 +166,7 @@ A: No. DiagView clones the SVG before sanitizing. The original DOM element is ne
 ## Mobile
 
 **Q: Controls drift when I pinch-zoom in the browser.**  
-A: Enable `immersiveMode`:
-
-```javascript
-DiagView.init({ immersiveMode: true });
-```
-
-This resets the viewport meta tag to `initial-scale=1.0` when the modal opens, snapping browser zoom back to 1×. The user can still re-zoom after opening.
+A: This is handled automatically. When the modal opens, DiagView syncs its controls to the visual viewport and keeps them aligned while the page is pinch-zoomed. No option is required; if you still see drift, please open an issue with the device and browser version.
 
 **Q: The minimap doesn't appear on my phone.**  
 A: The minimap is intentionally hidden on viewports narrower than 768 px to preserve screen real estate.

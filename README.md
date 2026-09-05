@@ -379,10 +379,8 @@ DiagView.init({
 
   // ── Interaction ──────────────────────────────────
   naturalPanning: false, // true = scroll-like pan direction
-  immersiveMode: false, // true = lock viewport meta on mobile open
   rememberZoom: false, // true = restore zoom/pan across modal opens (session)
   showMinimap: true, // Show minimap when diagram overflows viewport
-  printFriendly: true, // Hide controls in print media
 
   // ── Zoom / Pan ───────────────────────────────────
   maxZoomScale: 25, // Upper zoom limit (1–50)

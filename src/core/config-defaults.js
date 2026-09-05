@@ -43,13 +43,10 @@ export const INITIAL_CONFIG = {
   showMinimap: true,
   rememberZoom: false,
   animateOpen: true,
-  printFriendly: true,
   showBranding: true,
-  immersiveMode: false,
   showFirstTimeThemeHint: true,
 
   // Security & Sanitization
-  sanitize: "auto", // "auto" | "strict" | "off"
   allowedImageTypes: ["png", "jpeg", "webp", "gif"],
   security: {
     // 'strict' (Default) - Blocks foreignObject, animate, style injection, etc.

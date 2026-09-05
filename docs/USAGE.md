@@ -783,14 +783,6 @@ DiagView.init({
 });
 ```
 
-### Immersive mobile mode
-
-When enabled, DiagView modifies the viewport meta tag on mobile when the modal opens, snapping out of any browser pinch-zoom and locking the layout to 1:1 scale. The user can still use native browser zoom afterward.
-
-```javascript
-DiagView.init({ immersiveMode: true });
-```
-
 ### Natural panning
 
 By default, `ArrowUp` moves the diagram downward (camera moves up). Set `naturalPanning: true` for scroll-like behavior where `ArrowUp` moves the diagram up.
@@ -916,11 +908,7 @@ Search matches text inside `<text>` and `.node` elements. Check that your SVG co
 
 ### Mobile controls drift when pinch-zooming
 
-Enable `immersiveMode` to lock the viewport:
-
-```javascript
-DiagView.init({ immersiveMode: true });
-```
+No setting is needed. When the modal opens, DiagView syncs its UI to the visual viewport and keeps it in sync while the browser is pinch-zoomed. If you still see drift, please open an issue with the device and browser version.
 
 ### "Double Prefixing" on SVG IDs
 
