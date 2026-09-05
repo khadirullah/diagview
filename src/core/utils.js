@@ -279,6 +279,33 @@ const STRICT_BLOCKED_TAGS = new Set([
 ]);
 
 /**
+ * SMIL animation elements. Strict mode drops them all; permissive mode
+ * keeps them unless they rewrite a URL-bearing or event attribute, since
+ * <animate attributeName="href" values="javascript:..."> is as dangerous
+ * as the attribute itself.
+ * @private
+ */
+const ANIMATION_TAGS = new Set([
+  "animate",
+  "animatecolor",
+  "animatemotion",
+  "animatetransform",
+  "set",
+]);
+
+/**
+ * True when an animation element targets href/xlink:href (any prefix) or
+ * an on* event handler attribute. attributeName is compared case- and
+ * prefix-insensitively so "HREF" and "xl:href" are caught too.
+ * @private
+ */
+function animatesDangerousAttribute(el) {
+  const target = (el.getAttribute("attributeName") || "").trim().toLowerCase();
+  const local = target.slice(target.lastIndexOf(":") + 1);
+  return local === "href" || local.startsWith("on");
+}
+
+/**
  * Matches dangerous URL protocols in href/src/action attributes.
  * Blocks javascript:, vbscript:, and data: URIs by default.
  * Test only values passed through normalizeURLValue(); the scheme colon is
@@ -439,6 +466,13 @@ export function sanitizeSVG(input, mode = "strict", options = 0) {
 
     // Remove blocked tags entirely — no further processing needed
     if (blockedTags.has(tagName)) {
+      el.remove();
+      return;
+    }
+
+    // Permissive keeps SMIL animations, but never ones that write href or
+    // an on* attribute — those are script execution by another route.
+    if (!isStrict && ANIMATION_TAGS.has(tagName) && animatesDangerousAttribute(el)) {
       el.remove();
       return;
     }

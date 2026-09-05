@@ -96,3 +96,51 @@ describe("sanitizeSVG CSS escape and syntax variants (strict, remote blocked)", 
     expect(out).toContain("<rect style=");
   });
 });
+
+describe("sanitizeSVG SMIL animation of href/on* attributes (permissive)", () => {
+  test('<animate attributeName="href"> is removed in permissive mode', () => {
+    const out = sanitizeToString(
+      wrap(
+        `<a href="#x"><animate attributeName="href" values="javascript:alert(1)"/><text>x</text></a>`,
+      ),
+      "permissive",
+    );
+    expect(out).not.toContain("<animate");
+    expect(out).not.toContain("javascript:");
+    expect(out).toContain("<text>x</text>");
+  });
+
+  test.each([
+    ["xlink:href", `<set attributeName="xlink:href" to="javascript:alert(1)"/>`],
+    ["HREF (case-insensitive)", `<animate attributeName="HREF" values="javascript:alert(1)"/>`],
+    ["prefixed xl:href", `<animate attributeName="xl:href" values="javascript:alert(1)"/>`],
+    ["onclick", `<set attributeName="onclick" to="alert(1)"/>`],
+    ["onload via animateTransform", `<animateTransform attributeName="onload" to="alert(1)"/>`],
+  ])("animation targeting %s is removed in permissive mode", (_label, el) => {
+    const out = sanitizeToString(wrap(`<a href="#x">${el}<text>x</text></a>`), "permissive");
+    expect(out).not.toMatch(/<(?:animate|set|animateTransform)\b/);
+    expect(out).not.toContain("alert(1)");
+    expect(out).toContain("<text>x</text>");
+  });
+
+  test("animations of other attributes are kept in permissive mode", () => {
+    const out = sanitizeToString(
+      wrap(
+        `<rect width="1"><animate attributeName="x" values="0;1" dur="1s"/><animateTransform attributeName="transform" type="rotate" from="0" to="360"/><set attributeName="fill" to="red"/></rect>`,
+      ),
+      "permissive",
+    );
+    expect(out).toContain('<animate attributeName="x"');
+    expect(out).toContain('<animateTransform attributeName="transform"');
+    expect(out).toContain('<set attributeName="fill"');
+  });
+
+  test("strict mode still removes every animation element", () => {
+    const out = sanitizeToString(
+      wrap(`<rect width="1"><animate attributeName="x" values="0;1"/></rect>`),
+      "strict",
+    );
+    expect(out).not.toContain("<animate");
+    expect(out).toContain("<rect");
+  });
+});

@@ -472,6 +472,7 @@ Blocks only the most critical vectors:
 - Tags: `<script>`, `<iframe>`, `<object>`, `<applet>`, `<embed>`, `<form>`
 - All `on*` event attributes
 - `javascript:`/`vbscript:`/`data:` URIs
+- SMIL animations (`<animate>`, `<set>`, `<animateTransform>`, ...) whose `attributeName` is `href`/`xlink:href` or an `on*` handler; all other animations are kept
 
 This matches the legacy v0.x behavior.
 
