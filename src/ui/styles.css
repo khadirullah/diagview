@@ -433,17 +433,14 @@
   border-color: var(--dv-accent, #3b82f6) !important;
   background: rgba(59, 130, 246, 0.1);
 }
-.dv-icon-btn:focus-visible {
-  outline: 2px solid var(--dv-accent);
-  outline-offset: 2px;
-}
 
 /* ── Mobile: search container slides in-place on topbar ── */
 /* On mobile the .diagview-search-container is normally hidden.          */
 /* Tapping the search icon adds .search-open to the topbar, which slides */
 /* the real search input in from the left — no duplicate DOM needed.     */
 @media (max-width: 639px) {
-  .diagview-search-container {
+  /* .diagview-topbar prefix: outranks the later base rule (flex:1, 600px) */
+  .diagview-topbar .diagview-search-container {
     display: flex;
     flex: 0;
     max-width: 0;
@@ -533,10 +530,6 @@
     border-color: var(--dv-accent, #3b82f6) !important;
     background: var(--dv-accent, #3b82f6) !important;
     box-shadow: 0 0 12px rgba(59, 130, 246, 0.4);
-  }
-  .dv-text-select-btn:focus-visible {
-    outline: 2px solid var(--dv-accent);
-    outline-offset: 2px;
   }
 }
 
@@ -839,11 +832,6 @@
   transform: translateY(-50%) scale(0.94);
 }
 
-.diagview-close-btn:focus-visible {
-  outline: 2px solid var(--dv-accent);
-  outline-offset: 2px;
-}
-
 /* Search Highlighting - Mermaid Optimized */
 .dv-searching .node,
 .dv-searching .cluster,
@@ -905,7 +893,6 @@
   }
   50% {
     filter: drop-shadow(0 0 16px var(--dv-accent));
-    brightness: 1.1;
   }
   100% {
     filter: drop-shadow(0 0 8px var(--dv-accent));
@@ -960,12 +947,6 @@
   -webkit-user-select: text !important;
   pointer-events: auto !important;
   cursor: text !important;
-}
-
-/* Global helper to ensure selection is allowed */
-.dv-selection-allowed {
-  user-select: text !important;
-  -webkit-user-select: text !important;
 }
 
 .diagview-modal-viewport svg {
@@ -1292,11 +1273,6 @@
   background: var(--dv-primary, var(--dv-accent, #0891b2));
 }
 
-.dv-exp-trans-chk:focus-visible {
-  outline: 2px solid var(--dv-primary, var(--dv-accent, #06b6d4));
-  outline-offset: 2px;
-}
-
 .dv-exp button:disabled,
 .dv-exp button.disabled {
   opacity: 0.4 !important;
@@ -1304,12 +1280,6 @@
   pointer-events: none !important;
   transform: none !important;
   box-shadow: none !important;
-}
-
-/* Transparent-export format hint "(PNG/WebP/SVG)" */
-.dv-exp-trans-hint {
-  opacity: 0.5;
-  font-size: 8px;
 }
 
 /* Canvas Theme Section */
@@ -1572,8 +1542,13 @@
 }
 
 /* Accessibility */
+/* The spinner is excluded: a loading indicator must keep moving (it is */
+/* slowed down further below instead of frozen).                          */
 @media (prefers-reduced-motion: reduce) {
-  .diagview-modal *,
+  .diagview-modal,
+  .diagview-modal *:not(.diagview-spinner),
+  .diagview-modal *::before,
+  .diagview-modal *::after,
   .diagview-wrapper * {
     animation-duration: 0.01ms !important;
     transition-duration: 0.01ms !important;
@@ -1746,7 +1721,7 @@
   justify-content: center;
   background: rgba(0, 0, 0, 0.6);
   backdrop-filter: blur(4px);
-  z-index: 2147483648;
+  z-index: 2147483647;
   opacity: 0;
   visibility: hidden;
   transition: all 0.2s ease;

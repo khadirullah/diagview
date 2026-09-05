@@ -89,3 +89,56 @@ describe("styles.css: desktop tooltip", () => {
     expect(body).not.toMatch(/bottom:\s*calc/);
   });
 });
+
+describe("styles.css: dead and contradicting rules", () => {
+  test("never-emitted helper classes are gone", () => {
+    expect(css).not.toContain(".dv-selection-allowed");
+    expect(css).not.toContain(".dv-exp-trans-hint");
+  });
+
+  test("dv-pulse keyframes carry no invalid brightness property", () => {
+    const start = css.indexOf("@keyframes dv-pulse");
+    const end = css.indexOf("\n}\n", start);
+    expect(start).toBeGreaterThan(-1);
+    expect(css.slice(start, end)).not.toMatch(/brightness\s*:/);
+  });
+
+  test("per-control outline rules that always lose to the global focus ring are gone", () => {
+    for (const sel of [
+      ".dv-icon-btn:focus-visible",
+      ".dv-text-select-btn:focus-visible",
+      ".diagview-close-btn:focus-visible",
+      ".dv-exp-trans-chk:focus-visible",
+    ]) {
+      expect(css).not.toContain(sel);
+    }
+    // the shared box-shadow ring stays
+    expect(ruleBody(".diagview-modal *:focus-visible")).toMatch(/box-shadow/);
+  });
+
+  test("help modal z-index is clamped to the 32-bit maximum", () => {
+    expect(ruleBody(".diagview-help-modal {")).toMatch(/z-index:\s*2147483647;/);
+    expect(css).not.toContain("2147483648");
+  });
+
+  test("mobile closed-search rule outranks the later base rule", () => {
+    const mobile = css.indexOf("@media (max-width: 639px)");
+    const base = css.indexOf("\n.diagview-search-container {");
+    expect(mobile).toBeGreaterThan(-1);
+    expect(base).toBeGreaterThan(mobile);
+    const body = ruleBody(".diagview-topbar .diagview-search-container {", mobile);
+    expect(body).not.toBeNull();
+    expect(body).toMatch(/flex:\s*0;/);
+    expect(body).toMatch(/max-width:\s*0;/);
+  });
+
+  test("reduced-motion rule covers the modal and pseudo-elements but keeps the spinner spinning", () => {
+    const idx = css.indexOf("@media (prefers-reduced-motion: reduce)");
+    const open = css.indexOf("{", css.indexOf(".diagview-modal", idx));
+    const selector = css.slice(idx, open);
+    expect(selector).toMatch(/\.diagview-modal,/);
+    expect(selector).toMatch(/\.diagview-modal \*:not\(\.diagview-spinner\)/);
+    expect(selector).toMatch(/\.diagview-modal \*::before/);
+    expect(selector).toMatch(/\.diagview-modal \*::after/);
+  });
+});
