@@ -324,15 +324,22 @@ if (typeof window !== "undefined") {
   // Defensive global assignment to prevent overwriting existing versions
   window.DiagView = window.DiagView || DiagView;
 
-  // Auto-initialize on DOMContentLoaded
+  // The tag that loaded us, captured now: document.currentScript is only set
+  // while a classic script is executing, so it is null inside the timer below.
+  const loaderScript = document.currentScript;
+
   const autoInit = () => {
+    autoInitTimeout = null;
+
     // 1. Check if already initialized
     if (state.isInitialized) return;
 
-    // 2. Check for explicit opt-out on the script tag itself
-    const currentScript =
-      document.currentScript || document.querySelector('script[src*="diagview"]');
-    const isOptedOut = currentScript && currentScript.hasAttribute("data-diagview-no-auto-init");
+    // 2. Check for explicit opt-out. Look at ANY diagview script tag, not just
+    // the first one — a "diagview-setup.js" placed before the library tag must
+    // not hide the opt-out on the library tag itself.
+    const isOptedOut =
+      (loaderScript && loaderScript.hasAttribute("data-diagview-no-auto-init")) ||
+      !!document.querySelector('script[src*="diagview"][data-diagview-no-auto-init]');
 
     // 3. Determine if we should initialize
     const isForced = document.querySelector("[data-diagview-auto-init]");
@@ -350,10 +357,20 @@ if (typeof window !== "undefined") {
     }
   };
 
+  // Never auto-init synchronously. Module and defer scripts execute at
+  // readyState "interactive", so a synchronous auto-init would run during
+  // module evaluation and the user's own DiagView.init({...}) one line later
+  // would hit "Already initialized". Deferring by one task lets a manual
+  // init() cancel the pending auto-init (see init()).
+  const scheduleAutoInit = () => {
+    if (autoInitTimeout) clearTimeout(autoInitTimeout);
+    autoInitTimeout = setTimeout(autoInit, 0);
+  };
+
   if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", autoInit);
+    document.addEventListener("DOMContentLoaded", scheduleAutoInit, { once: true });
   } else {
-    autoInit();
+    scheduleAutoInit();
   }
 }
 

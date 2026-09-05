@@ -84,6 +84,8 @@ To disable auto-initialization and configure manually:
 </script>
 ```
 
+Auto-init is deferred by one task, so an `init()` call issued synchronously from a module, `defer` or bundler entry script always wins over it; the attribute is only needed when your `init()` runs later (after an `await`, in a framework effect).
+
 ### NPM
 
 ```bash

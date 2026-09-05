@@ -104,6 +104,12 @@ To match a custom selector:
 </script>
 ```
 
+### Timing
+
+Auto-init never runs synchronously. It is scheduled one task after `DOMContentLoaded` (or one task after the library finishes evaluating when it is loaded with `type="module"`, `defer`, or after the page has already parsed). A `DiagView.init({...})` you call before that task runs — a bundler entry point, a `<script type="module">`, a `defer` script, or a plain script right after the tag — cancels the pending auto-init and your options win. The opt-out attribute is only required when your own `init()` happens later than that, for example after an `await` (Mermaid rendering, a fetch) or from a framework effect.
+
+The opt-out attribute is honoured on any `<script>` whose `src` contains `diagview`, so a helper script named `diagview-setup.js` placed before the library tag does not hide it.
+
 ---
 
 ## 3. Manual Initialization
