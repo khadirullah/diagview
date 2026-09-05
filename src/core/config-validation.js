@@ -2,11 +2,31 @@ import { ZOOM, LAYOUTS, EXPORT } from "./constants.js";
 import { DEFAULT_CONFIG } from "./config-defaults.js";
 
 /**
- * Validate entire configuration
- * @param {Record<string, *>} config - The config object to validate
+ * Check that a selector string can actually be used with querySelector.
+ * @param {*} selector - Candidate selector
+ * @returns {boolean} True when the selector is a non-empty, parseable string
  */
-export function validateConfig(config) {
+function isValidSelector(selector) {
+  if (typeof selector !== "string" || !selector.trim()) return false;
+  if (typeof document === "undefined") return true;
+  try {
+    document.querySelector(selector);
+    return true;
+  } catch (_e) {
+    return false;
+  }
+}
+
+/**
+ * Validate entire configuration
+ * @param {Record<string, *>} config - The config object to validate (mutated in place)
+ * @param {Record<string, *>} [previous] - Config in effect before this update; invalid
+ *   values fall back to it (and to the defaults when it has none)
+ */
+export function validateConfig(config, previous = DEFAULT_CONFIG) {
   const defaults = /** @type {Record<string, *>} */ (DEFAULT_CONFIG);
+  /** @param {string} key - Config key */
+  const fallback = (key) => (previous && key in previous ? previous[key] : defaults[key]);
 
   /**
    * @param {string} key - Config key to validate
@@ -33,6 +53,13 @@ export function validateConfig(config) {
   ) {
     console.warn(`DiagView: Invalid layout "${config["layout"]}", using default`);
     config["layout"] = defaults["layout"];
+  }
+
+  if (!isValidSelector(config["diagramSelector"])) {
+    console.warn(
+      `DiagView: diagramSelector "${config["diagramSelector"]}" is not a valid selector, keeping "${fallback("diagramSelector")}"`,
+    );
+    config["diagramSelector"] = fallback("diagramSelector");
   }
 
   // Ensure positive values for timings

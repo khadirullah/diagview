@@ -160,8 +160,9 @@ export function updateConfig(options = {}) {
   // Create a new configuration by cloning current and merging new options
   const newConfig = deepMerge(deepMerge({}, state.config), sanitized);
 
-  // Validate the new configuration BEFORE freezing
-  validateConfig(newConfig);
+  // Validate the new configuration BEFORE freezing; invalid values fall back
+  // to what was in effect before this update
+  validateConfig(newConfig, state.config);
 
   // Apply the new frozen configuration
   state.config = deepFreeze(newConfig);

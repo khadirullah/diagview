@@ -32,7 +32,7 @@ document.body.innerHTML = `<div class="diagram">${SVG}</div>`;
 const autoInitWarn = jest.spyOn(console, "warn").mockImplementation(() => {});
 
 const DiagView = (await import("../src/index.js")).default;
-const { state } = await import("../src/core/config.js");
+const { state, DEFAULT_CONFIG } = await import("../src/core/config.js");
 
 describe("auto-init scheduling (finding 1)", () => {
   afterAll(async () => {
@@ -191,5 +191,65 @@ describe("refresh() recovers error-boundary diagrams (finding 12)", () => {
 
     expect(el.dataset.diagviewError).toBe("1");
     expect(el.querySelectorAll(".diagview-error")).toHaveLength(1);
+  });
+});
+
+describe("teardown safety and diagramSelector validation (finding 3)", () => {
+  let warnSpy;
+  let errorSpy;
+
+  beforeEach(() => {
+    document.body.innerHTML = `<div class="diagram">${SVG}</div>`;
+    document.head.innerHTML = "";
+    warnSpy = jest.spyOn(console, "warn").mockImplementation(() => {});
+    errorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
+  });
+
+  afterEach(async () => {
+    await DiagView.destroy();
+    jest.runAllTimers();
+    warnSpy.mockRestore();
+    errorSpy.mockRestore();
+  });
+
+  test("configure() with an invalid diagramSelector warns and keeps the previous one", () => {
+    DiagView.init();
+    DiagView.configure({ diagramSelector: ".custom-diagram" });
+    expect(DiagView.getConfiguration().diagramSelector).toBe(".custom-diagram");
+
+    warnSpy.mockClear();
+    DiagView.configure({ diagramSelector: "[[[" });
+
+    expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining("diagramSelector"));
+    expect(DiagView.getConfiguration().diagramSelector).toBe(".custom-diagram");
+  });
+
+  test("init() with a non-string diagramSelector falls back to the default", () => {
+    DiagView.init({ diagramSelector: 42 });
+    expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining("diagramSelector"));
+    expect(DiagView.getConfiguration().diagramSelector).toBe(DEFAULT_CONFIG.diagramSelector);
+  });
+
+  test("a throwing teardown step still resets state and removes the modal", async () => {
+    DiagView.init();
+    expect(document.getElementById("diagview-modal")).not.toBeNull();
+
+    // Poison the DOM phase of _teardown: a "shadow root" whose query throws.
+    state.shadowRoots.add({
+      querySelectorAll() {
+        throw new Error("boom");
+      },
+    });
+
+    await expect(DiagView.destroy()).resolves.toBeUndefined();
+
+    expect(state.isInitialized).toBe(false);
+    expect(document.getElementById("diagview-modal")).toBeNull();
+    expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining("teardown"), expect.any(Error));
+
+    // And a later init() is accepted again
+    DiagView.init({ layout: "header" });
+    expect(state.isInitialized).toBe(true);
+    expect(warnSpy).not.toHaveBeenCalledWith(expect.stringContaining("Already initialized"));
   });
 });
