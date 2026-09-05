@@ -18,6 +18,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 - **`init()` Right After `destroy()` Left Nothing Initialized** — `destroy()` is async, so an `init()` issued before it finished saw the instance as still initialized, warned and returned, and the pending teardown then reset everything. React StrictMode and hot module reload trigger exactly this sequence in development. `init()` now queues behind an in-flight `destroy()` and returns a promise that resolves when ready; a second `destroy()` during teardown returns the same promise. Normal synchronous `init()` behaviour is unchanged.
 - **`backgroundColor`, `textColor` and `panAnimationDuration` Did Nothing** — All three were documented and validated but never read. `backgroundColor` and `textColor` now override auto-detection (text still passes the WCAG contrast guard); `panAnimationDuration` is applied to arrow-key panning. `configure()` clears the theme cache so colour changes apply immediately.
 
+### Changed
+
+- **npm Provenance** — the publish workflow now runs `npm publish --provenance`, so every release carries a signed attestation linking the package on npm to the exact GitHub Actions run and commit that built it. Visible as the "Provenance" badge on the npm package page.
+
 ### Added
 
 - **React 18 + StrictMode demo and e2e check** — `demo/framework-react.html` is a real React dev-build tree (StrictMode on) with floating, header and off layout cards that mount, unmount, remount and replace DiagView diagrams, a "Detach DiagView" button that shows `destroy()`/`init()` with everything still mounted, and an "unsafe pattern" toggle that reproduces the DOM-ownership error the framework docs now warn about, contained per card by an error boundary and explained on the page. `tests/e2e/verify-react-strictmode.mjs` drives it in headless Chrome against the local build (21 checks) and, with `--cdn`, against the published version (1.0.11 fails 10 of 21).
