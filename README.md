@@ -345,6 +345,8 @@ DiagView.init(); // init normally first
 DiagView.initShadowRoot(shadow); // then scan the shadow root
 ```
 
+The stylesheet is installed inside the shadow root, so the inline toolbar is styled without any extra CSS.
+
 ### Mermaid.js
 
 Always render Mermaid first, then initialize DiagView:

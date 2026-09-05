@@ -27,7 +27,12 @@ A: The `@panzoom/panzoom` script must be loaded **before** DiagView. If it is mi
 A: Yes. `npm install @panzoom/panzoom` and import it normally. DiagView uses `window.Panzoom` at runtime; bundlers that expose globals (e.g. Vite with `define`) will wire it up automatically. Otherwise ensure `window.Panzoom = Panzoom` is set before `DiagView.init()`.
 
 **Q: Does DiagView inject CSS into `<head>` automatically?**  
-A: Yes. Styles are injected once into a `<style id="diagview-styles">` tag when `init()` is called, and removed by `destroy()`.
+A: Yes. Styles are injected once into a `<style id="diagview-styles">` tag when `init()` is called, and removed by `destroy()`. `initShadowRoot()` installs the same stylesheet inside the shadow root, and `destroy()` removes that copy too.
+
+---
+
+**Q: I call `init({...})` from a `type="module"` script and get "Already initialized"; my options are ignored.**  
+A: Auto-init is deferred one task after the library loads, so an `init()` that runs synchronously in your module wins. The warning means your call ran later, after an `await` or inside a framework effect. Add `data-diagview-auto-init="false"` to the library script tag in that case.
 
 ---
 
@@ -98,6 +103,8 @@ DiagView.init({ highResScale: 8 }); // 8× the SVG's intrinsic size
 await DiagView.exportToPNG(document.querySelector(".diagram"));
 ```
 
+Per-diagram `data-diagview-scale` and watermark attributes on the element are honoured. If the element contains no `<svg>`, the call resolves and shows a "No diagram found" toast.
+
 **Q: PDF export shows "PDF engine unavailable" and falls back to PNG. Why?**  
 A: jsPDF failed to load from CDN. Check the network tab for a blocked request. If behind a CSP, host jsPDF locally:
 
@@ -112,7 +119,7 @@ DiagView.init({
 A: When `transparent: true` is passed to JPEG export, DiagView automatically switches to transparent PNG (JPEG does not support transparency) and shows a warning toast.
 
 **Q: Clipboard copy fails on my site. Why?**  
-A: The Clipboard API requires HTTPS or `localhost`. On plain HTTP, DiagView falls back to `document.execCommand('copy')`. If both fail, an error toast is shown.
+A: The Clipboard API requires HTTPS or `localhost`. On plain HTTP, DiagView falls back to `document.execCommand('copy')`. If the browser denies the write (Safari does once the click that started the export is over) or both paths fail, the PNG is downloaded instead and the toast says so.
 
 **Q: I'm hitting the export size limit. How do I increase it?**
 
@@ -150,6 +157,8 @@ A: `strict` mode removes `<animate>`, `<animateTransform>`, `<set>`, and similar
 </div>
 ```
 
+`permissive` still drops animations whose `attributeName` is `href`/`xlink:href` or an `on*` handler, because those can be used to inject a script.
+
 **Q: I want to use Google Fonts embedded in my SVG's `<style>` block. How?**
 
 ```html
@@ -182,7 +191,7 @@ A: This is a known browser-level limitation in Firefox Mobile (Gecko engine) on 
 A: With the `floating` or `header` layout, DiagView moves the diagram element into a wrapper to place the toolbar. If React later removes that exact element, it is no longer where React left it. Nest the diagram element inside a container div that your component renders, so React removes the container instead. Or use `layout: "off"`, which never touches the surrounding DOM. See USAGE.md § Framework Integration.
 
 **Q: In development, DiagView stops working after the first render (React StrictMode / hot reload).**  
-A: Fixed in the release after 1.0.11. `init()` now queues behind an in-flight `destroy()`, which is the sequence StrictMode produces. On older versions, await `destroy()` before calling `init()` again.
+A: `init()` queues behind an in-flight `destroy()`, which is the sequence StrictMode produces, so the `useEffect` cleanup-then-setup cycle needs no special handling. Call `destroy()` in the cleanup and `init()` in the effect body, as shown in [USAGE](USAGE.md#20-framework-integration).
 
 **Q: The whole diagram disappears when my component unmounts. Is DiagView removing it?**  
 A: No. Unmounting is your framework deleting the component and every DOM node it rendered, the diagram included; that is what unmount means in every layout, `off` too. DiagView's toolbar leaves only because the diagram it was attached to is gone. Call `destroy()` in the cleanup so DiagView releases its handlers. If you want the diagram to stay and only the viewer to go, keep the component mounted and call `destroy()` on its own; the diagram is put back where your framework left it as plain SVG, and `init()` enhances it again. The [React demo](https://khadirullah.github.io/diagview/framework-react.html) has "Unmount" and "Detach" buttons that show the two side by side.
@@ -233,6 +242,8 @@ A: Search pre-warms its candidate cache during browser idle time. On very large 
 DiagView.init(); // initialize globally first
 DiagView.initShadowRoot(myShadowRoot); // then scan the shadow root
 ```
+
+The stylesheet is installed inside the root so the inline toolbar renders correctly, and shadow diagrams are numbered after the document's diagrams for share links.
 
 ---
 

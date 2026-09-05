@@ -227,6 +227,8 @@ Set any of the following `data-diagview-*` attributes directly on a diagram cont
 
 > **Requires `security.allowOverrides: true`** (the default) for `data-diagview-sanitize` and `data-diagview-allow-remote` to take effect.
 
+`data-diagview-scale` and the watermark overrides apply to every export path: the inline toolbar, the fullscreen menu and the `exportTo*` functions.
+
 ---
 
 ## 6. Search
@@ -286,6 +288,8 @@ await DiagView.exportDiagram(el, "png", {
 });
 ```
 
+Every export function resolves without throwing when the element contains no `<svg>`; a "No diagram found" toast is shown instead. `copyToClipboard()` downloads the PNG when the browser denies the clipboard write (Safari does this once the click that started the export is over).
+
 ### Options
 
 | Option        | Type       | Default        | Description                           |
@@ -304,6 +308,10 @@ DiagView.init({
   maxPixels: 16777216, // Safety cap — auto-downscales massive diagrams
 });
 ```
+
+### Fonts
+
+Exports embed the `@font-face` sources used by the diagram, including self-hosted fonts referenced by relative `url()` paths, so the file renders with the same fonts when opened elsewhere. A font file that cannot be fetched is left as its original reference.
 
 ### PDF
 
@@ -482,7 +490,7 @@ Blocks only the most critical vectors:
 - `javascript:`/`vbscript:`/`data:` URIs
 - SMIL animations (`<animate>`, `<set>`, `<animateTransform>`, ...) whose `attributeName` is `href`/`xlink:href` or an `on*` handler; all other animations are kept
 
-This matches the legacy v0.x behavior.
+This matches the legacy v0.x behavior, apart from the animation rule above.
 
 ### `off`
 
@@ -576,10 +584,10 @@ DiagView.init({ rememberZoom: true });
 | `R`                 | Rotate 90° clockwise                |                                                                                   |
 | `M`                 | Toggle meeting mode (laser pointer) |                                                                                   |
 | `L`                 | Copy share link                     | Requires HTTPS or localhost                                                       |
-| `?`                 | Show/hide keyboard shortcuts        | Works even with input focused                                                     |
+| `?`                 | Show/hide keyboard shortcuts        | Suspended while an input is focused, so `?` can be typed into search              |
 | `Ctrl/Cmd`+anything | Ignored                             | Native browser shortcuts are never intercepted                                    |
 
-Shortcuts are disabled when the modal is closed. When an `<input>` or `<textarea>` is focused, most shortcuts are suspended (except `Esc` and `?`).
+Shortcuts are disabled when the modal is closed. When an `<input>` or `<textarea>` is focused, all shortcuts except `Esc` are suspended.
 
 ---
 
@@ -928,9 +936,21 @@ console.log(DiagView.version); // e.g. "1.0.6"
 ### Diagrams not showing interactive controls
 
 1. Check the selector: does your element match `diagramSelector`?
-2. Ensure the element contains a valid `<svg>` child with visible content
+2. Ensure the element contains an `<svg>` child with visible content. A `viewBox` is not required; width/height-only SVGs work
 3. Check the browser console — errors from SVG validation appear there
 4. Confirm DiagView initialized: `console.log(DiagView.state.isInitialized)`
+
+### "Diagram Error" placeholder instead of a diagram
+
+The element has no `<svg>` child, or the `<svg>` declares a `viewBox` with zero width or height. Fix the SVG in place and call `DiagView.refresh()`; the placeholder is removed and the diagram is initialized normally.
+
+### "Already initialized" warning and my options are ignored
+
+Auto-init ran before your `DiagView.init({...})`. This happens when your call comes after an `await` or from a framework effect. Add `data-diagview-auto-init="false"` to the script tag, or call `init()` synchronously after the library loads (see [Timing](#timing)).
+
+### `diagramSelector` change has no effect
+
+`configure()` validates the selector with `document.querySelector`. An invalid selector logs a warning and keeps the previous selector.
 
 ### Zoom/pan not working in fullscreen
 
@@ -960,7 +980,7 @@ DiagView.init({
 
 ### Clipboard copy fails
 
-Clipboard API requires HTTPS or `localhost`. On HTTP, DiagView falls back to `document.execCommand('copy')`. If both fail, the diagram is downloaded instead.
+Clipboard API requires HTTPS or `localhost`. On HTTP, DiagView falls back to `document.execCommand('copy')`. If the browser denies the write (Safari, once the click that started the export is over) or both paths fail, the PNG is downloaded instead.
 
 ### Search highlights nothing
 
