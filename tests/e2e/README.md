@@ -27,26 +27,34 @@ Build first so `dist/diagview.umd.js` reflects your changes, then:
 
 ```bash
 npm run build
-node tests/e2e/final-verify.mjs    # core suite: share restore, minimap click,
-                                   # drag 1:1, wheel zoom, focus trap,
-                                   # rememberZoom, mobile touch (9 checks)
-node tests/e2e/verify-v1011.mjs    # will-change lifecycle (sharp at rest /
-                                   # smooth mid-gesture), two-stage Escape,
-                                   # closeModal single-fire (10 checks)
-node tests/e2e/verify-react-strictmode.mjs   # real React 18 dev tree with
-                                   # StrictMode: init survives the double
-                                   # effect, unmount/remount/replace are
-                                   # error-free, anti-pattern throws (12 checks)
+node tests/e2e/final-verify.mjs             # core suite: share restore, minimap click,
+                                            # drag 1:1, wheel zoom, focus trap,
+                                            # rememberZoom, mobile touch (9 checks)
+node tests/e2e/verify-modal-gestures.mjs    # will-change lifecycle (sharp at rest /
+                                            # smooth mid-gesture), two-stage Escape,
+                                            # closeModal single-fire (10 checks)
+node tests/e2e/verify-minimap-rotation.mjs  # minimap click + indicator while
+                                            # rotated 90/180/270 (8 checks)
+node tests/e2e/verify-share-rotation.mjs    # share link restores rotation, zoom
+                                            # and position (7 checks)
+node tests/e2e/verify-fixes.mjs             # option sweep against dist/diagview.umd.js:
+                                            # auto-init timing, destroy/refresh, export
+                                            # scale/watermark, sanitizer, shadow DOM,
+                                            # minimap, laser, search, focus (30 checks)
+node tests/e2e/verify-react-strictmode.mjs  # real React 18 dev tree with
+                                            # StrictMode: init survives the double
+                                            # effect, unmount/remount/replace are
+                                            # error-free, anti-pattern throws (21 checks)
 ```
 
 `verify-react-strictmode.mjs` drives `demo/framework-react.html`. It
 intercepts the page's unpkg request for diagview and serves
 `dist/diagview.umd.js`, so the local build is what gets tested. Pass
-`--cdn` to test the published version instead (1.0.11 fails 8 of 12: the
-StrictMode destroy→init sequence left it uninitialized). React itself is
+`--cdn` to test the published version instead. `verify-fixes.mjs` accepts
+the same flag and shows which checks the published build fails. React itself is
 loaded from unpkg, so this one needs network access.
 
-Both exit non-zero on any failed check. `repro.html` is the shared test
+All scripts exit non-zero on any failed check. `repro.html` is the shared test
 page: a 2000×1200 labeled grid SVG (cells A1–J6, 200 units each) so any
 viewport center measurement maps to a recognizable cell.
 

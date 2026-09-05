@@ -1,3 +1,8 @@
+/**
+ * Verifies the gesture-scoped will-change lifecycle (sharp at rest, smooth
+ * mid-gesture), the two-stage Escape in search and single-fire closeModal.
+ * Run after `npm run build`.
+ */
 import { chromium } from "playwright-core";
 import { fileURLToPath } from "url";
 import path from "path";
@@ -98,5 +103,5 @@ check("modal reopens cleanly after guarded close", await page.evaluate(() => Dia
 
 await browser.close();
 const failed = results.filter((r) => !r.ok).length;
-console.log(`\n${results.length - failed}/${results.length} v1.0.11 checks passed`);
+console.log(`\n${results.length - failed}/${results.length} modal gesture checks passed`);
 process.exit(failed ? 1 : 0);
