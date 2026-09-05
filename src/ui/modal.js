@@ -29,6 +29,9 @@ import { createFloatingMenu } from "./floating-menu.js";
 import { pushModalHistoryState, startVisualViewportSync } from "./viewport.js";
 import { showInfoToast } from "./toast.js";
 
+/** Debounce for persisting zoom state on high-frequency panzoomchange (ms) */
+const ZOOM_SAVE_DEBOUNCE = 150;
+
 /**
  * Create modal structure
  */
@@ -281,10 +284,25 @@ function _attachModalLifecycle(element, clone, viewport, panzoom, diagramId) {
   if (panzoom) {
     setupViewportInteractions(viewport, clone, panzoom);
 
-    // Save zoom state on changes
+    // Save zoom state on changes. "panzoomend" only fires on pointer-up, so
+    // wheel, keyboard and button zooms were never persisted. "panzoomchange"
+    // covers every transform source; debounce it so a wheel burst does one
+    // write, and flush once more synchronously when the session closes.
     if (diagramId && state.config.rememberZoom) {
+      let saveTimer = null;
       const saveState = () => saveZoomState(diagramId, panzoom);
-      addModalListener(clone, "panzoomend", saveState);
+      addModalListener(clone, "panzoomchange", () => {
+        if (saveTimer) clearTimeout(saveTimer);
+        saveTimer = setTimeout(() => {
+          saveTimer = null;
+          if (state.isModalOpen) saveState();
+        }, ZOOM_SAVE_DEBOUNCE);
+      });
+      addModalCleanupFunction(() => {
+        if (saveTimer) clearTimeout(saveTimer);
+        saveTimer = null;
+        saveState();
+      });
     }
   }
 

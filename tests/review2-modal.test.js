@@ -3,8 +3,129 @@
  * Each describe block maps to one commit on the review2/modal branch.
  */
 import { jest } from "@jest/globals";
-import { state, resetConfig } from "../src/core/config.js";
+import { state, resetConfig, updateConfig } from "../src/core/config.js";
 import { setupFocusTrap, invalidateFocusableCache } from "../src/ui/focus-manager.js";
+import { createModal, openFullscreen } from "../src/ui/modal.js";
+import { closeModal } from "../src/ui/modal-controls.js";
+
+// ---------------------------------------------------------------------------
+// Shared harness: drive the REAL modal with a fake Panzoom implementation
+// ---------------------------------------------------------------------------
+const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+
+function installFakePanzoom() {
+  const instances = [];
+  window.Panzoom = jest.fn((el) => {
+    let scale = 1;
+    let pan = { x: 0, y: 0 };
+    const inst = {
+      el,
+      destroyed: false,
+      zoom: jest.fn((s) => {
+        scale = s;
+      }),
+      pan: jest.fn((x, y) => {
+        pan = { x, y };
+      }),
+      getScale: () => scale,
+      getPan: () => pan,
+      reset: jest.fn(),
+      zoomIn: jest.fn(),
+      zoomOut: jest.fn(),
+      zoomWithWheel: jest.fn(),
+      setOptions: jest.fn(),
+      destroy: jest.fn(() => {
+        inst.destroyed = true;
+      }),
+    };
+    instances.push(inst);
+    return inst;
+  });
+  return instances;
+}
+
+function makeDiagram(id, index = 0) {
+  const container = document.createElement("div");
+  container.className = "diagram";
+  container.dataset.diagviewId = id;
+  container.dataset.diagviewIndex = String(index);
+  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  svg.setAttribute("viewBox", "0 0 100 100");
+  const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+  rect.setAttribute("width", "50");
+  rect.setAttribute("height", "50");
+  svg.appendChild(rect);
+  container.appendChild(svg);
+  document.body.appendChild(container);
+  return container;
+}
+
+async function settle() {
+  // Lazy imports + rAF-based hand-offs: a few macrotask turns are enough
+  for (let i = 0; i < 4; i++) await wait(20);
+}
+
+// ---------------------------------------------------------------------------
+// 2. rememberZoom must persist wheel / keyboard / button zooms, not only drags
+// ---------------------------------------------------------------------------
+describe("rememberZoom saves on panzoomchange and on close", () => {
+  let instances;
+
+  beforeEach(() => {
+    resetConfig();
+    document.body.innerHTML = "";
+    sessionStorage.clear();
+    instances = installFakePanzoom();
+    updateConfig({ rememberZoom: true, showFirstTimeThemeHint: false, animateOpen: false });
+    createModal();
+  });
+
+  afterEach(async () => {
+    if (state.isModalOpen) await closeModal();
+    await settle();
+    delete window.Panzoom;
+  });
+
+  const key = (id) => `diagview-zoom-states:${id}`;
+
+  test("a debounced panzoomchange (wheel/keyboard/button zoom) writes the state", async () => {
+    const el = makeDiagram("d-remember");
+    await openFullscreen(el);
+    await settle();
+    expect(state.isModalOpen).toBe(true);
+    expect(sessionStorage.getItem(key("d-remember"))).toBeNull();
+
+    const pz = instances[0];
+    pz.zoom(2.5);
+    pz.el.dispatchEvent(new CustomEvent("panzoomchange", { detail: { scale: 2.5, x: 0, y: 0 } }));
+    // Not yet (debounced)…
+    expect(sessionStorage.getItem(key("d-remember"))).toBeNull();
+    await wait(250);
+    // …but shortly after, without any panzoomend
+    const saved = JSON.parse(sessionStorage.getItem(key("d-remember")));
+    expect(saved.scale).toBe(2.5);
+  });
+
+  test("closing the modal saves synchronously and reopening restores the scale", async () => {
+    const el = makeDiagram("d-remember-close");
+    await openFullscreen(el);
+    await settle();
+
+    const pz = instances[0];
+    pz.zoom(1.75);
+    pz.el.dispatchEvent(new CustomEvent("panzoomchange", { detail: { scale: 1.75, x: 0, y: 0 } }));
+    // Close before the debounce fires
+    await closeModal();
+    const saved = JSON.parse(sessionStorage.getItem(key("d-remember-close")));
+    expect(saved.scale).toBe(1.75);
+
+    await settle();
+    await openFullscreen(el);
+    await settle();
+    const pz2 = instances[1];
+    expect(pz2.zoom).toHaveBeenCalledWith(1.75, expect.anything());
+  });
+});
 
 // ---------------------------------------------------------------------------
 // 1. Focus trap must only cycle through elements that are actually rendered
