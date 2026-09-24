@@ -428,18 +428,11 @@ export async function renderToCanvas(sourceElement, modalClone, transparent = fa
   const ctx = canvas.getContext("2d");
 
   const svgStr = await serializeSVGAsync(finalSvg);
-  const isSmall = svgStr.length < EXPORT.LARGE_FILE_THRESHOLD;
 
-  let url,
-    isBlob = false;
-  if (isSmall || typeof URL.createObjectURL !== "function") {
-    url = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svgStr);
-  } else {
-    const blob = new Blob([svgStr], { type: "image/svg+xml;charset=utf-8" });
-    url = URL.createObjectURL(blob);
-    isBlob = true;
-  }
-
+  // A data: URL first. Chrome taints the canvas when it draws a blob: SVG
+  // that contains <foreignObject>, and Mermaid puts every label in one.
+  // Some Firefox versions refuse data: URLs over 32 MB, so if the data: URL
+  // fails to load, try a blob: URL before giving up.
   const img = new Image();
   img.crossOrigin = "anonymous";
 
@@ -447,17 +440,25 @@ export async function renderToCanvas(sourceElement, modalClone, transparent = fa
   img.width = Math.round(width);
   img.height = Math.round(height);
 
-  await new Promise((resolve, reject) => {
-    img.onload = () => {
-      if (isBlob) URL.revokeObjectURL(url);
-      resolve();
-    };
-    img.onerror = (_err) => {
-      if (isBlob) URL.revokeObjectURL(url);
-      reject(new Error("Image load failed. SVG may be too large or contain invalid data."));
-    };
-    img.src = url;
-  });
+  const load = (src) =>
+    new Promise((resolve, reject) => {
+      img.onload = () => resolve();
+      img.onerror = () => reject(new Error("Image load failed"));
+      img.src = src;
+    });
+
+  let blobUrl = null;
+  try {
+    await load("data:image/svg+xml;charset=utf-8," + encodeURIComponent(svgStr));
+  } catch (_e) {
+    blobUrl = URL.createObjectURL(new Blob([svgStr], { type: "image/svg+xml;charset=utf-8" }));
+    try {
+      await load(blobUrl);
+    } catch (_e2) {
+      URL.revokeObjectURL(blobUrl);
+      throw new Error("Image load failed. SVG may be too large or contain invalid data.");
+    }
+  }
 
   if (!transparent) {
     ctx.fillStyle = bg || COLORS.BG_LIGHT;
@@ -467,6 +468,7 @@ export async function renderToCanvas(sourceElement, modalClone, transparent = fa
   ctx.imageSmoothingEnabled = true;
   ctx.imageSmoothingQuality = "high";
   ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+  if (blobUrl) URL.revokeObjectURL(blobUrl);
 
   return { canvas, scale, width, height };
 }

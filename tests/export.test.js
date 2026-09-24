@@ -98,6 +98,58 @@ describe("Export Functionality", () => {
     expect(global.URL.createObjectURL).toHaveBeenCalled();
   });
 
+  test("renderToCanvas loads an SVG over 1 MB through a data: URL, not a blob: URL", async () => {
+    // Chrome taints the canvas for a blob: SVG with <foreignObject>
+    const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+    text.textContent = "x".repeat(1100000);
+    svg.appendChild(text);
+
+    await renderToCanvas(container);
+
+    const img = global.Image.mock.results[0].value;
+    expect(img.src.startsWith("data:image/svg+xml")).toBe(true);
+    expect(img.src.length).toBeGreaterThan(1100000);
+    expect(global.URL.createObjectURL).not.toHaveBeenCalled();
+  });
+
+  describe("when the browser refuses the data: URL", () => {
+    const imageFailing = (failBlob) =>
+      jest.fn(() => {
+        const img = document.createElement("img");
+        img.tried = [];
+        Object.defineProperty(img, "src", {
+          set(val) {
+            this._src = val;
+            this.tried.push(val.slice(0, 5));
+            const fails = val.startsWith("data:") || failBlob;
+            setTimeout(() => (fails ? this.onerror?.() : this.onload?.()), 10);
+          },
+          get() {
+            return this._src;
+          },
+        });
+        return img;
+      });
+
+    test("retries through a blob: URL and frees it after drawing", async () => {
+      global.Image = imageFailing(false);
+
+      const { canvas } = await renderToCanvas(container);
+
+      const img = global.Image.mock.results[0].value;
+      expect(img.tried).toEqual(["data:", "blob:"]);
+      expect(canvas.width).toBe(280);
+      expect(global.URL.revokeObjectURL).toHaveBeenCalledWith("blob:mock-url");
+    });
+
+    test("rejects with the size message when the blob: URL fails too", async () => {
+      global.Image = imageFailing(true);
+
+      await expect(renderToCanvas(container)).rejects.toThrow("SVG may be too large");
+      expect(global.URL.revokeObjectURL).toHaveBeenCalledWith("blob:mock-url");
+    });
+  });
+
   test("visibility guard warns when exporting hidden elements", async () => {
     const consoleSpy = jest.spyOn(console, "warn").mockImplementation(() => {});
     svg.style.display = "none";
