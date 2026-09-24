@@ -34,11 +34,34 @@ describe("styles.css: dead and contradicting rules", () => {
     expect(css).not.toContain(".dv-exp-trans-hint");
   });
 
-  test("dv-pulse keyframes carry no invalid brightness property", () => {
-    const start = css.indexOf("@keyframes dv-pulse");
-    const end = css.indexOf("\n}\n", start);
+  test("search highlight runs no animation and promotes no layers", () => {
+    expect(css).not.toContain("dv-pulse");
+    const start = css.indexOf(".dv-searching");
+    const end = css.indexOf("/* Modal Viewport");
     expect(start).toBeGreaterThan(-1);
-    expect(css.slice(start, end)).not.toMatch(/brightness\s*:/);
+    const rules = css.slice(start, end);
+    expect(rules).not.toMatch(/animation\s*:/);
+    expect(rules).not.toMatch(/will-change\s*:/);
+    expect(rules).not.toMatch(/filter\s*:/);
+  });
+
+  test("search keeps the diagram's own colours and outlines from the canvas", () => {
+    const start = css.indexOf(".dv-searching");
+    const rules = css.slice(start, css.indexOf("/* Modal Viewport"));
+    expect(rules).not.toMatch(/fill\s*:/);
+    expect(rules).not.toContain("--dv-accent");
+    expect(rules).toContain("var(--dv-search-ring");
+  });
+
+  test("search dimming outranks the id-scoped opacity Mermaid sets on some shapes", () => {
+    const body = ruleBody(".dv-search-match *");
+    expect(body).toMatch(/opacity:\s*0\.15\s*!important/);
+  });
+
+  test("search outlines Mermaid 11 shapes drawn inside a g.label-container", () => {
+    const body = ruleBody(".dv-search-match > .label-container > :is(");
+    expect(body).not.toBeNull();
+    expect(body).toContain("var(--dv-search-ring");
   });
 
   test("per-control outline rules that always lose to the global focus ring are gone", () => {

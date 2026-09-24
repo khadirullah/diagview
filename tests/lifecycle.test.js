@@ -199,12 +199,14 @@ describe("destroy() restores every touched element", () => {
     DiagView.init();
     DiagView.refresh(); // syncTheme() writes the variables onto <html>
     expect(root.style.getPropertyValue("--dv-bg")).not.toBe("");
+    expect(root.style.getPropertyValue("--dv-search-ring")).not.toBe("");
 
     await DiagView.destroy();
 
     expect(root.style.getPropertyValue("--dv-bg")).toBe("");
     expect(root.style.getPropertyValue("--dv-text-color")).toBe("");
     expect(root.style.getPropertyValue("--dv-accent")).toBe("");
+    expect(root.style.getPropertyValue("--dv-search-ring")).toBe("");
   });
 
   test("shadow-root diagrams are unwrapped on destroy", async () => {

@@ -23,6 +23,13 @@ let activeSearchThrottle = null;
 let searchGeneration = 0;
 
 /**
+ * Shapes marked for plain-SVG text matches. They are not search candidates,
+ * so the candidate loop cannot unmark them.
+ * @type {Element[]}
+ */
+let markedShapes = [];
+
+/**
  * Initialize or retrieve search cache
  * O(N) read operation, done once per diagram instance (or refresh)
  */
@@ -45,12 +52,80 @@ function getSearchCandidates(clone) {
     cache.push({
       el: el,
       text: (el.textContent || "").toLowerCase(),
-      isPath: el.classList.contains("edgePath"),
     });
   }
 
   state.searchCache.set(clone, cache);
   return cache;
+}
+
+const SHAPE_SELECTOR = "rect, circle, ellipse, polygon, path";
+
+/**
+ * Box of an element as fractions of the SVG's box. Pan and zoom move the
+ * SVG and everything in it together, so these stay valid after the user
+ * pans or zooms between two searches.
+ */
+function relativeBox(el, svgBox) {
+  const r = el.getBoundingClientRect();
+  return {
+    left: (r.left - svgBox.left) / svgBox.width,
+    top: (r.top - svgBox.top) / svgBox.height,
+    right: (r.right - svgBox.left) / svgBox.width,
+    bottom: (r.bottom - svgBox.top) / svgBox.height,
+  };
+}
+
+/**
+ * Filled shapes of a plain SVG with their boxes, measured once per diagram
+ * and rotation. Rotation turns the content inside the SVG, so boxes from
+ * another angle no longer line up. Edges have no fill, so they never count
+ * as a label's shape.
+ */
+function getShapeBoxes(clone, svgBox) {
+  const cached = state.searchShapeCache.get(clone);
+  if (cached && cached.angle === state.rotationAngle) return cached.boxes;
+  const boxes = [];
+  for (const el of clone.querySelectorAll(SHAPE_SELECTOR)) {
+    if (el.closest("defs, marker, clipPath, mask, pattern")) continue;
+    if (getComputedStyle(el).fill === "none") continue;
+    const r = relativeBox(el, svgBox);
+    const area = (r.right - r.left) * (r.bottom - r.top);
+    // A backdrop covering most of the diagram is not a label's shape
+    if (!area || area > 0.5) continue;
+    boxes.push({ el, r, area });
+  }
+  state.searchShapeCache.set(clone, { angle: state.rotationAngle, boxes });
+  return boxes;
+}
+
+/**
+ * A plain SVG draws a label as a <text> next to its shape, not inside it.
+ * Return the smallest filled shape under the text's centre, so the match
+ * can outline it and keep it undimmed. Mermaid nodes never get here: their
+ * outermost candidate is the group that already holds the shape.
+ */
+function findShapeForText(clone, item) {
+  if (item.shape !== undefined) return item.shape;
+  if (item.el.tagName.toLowerCase() !== "text") {
+    item.shape = null;
+    return null;
+  }
+  // Not laid out yet: measure on a later search instead of caching a miss
+  const svgBox = clone.getBoundingClientRect();
+  if (!svgBox.width || !svgBox.height) return null;
+  item.shape = null;
+  const t = relativeBox(item.el, svgBox);
+  const cx = (t.left + t.right) / 2;
+  const cy = (t.top + t.bottom) / 2;
+  let best = Infinity;
+  for (const b of getShapeBoxes(clone, svgBox)) {
+    if (b.area < best && cx >= b.r.left && cx <= b.r.right && cy >= b.r.top && cy <= b.r.bottom) {
+      item.shape = b.el;
+      best = b.area;
+    }
+  }
+  return item.shape;
 }
 
 /**
@@ -76,6 +151,8 @@ function clearHighlights(clone) {
   for (let i = 0; i < toClean.length; i++) {
     toClean[i].classList.remove("dv-search-match");
   }
+  for (const el of markedShapes) el.classList.remove("dv-search-match");
+  markedShapes = [];
 
   const statusEl = document.getElementById("diagview-search-status");
   if (statusEl) statusEl.textContent = "";
@@ -108,6 +185,8 @@ export function performSearch(clone, query) {
     if (gen !== searchGeneration) return;
     clone.classList.add("dv-searching");
 
+    const shapes = new Set();
+
     // Single loop for O(1) DOM updates utilizing CSS fading architecture
     for (let i = 0; i < candidates.length; i++) {
       const item = candidates[i];
@@ -119,12 +198,20 @@ export function performSearch(clone, query) {
           item.el.classList.add("dv-search-match");
         }
         newMatches.push(item.el);
+        const shape = findShapeForText(clone, item);
+        if (shape) shapes.add(shape);
       } else {
         if (isSearchMatch) {
           item.el.classList.remove("dv-search-match");
         }
       }
     }
+
+    for (const el of markedShapes) {
+      if (!shapes.has(el)) el.classList.remove("dv-search-match");
+    }
+    for (const el of shapes) el.classList.add("dv-search-match");
+    markedShapes = [...shapes];
 
     state.searchMatches = newMatches;
 
@@ -260,10 +347,12 @@ export function setupSearch(clone, initialQuery = "") {
  */
 export function resetSearch() {
   searchGeneration = 0;
+  markedShapes = [];
   if (state.searchRafId) {
     cancelAnimationFrame(state.searchRafId);
     state.searchRafId = null;
   }
-  // searchCache is a WeakMap — entries are GC'd automatically when the
-  // clone SVG element is removed from DOM. No manual clear needed.
+  // searchCache and searchShapeCache are WeakMaps. Their entries are GC'd
+  // automatically when the clone SVG element is removed from DOM, so no
+  // manual clear is needed.
 }

@@ -4,7 +4,7 @@
  */
 
 import { jest } from "@jest/globals";
-import { performSearch, clearSearch } from "../src/features/lazy/search.js";
+import { performSearch, clearSearch, resetSearch } from "../src/features/lazy/search.js";
 import { state, resetConfig } from "../src/core/config.js";
 
 // Mock SVG with searchable nodes
@@ -262,5 +262,187 @@ describe("Search: clearSearch", () => {
 
     expect(node.classList.contains("dv-search-match")).toBe(false);
     expect(state.searchMatches).toEqual([]);
+  });
+});
+
+describe("Search: shapes behind plain SVG text", () => {
+  const NS = "http://www.w3.org/2000/svg";
+  let svg;
+  let status;
+  let rafCallbacks;
+  // Current pan and zoom, applied to every mocked box
+  let view;
+
+  // jsdom has no layout, so each element reports a box in diagram units
+  // that the current view moves and scales like pan and zoom would
+  function place(el, x, y, w, h) {
+    el.getBoundingClientRect = () => {
+      // A 90 degree turn inside the 1000 x 1000 SVG moves (x, y) to (1000 - y, x).
+      // The SVG itself keeps its box.
+      const turn = view.angle === 90 && el !== svg;
+      const [bx, by, bw, bh] = turn ? [1000 - (y + h), x, h, w] : [x, y, w, h];
+      const left = view.x + bx * view.scale;
+      const top = view.y + by * view.scale;
+      const width = bw * view.scale;
+      const height = bh * view.scale;
+      return { left, top, width, height, right: left + width, bottom: top + height };
+    };
+    return el;
+  }
+
+  function add(tag, attrs = {}, parent = svg) {
+    const el = document.createElementNS(NS, tag);
+    for (const [k, v] of Object.entries(attrs)) el.setAttribute(k, v);
+    parent.appendChild(el);
+    return el;
+  }
+
+  function flushRaf() {
+    const cbs = [...rafCallbacks];
+    rafCallbacks = [];
+    cbs.forEach((cb) => cb());
+  }
+
+  const marked = () => [...svg.querySelectorAll(".dv-search-match")];
+
+  beforeEach(() => {
+    resetConfig();
+    resetSearch();
+    view = { x: 0, y: 0, scale: 1, angle: 0 };
+    document.body.innerHTML = "";
+    svg = place(document.createElementNS(NS, "svg"), 0, 0, 1000, 1000);
+    document.body.appendChild(svg);
+    status = document.createElement("div");
+    status.id = "diagview-search-status";
+    document.body.appendChild(status);
+    state.searchMatches = [];
+
+    rafCallbacks = [];
+    jest.spyOn(window, "requestAnimationFrame").mockImplementation((cb) => {
+      rafCallbacks.push(cb);
+      return rafCallbacks.length;
+    });
+    jest.spyOn(window, "cancelAnimationFrame").mockImplementation(() => {});
+    jest
+      .spyOn(window, "getComputedStyle")
+      .mockImplementation((el) => ({ fill: el.getAttribute("fill") || "rgb(0, 0, 0)" }));
+  });
+
+  afterEach(() => {
+    resetSearch();
+    document.body.innerHTML = "";
+    state.searchMatches = [];
+    jest.restoreAllMocks();
+  });
+
+  // A hand-drawn diagram: a page backdrop, a panel holding a box with its
+  // label, an edge line through the box, and a second box elsewhere
+  function drawPlainDiagram() {
+    const backdrop = place(add("rect"), 0, 0, 1000, 1000);
+    const panel = place(add("rect"), 100, 100, 300, 300);
+    const box = place(add("rect"), 150, 150, 200, 200);
+    const edge = place(add("path", { fill: "none" }), 0, 240, 1000, 20);
+    const label = place(add("text"), 200, 240, 100, 20);
+    label.textContent = "Auth Service";
+    const otherBox = place(add("circle"), 600, 600, 100, 100);
+    const otherLabel = place(add("text"), 620, 640, 60, 20);
+    otherLabel.textContent = "Billing";
+    return { backdrop, panel, box, edge, label, otherBox, otherLabel };
+  }
+
+  test("a text match marks the smallest filled shape under it", () => {
+    const { backdrop, panel, box, edge, label } = drawPlainDiagram();
+
+    performSearch(svg, "auth");
+    flushRaf();
+
+    expect(label.classList.contains("dv-search-match")).toBe(true);
+    expect(box.classList.contains("dv-search-match")).toBe(true);
+    expect(panel.classList.contains("dv-search-match")).toBe(false);
+    expect(backdrop.classList.contains("dv-search-match")).toBe(false);
+    expect(edge.classList.contains("dv-search-match")).toBe(false);
+  });
+
+  test("the match count leaves the marked shape out", () => {
+    const { box, label } = drawPlainDiagram();
+
+    performSearch(svg, "auth");
+    flushRaf();
+
+    expect(state.searchMatches).toEqual([label]);
+    expect(marked()).toEqual([box, label]);
+    expect(status.textContent).toBe("1 match found");
+  });
+
+  test("the shape is unmarked when the query changes or clears", () => {
+    const { box, label, otherBox, otherLabel } = drawPlainDiagram();
+
+    performSearch(svg, "auth");
+    flushRaf();
+    performSearch(svg, "billing");
+    flushRaf();
+
+    expect(box.classList.contains("dv-search-match")).toBe(false);
+    expect(label.classList.contains("dv-search-match")).toBe(false);
+    expect(marked()).toEqual([otherBox, otherLabel]);
+
+    performSearch(svg, "");
+    expect(marked()).toEqual([]);
+
+    performSearch(svg, "auth");
+    flushRaf();
+    document.body.innerHTML = `
+      <input id="diagview-search" value="auth" />
+      <div id="diagview-modal-viewport"></div>
+    `;
+    document.getElementById("diagview-modal-viewport").appendChild(svg);
+    clearSearch();
+    expect(marked()).toEqual([]);
+  });
+
+  test("shapes measured before a pan or zoom still pair with text after it", () => {
+    const { box, label, otherBox, otherLabel } = drawPlainDiagram();
+
+    performSearch(svg, "auth");
+    flushRaf();
+    expect(marked()).toEqual([box, label]);
+
+    view = { x: -300, y: 120, scale: 2.5, angle: 0 };
+    performSearch(svg, "billing");
+    flushRaf();
+
+    expect(marked()).toEqual([otherBox, otherLabel]);
+  });
+
+  test("shapes are measured again after the diagram is rotated", () => {
+    const { box, label, otherBox, otherLabel } = drawPlainDiagram();
+
+    performSearch(svg, "auth");
+    flushRaf();
+    expect(marked()).toEqual([box, label]);
+
+    view.angle = 90;
+    state.rotationAngle = 90;
+    performSearch(svg, "billing");
+    flushRaf();
+
+    expect(marked()).toEqual([otherBox, otherLabel]);
+  });
+
+  test("a Mermaid node match does not mark a shape of its own", () => {
+    // g.node > rect + g.label > text: the node already holds its shape
+    const node = add("g", { class: "node" });
+    const shape = place(add("rect", {}, node), 100, 100, 200, 80);
+    const label = add("g", { class: "label" }, node);
+    const text = place(add("text", {}, label), 150, 130, 100, 20);
+    text.textContent = "Deploy";
+
+    performSearch(svg, "deploy");
+    flushRaf();
+
+    expect(state.searchMatches).toEqual([node]);
+    expect(marked()).toEqual([node]);
+    expect(shape.classList.contains("dv-search-match")).toBe(false);
+    expect(window.getComputedStyle).not.toHaveBeenCalled();
   });
 });

@@ -435,6 +435,14 @@ export function syncTheme() {
   root.style.setProperty("--dv-text-color", theme.text);
   root.style.setProperty("--dv-accent", theme.accent);
 
+  // The search outline follows the canvas, never the diagram's own colours.
+  // Pick whichever ring colour stands out more against the canvas.
+  const { SEARCH_RING_LIGHT: ringLight, SEARCH_RING_DARK: ringDark } = COLORS;
+  const darkCanvas = parseColor(theme.bg)
+    ? getContrastRatio(ringDark, theme.bg) > getContrastRatio(ringLight, theme.bg)
+    : theme.isDark;
+  root.style.setProperty("--dv-search-ring", darkCanvas ? ringDark : ringLight);
+
   // Update modal if exists
   const modal = document.getElementById("diagview-modal");
   if (modal) {
@@ -534,6 +542,7 @@ export function teardownThemeWatchers() {
   root.style.removeProperty("--dv-bg");
   root.style.removeProperty("--dv-text-color");
   root.style.removeProperty("--dv-accent");
+  root.style.removeProperty("--dv-search-ring");
 
   clearThemeCache();
 }

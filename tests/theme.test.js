@@ -12,6 +12,7 @@ import {
   normalizeSvgTextContrast,
 } from "../src/core/theme.js";
 import { resetConfig, updateConfig } from "../src/core/config.js";
+import { COLORS } from "../src/core/constants.js";
 
 describe("Theme Module", () => {
   beforeEach(() => {
@@ -136,6 +137,25 @@ describe("Theme Module", () => {
     expect(root.style.getPropertyValue("--dv-bg")).toBe(theme.bg);
     expect(root.style.getPropertyValue("--dv-text-color")).toBe(theme.text);
     expect(root.style.getPropertyValue("--dv-accent")).toBe(theme.accent);
+  });
+
+  test("syncTheme picks the search ring colour from the canvas background", () => {
+    const warn = jest.spyOn(console, "warn").mockImplementation(() => {});
+    const root = document.documentElement;
+    const ring = () => root.style.getPropertyValue("--dv-search-ring");
+
+    setCanvasTheme("dark");
+    expect(ring()).toBe(COLORS.SEARCH_RING_DARK);
+
+    setCanvasTheme("light");
+    expect(ring()).toBe(COLORS.SEARCH_RING_LIGHT);
+
+    setCanvasTheme("custom", "#1e293b");
+    expect(ring()).toBe(COLORS.SEARCH_RING_DARK);
+
+    setCanvasTheme("custom", "#fef3c7");
+    expect(ring()).toBe(COLORS.SEARCH_RING_LIGHT);
+    warn.mockRestore();
   });
 
   test("caching prevents redundant detections within 1s", () => {

@@ -832,78 +832,53 @@
   transform: translateY(-50%) scale(0.94);
 }
 
-/* Search Highlighting - Mermaid Optimized */
-.dv-searching .node,
-.dv-searching .cluster,
-.dv-searching .edgePath,
-.dv-searching .label,
-.dv-searching text {
-  transition: opacity 0.2s ease;
-  will-change: opacity;
-}
-
 /*
- * WCAG Contrast Exception — intentional design decision (audit item B5)
+ * Search dimming. Every drawn element outside a match is dimmed. Only leaf
+ * elements are dimmed, so opacity never stacks, and a label inside a matched
+ * node stays sharp. For plain SVGs, search.js also marks the shape behind a
+ * matched text.
  *
- * Non-matching nodes are dimmed to opacity: 0.15 during active search.
+ * WCAG contrast exception (intentional design decision)
+ *
+ * Non-matching elements are dimmed to opacity: 0.15 during active search.
  * This technically violates WCAG 2.1 SC 1.4.3 (minimum contrast ratio 4.5:1)
- * for those nodes.
+ * for those elements.
  *
  * Rationale for exception:
- * 1. The dimming is TRANSIENT — it only occurs while the user is actively typing
+ * 1. The dimming is TRANSIENT. It only occurs while the user is actively typing
  *    in the search box and disappears the moment search is cleared.
  * 2. The PRIMARY information ("these nodes don't match") is conveyed by the dimming
- *    itself, not by reading the dimmed text — the content of dimmed nodes is
+ *    itself, not by reading the dimmed text. The content of dimmed nodes is
  *    intentionally de-emphasized, not the accessible channel.
- * 3. Matching nodes remain at full opacity (see .dv-search-match below) and are
- *    announced via the aria-live region (#diagview-search-status).
+ * 3. Matching nodes remain at full opacity (they and everything inside them are
+ *    excluded below) and are announced via the aria-live region
+ *    (#diagview-search-status).
  * 4. This pattern matches established design systems (VS Code search, GitHub search)
  *    that dim non-matching items without WCAG exception.
  *
- * Screen reader users get match counts via aria-live="polite" — they do not
+ * Screen reader users get match counts via aria-live="polite". They do not
  * rely on the visual opacity state to understand search results.
  */
-.dv-searching .node:not(.dv-search-match),
-.dv-searching .cluster:not(.dv-search-match),
-.dv-searching .label:not(.dv-search-match),
-.dv-searching text:not(.dv-search-match) {
+.dv-searching
+  :is(path, rect, circle, ellipse, polygon, polyline, line, text, foreignObject, image):not(
+    .dv-search-match,
+    .dv-search-match *
+  ) {
+  /* !important: Mermaid sets opacity on some shapes (pie slices) with ID selectors */
   opacity: 0.15 !important;
   pointer-events: none !important;
+  transition: opacity 0.15s ease;
 }
 
-/* Match Highlighting - Premium Glow + Pulse */
-.dv-searching .dv-search-match {
-  opacity: 1 !important;
-  filter: drop-shadow(0 0 12px var(--dv-accent)) !important;
-  animation: dv-pulse 2s infinite ease-in-out;
-}
-
-/* Ensure text inside matches remains crisp and original */
-.dv-searching .dv-search-match text,
-.dv-searching text.dv-search-match {
-  fill: inherit !important;
-  stroke: none !important;
-  font-weight: inherit !important;
-}
-
-/* Pulse animation for easy discovery */
-@keyframes dv-pulse {
-  0% {
-    filter: drop-shadow(0 0 8px var(--dv-accent));
-  }
-  50% {
-    filter: drop-shadow(0 0 16px var(--dv-accent));
-  }
-  100% {
-    filter: drop-shadow(0 0 8px var(--dv-accent));
-  }
-}
-
-/* Specific fix for edge paths (lines) */
-.dv-searching .edgePath.dv-search-match path {
-  stroke: var(--dv-accent) !important;
+/*
+ * Outline the matched shape in a colour taken from the canvas. Mermaid 11
+ * draws its newer node shapes inside a g.label-container.
+ */
+.dv-searching .dv-search-match > :is(rect, circle, ellipse, polygon, path),
+.dv-searching .dv-search-match > .label-container > :is(rect, circle, ellipse, polygon, path),
+.dv-searching :is(rect, circle, ellipse, polygon, path).dv-search-match {
+  stroke: var(--dv-search-ring, #2563eb) !important;
   stroke-width: 3px !important;
-  opacity: 1 !important;
 }
 
 /* Modal Viewport - Diagram Container */

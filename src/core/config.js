@@ -75,6 +75,7 @@ function createInitialState() {
 
     // Search internal state
     searchCache: new WeakMap(),
+    searchShapeCache: new WeakMap(),
 
     // Meeting mode internal state
     // Storage availability (B4)
@@ -252,6 +253,7 @@ export function resetConfig() {
   state.cleanupFunctions = new Set();
   state.modalCleanupFunctions = new Set();
   state.searchCache = new WeakMap();
+  state.searchShapeCache = new WeakMap();
 }
 
 /**
@@ -354,6 +356,7 @@ export { DEFAULT_CONFIG, INITIAL_CONFIG };
  * @property {Set<Node>} nodesToProcess - Observer pending nodes queue
  * @property {Function|null} debouncedProcess - Observer debounced function
  * @property {WeakMap<SVGElement, Array<*>>} searchCache - Search candidates cache
+ * @property {WeakMap<SVGElement, {angle: number, boxes: Array<*>}>} searchShapeCache - Filled shapes of plain SVGs and the rotation they were measured at, for text matches
  * @property {boolean} isStorageAvailable - Whether sessionStorage is available
  * @property {boolean} meetingCleanupRegistered - Meeting mode cleanup flag
  * @property {HTMLElement[]|null} focusableElements - Cached focusable elements for modal

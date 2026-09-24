@@ -213,7 +213,7 @@ A: Ensure your HTML signals dark mode via one of:
 Or override manually: `DiagView.init({ accentColor: '#60a5fa', backgroundColor: '#0f172a' })`.
 
 **Q: My brand color doesn't apply inside the diagram itself.**  
-A: DiagView applies the accent color to the UI chrome (buttons, minimap, highlights), not to the SVG content itself. To style SVG internals, use your own CSS.
+A: DiagView applies the accent color to the UI chrome (buttons and minimap), not to the SVG content itself. To style SVG internals, use your own CSS.
 
 ---
 

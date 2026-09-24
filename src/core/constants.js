@@ -77,6 +77,10 @@ export const COLORS = {
   ACCENT_DARK: "#60a5fa",
   BG_DARK: "#0f172a",
   TEXT_DARK: "#f1f5f9",
+
+  // Search outline, whichever contrasts more with the canvas
+  SEARCH_RING_LIGHT: "#2563eb",
+  SEARCH_RING_DARK: "#fbbf24",
 };
 
 /**

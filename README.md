@@ -38,7 +38,7 @@
 | Feature                      | Description                                                            |
 | ---------------------------- | ---------------------------------------------------------------------- |
 | 🎨 **Auto-Theming**          | Detects Tailwind, Bootstrap, and system dark/light mode automatically  |
-| 🔍 **Node Search**           | Instant search with pulsing glow highlights on matching nodes          |
+| 🔍 **Node Search**           | Instant search that outlines matching nodes and fades the rest         |
 | 📤 **Multi-Format Export**   | PNG, SVG, PDF, JPEG, WebP — with transparent background option         |
 | 📋 **Clipboard Copy**        | Copy diagrams directly to the clipboard                                |
 | ⌨️ **Keyboard Shortcuts**    | Full keyboard navigation (zoom, pan, search, share, rotate)            |

@@ -233,7 +233,17 @@ Set any of the following `data-diagview-*` attributes directly on a diagram cont
 
 ## 6. Search
 
-Search is available inside the fullscreen viewer. It highlights all nodes whose text content contains the search query (case-insensitive). Non-matching nodes are dimmed to 15% opacity.
+Search is available inside the fullscreen viewer. It highlights all nodes whose text content contains the search query (case-insensitive). Everything outside a match fades to 15% opacity, including edges, arrowheads and labels. A matching node stays at full strength with its own colours and label, and its shape gets a 3px outline. In a plain hand-drawn SVG, a matching `<text>` also outlines the smallest filled shape under it.
+
+### Outline colour
+
+DiagView picks the outline colour from the canvas background. It uses `#2563eb` on a light canvas and `#fbbf24` on a dark one. It stores the colour in the `--dv-search-ring` variable, set inline on `<html>` next to `--dv-bg`, `--dv-text-color` and `--dv-accent`. An inline value wins over a plain `:root` rule, so set your own colour on the modal instead, or add `!important`:
+
+```css
+#diagview-modal {
+  --dv-search-ring: #db2777;
+}
+```
 
 ### Activating search
 
