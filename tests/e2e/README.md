@@ -45,6 +45,9 @@ node tests/e2e/verify-react-strictmode.mjs  # real React 18 dev tree with
                                             # StrictMode: init survives the double
                                             # effect, unmount/remount/replace are
                                             # error-free, anti-pattern throws (21 checks)
+node tests/e2e/verify-export-search.mjs     # PNG export of a 1 MB+ foreignObject diagram,
+                                            # search dimming, ring colour per canvas,
+                                            # plain SVG shape marking, rotation (12 checks)
 ```
 
 `verify-react-strictmode.mjs` drives `demo/framework-react.html`. It
