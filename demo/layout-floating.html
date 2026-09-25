@@ -77,7 +77,7 @@
     <section class="page-hero">
         <h1>Static SVG &amp; HUD UI</h1>
         <p>Clean, non-intrusive floating controls combined with high-performance static SVG rendering.</p>
-        <div class="badge-row"><span class="badge">⊙ Floating FAB Mode</span></div>
+        <div class="badge-row"><span class="badge">⊙ Floating Mode</span></div>
     </section>
 
     <div class="grid">
@@ -385,19 +385,19 @@
             <div class="info-card">
                 <div class="info-icon">⊙</div>
                 <h4>Non-Intrusive by Design</h4>
-                <p>The FAB button sits outside the diagram content flow. Users who just need to read never see it —
-                    controls appear only on hover.</p>
+                <p>The copy, download and fullscreen buttons stay hidden until the pointer moves over the diagram.
+                    Users who just need to read never see them.</p>
             </div>
             <div class="info-card">
                 <div class="info-icon">📐</div>
                 <h4>Works in Any Container</h4>
-                <p>Floating mode adapts to any parent container size. Embed in sidebars, modals, or full-width sections
-                    — the FAB always positions correctly.</p>
+                <p>Floating mode adapts to any parent container size. Embed in sidebars, modals, or full-width sections.
+                    The buttons stay centred under the diagram.</p>
             </div>
             <div class="info-card">
                 <div class="info-icon">⌨️</div>
                 <h4>Full Keyboard Navigation</h4>
-                <p>Press / to search, + / − to zoom, arrows to pan, Esc to close. Every action is accessible without
+                <p>Press F to search, + / − to zoom, arrows to pan, Esc to close. Every action is accessible without
                     touching the mouse.</p>
             </div>
         </div>
@@ -421,7 +421,7 @@
             <div class="shortcut-card">
                 <div class="shortcut-group">Pan</div>
                 <div class="shortcut-row"><kbd>↑ ↓ ← →</kbd><span>Pan diagram</span></div>
-                <div class="shortcut-row"><kbd>Shift</kbd><span>Fast pan</span></div>
+                <div class="shortcut-row"><kbd>Shift + ↑ ↓ ← →</kbd><span>Fast pan</span></div>
                 <div class="shortcut-row"><kbd>Drag</kbd><span>Free pan</span></div>
             </div>
             <div class="shortcut-card">
@@ -434,6 +434,8 @@
                 <div class="shortcut-row"><kbd>M</kbd><span>Meeting mode</span></div>
                 <div class="shortcut-row"><kbd>R</kbd><span>Rotate 90°</span></div>
                 <div class="shortcut-row"><kbd>L</kbd><span>Share link</span></div>
+                <div class="shortcut-row"><kbd>T</kbd><span>Text select</span></div>
+                <div class="shortcut-row"><kbd>?</kbd><span>Show shortcuts</span></div>
             </div>
         </div>
     </div>
@@ -448,7 +450,7 @@
             <pre><code><span class="c">// 1. CDN — drop into any HTML page</span>
 &lt;<span class="t">script</span> <span class="a">src</span>=<span class="v">"https://unpkg.com/diagview@1.0.12/dist/diagview.umd.js"</span>&gt;&lt;/<span class="t">script</span>&gt;
 
-<span class="c">// 2. Init with floating FAB</span>
+<span class="c">// 2. Init with floating buttons</span>
 <span class="kw">DiagView</span>.init({
   diagramSelector: <span class="v">'.diagram'</span>,
   layout:          <span class="v">'floating'</span>,
