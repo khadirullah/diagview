@@ -911,7 +911,6 @@ DiagView.init({ naturalPanning: true });
 ```javascript
 DiagView.init({
   performance: {
-    largeFileThreshold: 500000, // Skip style-baking above 500 KB SVG
     criticalFileLimit: 10000000, // Block processing above 10,000,000 characters of serialized SVG
   },
   maxPixels: 25000000, // Allow up to 25MP export (use carefully)

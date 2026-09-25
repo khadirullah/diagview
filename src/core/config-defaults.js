@@ -61,6 +61,9 @@ export const INITIAL_CONFIG = {
 
   // Performance & Safeguards
   performance: {
+    // No effect. Only cloneSVG's preserveStyles copy read it, and no caller
+    // turns that on. Export copies styles its own way, with a node cap.
+    // Kept so existing configs and getConfiguration() output stay the same.
     largeFileThreshold: EXPORT.LARGE_FILE_THRESHOLD,
     criticalFileLimit: EXPORT.CRITICAL_FILE_LIMIT_DEFAULT,
   },

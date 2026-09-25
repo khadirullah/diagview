@@ -393,8 +393,8 @@ interface DiagViewConfig {
 
   // Performance
   performance: {
-    largeFileThreshold: number; // default: 1000000 (1 MB)
-    criticalFileLimit: number; // default: 50000000 (50 MB)
+    largeFileThreshold: number; // default: 1000000; no effect in this version
+    criticalFileLimit: number; // default: 50000000 characters of SVG markup
   };
 
   // Notifications

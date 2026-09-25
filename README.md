@@ -435,8 +435,8 @@ DiagView.init({
 
   // ── Performance ──────────────────────────────────
   performance: {
-    largeFileThreshold: 1000000, // 1 MB — skip style baking above this
-    criticalFileLimit: 50000000, // 50 MB — hard block above this
+    largeFileThreshold: 1000000, // no effect in this version, accepted so old configs still work
+    criticalFileLimit: 50000000, // characters of SVG markup; fullscreen and export refuse above this
   },
 
   // ── Notifications ────────────────────────────────
