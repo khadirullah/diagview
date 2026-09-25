@@ -21,10 +21,10 @@ A: Yes. Drop in two `<script>` tags from a CDN and you are done. See [Installati
 ## Installation
 
 **Q: Why doesn't zoom work?**  
-A: The `@panzoom/panzoom` script must be loaded **before** DiagView. If it is missing, DiagView prints "Panzoom library not found" in the console and gracefully degrades — exports still work, but zoom/pan are disabled.
+A: DiagView could not find `window.Panzoom` when the viewer opened. It checks each time fullscreen opens, so script order does not matter. If you use share links, Panzoom must exist before `init()` runs, because a share link opens the viewer right after `init()`. When Panzoom is missing, the console logs "Panzoom library not found" and a toast says "Zoom/pan requires Panzoom library". Export still works. Zoom, pan, the minimap and most keyboard shortcuts do not. With npm, set `window.Panzoom = Panzoom` as shown in the [README](../README.md#npm).
 
 **Q: Can I use Panzoom from npm instead of CDN?**  
-A: Yes. `npm install @panzoom/panzoom` and import it normally. DiagView uses `window.Panzoom` at runtime; bundlers that expose globals (e.g. Vite with `define`) will wire it up automatically. Otherwise ensure `window.Panzoom = Panzoom` is set before `DiagView.init()`.
+A: Yes. Run `npm install @panzoom/panzoom`, then import it and assign it in your entry file with `window.Panzoom = Panzoom`. DiagView does not import Panzoom itself and only reads `window.Panzoom`, so no bundler setting does this for you.
 
 **Q: Does DiagView inject CSS into `<head>` automatically?**  
 A: Yes. Styles are injected once into a `<style id="diagview-styles">` tag when `init()` is called, and removed by `destroy()`. `initShadowRoot()` installs the same stylesheet inside the shadow root, and `destroy()` removes that copy too.
@@ -32,7 +32,7 @@ A: Yes. Styles are injected once into a `<style id="diagview-styles">` tag when 
 ---
 
 **Q: I call `init({...})` from a `type="module"` script and get "Already initialized"; my options are ignored.**  
-A: Auto-init is deferred one task after the library loads, so an `init()` that runs synchronously in your module wins. The warning means your call ran later, after an `await` or inside a framework effect. Add `data-diagview-auto-init="false"` to the library script tag in that case.
+A: Auto-init is deferred one task after the library loads, so an `init()` that runs synchronously in your module wins. The warning means your call ran later, after an `await` or inside a framework effect. Add `data-diagview-no-auto-init` to the library script tag in that case. Do not use `data-diagview-auto-init`, which forces auto-init whatever its value.
 
 ---
 
@@ -42,7 +42,15 @@ A: Auto-init is deferred one task after the library loads, so an `init()` that r
 A: Use `layout: 'off'`. Clicking the diagram opens fullscreen.
 
 **Q: How do I make controls always visible on desktop?**  
-A: Use `layout: 'header'`.
+A: There is no option for this. With a mouse or trackpad, DiagView shows the inline controls on hover or keyboard focus. On touch screens they are always shown. To keep them visible everywhere, add this CSS. It works for the header and floating layouts:
+
+```css
+.diagview-wrapper .diagview-controls {
+  opacity: 1;
+  pointer-events: auto;
+  transform: none;
+}
+```
 
 **Q: How do I hide the "DiagView" branding link?**
 
@@ -97,6 +105,8 @@ A: Increase `highResScale`:
 DiagView.init({ highResScale: 8 }); // 8× the SVG's intrinsic size
 ```
 
+On touch devices and screens up to 768 px wide, `mobileScale` (default 2) applies instead. DiagView also lowers the scale when the canvas would exceed `maxPixels`.
+
 **Q: Can I export a specific diagram from code without opening fullscreen?**
 
 ```javascript
@@ -119,7 +129,7 @@ DiagView.init({
 A: When `transparent: true` is passed to JPEG export, DiagView automatically switches to transparent PNG (JPEG does not support transparency) and shows a warning toast.
 
 **Q: Clipboard copy fails on my site. Why?**  
-A: The Clipboard API requires HTTPS or `localhost`. On plain HTTP, DiagView falls back to `document.execCommand('copy')`. If the browser denies the write (Safari does once the click that started the export is over) or both paths fail, the PNG is downloaded instead and the toast says so.
+A: Copying an image needs the Clipboard API, which browsers only offer on HTTPS or `localhost`. Without it, or if the browser denies the write (Safari does once the click that started the export is over), DiagView downloads the PNG instead and the toast says so. "Copy SVG" in the fullscreen menu copies text, and on plain HTTP it falls back to `document.execCommand('copy')`.
 
 **Q: I'm hitting the export size limit. How do I increase it?**
 
@@ -151,7 +161,7 @@ Per-element (requires `security.allowOverrides: true`, the default):
 <div class="diagram" data-diagview-sanitize="off">...</div>
 ```
 
-**Q: My SVG has CSS animations that get stripped. Why?**  
+**Q: My SVG animations (`<animate>`, `<animateTransform>`, `<set>`) get stripped. Why?**  
 A: `strict` mode removes `<animate>`, `<animateTransform>`, `<set>`, and similar elements as they are known XSS vectors. Switch to `permissive` for the affected diagram:
 
 ```html
@@ -159,6 +169,8 @@ A: `strict` mode removes `<animate>`, `<animateTransform>`, `<set>`, and similar
   <svg><!-- animated diagram --></svg>
 </div>
 ```
+
+CSS `@keyframes` animations in a `<style>` block are kept. `strict` removes the block only if it contains script patterns, `@import` or a remote `url()`.
 
 `permissive` still drops animations whose `attributeName` is `href`/`xlink:href` or an `on*` handler, because those can be used to inject a script.
 
@@ -181,7 +193,7 @@ A: No. DiagView clones the SVG before sanitizing. The original DOM element is ne
 A: This is handled automatically. When the modal opens, DiagView syncs its controls to the visual viewport and keeps them aligned while the page is pinch-zoomed. No option is required; if you still see drift, please open an issue with the device and browser version.
 
 **Q: The minimap doesn't appear on my phone.**  
-A: The minimap is intentionally hidden on viewports narrower than 768 px to preserve screen real estate.
+A: The minimap is intentionally hidden on viewports 768 px wide or narrower to preserve screen real estate.
 
 **Q: Why does the diagram stutter or zoom wildly in Firefox Mobile after a 3-finger screenshot?**  
 A: This is a known browser-level limitation in Firefox Mobile (Gecko engine) on Android devices with system-level gestures (like 3-finger screenshots). When a system gesture is triggered, the browser enters a "Decision State" where it briefly blocks all touch events to the script. This can cause the internal pointer state to become desynchronized. DiagView includes "Safe-Recovery" logic to stabilize this, but you may still experience a momentary "stutter" as the browser hands control back to the viewer. For the most fluid multi-touch experience, Chromium-based browsers (Brave, Chrome) are recommended.
@@ -210,10 +222,13 @@ A: Ensure your HTML signals dark mode via one of:
 - `<html data-theme="dark">`
 - `<html data-bs-theme="dark">` (Bootstrap)
 
-Or override manually: `DiagView.init({ accentColor: '#60a5fa', backgroundColor: '#0f172a' })`.
+Or override manually: `DiagView.init({ backgroundColor: '#0f172a', textColor: '#e2e8f0' })`.
 
 **Q: My brand color doesn't apply inside the diagram itself.**  
 A: DiagView applies the accent color to the UI chrome (buttons and minimap), not to the SVG content itself. To style SVG internals, use your own CSS.
+
+**Q: How do I change the accent color?**  
+A: Pass `accentColor` to `init()`, or call `DiagView.configure({ accentColor: "#f59e0b" })` to change it later. Without `accentColor`, DiagView uses `--diagram-accent` if it holds a colour, then its built-in blue. It does not read the site's `--primary` or `--accent-color`. It reads the page variables again when the `class`, `data-theme` or `style` attribute of `<html>` or `<body>` changes, so a theme or accent switcher that sets them applies at once. An `accentColor` in the config always wins over the page variables.
 
 **Q: My diagram text is hard to read on a dark canvas.**  
 A: The canvas theme changes only the background, and the diagram keeps its author's colors. In the fullscreen menu, pick "Readable" under "Text Colours". DiagView then recolors only the text that is hard to read and keeps its hue. Exports keep the original colors. See [Text Colours](USAGE.md#text-colours).
@@ -256,7 +271,7 @@ The stylesheet is installed inside the root so the inline toolbar renders correc
 ## Branding & Watermarking
 
 **Q: Why don't I see the watermark in the viewer?**  
-A: DiagView watermarks are "Silent." They are designed to keep your website clean and professional. They only appear on the exported file (PNG, JPEG, SVG, or PDF) to ensure your work is attributed when shared.
+A: DiagView watermarks are "Silent." They are designed to keep your website clean and professional. They only appear on the exported file (PNG, JPEG, WebP, SVG, or PDF), on copied images and in copied SVG markup to ensure your work is attributed when shared.
 
 **Q: Does adding a watermark affect image quality?**  
 A: No. DiagView renders watermarks using native SVG vectors, ensuring they are crystal clear at any resolution.
@@ -265,7 +280,7 @@ A: No. DiagView renders watermarks using native SVG vectors, ensuring they are c
 A: No. DiagView uses a "Safe-Fit" scaling engine. It automatically calculates the available space and reduces the font size until your brand fits perfectly within the diagram boundaries.
 
 **Q: What if my diagram has a yellow or dark background?**  
-A: DiagView is "Contrast-Aware." It automatically adds a subtle outline (stroke) to the text in a contrasting color (e.g., white text on dark nodes) to ensure your brand is always legible.
+A: The watermark text has a thin outline in the opposite color. It is black with a white outline on a light theme and white with a black outline on a dark theme, so it stays legible on light and dark fills.
 
 **Q: Does "four-sides" put text on all 4 corners?**  
 A: No, it puts them on the center of each edge (Top, Bottom, Left, Right) to maximize visibility while preventing the diagram from looking cluttered.
@@ -278,4 +293,4 @@ A: No, it puts them on the center of each edge (Top, Bottom, Left, Right) to max
 A: [GitHub Issues](https://github.com/khadirullah/diagview/issues). Include browser, OS, DiagView version, and a minimal reproduction.
 
 **Q: How do I request a feature?**  
-A: Open a GitHub Issue titled `[Feature] My request`. Describe the problem it solves and your proposed solution.
+A: Open a GitHub issue with the Feature request template. Its title starts with `[FEATURE]`. Describe the problem it solves and the solution you have in mind.

@@ -1,6 +1,6 @@
 # DiagView — Public API Reference
 
-All methods are available on the `DiagView` global (UMD) or the default export (ESM).
+All methods are available on the `DiagView` global (UMD) or the default export (ESM). The ESM build also exports each of them by name, along with `state`, `utils` and `version`.
 
 ---
 
@@ -26,7 +26,7 @@ Initialize DiagView. Injects styles, creates the modal DOM, sets up keyboard sho
 
 ```javascript
 DiagView.init();
-DiagView.init({ layout: "header", accentColor: "#6366f1" });
+DiagView.init({ layout: "header", showMinimap: false });
 ```
 
 Initialization runs synchronously, so you do not need to await it in normal use. The returned promise exists for one case: if a `destroy()` is still in flight when `init()` is called, the initialization is queued behind it and the promise resolves once DiagView is ready. This is what happens under React StrictMode and hot module reload, where cleanup calls `destroy()` and the effect immediately calls `init()` again.
@@ -37,7 +37,7 @@ Calling `init()` more than once without an intervening `destroy()` is a no-op (l
 
 ### `DiagView.destroy()`
 
-Fully tear down DiagView. Removes all DOM elements, stops observers, destroys Panzoom, clears sessionStorage zoom states, and resets all internal state.
+Fully tear down DiagView. Removes all DOM elements, stops observers, destroys Panzoom, clears sessionStorage zoom states, and resets all internal state. The configuration goes back to the defaults, the Canvas Theme to Auto and Text Colours to Original.
 
 **Signature:** `destroy(): Promise<void>`
 
@@ -73,18 +73,18 @@ Update configuration at runtime without re-initializing. Syncs theme and brandin
 
 ```javascript
 DiagView.configure({
-  accentColor: "#f59e0b",
+  backgroundColor: "#0f172a",
   showBranding: false,
 });
 ```
 
-Every option is validated on `init()` and `configure()`. An invalid value logs a warning and keeps the value that was in effect before: numeric options must be finite numbers within their documented range, `minZoomScale` may not exceed `maxZoomScale`, `diagramSelector` must be a selector the browser accepts, `backgroundColor`/`textColor` must be colours the browser accepts, `allowedImageTypes` must be an array of strings, and the `security`, `watermark`, `ui` and `performance` groups must be objects (they are merged, never replaced). Unknown keys are ignored with a warning.
+DiagView checks some options on `init()` and `configure()`. An invalid value logs a warning and keeps the value that was in effect before. The exception is `layout`, which falls back to `'floating'`. `highResScale`, `mobileScale`, `maxZoomScale`, `minZoomScale` and `maxPixels` must be finite numbers in their documented range, and `minZoomScale` may not exceed `maxZoomScale`. Timing options such as `toastDuration` must be 0 or more. `diagramSelector` must be a selector the browser accepts, and `allowedImageTypes` must be an array of strings. The `security`, `watermark`, `ui` and `performance` groups must be objects, and DiagView merges them into the current settings. DiagView does not check the values inside those groups, booleans, callbacks or the PDF options. An unknown `security.mode` works as `'strict'`. An `accentColor`, `backgroundColor` or `textColor` the browser cannot parse logs a warning, and DiagView detects that colour from the page instead. DiagView ignores unknown top-level keys and logs a warning.
 
 ---
 
 ### `DiagView.getConfiguration()`
 
-Return an immutable copy of the current configuration.
+Return a copy of the current configuration. Changing the copy does not change DiagView; use `configure()` for that.
 
 **Signature:** `getConfiguration(): DiagViewConfig`
 
@@ -120,15 +120,27 @@ Generic export dispatcher.
 **Signature:** `exportDiagram(element: HTMLElement, mode: ExportMode, options?: ExportOptions): Promise<void>`
 
 ```typescript
-type ExportMode = "png" | "svg" | "jpeg" | "webp" | "pdf" | "copy";
+type ExportMode =
+  | "png"
+  | "svg"
+  | "jpeg"
+  | "webp"
+  | "pdf"
+  | "copy"
+  | "copy-svg"
+  | "png-transparent"
+  | "webp-transparent"
+  | "download";
 ```
 
 ```javascript
 await DiagView.exportDiagram(el, "png", { transparent: true });
-await DiagView.exportDiagram(el, "svg", { filename: "architecture" });
+await DiagView.exportDiagram(el, "svg");
 await DiagView.exportDiagram(el, "pdf");
 await DiagView.exportDiagram(el, "copy");
 ```
+
+`"copy"` puts a PNG on the clipboard and `"copy-svg"` copies the SVG markup as text. An unknown mode exports a PNG. `exportDiagram()` names the file from the diagram's title and ignores `filename` and `silent`. It is the call the toolbar and the fullscreen menu use, and the only export call that fires the `onExport` callback. The `exportTo*()` methods and `copyToClipboard()` do not fire it.
 
 ### `DiagView.exportToPNG(element, options?)`
 
@@ -175,7 +187,7 @@ Copies a PNG to the system clipboard. Requires HTTPS or localhost. If the browse
 await DiagView.copyToClipboard(el);
 ```
 
-All export methods resolve without throwing when `element` contains no `<svg>`; they show a "No diagram found" toast instead. Per-diagram `data-diagview-scale` and `data-diagview-watermark-*` attributes on the element are honoured by every export path, inline or fullscreen.
+All export methods resolve without throwing when `element` contains no `<svg>`; they show a "No diagram found" toast instead. Per-diagram `data-diagview-scale` and `data-diagview-watermark-*` attributes on the element are honoured by every export path, inline or fullscreen. On touch devices and narrow screens, `mobileScale` applies instead.
 
 ### Export Options
 
@@ -183,9 +195,11 @@ All export methods resolve without throwing when `element` contains no `<svg>`; 
 interface ExportOptions {
   transparent?: boolean; // Transparent background (default: false)
   filename?: string; // Base filename without extension (default: auto)
-  silent?: boolean; // Suppress toast notifications (default: false)
+  silent?: boolean; // Skip the progress and JPEG transparency toasts (PNG and JPEG only, default: false)
 }
 ```
+
+`copyToClipboard()` ignores `transparent`. `exportToPDF()` keeps the background and shows a warning when `transparent` is set.
 
 ---
 
@@ -247,7 +261,7 @@ sanitizeSVG(
   input: string | Node,
   mode?: 'strict' | 'permissive' | 'off',
   options?: number | SanitizeOptions
-): string | Node
+): string | Node | null
 ```
 
 ```typescript
@@ -278,7 +292,7 @@ Input over `maxChars` is blocked with a console error: a string returns `""`, a 
 The current library version string.
 
 ```javascript
-console.log(DiagView.version); // "1.0.6"
+console.log(DiagView.version); // e.g. "1.0.12"
 ```
 
 ---
@@ -296,6 +310,8 @@ interface PublicState {
   currentDiagramIndex: number;
   meetingMode: boolean;
   searchMatches: Element[];
+  activeCanvasThemeMode: "auto" | "light" | "dark" | "custom"; // Canvas theme picked in the menu
+  customCanvasColor: string | null; // Canvas colour when the mode is "custom"
   readableText: boolean; // Text Colours set to Readable in the menu
   // Internal collections returned as snapshots:
   cleanupFunctions: Set<Function>;
@@ -365,7 +381,7 @@ interface DiagViewConfig {
   // Export
   highResScale: number; // default: 4 (range: 1–10)
   mobileScale: number; // default: 2 (range: 1–5)
-  maxPixels: number; // default: 16777216 (16MP)
+  maxPixels: number; // default: 16777216 (16MP), range: 1000000 to 268435456
 
   // Security
   security: {
@@ -402,7 +418,7 @@ interface DiagViewConfig {
     enabled: boolean; // default: false
     text: string; // branding text
     style: "corner" | "background" | "both"; // default: 'corner'
-    position: "top-left" | "top-right" | "bottom-left" | "bottom-right" | "center" | "four-sides"; // default: 'bottom-right'
+    position: "top-left" | "top-right" | "bottom-left" | "bottom-right" | "center" | "four-sides"; // default: 'bottom-right'; four-sides needs the corner or both style
     opacity: number; // default: 0.2 (range 0.0–1.0)
   };
 }
@@ -419,7 +435,7 @@ import DiagView from "diagview";
 
 DiagView.init({
   layout: "floating",
-  accentColor: "#3b82f6",
+  showMinimap: false,
   onOpen: () => console.log("opened"),
 });
 
@@ -428,17 +444,7 @@ await DiagView.openFullscreen(el, { zoom: 2 });
 await DiagView.exportToPNG(el, { transparent: true });
 ```
 
-Import specific types if needed:
-
-```typescript
-import type { DiagViewConfig } from "diagview";
-
-const config: Partial<DiagViewConfig> = {
-  layout: "header",
-  highResScale: 8,
-};
-DiagView.init(config);
-```
+The declarations come from the JSDoc in the source. They type the options of `init()` and `configure()` as `object`, and they do not export a `DiagViewConfig` type. `DiagViewConfig` in this reference only describes the shape of the options.
 
 ---
 
