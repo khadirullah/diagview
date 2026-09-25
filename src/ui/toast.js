@@ -44,8 +44,11 @@ export function showToast(message, type = "success", duration = null) {
   // If the modal is open, we append the toast TO THE MODAL.
   // This ensures that the toast inherits the "Visual Viewport Sync" transform
   // and appears at the correct 1:1 scale even if the background is zoomed.
+  // The modal element stays in the DOM after init but is display:none while
+  // closed, so only use it while it is open.
   const modal = document.getElementById("diagview-modal");
-  const targetParent = modal && document.contains(modal) ? modal : document.body;
+  const targetParent =
+    modal && document.contains(modal) && modal.classList.contains("open") ? modal : document.body;
 
   if (!container) {
     container = document.createElement("div");

@@ -42,7 +42,8 @@ node tests/e2e/verify-fixes.mjs             # UMD globals, removed config keys, 
                                             # exports, allowOverrides gate, background and
                                             # text colour, panAnimationDuration, arrow keys
                                             # while rotated, T after reopen, share links on
-                                            # file://, init() after destroy() (30 checks)
+                                            # file://, init() after destroy(), notices
+                                            # visible in and out of fullscreen (33 checks)
 node tests/e2e/verify-react-strictmode.mjs  # real React 18 dev tree with
                                             # StrictMode: init survives the double
                                             # effect, unmount/remount/replace are

@@ -68,4 +68,42 @@ describe("Toast Notification System", () => {
     jest.advanceTimersByTime(1);
     expect(document.body.textContent).toContain("✕ Error: Details");
   });
+
+  describe("where the container goes", () => {
+    let modal;
+    const container = () => document.getElementById("diagview-toast-container");
+
+    beforeEach(() => {
+      modal = document.createElement("div");
+      modal.id = "diagview-modal";
+      modal.className = "diagview-modal";
+      document.body.appendChild(modal);
+    });
+
+    test("on the page while the modal exists but is closed", () => {
+      showToast("Saved");
+      expect(container().parentNode).toBe(document.body);
+      expect(modal.contains(container())).toBe(false);
+    });
+
+    test("inside the modal while it is open", () => {
+      modal.classList.add("open");
+      showToast("Saved");
+      expect(container().parentNode).toBe(modal);
+    });
+
+    test("follows the modal as it opens and closes", () => {
+      showToast("Before");
+      expect(container().parentNode).toBe(document.body);
+
+      modal.classList.add("open");
+      showToast("While open");
+      expect(container().parentNode).toBe(modal);
+
+      modal.classList.remove("open");
+      showToast("After");
+      expect(container().parentNode).toBe(document.body);
+      expect(container().textContent).toContain("After");
+    });
+  });
 });

@@ -1,5 +1,5 @@
 /**
- * Browser sweep for the fixes landed after v1.0.11.
+ * Browser sweep for the fixes landed after v1.0.11, plus notice visibility.
  *
  * Loads a self-contained page from file:// (so the share-link fix is exercised
  * for real) with several SVG flavours — attribute refs, inline-style refs,
@@ -497,6 +497,67 @@ await section("destroy/init race", async () => {
   );
   await closeModal();
   check("fullscreen works after destroy/init cycle", reopened);
+});
+
+// ── 12. Notices are visible outside fullscreen too ─────────────────────────
+await section("toast visibility", async () => {
+  // Reports where the newest toast sits and whether it is on screen.
+  const lastToast = async (text) => {
+    await page.waitForFunction(
+      (t) =>
+        [...document.querySelectorAll(".diagview-toast")].some((n) => n.textContent.includes(t)),
+      text,
+    );
+    await page.waitForTimeout(400);
+    return page.evaluate((t) => {
+      const n = [...document.querySelectorAll(".diagview-toast")]
+        .reverse()
+        .find((x) => x.textContent.includes(t));
+      const r = n.getBoundingClientRect();
+      const onScreen =
+        n.checkVisibility({ checkOpacity: true }) &&
+        r.width > 0 &&
+        r.height > 0 &&
+        r.top >= 0 &&
+        r.bottom <= innerHeight;
+      return { inViewer: !!n.closest("#diagview-modal"), onScreen };
+    }, text);
+  };
+  const clearToasts = () =>
+    page.evaluate(() => document.getElementById("diagview-toast-container")?.remove());
+
+  await clearToasts();
+  const copyBtn = page.locator('[data-action="copy"]').first();
+  await copyBtn.scrollIntoViewIfNeeded();
+  await copyBtn.click({ force: true });
+  const inline = await lastToast("Copied");
+  check(
+    "toolbar notice shows on the page while fullscreen is closed",
+    !inline.inViewer && inline.onScreen,
+    JSON.stringify(inline),
+  );
+
+  await openIndex(0);
+  await clearToasts();
+  await page.evaluate(() => DiagView.exportDiagram(DiagView.state.activeSourceElement, "svg"));
+  const inside = await lastToast("SVG saved");
+  check(
+    "notice shows inside the viewer while fullscreen is open",
+    inside.inViewer && inside.onScreen,
+    JSON.stringify(inside),
+  );
+  await closeModal();
+
+  await clearToasts();
+  await page.evaluate(() =>
+    DiagView.exportDiagram(document.querySelector(".diagram, .mermaid"), "svg"),
+  );
+  const after = await lastToast("SVG saved");
+  check(
+    "notice shows on the page again after fullscreen closes",
+    !after.inViewer && after.onScreen,
+    JSON.stringify(after),
+  );
 });
 
 check(
