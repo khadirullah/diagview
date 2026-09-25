@@ -34,12 +34,21 @@ import { deepMerge, deepFreeze } from "./state-utils.js";
  */
 
 /**
+ * Export matches these without regard to case, so "Corner" and "CORNER" work too.
+ * @typedef {"corner"|"background"|"both"} WatermarkStyle
+ */
+
+/**
+ * @typedef {"top-left"|"top-right"|"bottom-left"|"bottom-right"|"center"|"four-sides"} WatermarkPosition
+ */
+
+/**
  * Watermark drawn on exported images only.
  * @typedef {object} DiagViewWatermarkConfig
  * @property {boolean} enabled - Draw the watermark
  * @property {string} text - Watermark text
- * @property {"corner"|"background"|"both"} style - Corner text, a large centred mark, or both
- * @property {"top-left"|"top-right"|"bottom-left"|"bottom-right"|"center"|"four-sides"} position - Where corner text goes
+ * @property {WatermarkStyle|Capitalize<WatermarkStyle>|Uppercase<WatermarkStyle>} style - Corner text, a large centred mark, or both
+ * @property {WatermarkPosition|Capitalize<WatermarkPosition>|Uppercase<WatermarkPosition>} position - Where corner text goes
  * @property {number} opacity - From 0 to 1
  */
 
