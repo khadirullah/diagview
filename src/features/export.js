@@ -722,6 +722,7 @@ export async function exportToWebP(sourceElement, options = {}) {
     !!options.transparent,
     false,
     options.modalClone,
+    !!options.silent,
   );
 }
 
@@ -793,7 +794,8 @@ export async function exportDiagram(sourceElement, mode, options = {}) {
   const svg = sourceElement.querySelector("svg");
   if (!svg) return showErrorToast("No diagram found");
 
-  const filename = generateFilename(svg);
+  const filename = options.filename || generateFilename(svg);
+  const silent = options.silent;
 
   // Parse legacy modes mapping
   if (mode === "png-transparent") {
@@ -819,19 +821,34 @@ export async function exportDiagram(sourceElement, mode, options = {}) {
       await copyToClipboard(sourceElement, { filename, modalClone });
       break;
     case "jpeg":
-      await exportToJPEG(sourceElement, { filename, transparent: isTransparent, modalClone });
+      await exportToJPEG(sourceElement, {
+        filename,
+        transparent: isTransparent,
+        modalClone,
+        silent,
+      });
       break;
     case "png":
-      await exportToPNG(sourceElement, { filename, transparent: isTransparent, modalClone });
+      await exportToPNG(sourceElement, {
+        filename,
+        transparent: isTransparent,
+        modalClone,
+        silent,
+      });
       break;
     case "webp":
-      await exportToWebP(sourceElement, { filename, transparent: isTransparent, modalClone });
+      await exportToWebP(sourceElement, {
+        filename,
+        transparent: isTransparent,
+        modalClone,
+        silent,
+      });
       break;
     case "pdf":
       await exportToPDF(sourceElement, { filename, transparent: isTransparent, modalClone });
       break;
     default:
-      await exportToPNG(sourceElement, { filename, modalClone });
+      await exportToPNG(sourceElement, { filename, modalClone, silent });
   }
 
   // Fire onExport callback after export completes (matches onOpen/onClose pattern)

@@ -469,3 +469,108 @@ describe("copyToClipboard falls back to download when the clipboard write is den
     clickSpy.mockRestore();
   });
 });
+
+describe("exportDiagram honours the filename and silent options", () => {
+  let container;
+  const toastTexts = () =>
+    Array.from(document.querySelectorAll("#diagview-toast-container .diagview-toast")).map(
+      (t) => t.textContent,
+    );
+
+  beforeEach(() => {
+    container = document.createElement("div");
+    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    svg.setAttribute("width", "100");
+    svg.setAttribute("height", "100");
+    svg.setAttribute("viewBox", "0 0 100 100");
+    container.appendChild(svg);
+    document.body.appendChild(container);
+    updateConfig({ highResScale: 1, maxPixels: 16000000, security: { mode: "strict" } });
+
+    global.URL.createObjectURL = jest.fn().mockReturnValue("blob:mock-url");
+    global.URL.revokeObjectURL = jest.fn();
+    global.Image = jest.fn(() => {
+      const img = document.createElement("img");
+      Object.defineProperty(img, "src", {
+        set(val) {
+          this._src = val;
+          setTimeout(() => this.onload && this.onload(), 5);
+        },
+        get() {
+          return this._src;
+        },
+      });
+      return img;
+    });
+    HTMLCanvasElement.prototype.toBlob = function (cb, type) {
+      cb(new Blob(["img"], { type: type || "image/png" }));
+    };
+  });
+
+  afterEach(() => {
+    container.remove();
+    hideToast();
+    document.getElementById("diagview-toast-container")?.remove();
+    updateConfig({ onExport: null });
+    jest.clearAllMocks();
+  });
+
+  const captureDownloads = () => {
+    const names = [];
+    const spy = jest.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(function () {
+      names.push(this.download);
+    });
+    return { names, restore: () => spy.mockRestore() };
+  };
+
+  test("a custom filename is used for the download", async () => {
+    const dl = captureDownloads();
+    await exportDiagram(container, "png", { filename: "arch" });
+    dl.restore();
+    expect(dl.names).toEqual(["arch.png"]);
+  });
+
+  test("without a filename the generated name is kept", async () => {
+    const dl = captureDownloads();
+    await exportDiagram(container, "webp");
+    dl.restore();
+    expect(dl.names).toHaveLength(1);
+    expect(dl.names[0]).toMatch(/\.webp$/);
+    expect(dl.names[0]).not.toBe("undefined.webp");
+  });
+
+  test("the legacy (element, mode, modalClone) signature still exports", async () => {
+    const dl = captureDownloads();
+    await exportDiagram(container, "png", container.querySelector("svg").cloneNode(true));
+    dl.restore();
+    expect(dl.names).toHaveLength(1);
+    expect(dl.names[0]).toMatch(/\.png$/);
+  });
+
+  test.each(["png", "webp"])("silent skips the Processing toast for %s", async (mode) => {
+    const dl = captureDownloads();
+    await exportDiagram(container, mode, { filename: "quiet", silent: true });
+    dl.restore();
+    const texts = toastTexts();
+    expect(texts.some((t) => /Processing/.test(t))).toBe(false);
+    expect(texts.some((t) => /saved/.test(t))).toBe(true);
+  });
+
+  test.each(["png", "webp"])("without silent the Processing toast shows for %s", async (mode) => {
+    const dl = captureDownloads();
+    await exportDiagram(container, mode, { filename: "loud" });
+    dl.restore();
+    expect(toastTexts().some((t) => /Processing/.test(t))).toBe(true);
+  });
+
+  test("onExport receives the filename that was used", async () => {
+    const onExport = jest.fn();
+    updateConfig({ onExport });
+    const dl = captureDownloads();
+    await exportDiagram(container, "png", { filename: "arch" });
+    await exportDiagram(container, "png");
+    dl.restore();
+    expect(onExport).toHaveBeenNthCalledWith(1, "png", "arch");
+    expect(onExport).toHaveBeenNthCalledWith(2, "png", dl.names[1].replace(/\.png$/, ""));
+  });
+});

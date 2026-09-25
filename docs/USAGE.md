@@ -304,18 +304,18 @@ await DiagView.copyToClipboard(el);
 await DiagView.exportDiagram(el, "png", { transparent: false });
 ```
 
-`exportDiagram()` takes one of these modes: `png`, `jpeg`, `webp`, `svg`, `pdf`, `copy` (PNG to the clipboard), `copy-svg` (SVG markup to the clipboard), `png-transparent` and `webp-transparent`. It always builds the file name from the diagram title and a timestamp, and ignores `filename`.
+`exportDiagram()` takes one of these modes: `png`, `jpeg`, `webp`, `svg`, `pdf`, `copy` (PNG to the clipboard), `copy-svg` (SVG markup to the clipboard), `png-transparent`, `webp-transparent` and `download` (a PNG). It uses `filename` when you pass one, and otherwise builds the name from the diagram title and a timestamp.
 
 Every export function resolves without throwing when the element contains no `<svg>`; a "No diagram found" toast is shown instead. `copyToClipboard()` downloads the PNG when the browser denies the clipboard write (Safari does this once the click that started the export is over).
 
 ### Options
 
-| Option        | Type       | Default        | Description                                                                                                  |
-| ------------- | ---------- | -------------- | ------------------------------------------------------------------------------------------------------------ |
-| `transparent` | boolean    | `false`        | Transparent background (PNG/SVG/WebP). JPEG switches to a transparent PNG; PDF keeps the background          |
-| `filename`    | string     | auto-generated | Output filename without extension. Ignored by `exportDiagram()`                                              |
-| `modalClone`  | SVGElement | `null`         | Internal, clone from the open modal                                                                          |
-| `silent`      | boolean    | `false`        | `exportToPNG()` and `exportToJPEG()` only. Skips the "Processing" toast; success and error toasts still show |
+| Option        | Type       | Default        | Description                                                                                                                                               |
+| ------------- | ---------- | -------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `transparent` | boolean    | `false`        | Transparent background (PNG/SVG/WebP). JPEG switches to a transparent PNG; PDF keeps the background                                                       |
+| `filename`    | string     | auto-generated | Output filename without extension                                                                                                                         |
+| `modalClone`  | SVGElement | `null`         | Internal, clone from the open modal                                                                                                                       |
+| `silent`      | boolean    | `false`        | PNG, JPEG and WebP only. Skips the "Processing" toast and the warning shown when a transparent JPEG is saved as PNG. Success and error toasts still show. |
 
 ### Resolution
 
