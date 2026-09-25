@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>DiagView readable text colours</title>
+<style>body{font-family:sans-serif;margin:24px;background:#fff} .diagram{border:1px solid #ccc;margin:12px 0;width:640px;height:320px}</style>
+</head>
+<body>
+<!--
+  Each label carries an id so the test can find it in the modal clone.
+  The expected result on a dark canvas is noted next to each label.
+-->
+
+<!-- 1. Shaped like Mermaid 11 sequence output: colours come from a style block scoped to the svg id -->
+<div class="diagram" id="seq" data-title="Sequence">
+<svg id="mermaid-seq" width="100%" xmlns="http://www.w3.org/2000/svg" style="max-width: 450px;" viewBox="-50 -50 450 299" role="graphics-document document" aria-roledescription="sequence">
+  <style>
+    #mermaid-seq{font-family:"trebuchet ms",verdana,arial,sans-serif;font-size:16px;fill:#333;}
+    #mermaid-seq .actor{stroke:#9370DB;fill:#ECECFF;}
+    #mermaid-seq text.actor>tspan{fill:black;stroke:none;}
+    #mermaid-seq .actor-line{stroke:#9370DB;}
+    #mermaid-seq .messageText{fill:#333;stroke:none;}
+  </style>
+  <g><rect x="200" y="173" fill="#eaeaea" stroke="#666" width="150" height="65" rx="3" ry="3" class="actor actor-bottom"></rect>
+    <text x="275" y="205.5" dominant-baseline="central" class="actor actor-box" style="text-anchor: middle; font-size: 16px; font-weight: 400;"><tspan id="sq-api-b" x="275" dy="0">API</tspan></text></g>
+  <g><rect x="0" y="173" fill="#eaeaea" stroke="#666" width="150" height="65" rx="3" ry="3" class="actor actor-bottom"></rect>
+    <text x="75" y="205.5" dominant-baseline="central" class="actor actor-box" style="text-anchor: middle; font-size: 16px; font-weight: 400;"><tspan id="sq-browser-b" x="75" dy="0">Browser</tspan></text></g>
+  <g><line x1="275" y1="65" x2="275" y2="173" class="actor-line 200" stroke-width="0.5px" stroke="#999"></line>
+    <g data-et="participant" data-id="A"><rect x="200" y="0" fill="#eaeaea" stroke="#666" width="150" height="65" rx="3" ry="3" class="actor actor-top"></rect>
+    <text x="275" y="32.5" dominant-baseline="central" class="actor actor-box" style="text-anchor: middle; font-size: 16px; font-weight: 400;"><tspan id="sq-api" x="275" dy="0">API</tspan></text></g></g>
+  <g><line x1="75" y1="65" x2="75" y2="173" class="actor-line 200" stroke-width="0.5px" stroke="#999"></line>
+    <g data-et="participant" data-id="U"><rect x="0" y="0" fill="#eaeaea" stroke="#666" width="150" height="65" rx="3" ry="3" class="actor actor-top"></rect>
+    <text x="75" y="32.5" dominant-baseline="central" class="actor actor-box" style="text-anchor: middle; font-size: 16px; font-weight: 400;"><tspan id="sq-browser" x="75" dy="0">Browser</tspan></text></g></g>
+  <defs><marker id="mermaid-seq-arrowhead" refX="7.9" refY="5" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" orient="auto-start-reverse"><path d="M -1 0 L 10 5 L 0 10 z"></path></marker></defs>
+  <!-- On the canvas, dark: changes -->
+  <text id="sq-msg1" x="174" y="80" text-anchor="middle" dominant-baseline="middle" class="messageText" dy="1em" style="font-size: 16px; font-weight: 400;">POST /checkout</text>
+  <line x1="76" y1="109" x2="271" y2="109" class="messageLine0" stroke-width="2" stroke="#333" marker-end="url(#mermaid-seq-arrowhead)" style="fill: none;"></line>
+  <text id="sq-msg2" x="177" y="124" text-anchor="middle" dominant-baseline="middle" class="messageText" dy="1em" style="font-size: 16px; font-weight: 400;">201 Created</text>
+  <line x1="274" y1="153" x2="79" y2="153" class="messageLine1" stroke-width="2" stroke="#333" marker-end="url(#mermaid-seq-arrowhead)" style="stroke-dasharray: 3, 3; fill: none;"></line>
+  <!-- Title inherits #333 from the root rule: changes -->
+  <text id="sq-title" x="75" y="-25">Checkout</text>
+</svg>
+</div>
+
+<!-- 2. Shaped like Mermaid flowchart output with htmlLabels. Nothing here should change on any canvas. -->
+<div class="diagram" id="flow" data-title="Flowchart">
+<svg id="mermaid-flow" width="100%" xmlns="http://www.w3.org/2000/svg" class="flowchart" style="max-width: 300px;" viewBox="0 0 300 70" role="graphics-document document" aria-roledescription="flowchart-v2">
+  <style>
+    #mermaid-flow{font-family:"trebuchet ms",verdana,arial,sans-serif;font-size:16px;fill:#333;}
+    #mermaid-flow .label{color:#333;}
+    #mermaid-flow .node rect{fill:#ECECFF;stroke:#9370DB;stroke-width:1px;}
+    #mermaid-flow .flowchart-link{stroke:#333333;fill:none;}
+    #mermaid-flow .edgeLabel{background-color:rgba(232,232,232, 0.8);text-align:center;}
+    #mermaid-flow .edgeLabel p{background-color:rgba(232,232,232, 0.8);}
+    #mermaid-flow .labelBkg{background-color:rgba(232, 232, 232, 0.5);}
+    #mermaid-flow .nodeLabel,#mermaid-flow .edgeLabel{color:#333;}
+  </style>
+  <g class="root">
+    <g class="clusters"></g>
+    <g class="edgePaths">
+      <path d="M103.6,35L111.7,35C119.9,35,136.3,35,151.9,35C167.6,35,182.6,35,190.1,35L197.6,35" id="L_B_T_0" class="edge-thickness-normal edge-pattern-solid flowchart-link" style=";"></path>
+    </g>
+    <g class="edgeLabels">
+      <g class="edgeLabel" transform="translate(152.6, 35)">
+        <g class="label" transform="translate(-24, -12)">
+          <foreignObject width="48" height="24"><div xmlns="http://www.w3.org/1999/xhtml" class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="edgeLabel"><p id="fl-edge" style="margin:0">artifact</p></span></div></foreignObject>
+        </g>
+      </g>
+    </g>
+    <g class="nodes">
+      <!-- Mermaid 10 style: text directly in span.nodeLabel -->
+      <g class="node default" id="flowchart-B-0" transform="translate(55.8, 35)">
+        <rect class="basic label-container" style="" x="-47.8" y="-27" width="95.6" height="54"></rect>
+        <g class="label" style="" transform="translate(-17.8, -12)"><rect></rect>
+          <foreignObject width="35.6" height="24"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span id="fl-build" class="nodeLabel">Build</span></div></foreignObject>
+        </g>
+      </g>
+      <!-- Mermaid 11 style: text in a <p> inside span.nodeLabel -->
+      <g class="node default" id="flowchart-T-1" transform="translate(246.3, 35)">
+        <rect class="basic label-container" style="" x="-44.7" y="-27" width="89.3" height="54"></rect>
+        <g class="label" style="" transform="translate(-14.7, -12)"><rect></rect>
+          <foreignObject width="29.3" height="24"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="nodeLabel"><p id="fl-test" style="margin:0">Test</p></span></div></foreignObject>
+        </g>
+      </g>
+    </g>
+  </g>
+</svg>
+</div>
+
+<!-- 3. Graphviz dot with bgcolor=transparent: text has no fill attribute, so it is black -->
+<div class="diagram" id="gv" data-title="Graphviz">
+<svg xmlns="http://www.w3.org/2000/svg" width="420pt" height="150pt" viewBox="0 0 420 150">
+<g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 146)">
+<polygon fill="transparent" stroke="transparent" points="-4,4 -4,-146 416,-146 416,4 -4,4"/>
+<g id="node1" class="node"><title>client</title>
+<ellipse fill="none" stroke="black" cx="60" cy="-71" rx="52" ry="18"/>
+<!-- Outline only, so the canvas shows through: changes -->
+<text id="gv-client" text-anchor="middle" x="60" y="-67.3" font-family="Times,serif" font-size="14.00">client</text></g>
+<g id="node2" class="node"><title>server</title>
+<ellipse fill="lightblue" stroke="black" cx="340" cy="-71" rx="56" ry="18"/>
+<!-- Filled ellipse: unchanged -->
+<text id="gv-server" text-anchor="middle" x="340" y="-67.3" font-family="Times,serif" font-size="14.00">server</text></g>
+<g id="edge1" class="edge"><title>client&#45;&gt;server</title>
+<path fill="none" stroke="black" d="M112,-71C160,-71 230,-71 274,-71"/>
+<polygon fill="black" stroke="black" points="274,-74.5 284,-71 274,-67.5 274,-74.5"/>
+<!-- Edge label on the canvas: changes -->
+<text id="gv-edge" text-anchor="middle" x="200" y="-78.8" font-family="Times,serif" font-size="14.00">HTTPS</text></g>
+</g>
+</svg>
+</div>
+
+<!-- 4. PlantUML: white background on the root svg style, which the modal drops -->
+<div class="diagram" id="puml" data-title="PlantUML">
+<svg xmlns="http://www.w3.org/2000/svg" contentStyleType="text/css" height="170px" preserveAspectRatio="none" style="width:360px;height:170px;background:#FFFFFF;" version="1.1" viewBox="0 0 360 170" width="360px" zoomAndPan="magnify">
+<g>
+<line style="stroke:#181818;stroke-width:0.5;stroke-dasharray:5.0,5.0;" x1="50" x2="50" y1="40" y2="140"/>
+<line style="stroke:#181818;stroke-width:0.5;stroke-dasharray:5.0,5.0;" x1="290" x2="290" y1="40" y2="140"/>
+<rect fill="#E2E2F0" height="30" rx="2.5" style="stroke:#181818;stroke-width:0.5;" width="70" x="15" y="10"/>
+<text id="pu-alice" fill="#000000" font-family="sans-serif" font-size="14" x="30" y="30">Alice</text>
+<rect fill="#E2E2F0" height="30" rx="2.5" style="stroke:#181818;stroke-width:0.5;" width="70" x="255" y="10"/>
+<text id="pu-bob" fill="#000000" font-family="sans-serif" font-size="14" x="274" y="30">Bob</text>
+<polygon fill="#181818" points="278,86,288,90,278,94,282,90" style="stroke:#181818;stroke-width:1.0;"/>
+<line style="stroke:#181818;stroke-width:1.0;" x1="50" x2="284" y1="90" y2="90"/>
+<!-- On the canvas once the root background is gone: changes -->
+<text id="pu-msg" fill="#000000" font-family="sans-serif" font-size="13" x="120" y="84">Authentication Request</text>
+</g>
+</svg>
+</div>
+
+<!-- 5. draw.io: HTML labels in foreignObject with an inline colour, and a <text> fallback in each <switch> that is not drawn -->
+<div class="diagram" id="drawio" data-title="draw.io">
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" width="381px" height="141px" viewBox="-0.5 -0.5 381 141">
+<defs/><g>
+<rect x="0" y="40" width="120" height="60" rx="9" ry="9" fill="#dae8fc" stroke="#6c8ebf" pointer-events="all"/>
+<g transform="translate(-0.5 -0.5)"><switch>
+<foreignObject pointer-events="none" width="100%" height="100%" requiredFeatures="http://www.w3.org/TR/SVG11/feature#Extensibility" style="overflow: visible; text-align: left;"><div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; align-items: unsafe center; justify-content: unsafe center; width: 118px; height: 1px; padding-top: 70px; margin-left: 1px;"><div data-drawio-colors="color: rgb(0, 0, 0); " style="box-sizing: border-box; font-size: 0px; text-align: center;"><div id="dio-queue" style="display: inline-block; font-size: 12px; font-family: Helvetica; color: rgb(0, 0, 0); line-height: 1.2; pointer-events: all; white-space: normal; overflow-wrap: normal;">Queue</div></div></div></foreignObject>
+<text id="dio-queue-fb" x="60" y="74" fill="rgb(0, 0, 0)" font-family="Helvetica" font-size="12px" text-anchor="middle">Queue</text>
+</switch></g>
+<path d="M 120 70 L 253.63 70" fill="none" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="stroke"/>
+<g transform="translate(-0.5 -0.5)"><switch>
+<foreignObject pointer-events="none" width="100%" height="100%" requiredFeatures="http://www.w3.org/TR/SVG11/feature#Extensibility" style="overflow: visible; text-align: left;"><div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; align-items: unsafe center; justify-content: unsafe center; width: 1px; height: 1px; padding-top: 58px; margin-left: 188px;"><div style="box-sizing: border-box; font-size: 0px; text-align: center;"><div id="dio-edge" style="display: inline-block; font-size: 11px; font-family: Helvetica; color: rgb(0, 0, 0); line-height: 1.2; pointer-events: all; white-space: nowrap;">consume</div></div></div></foreignObject>
+<text id="dio-edge-fb" x="188" y="61" fill="rgb(0, 0, 0)" font-family="Helvetica" font-size="11px" text-anchor="middle">consume</text>
+</switch></g>
+<rect x="260" y="40" width="120" height="60" fill="#d5e8d4" stroke="#82b366" pointer-events="all"/>
+<g transform="translate(-0.5 -0.5)"><switch>
+<foreignObject pointer-events="none" width="100%" height="100%" requiredFeatures="http://www.w3.org/TR/SVG11/feature#Extensibility" style="overflow: visible; text-align: left;"><div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; align-items: unsafe center; justify-content: unsafe center; width: 118px; height: 1px; padding-top: 70px; margin-left: 261px;"><div style="box-sizing: border-box; font-size: 0px; text-align: center;"><div id="dio-worker" style="display: inline-block; font-size: 12px; font-family: Helvetica; color: rgb(0, 0, 0); line-height: 1.2; pointer-events: all; white-space: normal; overflow-wrap: normal;">Worker</div></div></div></foreignObject>
+<text id="dio-worker-fb" x="320" y="74" fill="rgb(0, 0, 0)" font-family="Helvetica" font-size="12px" text-anchor="middle">Worker</text>
+</switch></g>
+<g transform="translate(-0.5 -0.5)"><switch>
+<foreignObject pointer-events="none" width="100%" height="100%" requiredFeatures="http://www.w3.org/TR/SVG11/feature#Extensibility" style="overflow: visible; text-align: left;"><div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; align-items: unsafe center; justify-content: unsafe center; width: 238px; height: 1px; padding-top: 15px; margin-left: 71px;"><div style="box-sizing: border-box; font-size: 0px; text-align: center;"><div id="dio-title" style="display: inline-block; font-size: 16px; font-family: Helvetica; color: rgb(0, 0, 0); line-height: 1.2; pointer-events: all; font-weight: bold; white-space: normal; overflow-wrap: normal;">Job pipeline</div></div></div></foreignObject>
+<text id="dio-title-fb" x="190" y="20" fill="rgb(0, 0, 0)" font-family="Helvetica" font-size="16px" text-anchor="middle" font-weight="bold">Job pipeline</text>
+</switch></g>
+</g>
+</svg>
+</div>
+
+<!-- 6. Hand-drawn edge cases -->
+<div class="diagram" id="hand" data-title="Hand-drawn">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 200" width="520" height="200">
+<style>.lbl { fill: #334155; font: 14px sans-serif; }</style>
+<defs>
+  <linearGradient id="g1"><stop offset="0" stop-color="#f43f5e"/><stop offset="1" stop-color="#8b5cf6"/></linearGradient>
+  <linearGradient id="g2"><stop offset="0" stop-color="#fef3c7"/><stop offset="1" stop-color="#fde68a"/></linearGradient>
+</defs>
+<rect x="20" y="20" width="140" height="50" fill="#1d4ed8"/>
+<text id="h-white" x="90" y="50" text-anchor="middle" fill="#ffffff">on blue box</text>
+<text id="h-class" class="lbl" x="260" y="50" text-anchor="middle">class-styled text</text>
+<text id="h-grad" x="420" y="50" text-anchor="middle" font-size="20" font-weight="bold" fill="url(#g1)">Gradient</text>
+<text id="h-mixed" x="20" y="120" font-size="14"><tspan id="h-t1" fill="#111827">dark part, </tspan><tspan id="h-t2" fill="#dc2626">red part, </tspan><tspan id="h-t3" fill="#fde047">yellow part</tspan></text>
+<rect x="300" y="140" width="200" height="45" fill="url(#g2)"/>
+<text id="h-overgrad" x="400" y="168" text-anchor="middle" font-size="14" fill="#111827">on a gradient box</text>
+</svg>
+</div>
+
+<script src="../../../node_modules/@panzoom/panzoom/dist/panzoom.min.js"></script>
+</body>
+</html>

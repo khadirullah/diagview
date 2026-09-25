@@ -48,14 +48,23 @@ node tests/e2e/verify-react-strictmode.mjs  # real React 18 dev tree with
 node tests/e2e/verify-export-search.mjs     # PNG export of a 1 MB+ foreignObject diagram,
                                             # search dimming, ring colour per canvas,
                                             # plain SVG shape marking, rotation (12 checks)
+node tests/e2e/verify-readable-text.mjs     # Text Colours menu row on Mermaid, Graphviz,
+                                            # PlantUML, draw.io and hand-drawn SVGs: which
+                                            # labels change, 4.5:1 contrast, hue kept, exact
+                                            # restore, canvas switch, reopen, SVG export
+                                            # keeps author colours (38 checks)
 ```
 
 `verify-react-strictmode.mjs` drives `demo/framework-react.html`. It
 intercepts the page's unpkg request for diagview and serves
 `dist/diagview.umd.js`, so the local build is what gets tested. Pass
 `--cdn` to test the published version instead. `verify-fixes.mjs` accepts
-the same flag and shows which checks the published build fails. React itself is
-loaded from unpkg, so this one needs network access.
+the same flag, loads the published 1.0.11 build and shows which checks it
+fails. React itself is loaded from unpkg, so this one needs network access.
+
+`verify-export-search.mjs` and `verify-readable-text.mjs` run offline and
+read the build from `dist/diagview.umd.js`. Set `DV_DIST=/path/to/diagview.umd.js`
+to test another build.
 
 All scripts exit non-zero on any failed check. `repro.html` is the shared test
 page: a 2000×1200 labeled grid SVG (cells A1–J6, 200 units each) so any
@@ -63,6 +72,7 @@ viewport center measurement maps to a recognizable cell.
 
 ## When to run
 
-Whenever you touch pan/zoom, share, minimap, modal open/close, or the
-viewport CSS. These are not wired into CI on purpose (browser setup cost,
-flakiness) — they are a pre-release manual gate.
+Whenever you touch pan/zoom, share, minimap, modal open/close, export,
+search, the Text Colours menu row, or the viewport CSS. These are not wired
+into CI on purpose (browser setup cost, flakiness). They are a pre-release
+manual gate.
