@@ -6,6 +6,28 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 
 ---
 
+## [Unreleased]
+
+### Added
+
+- **Text Colours toggle in the fullscreen menu.** A new row under the canvas swatches has two buttons, Original and Readable. Original is the default and shows the diagram as the author drew it. Readable recolours labels whose contrast is under 4.5:1 against what sits behind them, which is the label's own background, the filled shape under it, or the canvas. A dark label inside a light node stays as it is. The new shade keeps the label's hue and aims for 7:1, so red text on a dark canvas turns light red. It covers SVG text, tspans and HTML labels in `foreignObject`, skips gradient paint, and updates when the canvas or the page theme changes. The choice stays on across fullscreen sessions until `destroy()` or a page reload, and exports always keep the author's colours. `DiagView.state.readableText` reports it.
+- **Browser checks for export, search and Text Colours.** `tests/e2e/verify-export-search.mjs` covers PNG export of a diagram over 1 MB with `foreignObject` labels and the search outline on Mermaid-shaped and plain SVGs (12 checks). `tests/e2e/verify-readable-text.mjs` runs the Text Colours toggle on Mermaid, Graphviz, PlantUML, draw.io and hand-drawn SVGs (38 checks).
+
+### Removed
+
+- **The `data-diagview-accent` Attribute.** It set `--dv-accent` on the diagram element, but nothing inside that element reads it, so it never changed a colour. Set `accentColor` in `init()` or a page variable such as `--diagram-accent` instead.
+
+### Fixed
+
+- **Raster Export Failed for Large Diagrams With HTML Labels.** Above 1 MB the SVG was loaded from a `blob:` URL. Chrome taints the canvas when it draws a `blob:` SVG that contains `<foreignObject>`, and Mermaid puts every label in one, so PNG, JPEG, WebP, PDF and Copy Image failed with a security error. The image now always loads from a `data:` URL.
+- **Search Highlight Faded the Match and Hid on Some Canvases.** Labels inside a matched node faded with everything else, the edge rule never matched Mermaid 10 or 11 output, the glow used the page accent colour and could vanish against the canvas, and a pulse animation that never showed ran on every match. A match now keeps the diagram's own colours and gets a 3px outline in `--dv-search-ring`, blue on a light canvas and amber on a dark one, while everything else fades evenly to 15%. Shapes that Mermaid gives an opacity through ID-scoped rules, like pie slices, fade too. On plain SVGs a text match outlines the smallest filled shape under the text, and it still finds the right shape after a rotation.
+- **The "?" Shortcut Badge Vanished on a White Canvas.** The badge set no text colour, so a host page's global `kbd` rule won. On a dark page with the canvas switched to White it came out near-white on white. It now uses the canvas text colour.
+- **`accentColor` Had No Effect.** The accent came only from page CSS variables, so `DiagView.init({ accentColor })` changed nothing. The order is now `accentColor`, then `--diagram-accent`, then the built-in blue. `--diagram-accent` counts only if it holds a colour, so bare numbers such as `222.2 47.4% 11.2%` are skipped. The fullscreen menu button now follows accent changes while the viewer is open.
+- **`exportDiagram()` Ignored `filename` and `silent`.** It always named the file from the diagram title and a timestamp, and it never passed `silent` on. `exportToWebP()` ignored `silent` as well. `exportDiagram()` now uses `filename` when given, passes `silent` to PNG, JPEG and WebP, and hands the name it used to `onExport`. The toolbar and menu buttons behave as before.
+- **`exportDiagram()` Threw When Passed `null` Options.** `exportDiagram(el, "png", null)` failed with a `TypeError` and exported nothing. `null` now counts as no options.
+
+---
+
 ## [1.0.12] - 2026-09-06
 
 ### Fixed
