@@ -143,6 +143,69 @@ async function embedDocumentFonts(svgEl) {
   styleEl.textContent = inlined.join("\n");
 }
 
+const WATERMARK_STYLES = ["corner", "background", "both"];
+const WATERMARK_POSITIONS = [
+  "top-left",
+  "top-right",
+  "bottom-left",
+  "bottom-right",
+  "center",
+  "four-sides",
+];
+
+/**
+ * Resolve the watermark style, position and opacity. An unknown style or
+ * position logs a warning and uses the default, so a typo still gives a
+ * watermark. An opacity outside 0 to 1 is clamped into that range, and one
+ * that is not a number uses 0.2. A missing or empty value uses the default
+ * without a warning.
+ * @private
+ */
+function resolveWatermark(config) {
+  let style = String(config.style || "corner")
+    .trim()
+    .toLowerCase();
+  if (!WATERMARK_STYLES.includes(style)) {
+    console.warn(
+      `DiagView: Unknown watermark style "${config.style}", expected corner, background or both. Using corner.`,
+    );
+    style = "corner";
+  }
+
+  let pos = String(config.position || "bottom-right")
+    .trim()
+    .toLowerCase();
+  if (!WATERMARK_POSITIONS.includes(pos)) {
+    console.warn(
+      `DiagView: Unknown watermark position "${config.position}", expected ${WATERMARK_POSITIONS.join(", ")}. Using bottom-right.`,
+    );
+    pos = "bottom-right";
+  }
+
+  const isEmpty =
+    config.opacity == null || (typeof config.opacity === "string" && config.opacity.trim() === "");
+  let opacity = isEmpty ? 0.2 : config.opacity;
+  const isNumeric =
+    (typeof opacity === "number" && !isNaN(opacity)) ||
+    (typeof opacity === "string" && opacity.trim() !== "" && !isNaN(Number(opacity)));
+  if (!isNumeric) {
+    console.warn(
+      `DiagView: Watermark opacity "${opacity}" should be a number from 0 to 1. Using 0.2.`,
+    );
+    opacity = 0.2;
+  } else if (Number(opacity) < 0 || Number(opacity) > 1) {
+    const clamped = Math.min(1, Math.max(0, Number(opacity)));
+    console.warn(
+      `DiagView: Watermark opacity "${opacity}" should be a number from 0 to 1. Using ${clamped}.`,
+    );
+    opacity = clamped;
+  } else {
+    opacity = Number(opacity);
+  }
+
+  return { style, pos, opacity };
+}
+
 /**
  * Injects a watermark into the SVG for branding during export.
  * Supports "background" (centered/rotated) and "corner" styles.
@@ -175,8 +238,15 @@ function injectWatermark(svg, d, sourceSvg = null) {
     if (dataset.diagviewWatermarkStyle) config.style = dataset.diagviewWatermarkStyle;
     if (dataset.diagviewWatermarkPos) config.position = dataset.diagviewWatermarkPos;
     if (dataset.diagviewWatermarkOpacity) {
-      const n = parseFloat(dataset.diagviewWatermarkOpacity);
-      if (!isNaN(n)) config.opacity = n;
+      const raw = dataset.diagviewWatermarkOpacity.trim();
+      const n = Number(raw);
+      if (raw !== "" && !isNaN(n)) {
+        config.opacity = n;
+      } else if (raw !== "") {
+        console.warn(
+          `DiagView: data-diagview-watermark-opacity "${raw}" should be a number from 0 to 1. Using the config opacity.`,
+        );
+      }
     }
   }
 
@@ -188,11 +258,7 @@ function injectWatermark(svg, d, sourceSvg = null) {
   const mainColor = theme.isDark ? "#ffffff" : "#000000";
   const contrastColor = theme.isDark ? "#000000" : "#ffffff";
 
-  const style = (config.style || "corner").toLowerCase();
-  const pos = (
-    config.position || (style === "background" ? "center" : "bottom-right")
-  ).toLowerCase();
-  const opacity = config.opacity ?? (style === "background" ? 0.15 : 0.2);
+  const { style, pos, opacity } = resolveWatermark(config);
 
   const createWatermarkElement = (fontSize, textOpacity, maxWidth = 0) => {
     const text = document.createElementNS("http://www.w3.org/2000/svg", "text");

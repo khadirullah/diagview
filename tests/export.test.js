@@ -211,6 +211,198 @@ describe("Export Functionality", () => {
     expect(markup).toContain("LOCALMARK");
     expect(markup).not.toContain("GLOBALMARK");
   });
+
+  describe("watermark values DiagView does not know", () => {
+    let warn, click, downloaded;
+    beforeEach(() => {
+      state.activeSourceElement = null;
+      warn = jest.spyOn(console, "warn").mockImplementation(() => {});
+      downloaded = "";
+      click = jest.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(function () {
+        downloaded = this.href;
+      });
+    });
+    afterEach(() => {
+      warn.mockRestore();
+      click.mockRestore();
+      for (const key of Object.keys(container.dataset)) delete container.dataset[key];
+      updateConfig({
+        watermark: {
+          enabled: false,
+          text: "",
+          style: "corner",
+          position: "bottom-right",
+          opacity: 0.2,
+        },
+      });
+    });
+    const markup = () =>
+      decodeURIComponent(downloaded.replace(/^data:image\/svg\+xml;charset=utf-8,/, ""));
+    const warnings = () =>
+      warn.mock.calls.map((c) => String(c[0])).filter((m) => m.includes("atermark"));
+
+    test("an unknown position or opacity warns and uses the default or nearest value", async () => {
+      updateConfig({ watermark: { enabled: true, text: "MARK" } });
+      container.dataset.diagviewWatermarkStyle = "corner";
+      container.dataset.diagviewWatermarkPos = "middle";
+      container.dataset.diagviewWatermarkOpacity = "5";
+
+      await exportToSVG(container, { filename: "wm" });
+
+      expect(warnings()).toEqual([
+        expect.stringContaining('position "middle"'),
+        expect.stringContaining('opacity "5"'),
+      ]);
+      expect(warnings()[0]).toContain("Using bottom-right.");
+      expect(warnings()[1]).toContain("Using 1.");
+      expect(markup()).toContain("MARK");
+      expect(markup()).toContain('fill-opacity="1"');
+      expect(markup()).toContain('text-anchor="end"'); // bottom-right
+    });
+
+    test("an unknown style warns and draws the corner watermark", async () => {
+      updateConfig({ watermark: { enabled: true, text: "MARK", style: "fancy" } });
+
+      await exportToSVG(container, { filename: "wm" });
+
+      expect(warnings()).toEqual([expect.stringContaining('style "fancy"')]);
+      expect(warnings()[0]).toContain("Using corner.");
+      expect(markup()).toContain("MARK");
+      expect(markup()).toContain('text-anchor="end"');
+      expect(markup()).not.toContain("rotate(-30");
+    });
+
+    test("a negative opacity is raised to 0", async () => {
+      updateConfig({ watermark: { enabled: true, text: "MARK", opacity: -1 } });
+
+      await exportToSVG(container, { filename: "wm" });
+
+      expect(warnings()).toEqual([expect.stringContaining("Using 0.")]);
+      expect(markup()).toContain('fill-opacity="0"');
+    });
+
+    test("an opacity that is not a number warns and uses the default", async () => {
+      for (const opacity of [true, "abc", NaN]) {
+        warn.mockClear();
+        updateConfig({ watermark: { enabled: true, text: "MARK", opacity } });
+        await exportToSVG(container, { filename: "wm" });
+        expect(warnings()).toEqual([expect.stringContaining("should be a number from 0 to 1")]);
+        expect(warnings()[0]).toContain("Using 0.2.");
+        expect(markup()).toContain('fill-opacity="0.2"');
+      }
+    });
+
+    test("an unknown style from an attribute uses corner", async () => {
+      updateConfig({ watermark: { enabled: true, text: "MARK" } });
+      container.dataset.diagviewWatermarkStyle = "fancy";
+
+      await exportToSVG(container, { filename: "wm" });
+
+      expect(warnings()).toEqual([expect.stringContaining("Using corner.")]);
+      expect(markup()).toContain('text-anchor="end"');
+    });
+
+    test("an unknown position with the background style still draws the centred mark", async () => {
+      updateConfig({
+        watermark: { enabled: true, text: "MARK", style: "background", position: "middle" },
+      });
+
+      await exportToSVG(container, { filename: "wm" });
+
+      expect(warnings()).toEqual([expect.stringContaining("Using bottom-right.")]);
+      expect(markup()).toContain("rotate(-30");
+      expect(markup()).not.toContain('text-anchor="end"');
+    });
+
+    test("a background watermark with a bad opacity uses 0.2", async () => {
+      updateConfig({
+        watermark: { enabled: true, text: "MARK", style: "background", opacity: "abc" },
+      });
+
+      await exportToSVG(container, { filename: "wm" });
+
+      expect(warnings()).toEqual([expect.stringContaining("Using 0.2.")]);
+      expect(markup()).toContain('fill-opacity="0.2"');
+    });
+
+    test("an infinite opacity is clamped to 1", async () => {
+      updateConfig({ watermark: { enabled: true, text: "MARK", opacity: Infinity } });
+
+      await exportToSVG(container, { filename: "wm" });
+
+      expect(warnings()).toEqual([expect.stringContaining("Using 1.")]);
+      expect(markup()).toContain('fill-opacity="1"');
+    });
+
+    test("valid values with spaces around them or a numeric string opacity do not warn", async () => {
+      updateConfig({
+        watermark: {
+          enabled: true,
+          text: "MARK",
+          style: " corner ",
+          position: " top-left",
+          opacity: "0.5",
+        },
+      });
+
+      await exportToSVG(container, { filename: "wm" });
+
+      expect(warnings()).toEqual([]);
+      expect(markup()).toContain('text-anchor="start"');
+      expect(markup()).toContain('fill-opacity="0.5"');
+    });
+
+    test("an empty opacity uses 0.2 without a warning", async () => {
+      for (const opacity of ["", "  ", null]) {
+        warn.mockClear();
+        updateConfig({ watermark: { enabled: true, text: "MARK", opacity } });
+        await exportToSVG(container, { filename: "wm" });
+        expect(warnings()).toEqual([]);
+        expect(markup()).toContain('fill-opacity="0.2"');
+      }
+    });
+
+    test("an opacity attribute that is not a number warns and keeps the config opacity", async () => {
+      updateConfig({ watermark: { enabled: true, text: "MARK", opacity: 0.4 } });
+      container.dataset.diagviewWatermarkOpacity = "0.5abc";
+
+      await exportToSVG(container, { filename: "wm" });
+
+      expect(warnings()).toEqual([
+        expect.stringContaining('data-diagview-watermark-opacity "0.5abc"'),
+      ]);
+      expect(markup()).toContain('fill-opacity="0.4"');
+    });
+
+    test('data-diagview-watermark="false" turns off a watermark enabled in the config', async () => {
+      updateConfig({ watermark: { enabled: true, text: "MARK" } });
+      container.dataset.diagviewWatermark = "false";
+
+      await exportToSVG(container, { filename: "wm" });
+
+      expect(warnings()).toEqual([]);
+      expect(markup()).not.toContain("MARK");
+    });
+
+    test("known values in any case do not warn", async () => {
+      updateConfig({
+        watermark: {
+          enabled: true,
+          text: "MARK",
+          style: "Both",
+          position: "FOUR-SIDES",
+          opacity: 0,
+        },
+      });
+
+      await exportToSVG(container, { filename: "wm" });
+
+      expect(warnings()).toEqual([]);
+      expect(markup()).toContain("rotate(-30"); // the "both" centre mark
+      expect(markup().match(/rotate\(-?90/g)).toHaveLength(2); // left and right edges
+      expect(markup()).toContain('fill-opacity="0"');
+    });
+  });
 });
 
 // ---------------------------------------------------------------------------

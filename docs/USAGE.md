@@ -219,18 +219,18 @@ Set any of the following `data-diagview-*` attributes directly on a diagram cont
 </div>
 ```
 
-| Attribute                         | Type                               | Description                            |
-| --------------------------------- | ---------------------------------- | -------------------------------------- |
-| `data-diagview-layout`            | `header \| floating \| off`        | Layout for this diagram                |
-| `data-diagview-scale`             | Integer `1`–`10`                   | Export `highResScale` for this diagram |
-| `data-diagview-sanitize`          | `strict` \| `permissive` \| `off`  | SVG sanitization mode                  |
-| `data-diagview-allow-remote`      | `true` \| `false`                  | Allow remote CSS/fonts in SVG          |
-| `data-diagview-watermark`         | `true` \| `false`                  | Enable watermark for this diagram only |
-| `data-diagview-watermark-text`    | Any string                         | Custom watermark text                  |
-| `data-diagview-watermark-style`   | `corner` \| `background` \| `both` | Style override for this diagram        |
-| `data-diagview-watermark-pos`     | `top-left` \| `...`                | Position override for this diagram     |
-| `data-diagview-watermark-opacity` | `0`–`1`                            | Opacity override for this diagram      |
-| `data-title`                      | Any string                         | Title shown in header layout label     |
+| Attribute                         | Type                               | Description                                   |
+| --------------------------------- | ---------------------------------- | --------------------------------------------- |
+| `data-diagview-layout`            | `header \| floating \| off`        | Layout for this diagram                       |
+| `data-diagview-scale`             | Integer `1`–`10`                   | Export `highResScale` for this diagram        |
+| `data-diagview-sanitize`          | `strict` \| `permissive` \| `off`  | SVG sanitization mode                         |
+| `data-diagview-allow-remote`      | `true` \| `false`                  | Allow remote CSS/fonts in SVG                 |
+| `data-diagview-watermark`         | `true` \| `false`                  | Turn the watermark on or off for this diagram |
+| `data-diagview-watermark-text`    | Any string                         | Custom watermark text                         |
+| `data-diagview-watermark-style`   | `corner` \| `background` \| `both` | Style override for this diagram               |
+| `data-diagview-watermark-pos`     | `top-left` \| `...`                | Position override for this diagram            |
+| `data-diagview-watermark-opacity` | `0`–`1`                            | Opacity override for this diagram             |
+| `data-title`                      | Any string                         | Title shown in header layout label            |
 
 > **Requires `security.allowOverrides: true`** (the default) for `data-diagview-sanitize` and `data-diagview-allow-remote` to take effect.
 
@@ -1086,6 +1086,42 @@ DiagView.init({
 | `style`    | string  | `"corner"`       | `corner` \| `background` (PowerPoint style) \| `both`                                                                                     |
 | `position` | string  | `"bottom-right"` | `top-left` \| `top-right` \| `bottom-left` \| `bottom-right` \| `center` \| `four-sides`. `four-sides` needs the `corner` or `both` style |
 | `opacity`  | number  | `0.2`            | Transparency level (0.0 to 1.0)                                                                                                           |
+
+### Values DiagView does not know
+
+Export checks `style`, `position` and `opacity` each time it draws the watermark, from the config and from the `data-diagview-watermark-*` attributes. Case and spaces around the value do not matter at runtime, so `"Corner"` and `"TOP-LEFT"` work. A mistake never removes the watermark. DiagView draws it with the fallback below and logs a console warning that names the value it used.
+
+| Option     | Valid values                                                                   | Missing or empty           | Anything else                                                                                                                                        |
+| ---------- | ------------------------------------------------------------------------------ | -------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `style`    | `corner`, `background`, `both`                                                 | `corner`, no warning       | `corner`, with a warning                                                                                                                             |
+| `position` | `top-left`, `top-right`, `bottom-left`, `bottom-right`, `center`, `four-sides` | `bottom-right`, no warning | `bottom-right`, with a warning                                                                                                                       |
+| `opacity`  | A number from 0 to 1, such as `0.2` or `"0.2"`                                 | `0.2`, no warning          | Below 0 uses 0 and above 1 uses 1. Anything that is not a number uses 0.2 in the config, and the config opacity in an attribute. Each logs a warning |
+
+For example, `opacity: 5` draws at full strength, `opacity: "abc"` draws at 0.2, and `data-diagview-watermark-opacity="abc"` keeps whatever opacity the config sets.
+
+### Turning it off for one diagram
+
+To watermark every diagram except one or two, enable it in the config and add `data-diagview-watermark="false"` to the diagrams that should not have it. Downloads, copies and `exportTo*()` calls for those diagrams then have no watermark. The attribute wins over the config.
+
+The reverse also works. Leave `enabled` false and add `data-diagview-watermark="true"` to the diagrams that need one, with the text in the config or in `data-diagview-watermark-text`. The attribute must be exactly `"true"` or `"false"`. Any other non-empty value also turns the watermark off.
+
+The attribute goes on the element that `diagramSelector` matches. For Mermaid, that is the element holding the Mermaid code:
+
+```html
+<!-- Watermarked -->
+<div class="mermaid">graph LR; A --> B</div>
+
+<!-- Not watermarked -->
+<div class="mermaid" data-diagview-watermark="false">graph LR; C --> D</div>
+
+<script type="module">
+  await mermaid.run();
+  DiagView.init({
+    diagramSelector: ".mermaid",
+    watermark: { enabled: true, text: "khadirullah.com" },
+  });
+</script>
+```
 
 ### Branding Styles
 
