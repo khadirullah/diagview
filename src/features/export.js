@@ -487,7 +487,12 @@ export async function renderToCanvas(sourceElement, modalClone, transparent = fa
 
   // Use modalClone if available to ensure export matches browser rendering
   const result = await prepareSvgForExport(originalSvg, modalClone);
-  if (!result) throw new Error("SVG preparation failed");
+  if (!result) {
+    // Only the size limit gets here, and cloneSVG has already said so
+    const err = new Error("SVG preparation failed");
+    err.dvReported = true;
+    throw err;
+  }
 
   const { width, height, bg, svg: finalSvg } = result;
 
@@ -576,7 +581,10 @@ export async function exportToSVG(sourceElement, options = {}) {
   const modalClone = options.modalClone || null;
 
   try {
-    const { bg, svg } = await prepareSvgForExport(originalSvg, modalClone);
+    const prepared = await prepareSvgForExport(originalSvg, modalClone);
+    // Over the size limit. cloneSVG has already shown "Diagram blocked".
+    if (!prepared) return;
+    const { bg, svg } = prepared;
 
     // Add bg rect for non-transparent SVG
     if (!isTransparent) {
@@ -619,8 +627,10 @@ export async function copySVGCode(sourceElement, options = {}) {
   const modalClone = options.modalClone || null;
 
   try {
-    const { svg } = await prepareSvgForExport(originalSvg, modalClone);
-    const data = await serializeSVGAsync(svg);
+    const prepared = await prepareSvgForExport(originalSvg, modalClone);
+    // Over the size limit. cloneSVG has already shown "Diagram blocked".
+    if (!prepared) return;
+    const data = await serializeSVGAsync(prepared.svg);
 
     if (navigator.clipboard && window.isSecureContext) {
       await navigator.clipboard.writeText(data);
@@ -740,6 +750,7 @@ async function processImageExport(
       }
     }
   } catch (e) {
+    if (e?.dvReported) return;
     console.error("DiagView Export Error:", e);
 
     // Handle "Tainted Canvas" security error specifically
@@ -875,6 +886,7 @@ export async function exportToPDF(sourceElement, options = {}) {
     pdf.save(`${filename}.pdf`);
     showSuccessToast("PDF saved");
   } catch (e) {
+    if (e?.dvReported) return;
     showErrorToast("PDF Failed", e.message);
   }
 }

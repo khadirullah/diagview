@@ -779,3 +779,52 @@ describe("exportDiagram honours the filename and silent options", () => {
     expect(onExport).toHaveBeenNthCalledWith(2, "png", dl.names[1].replace(/\.png$/, ""));
   });
 });
+
+describe("Export over performance.criticalFileLimit", () => {
+  let container, errorSpy, clickSpy;
+  const toastTexts = () =>
+    Array.from(document.querySelectorAll("#diagview-toast-container .diagview-toast")).map(
+      (t) => t.textContent,
+    );
+
+  beforeEach(() => {
+    container = document.createElement("div");
+    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    svg.setAttribute("viewBox", "0 0 100 100");
+    svg.appendChild(document.createElementNS("http://www.w3.org/2000/svg", "rect"));
+    container.appendChild(svg);
+    document.body.appendChild(container);
+    updateConfig({ performance: { criticalFileLimit: 10 } });
+    errorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
+    clickSpy = jest.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => {});
+    window.jspdf = { jsPDF: jest.fn() };
+  });
+
+  afterEach(() => {
+    container.remove();
+    hideToast();
+    document.getElementById("diagview-toast-container")?.remove();
+    updateConfig({ performance: { criticalFileLimit: 50000000 } });
+    errorSpy.mockRestore();
+    clickSpy.mockRestore();
+    delete window.jspdf;
+  });
+
+  test.each(["svg", "copy-svg", "png", "jpeg", "webp", "copy", "pdf"])(
+    "%s shows only the Diagram blocked notice",
+    async (mode) => {
+      await expect(exportDiagram(container, mode)).resolves.toBeUndefined();
+      const texts = toastTexts();
+      expect(texts.filter((t) => t.includes("Diagram blocked"))).toHaveLength(1);
+      expect(texts.some((t) => /Failed|intermediate value/.test(t))).toBe(false);
+      expect(clickSpy).not.toHaveBeenCalled();
+    },
+  );
+
+  test("a PDF failure that is not the size limit still shows its notice", async () => {
+    // Under the limit the mock jsPDF has no addImage, so the PDF step throws
+    updateConfig({ performance: { criticalFileLimit: 50000000 } });
+    await exportToPDF(container, {});
+    expect(toastTexts().some((t) => /PDF Failed/.test(t))).toBe(true);
+  });
+});
