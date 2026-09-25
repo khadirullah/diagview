@@ -33,7 +33,7 @@ npm run dev
 
 ### Serve the demo locally
 
-Open `demo/index.html` directly in your browser after building. The demo pages reference `../dist/diagview.umd.js` (relative path).
+Open a page in `demo/` directly in your browser. The demo pages load the released `diagview@<version>` from unpkg. To try a local build, run `npm run build` and switch a demo page other than `index.html` to its commented-out `../dist/diagview.umd.js` script tag.
 
 ---
 
@@ -44,21 +44,24 @@ Open `demo/index.html` directly in your browser after building. The demo pages r
 npm run build
 ```
 
-This runs four steps internally:
+This runs five steps internally:
 
-1. `npm run version:sync` — Updates version strings in `demo/demo-runtime.js` and `README.md`
-2. `npm run clean` — Removes `dist/` and `tsconfig.tsbuildinfo`
-3. `npm run build:lib` — Runs Rollup to produce all bundles
-4. `npm run build:types` — Generates `.d.ts` files via `tsc`
+1. `npm run version:sync` updates version strings (see [Versioning](#versioning))
+2. `npm run clean` removes `dist/` and `tsconfig.tsbuildinfo`
+3. `npm run build:lib` runs Rollup to produce all bundles
+4. `npm run build:css` copies `src/ui/styles.css` to `dist/diagview.css`
+5. `npm run build:types` generates `.d.ts` files via `tsc`
 
 ### Build outputs
 
-| File                       | Format       | Purpose                             |
-| -------------------------- | ------------ | ----------------------------------- |
-| `dist/diagview.umd.js`     | UMD          | Browser `<script>` tag (unminified) |
-| `dist/diagview.umd.min.js` | UMD minified | Browser `<script>` tag (production) |
-| `dist/esm/index.js`        | ESM          | Bundlers (Vite, Webpack, Rollup)    |
-| `dist/index.d.ts`          | TypeScript   | Type definitions                    |
+| File                       | Format       | Purpose                                |
+| -------------------------- | ------------ | -------------------------------------- |
+| `dist/diagview.umd.js`     | UMD          | Browser `<script>` tag (unminified)    |
+| `dist/diagview.umd.min.js` | UMD minified | Browser `<script>` tag (production)    |
+| `dist/esm/index.js`        | ESM          | Bundlers (Vite, Webpack, Rollup)       |
+| `dist/esm/*-<hash>.js`     | ESM chunks   | Lazy-loaded features for the ESM build |
+| `dist/diagview.css`        | CSS          | Optional stylesheet (`diagview/style`) |
+| `dist/index.d.ts`          | TypeScript   | Type definitions                       |
 
 ### Clean only
 
@@ -80,10 +83,10 @@ npm test
 npm run test:coverage
 
 # Run a single file
-npx jest tests/search.test.js
+npm test -- tests/search.test.js
 
 # Watch mode
-npx jest --watch
+npm test -- --watch
 ```
 
 ### E2E geometry harness (real Chrome)
@@ -99,14 +102,14 @@ npm install --no-save playwright-core
 node tests/e2e/final-verify.mjs
 ```
 
-Coverage thresholds are enforced. The build will fail if coverage drops below:
+`npm run test:coverage` enforces coverage thresholds and fails if coverage drops below:
 
 | Metric     | Threshold |
 | ---------- | --------- |
-| Statements | 53%       |
-| Lines      | 53%       |
-| Functions  | 48%       |
-| Branches   | 38%       |
+| Statements | 80%       |
+| Lines      | 83%       |
+| Functions  | 78%       |
+| Branches   | 65%       |
 
 ---
 
@@ -122,7 +125,7 @@ npm run lint:fix     # auto-fix
 ### Format
 
 ```bash
-npm run format       # runs Prettier on src/ and tests/
+npm run format       # runs Prettier on src/, tests/ and root *.js files
 ```
 
 ### Bundle size check
@@ -135,15 +138,15 @@ Size limits defined in `package.json` under `"size-limit"`:
 
 | Bundle       | Limit |
 | ------------ | ----- |
-| UMD minified | 34 KB |
-| ESM          | 38 KB |
+| UMD minified | 40 KB |
+| ESM          | 45 KB |
 
 ### Bundle analysis
 
 Generates a visual treemap of the bundle at `dist/bundle-stats.html`:
 
 ```bash
-ANALYZE=1 npm run build:analyze
+npm run build:analyze
 # Then open dist/bundle-stats.html in your browser
 ```
 
@@ -156,7 +159,9 @@ ANALYZE=1 npm run build:analyze
 The `version:sync` script updates version strings in:
 
 - `demo/demo-runtime.js` (`var DV_VERSION = '...'`)
-- `README.md` (all `diagview@x.x.x` CDN references)
+- `README.md` and `docs/*.md` (all `diagview@x.y.z` CDN references)
+- `demo/*.html` (`unpkg.com/diagview@...` script tags)
+- `package.json` (the Jest global `__DV_VERSION__`)
 
 ```bash
 npm run version:sync
@@ -172,15 +177,17 @@ Releases are managed by `release-it` with the `@release-it/conventional-changelo
 npm run release
 ```
 
+Run it from `main` with a clean working tree. `.release-it.json` requires both.
+
 This will:
 
 1. Detect the next version from commit messages
-2. Update `package.json`, `CHANGELOG.md`, and version strings
-3. Create a git tag
+2. Update `package.json`, `package-lock.json` and `CHANGELOG.md`
+3. Commit as `chore(release): vX.Y.Z` and create the `vX.Y.Z` tag
 4. Push to GitHub
 5. Create a GitHub Release
 
-> **Note:** Publishing to npm is handled separately by the CI pipeline after a tag is pushed. The `npm.publish` key in `.release-it.json` is set to `false`.
+> **Note:** `release-it` does not publish to npm (`npm.publish` is `false` in `.release-it.json`). The `publish.yml` workflow publishes to npm when the GitHub Release is published.
 
 ---
 

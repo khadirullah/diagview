@@ -19,20 +19,22 @@ DiagView processes untrusted SVG content from the DOM. The built-in sanitizer (`
 
 Removes all known SVG XSS vectors using a DOM-walking approach (not regex):
 
-- **Blocked tags:** `<script>`, `<iframe>`, `<object>`, `<applet>`, `<embed>`, `<form>`, `<foreignObject>`, `<math>`, `<feimage>`, `<animate>`, `<animateColor>`, `<animateMotion>`, `<animateTransform>`, `<set>`, `<discard>`, `<mpath>`, `<tref>`
+- **Blocked tags:** `<script>`, `<iframe>`, `<object>`, `<applet>`, `<embed>`, `<form>`, `<link>`, `<base>`, `<meta>`, `<math>`, `<feimage>`, `<animate>`, `<animateColor>`, `<animateMotion>`, `<animateTransform>`, `<set>`, `<discard>`, `<mpath>`, `<tref>`
+- **`<foreignObject>`:** Kept, so Mermaid HTML labels still render. It is removed when its `src` or `data` points at an `http(s)://` URL. Its contents go through the same checks.
 - **Blocked attributes:** All `on*` event handlers on any element
 - **Blocked URIs:** `javascript:`, `vbscript:`, `data:` (except safe raster data URIs: PNG, JPEG, WebP, GIF)
 - **External `<use>` references:** Blocked (`https://evil.com/...#payload`)
-- **Inline styles:** Stripped if containing `expression()`, `javascript:`, `@import`, or remote `url()` references (decoded before matching to catch hex/unicode bypasses)
+- **Inline styles:** Stripped if containing `expression()`, `javascript:`, `vbscript:`, `@import`, or remote `url()` references (decoded before matching to catch hex/unicode bypasses). `@import` and remote `url()` are allowed when `security.allowRemoteResources` is `true`.
 - **`<style>` blocks:** Stripped if containing the same patterns
 
 ### `permissive`
 
 Blocks only the most critical vectors (legacy behavior):
 
-- `<script>`, `<iframe>`, `<object>`, `<applet>`, `<embed>`, `<form>`
+- `<script>`, `<iframe>`, `<object>`, `<applet>`, `<embed>`, `<form>`, `<link>`, `<base>`, `<meta>`
+- SMIL animation elements that target `href` or an `on*` attribute
 - All `on*` event attributes
-- `javascript:`/`vbscript:`/`data:` URIs
+- `javascript:`/`vbscript:`/`data:` URIs (same raster exception as `strict`)
 
 ### `off`
 
@@ -63,7 +65,7 @@ Please **do not** file a public GitHub Issue for security vulnerabilities.
 
 ## Known Limitations
 
-- **`<style>` block CSS parsing** is pattern-based, not a full CSS parser. Highly obfuscated CSS injection (beyond hex/unicode escapes) is not guaranteed to be caught in `strict` mode. For maximum security, set `security.mode: 'off'` only with SVGs from sources you fully control.
+- **`<style>` block CSS parsing** is pattern-based, not a full CSS parser. Highly obfuscated CSS injection (beyond hex/unicode escapes) is not guaranteed to be caught in `strict` mode. Keep `strict` mode for untrusted SVGs, and use `'off'` only for SVGs you fully control.
 - **`data-diagview-sanitize="off"`** and **`data-diagview-allow-remote="true"`** disable protections on a per-element basis. These attributes only function when `security.allowOverrides: true` is set (the default). You can disable per-element overrides globally:
 
 ```javascript

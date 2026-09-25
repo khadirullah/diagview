@@ -25,8 +25,8 @@
 - [Export Formats](#-export-formats)
 - [Framework Integration](#-framework-integration)
 - [Configuration](#-configuration)
-- [Screenshots](#-screenshots)
 - [Live Demo](#-live-demo)
+- [Screenshots](#-screenshots)
 - [Documentation](#-documentation)
 - [Contributing](#-contributing)
 - [License](#-license)
@@ -35,28 +35,28 @@
 
 ## ✨ Features
 
-| Feature                      | Description                                                            |
-| ---------------------------- | ---------------------------------------------------------------------- |
-| 🎨 **Auto-Theming**          | Detects Tailwind, Bootstrap, and system dark/light mode automatically  |
-| 🔍 **Node Search**           | Instant search that outlines matching nodes and fades the rest         |
-| 🖼️ **Canvas Themes**         | Auto, light, dark or custom canvas; Readable mode for faint labels     |
-| 📤 **Multi-Format Export**   | PNG, SVG, PDF, JPEG, WebP — with transparent background option         |
-| 📋 **Clipboard Copy**        | Copy diagrams directly to the clipboard                                |
-| ⌨️ **Keyboard Shortcuts**    | Full keyboard navigation (zoom, pan, search, share, rotate)            |
-| 📱 **Mobile Optimized**      | Pinch-to-zoom, double-tap to reset, Visual Viewport sync for stability |
-| 🗺️ **Smart Minimap**         | Accurate portrait/landscape scaling; click-to-navigate                 |
-| 🎯 **Meeting Mode**          | Laser pointer that follows the cursor for presentations                |
-| 🔗 **Precision Share Links** | Share exact zoom/pan position via URL parameters                       |
-| 🔄 **Rotation**              | 90° rotation steps with correct Panzoom recalibration                  |
-| 📝 **Text Select Mode**      | Toggle SVG text selection for copying node labels                      |
-| 🔒 **SVG Sanitization**      | Three-tier security model (strict/permissive/off)                      |
-| 🎭 **3 Layout Modes**        | Header toolbar, floating FAB, or invisible click-to-open               |
-| 🔧 **Per-Diagram Overrides** | Set layout, accent, scale per diagram via `data-*` attributes          |
-| 🌐 **Shadow DOM Support**    | Works inside Shadow DOM roots                                          |
-| 🔄 **Remember Zoom**         | Persist zoom/pan state per diagram across modal opens (session)        |
-| 📦 **Minimal Dependencies**  | Only requires @panzoom/panzoom core module                             |
-| 🚫 **Framework Agnostic**    | Works with React, Vue, Svelte, Angular, or plain HTML                  |
-| 🏷️ **Silent Branding**       | Invisible in UI; professional attribution added during export          |
+| Feature                      | Description                                                                            |
+| ---------------------------- | -------------------------------------------------------------------------------------- |
+| 🎨 **Auto-Theming**          | Detects Tailwind, Bootstrap, and system dark/light mode automatically                  |
+| 🔍 **Node Search**           | Instant search that outlines matching nodes and fades the rest                         |
+| 🖼️ **Canvas Themes**         | Auto, light, dark or custom canvas; Readable mode for faint labels                     |
+| 📤 **Multi-Format Export**   | PNG, SVG, PDF, JPEG, WebP — with transparent background option                         |
+| 📋 **Clipboard Copy**        | Copy diagrams directly to the clipboard                                                |
+| ⌨️ **Keyboard Shortcuts**    | Full keyboard navigation (zoom, pan, search, share, rotate)                            |
+| 📱 **Mobile Optimized**      | Pinch-to-zoom, double-tap to reset, Visual Viewport sync for stability                 |
+| 🗺️ **Smart Minimap**         | Accurate portrait/landscape scaling; click-to-navigate                                 |
+| 🎯 **Meeting Mode**          | Laser pointer that follows the cursor for presentations                                |
+| 🔗 **Precision Share Links** | Share exact zoom/pan position via URL parameters                                       |
+| 🔄 **Rotation**              | 90° rotation steps with correct Panzoom recalibration                                  |
+| 📝 **Text Select Mode**      | Toggle SVG text selection for copying node labels                                      |
+| 🔒 **SVG Sanitization**      | Three-tier security model (strict/permissive/off)                                      |
+| 🎭 **3 Layout Modes**        | Header toolbar, buttons that appear on hover, or click-to-open with no inline controls |
+| 🔧 **Per-Diagram Overrides** | Set layout, export scale, sanitizing and watermark per diagram via `data-*` attributes |
+| 🌐 **Shadow DOM Support**    | Works inside Shadow DOM roots                                                          |
+| 🔄 **Remember Zoom**         | Persist zoom/pan state per diagram across modal opens (session)                        |
+| 📦 **Minimal Dependencies**  | Only requires @panzoom/panzoom core module                                             |
+| 🚫 **Framework Agnostic**    | Works with React, Vue, Svelte, Angular, or plain HTML                                  |
+| 🏷️ **Silent Branding**       | Off by default. When on, the watermark stamps exports and never shows in the UI        |
 
 ---
 
@@ -94,15 +94,22 @@ npm install diagview @panzoom/panzoom
 ```
 
 ```javascript
+import Panzoom from "@panzoom/panzoom";
 import DiagView from "diagview";
 
+window.Panzoom = Panzoom;
 DiagView.init({ layout: "floating" });
 ```
+
+DiagView does not import Panzoom. It reads `window.Panzoom` when the fullscreen viewer opens, so assign it once in your entry file. Without it, the viewer opens with zoom and pan turned off.
 
 ### ESM (Bundlers / Vite / Webpack)
 
 ```javascript
+import Panzoom from "@panzoom/panzoom";
 import DiagView from "diagview"; // resolves dist/esm/index.js
+
+window.Panzoom = Panzoom;
 ```
 
 Styles are injected automatically at runtime — no CSS import is required. The raw stylesheet is also exported for advanced setups (inspecting the rules, building theme overrides, or processing it through your build pipeline):
@@ -134,7 +141,7 @@ DiagView.init({
   layout: "floating", // 'header' | 'floating' | 'off'
   accentColor: "#3b82f6", // optional brand color
   highResScale: 4, // export resolution (1–10)
-  showKeyboardHelp: true, // show shortcuts on first open
+  showKeyboardHelp: true, // allow the ? shortcuts panel
 });
 ```
 
@@ -151,9 +158,11 @@ DiagView automatically:
 
 ## 🎨 Layout Modes
 
+In every layout, the fullscreen viewer is the same and has a menu button at the bottom right.
+
 ### Floating (Default)
 
-A circular FAB button appears at the bottom-right of the fullscreen viewer. Controls on the diagram card hover in at the bottom. Ideal for clean, minimal UIs.
+The copy, download and fullscreen buttons sit below the diagram, without a title. With a mouse or trackpad they appear on hover or keyboard focus. On touch screens they are always shown.
 
 ```javascript
 DiagView.init({ layout: "floating" });
@@ -161,7 +170,7 @@ DiagView.init({ layout: "floating" });
 
 ### Header
 
-A full-width toolbar is always visible above the diagram. Best for documentation sites and dashboards where discoverability matters.
+A full-width toolbar with the diagram title sits above the diagram. With a mouse or trackpad it appears when the pointer is over the diagram or keyboard focus is inside it. On touch screens it is always shown.
 
 ```javascript
 DiagView.init({ layout: "header" });
@@ -210,7 +219,7 @@ Any diagram can override the global configuration using `data-diagview-*` attrib
 | `data-diagview-watermark-text`    | Any string                          | Custom brand text (e.g. your name)      |
 | `data-diagview-watermark-style`   | `corner` \| `background` \| `both`  | Style override for this diagram         |
 | `data-diagview-watermark-pos`     | `top-left` \| `...` \| `four-sides` | Position override for this diagram      |
-| `data-diagview-watermark-opacity` | `0.1`–`1.0`                         | Transparency override for this diagram  |
+| `data-diagview-watermark-opacity` | `0`–`1`                             | Transparency override for this diagram  |
 | `data-title`                      | Any string                          | Title shown in header layout label      |
 
 > **Security note:** `data-diagview-sanitize="off"` and `data-diagview-allow-remote="true"` only work when `security.allowOverrides` is `true` in the global config (the default). Use these only with SVGs from fully trusted sources.
@@ -240,14 +249,14 @@ All shortcuts are active when the fullscreen modal is open.
 
 ## 📤 Export Formats
 
-| Format | Transparent | Notes                                 |
-| ------ | ----------- | ------------------------------------- |
-| PNG    | ✅          | High-res raster; default 4× scale     |
-| SVG    | ✅          | Fully scalable vector                 |
-| JPEG   | ❌          | Smallest file size                    |
-| WebP   | ✅          | Modern format; good compression       |
-| PDF    | ❌          | Requires jsPDF (lazy-loaded from CDN) |
-| Copy   | ❌          | Copies PNG to system clipboard        |
+| Format | Transparent | Notes                                                                         |
+| ------ | ----------- | ----------------------------------------------------------------------------- |
+| PNG    | ✅          | High-res raster. Default scale is 4, or 2 on touch devices and narrow screens |
+| SVG    | ✅          | Fully scalable vector                                                         |
+| JPEG   | ❌          | Smallest file size                                                            |
+| WebP   | ✅          | Modern format; good compression                                               |
+| PDF    | ❌          | Requires jsPDF (lazy-loaded from CDN)                                         |
+| Copy   | ❌          | Copies PNG to system clipboard                                                |
 
 ### Programmatic export
 
@@ -278,7 +287,10 @@ Live example: **[React 18 + StrictMode demo](https://khadirullah.github.io/diagv
 
 ```jsx
 import { useEffect } from "react";
+import Panzoom from "@panzoom/panzoom";
 import DiagView from "diagview";
+
+window.Panzoom = Panzoom;
 
 export default function App() {
   useEffect(() => {
@@ -303,7 +315,10 @@ export default function App() {
 ```vue
 <script setup>
 import { onMounted, onUnmounted } from "vue";
+import Panzoom from "@panzoom/panzoom";
 import DiagView from "diagview";
+
+window.Panzoom = Panzoom;
 
 onMounted(() => DiagView.init({ layout: "floating" }));
 onUnmounted(() => DiagView.destroy());
@@ -323,7 +338,10 @@ onUnmounted(() => DiagView.destroy());
 ```svelte
 <script>
   import { onMount, onDestroy } from 'svelte';
+  import Panzoom from '@panzoom/panzoom';
   import DiagView from 'diagview';
+
+  window.Panzoom = Panzoom;
 
   onMount(() => DiagView.init({ layout: 'floating' }));
   onDestroy(() => DiagView.destroy());
@@ -388,7 +406,8 @@ DiagView.init({
     },
   },
   showBranding: true, // Show DiagView branding link
-  showKeyboardHelp: true, // Show shortcut panel on first open
+  showKeyboardHelp: true, // Allow the ? shortcuts panel (false disables it)
+  showFirstTimeThemeHint: true, // One-time canvas theme tip on first open (stored in localStorage)
   helpTimeout: 8000, // ms before shortcut panel auto-closes (0 = never)
   animateOpen: true, // CSS scale animation when opening fullscreen
 
@@ -429,7 +448,8 @@ DiagView.init({
   // ── PDF ──────────────────────────────────────────
   pdfLibraryUrl: "https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js",
   // pdfLibraryIntegrity is auto-set when using the default URL above.
-  // Set to null if you provide a custom pdfLibraryUrl.
+  // With a custom pdfLibraryUrl, pass its SRI hash as pdfLibraryIntegrity,
+  // otherwise the script loads without an integrity check.
 
   // ── Callbacks ────────────────────────────────────
   onOpen: null, // () => void — modal opened
@@ -443,8 +463,8 @@ DiagView.init({
     enabled: false, // true = inject branding on export/download
     text: "", // The text to display (e.g. "yourdomain.com")
     style: "corner", // 'corner' | 'background' | 'both'
-    position: "bottom-right", // 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right' | 'four-sides'
-    opacity: 0.2, // 0.1 - 1.0 (default 0.2)
+    position: "bottom-right", // 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right' | 'center' | 'four-sides'
+    opacity: 0.2, // 0 to 1 (default 0.2)
   },
 });
 ```

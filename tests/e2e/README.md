@@ -37,10 +37,12 @@ node tests/e2e/verify-minimap-rotation.mjs  # minimap click + indicator while
                                             # rotated 90/180/270 (8 checks)
 node tests/e2e/verify-share-rotation.mjs    # share link restores rotation, zoom
                                             # and position (7 checks)
-node tests/e2e/verify-fixes.mjs             # option sweep against dist/diagview.umd.js:
-                                            # auto-init timing, destroy/refresh, export
-                                            # scale/watermark, sanitizer, shadow DOM,
-                                            # minimap, laser, search, focus (30 checks)
+node tests/e2e/verify-fixes.mjs             # UMD globals, removed config keys, ID
+                                            # references in the fullscreen clone and in
+                                            # exports, allowOverrides gate, background and
+                                            # text colour, panAnimationDuration, arrow keys
+                                            # while rotated, T after reopen, share links on
+                                            # file://, init() after destroy() (30 checks)
 node tests/e2e/verify-react-strictmode.mjs  # real React 18 dev tree with
                                             # StrictMode: init survives the double
                                             # effect, unmount/remount/replace are
@@ -60,7 +62,8 @@ intercepts the page's unpkg request for diagview and serves
 `dist/diagview.umd.js`, so the local build is what gets tested. Pass
 `--cdn` to test the published version instead. `verify-fixes.mjs` accepts
 the same flag, loads the published 1.0.11 build and shows which checks it
-fails. React itself is loaded from unpkg, so this one needs network access.
+fails. `verify-react-strictmode.mjs` loads React from unpkg and
+`verify-fixes.mjs` loads Mermaid from jsdelivr, so both need network access.
 
 `verify-export-search.mjs` and `verify-readable-text.mjs` run offline and
 read the build from `dist/diagview.umd.js`. Set `DV_DIST=/path/to/diagview.umd.js`
