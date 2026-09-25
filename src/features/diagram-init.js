@@ -195,7 +195,9 @@ function getIcon(key, defaultIcon) {
 
 /**
  * Read per-element data-diagview-* overrides and merge over global config.
- * Supports: data-diagview-layout, data-diagview-scale
+ * Only layout is merged. Scale, sanitize and allow-remote are checked here
+ * for warnings. Export reads scale and the data-diagview-watermark-*
+ * attributes itself when it runs.
  *
  * @param {HTMLElement} element - Diagram container element
  * @returns {object} A local config snapshot for this element only
@@ -216,12 +218,11 @@ function readElementOverrides(element) {
     }
   }
 
-  // data-diagview-scale="4" (integer 1–10)
+  // data-diagview-scale="4" (integer 1–10). Export reads the attribute
+  // itself, so this only warns about a bad value once, at init.
   if (dataset.diagviewScale) {
     const n = parseInt(dataset.diagviewScale, 10);
-    if (!isNaN(n) && n >= 1 && n <= 10) {
-      cfg.highResScale = n;
-    } else {
+    if (isNaN(n) || n < 1 || n > 10) {
       console.warn(
         `DiagView: data-diagview-scale "${dataset.diagviewScale}" must be 1–10, ignoring.`,
       );
@@ -234,38 +235,6 @@ function readElementOverrides(element) {
   // (see svg-clone.js) at the moment the SVG is cloned. The call here only
   // serves to emit the "override ignored" warnings once, at init time.
   resolveElementSecurity(element, { warn: true });
-
-  // --- Watermark Overrides ---
-  // data-diagview-watermark="true|false"
-  if (dataset.diagviewWatermark) {
-    cfg.watermark = { ...cfg.watermark, enabled: dataset.diagviewWatermark === "true" };
-  }
-
-  // data-diagview-watermark-text="My Label"
-  if (dataset.diagviewWatermarkText) {
-    cfg.watermark = { ...cfg.watermark, text: dataset.diagviewWatermarkText };
-  }
-
-  // data-diagview-watermark-style="corner|background|both"
-  if (dataset.diagviewWatermarkStyle) {
-    const v = dataset.diagviewWatermarkStyle.toLowerCase();
-    if (["corner", "background", "both"].includes(v)) {
-      cfg.watermark = { ...cfg.watermark, style: v };
-    }
-  }
-
-  // data-diagview-watermark-pos="top-left|..."
-  if (dataset.diagviewWatermarkPos) {
-    cfg.watermark = { ...cfg.watermark, position: dataset.diagviewWatermarkPos };
-  }
-
-  // data-diagview-watermark-opacity="0.5"
-  if (dataset.diagviewWatermarkOpacity) {
-    const n = parseFloat(dataset.diagviewWatermarkOpacity);
-    if (!isNaN(n) && n >= 0 && n <= 1) {
-      cfg.watermark = { ...cfg.watermark, opacity: n };
-    }
-  }
 
   return cfg;
 }
