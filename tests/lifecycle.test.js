@@ -160,7 +160,7 @@ describe("destroy() restores every touched element", () => {
   });
 
   test("layout off -> destroy -> layout header wraps the diagram", async () => {
-    document.body.innerHTML = `<div class="diagram" data-diagview-accent="#ff0000">${SVG}</div>`;
+    document.body.innerHTML = `<div class="diagram">${SVG}</div>`;
     const el = document.querySelector(".diagram");
     const svg = el.querySelector("svg");
 
@@ -175,7 +175,6 @@ describe("destroy() restores every touched element", () => {
     expect(el.dataset.diagviewIndex).toBeUndefined();
     expect(el.dataset.diagviewId).toBeUndefined();
     expect(el.style.cursor).toBe("");
-    expect(el.style.getPropertyValue("--dv-accent")).toBe("");
     expect(svg.classList.contains("dv-svg-content")).toBe(false);
     expect(svg.style.transition).toBe("");
 

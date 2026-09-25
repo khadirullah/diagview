@@ -188,14 +188,13 @@ DiagView.init({ layout: "off" });
 
 ## 🎛️ Per-Diagram Overrides
 
-Any diagram can override the global configuration using `data-diagview-*` attributes. This lets you mix layout modes and accent colors on a single page.
+Any diagram can override the global configuration using `data-diagview-*` attributes. This lets you mix layout modes and export sizes on a single page.
 
 ```html
-<!-- Use header layout with a purple accent for this diagram only -->
+<!-- Use header layout and a larger export for this diagram only -->
 <div
   class="diagram"
   data-diagview-layout="header"
-  data-diagview-accent="#8b5cf6"
   data-diagview-scale="6"
   data-title="My Architecture"
 >
@@ -211,7 +210,6 @@ Any diagram can override the global configuration using `data-diagview-*` attrib
 | Attribute                         | Values                              | Description                             |
 | --------------------------------- | ----------------------------------- | --------------------------------------- |
 | `data-diagview-layout`            | `header` \| `floating` \| `off`     | Layout for this diagram only            |
-| `data-diagview-accent`            | Any CSS color                       | Accent color for this diagram only      |
 | `data-diagview-scale`             | `1`–`10`                            | Export resolution for this diagram only |
 | `data-diagview-sanitize`          | `strict` \| `permissive` \| `off`   | SVG sanitization mode                   |
 | `data-diagview-allow-remote`      | `true` \| `false`                   | Allow remote CSS/fonts in SVG           |

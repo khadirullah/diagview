@@ -195,7 +195,7 @@ function getIcon(key, defaultIcon) {
 
 /**
  * Read per-element data-diagview-* overrides and merge over global config.
- * Supports: data-diagview-layout, data-diagview-accent, data-diagview-scale
+ * Supports: data-diagview-layout, data-diagview-scale
  *
  * @param {HTMLElement} element - Diagram container element
  * @returns {object} A local config snapshot for this element only
@@ -214,11 +214,6 @@ function readElementOverrides(element) {
     } else {
       console.warn(`DiagView: Unknown data-diagview-layout "${v}" on element, ignoring.`);
     }
-  }
-
-  // data-diagview-accent="#ff6b6b" (any valid CSS color string)
-  if (dataset.diagviewAccent) {
-    cfg.accentColor = dataset.diagviewAccent;
   }
 
   // data-diagview-scale="4" (integer 1–10)
@@ -293,7 +288,6 @@ export function initializeDiagram(element, precalculatedIndex = -1) {
     wrapper: null,
     errorDiv: null,
     svg,
-    hadAccent: !!element.dataset.diagviewAccent,
     prev: {
       cursor: element.style.cursor,
       display: svg ? svg.style.display : "",
@@ -306,12 +300,6 @@ export function initializeDiagram(element, precalculatedIndex = -1) {
 
   // Resolve config for this element: global config + any data-diagview-* overrides (A1)
   const elementConfig = readElementOverrides(element);
-
-  // If a per-element accent is set, apply it as a CSS custom property on the element
-  // so buttons and highlights use it without affecting other diagrams
-  if (element.dataset.diagviewAccent) {
-    element.style.setProperty("--dv-accent", elementConfig.accentColor);
-  }
 
   // Error boundary: Check for valid SVG
   if (!svg || !isValidSvg(svg)) {
@@ -458,7 +446,7 @@ export function deinitializeDiagram(element) {
   // Run per-element cleanup
   const data = cleanupMap.get(element);
   if (data) {
-    const { fn, wrapper, errorDiv, svg, hadAccent, prev } = data;
+    const { fn, wrapper, errorDiv, svg, prev } = data;
 
     // Always use the stored wrapper reference (bulletproof against DOM moves)
     if (wrapper && wrapper.parentNode) {
@@ -477,7 +465,6 @@ export function deinitializeDiagram(element) {
     }
 
     element.style.cursor = prev.cursor;
-    if (hadAccent) element.style.removeProperty("--dv-accent");
 
     cleanupMap.delete(element);
   }

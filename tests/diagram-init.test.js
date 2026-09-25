@@ -243,12 +243,6 @@ describe("Diagram Init: readElementOverrides", () => {
     expect(document.querySelector(".diagview-controls-floating")).not.toBeNull();
   });
 
-  test("respects data-diagview-accent override", () => {
-    container.dataset.diagviewAccent = "#ff0000";
-    initializeDiagram(container);
-    expect(container.style.getPropertyValue("--dv-accent")).toBe("#ff0000");
-  });
-
   test("respects data-diagview-scale override", () => {
     const warnSpy = jest.spyOn(console, "warn").mockImplementation(() => {});
     container.dataset.diagviewScale = "5";
