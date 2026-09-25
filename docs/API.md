@@ -22,7 +22,7 @@ All methods are available on the `DiagView` global (UMD) or the default export (
 
 Initialize DiagView. Injects styles, creates the modal DOM, sets up keyboard shortcuts, starts the MutationObserver, and processes all matching diagrams on the page.
 
-**Signature:** `init(options?: Partial<DiagViewConfig>): Promise<void>`
+**Signature:** `init(options?: DiagViewOptions): Promise<void>`
 
 ```javascript
 DiagView.init();
@@ -69,7 +69,7 @@ DiagView.refresh();
 
 Update configuration at runtime without re-initializing. Syncs theme and branding visibility immediately.
 
-**Signature:** `configure(options: Partial<DiagViewConfig>): void`
+**Signature:** `configure(options?: DiagViewOptions): void`
 
 ```javascript
 DiagView.configure({
@@ -444,7 +444,15 @@ await DiagView.openFullscreen(el, { zoom: 2 });
 await DiagView.exportToPNG(el, { transparent: true });
 ```
 
-The declarations come from the JSDoc in the source. They type the options of `init()` and `configure()` as `object`, and they do not export a `DiagViewConfig` type. `DiagViewConfig` in this reference only describes the shape of the options.
+The declarations come from the JSDoc in the source. `init()` and `configure()` take `DiagViewOptions`, `getConfiguration()` returns `DiagViewConfig`, and the export functions take `ExportOptions`. The package exports all four types, with `ExportMode`:
+
+```typescript
+import type { DiagViewOptions, ExportMode } from "diagview";
+```
+
+`DiagViewOptions` is `DiagViewConfig` with every key optional, nested groups included. Unknown keys still compile, because DiagView only warns about them at runtime.
+
+The declarations describe the package import. The `DiagView` global that the script-tag build creates has no type declaration.
 
 ---
 

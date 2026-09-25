@@ -70,7 +70,7 @@ let pendingDestroy = null;
  * Runs synchronously when nothing is pending. If a destroy() is still in
  * flight, the initialization is queued behind it. Either way the returned
  * promise resolves once DiagView is initialized.
- * @param {object} options - Configuration options
+ * @param {DiagViewOptions} [options] - Configuration options
  * @returns {Promise<void>} Resolves when initialization has completed
  */
 function init(options = {}) {
@@ -268,7 +268,7 @@ function initShadowRoot(shadowRoot) {
 
 /**
  * Update configuration at runtime
- * @param {object} options - New configuration options
+ * @param {DiagViewOptions} [options] - New configuration options, merged into the current ones
  */
 function configure(options = {}) {
   if (!state.isInitialized) {
@@ -284,13 +284,14 @@ function configure(options = {}) {
 
 /**
  * Get current configuration
- * @returns {object} Current configuration
+ * @returns {DiagViewConfig} Current configuration (read-only)
  */
 function getConfiguration() {
   return getConfig();
 }
 
 // Version
+/** @type {string} */
 const version = __DV_VERSION__;
 
 // Public API
@@ -414,3 +415,9 @@ export {
   openFullscreen,
   version,
 };
+
+// Public types
+/** @typedef {import("./core/config-defaults.js").DiagViewConfig} DiagViewConfig */
+/** @typedef {import("./core/config-defaults.js").DiagViewOptions} DiagViewOptions */
+/** @typedef {import("./features/export.js").ExportMode} ExportMode */
+/** @typedef {import("./features/export.js").ExportOptions} ExportOptions */

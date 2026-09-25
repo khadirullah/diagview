@@ -20,6 +20,21 @@ import { cloneSVGForExportAsync } from "../core/svg-clone.js";
 import { showSuccessToast, showErrorToast, showInfoToast, showWarningToast } from "../ui/toast.js";
 
 /**
+ * Export format for exportDiagram(). "download" is the same as "png", and the
+ * "-transparent" modes skip the background fill.
+ * @typedef {"png"|"svg"|"jpeg"|"webp"|"pdf"|"copy"|"copy-svg"|"png-transparent"|"webp-transparent"|"download"} ExportMode
+ */
+
+/**
+ * Options for the export functions. Each function documents which fields it reads.
+ * @typedef {object} ExportOptions
+ * @property {string} [filename] - File name without extension, generated from the diagram title if empty
+ * @property {boolean} [silent] - Skip the processing toast and the JPEG transparency warning
+ * @property {boolean} [transparent] - Skip the background fill
+ * @property {SVGSVGElement|null} [modalClone] - Fullscreen clone to export instead of the original SVG
+ */
+
+/**
  * Generate filename
  */
 export function generateFilename(svg) {
@@ -549,7 +564,8 @@ export async function renderToCanvas(sourceElement, modalClone, transparent = fa
 /**
  * Export as SVG
  * @param {HTMLElement} sourceElement - Element containing SVG
- * @param {object} [options={}] - Export options
+ * @param {ExportOptions} [options={}] - Reads filename, transparent and modalClone
+ * @returns {Promise<void>} Resolves when the download has started
  */
 export async function exportToSVG(sourceElement, options = {}) {
   const originalSvg = resolveSourceSvg(sourceElement);
@@ -593,7 +609,8 @@ export async function exportToSVG(sourceElement, options = {}) {
 /**
  * Copy raw SVG vector markup directly to clipboard
  * @param {HTMLElement} sourceElement - Element containing SVG
- * @param {object} [options={}] - Export options
+ * @param {ExportOptions} [options={}] - Reads modalClone
+ * @returns {Promise<void>} Resolves when the markup is copied
  */
 export async function copySVGCode(sourceElement, options = {}) {
   const originalSvg = sourceElement.querySelector("svg");
@@ -740,6 +757,9 @@ async function processImageExport(
 
 /**
  * Export as PNG
+ * @param {HTMLElement} sourceElement - Element containing SVG
+ * @param {ExportOptions} [options={}] - Reads filename, transparent, silent and modalClone
+ * @returns {Promise<void>} Resolves when the download has started
  */
 export async function exportToPNG(sourceElement, options = {}) {
   const sourceSvg = resolveSourceSvg(sourceElement);
@@ -758,6 +778,9 @@ export async function exportToPNG(sourceElement, options = {}) {
 
 /**
  * Export as JPEG
+ * @param {HTMLElement} sourceElement - Element containing SVG
+ * @param {ExportOptions} [options={}] - Reads filename, transparent, silent and modalClone
+ * @returns {Promise<void>} Resolves when the download has started
  */
 export async function exportToJPEG(sourceElement, options = {}) {
   const sourceSvg = resolveSourceSvg(sourceElement);
@@ -776,6 +799,9 @@ export async function exportToJPEG(sourceElement, options = {}) {
 
 /**
  * Export as WebP
+ * @param {HTMLElement} sourceElement - Element containing SVG
+ * @param {ExportOptions} [options={}] - Reads filename, transparent, silent and modalClone
+ * @returns {Promise<void>} Resolves when the download has started
  */
 export async function exportToWebP(sourceElement, options = {}) {
   const sourceSvg = resolveSourceSvg(sourceElement);
@@ -794,6 +820,10 @@ export async function exportToWebP(sourceElement, options = {}) {
 
 /**
  * Copy to Clipboard (PNG)
+ * @param {HTMLElement} sourceElement - Element containing SVG
+ * @param {ExportOptions} [options={}] - Reads filename and modalClone. filename names the
+ *   download used when the clipboard is unavailable.
+ * @returns {Promise<void>} Resolves when the image is copied or downloaded
  */
 export async function copyToClipboard(sourceElement, options = {}) {
   const sourceSvg = resolveSourceSvg(sourceElement);
@@ -804,6 +834,10 @@ export async function copyToClipboard(sourceElement, options = {}) {
 
 /**
  * Export as PDF
+ * @param {HTMLElement} sourceElement - Element containing SVG
+ * @param {ExportOptions} [options={}] - Reads filename, transparent and modalClone.
+ *   PDF has no transparency, so transparent only shows a warning.
+ * @returns {Promise<void>} Resolves when the download has started
  */
 export async function exportToPDF(sourceElement, options = {}) {
   const sourceSvg = resolveSourceSvg(sourceElement);
@@ -847,6 +881,12 @@ export async function exportToPDF(sourceElement, options = {}) {
 
 /**
  * Main Export Handler
+ * @param {HTMLElement} sourceElement - Element containing SVG
+ * @param {ExportMode} mode - Export format. An unknown mode exports PNG.
+ * @param {ExportOptions|SVGSVGElement|null} [options={}] - Reads filename, transparent,
+ *   silent and modalClone. silent applies to png, jpeg and webp. An SVG element here
+ *   is the old third argument and works as modalClone.
+ * @returns {Promise<void>} Resolves after the export and the onExport callback
  */
 export async function exportDiagram(sourceElement, mode, options = {}) {
   // A null third argument means no options

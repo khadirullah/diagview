@@ -2,6 +2,99 @@ import { TIMING, ZOOM, LAYOUTS, BUTTON_STYLES, SELECTORS, EXPORT } from "./const
 import { deepMerge, deepFreeze } from "./state-utils.js";
 
 /**
+ * Button icons. Each value is SVG markup, or null for the built-in icon.
+ * @typedef {object} DiagViewButtonIcons
+ * @property {string|null} copy - Copy button icon
+ * @property {string|null} download - Download button icon
+ * @property {string|null} fullscreen - Fullscreen button icon
+ */
+
+/**
+ * @typedef {object} DiagViewButtonsConfig
+ * @property {"transparent"|"accent"|"solid"|"neutral"} style - Button look
+ * @property {DiagViewButtonIcons} icons - Icon overrides
+ */
+
+/**
+ * @typedef {object} DiagViewUIConfig
+ * @property {DiagViewButtonsConfig} buttons - Diagram toolbar buttons
+ */
+
+/**
+ * @typedef {object} DiagViewSecurityConfig
+ * @property {"strict"|"permissive"|"off"} mode - SVG sanitization level
+ * @property {boolean} allowOverrides - Let data-diagview-sanitize change the mode per diagram
+ * @property {boolean} allowRemoteResources - Keep external fonts and stylesheets
+ */
+
+/**
+ * @typedef {object} DiagViewPerformanceConfig
+ * @property {number} largeFileThreshold - Has no effect, kept for old configs
+ * @property {number} criticalFileLimit - Largest SVG, in characters of markup, DiagView will clone
+ */
+
+/**
+ * Watermark drawn on exported images only.
+ * @typedef {object} DiagViewWatermarkConfig
+ * @property {boolean} enabled - Draw the watermark
+ * @property {string} text - Watermark text
+ * @property {"corner"|"background"|"both"} style - Corner text, a large centred mark, or both
+ * @property {"top-left"|"top-right"|"bottom-left"|"bottom-right"|"center"|"four-sides"} position - Where corner text goes
+ * @property {number} opacity - From 0 to 1
+ */
+
+/**
+ * Full configuration, as returned by getConfiguration().
+ * @typedef {object} DiagViewConfig
+ * @property {string|null} accentColor - Accent colour, null to detect from the page
+ * @property {string|null} backgroundColor - Background colour, null to detect from the page
+ * @property {string|null} textColor - Text colour, null to detect from the page
+ * @property {"header"|"floating"|"off"} layout - Where the diagram buttons go
+ * @property {number} highResScale - Export scale on desktop, 1 to 10
+ * @property {number} mobileScale - Export scale on mobile, 1 to 5
+ * @property {number} maxPixels - Largest export canvas in pixels
+ * @property {DiagViewUIConfig} ui - Button look and icons
+ * @property {boolean} showKeyboardHelp - Allow the ? shortcuts panel
+ * @property {number} helpTimeout - Milliseconds before the shortcuts panel closes, 0 keeps it open
+ * @property {string} diagramSelector - CSS selector for diagram containers
+ * @property {boolean} naturalPanning - Arrow keys move the diagram in the arrow's direction
+ * @property {boolean} showMinimap - Show the minimap in the viewer
+ * @property {boolean} rememberZoom - Keep each diagram's zoom and pan in session storage
+ * @property {boolean} animateOpen - Animate the viewer opening
+ * @property {boolean} showBranding - Show the DiagView link in the viewer
+ * @property {boolean} showFirstTimeThemeHint - Point to the canvas theme menu the first time the viewer opens
+ * @property {string[]} allowedImageTypes - Image types allowed in data URLs
+ * @property {DiagViewSecurityConfig} security - Sanitization settings
+ * @property {DiagViewPerformanceConfig} performance - Size limits
+ * @property {number} toastDuration - Milliseconds a notification stays
+ * @property {number} errorToastDuration - Milliseconds an error notification stays
+ * @property {string} pdfLibraryUrl - Script URL for jsPDF
+ * @property {string|null} pdfLibraryIntegrity - SRI hash for pdfLibraryUrl, null to skip the check
+ * @property {number} maxZoomScale - Largest zoom, 1 to 50
+ * @property {number} minZoomScale - Smallest zoom, 0.01 to 1
+ * @property {number} zoomAnimationDuration - Zoom animation in milliseconds
+ * @property {number} panAnimationDuration - Pan animation in milliseconds
+ * @property {((mode: string, filename: string) => void)|null} onExport - Called after an export with the format and the file name without extension
+ * @property {((error: Error) => void)|null} onError - Called when a diagram fails to render
+ * @property {((scale: number) => void)|null} onZoomChange - Called with the new zoom scale
+ * @property {(() => void)|null} onOpen - Called after the viewer opens
+ * @property {(() => void)|null} onClose - Called after the viewer closes
+ * @property {DiagViewWatermarkConfig} watermark - Export watermark
+ */
+
+/**
+ * Options for init() and configure(). Every key is optional, including the
+ * keys inside each group. Omitted keys keep their current value. Unknown
+ * keys are allowed, as at runtime, where DiagView warns and ignores them.
+ * @typedef {Partial<Omit<DiagViewConfig, "ui"|"security"|"performance"|"watermark">> & {
+ *   ui?: { buttons?: Partial<Omit<DiagViewButtonsConfig, "icons">> & { icons?: Partial<DiagViewButtonIcons> } },
+ *   security?: Partial<DiagViewSecurityConfig> & { [key: string]: unknown },
+ *   performance?: Partial<DiagViewPerformanceConfig> & { [key: string]: unknown },
+ *   watermark?: Partial<DiagViewWatermarkConfig> & { [key: string]: unknown },
+ * } & { [key: string]: unknown }} DiagViewOptions
+ */
+
+/**
  * Initial configuration template.
  * Private to prevent accidental mutation.
  */
