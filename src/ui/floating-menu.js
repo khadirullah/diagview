@@ -199,9 +199,49 @@ function _createCanvasThemeSection(menuPanel) {
     swatchGroup.appendChild(sw);
   });
 
+  const textLbl = document.createElement("div");
+  textLbl.className = "dv-menu-lbl";
+  textLbl.textContent = "Text Colours";
+
+  const textGroup = document.createElement("div");
+  textGroup.className = "dv-theme-modes dv-text-modes";
+
+  const textModes = [
+    { label: "Original", mode: "original", title: "Colours as the author drew them" },
+    {
+      label: "Readable",
+      mode: "readable",
+      title: "Recolour text that is hard to read on this canvas",
+    },
+  ];
+
+  textModes.forEach(({ label, mode, title }) => {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "dv-theme-btn dv-text-mode-btn";
+    btn.dataset.textMode = mode;
+    btn.title = title;
+    btn.textContent = label;
+    const isActive = state.readableText === (mode === "readable");
+    btn.classList.toggle("active", isActive);
+    btn.setAttribute("aria-pressed", String(isActive));
+
+    btn.onclick = () => {
+      textGroup.querySelectorAll(".dv-text-mode-btn").forEach((b) => {
+        b.classList.toggle("active", b === btn);
+        b.setAttribute("aria-pressed", String(b === btn));
+      });
+      state.readableText = mode === "readable";
+      import("../features/lazy/readable-text.js").then((m) => m.syncReadableText()).catch(() => {});
+    };
+    textGroup.appendChild(btn);
+  });
+
   themeSec.appendChild(themeLbl);
   themeSec.appendChild(modeGroup);
   themeSec.appendChild(swatchGroup);
+  themeSec.appendChild(textLbl);
+  themeSec.appendChild(textGroup);
   menuPanel.appendChild(themeSec);
 }
 

@@ -39,6 +39,7 @@
 | ---------------------------- | ---------------------------------------------------------------------- |
 | 🎨 **Auto-Theming**          | Detects Tailwind, Bootstrap, and system dark/light mode automatically  |
 | 🔍 **Node Search**           | Instant search that outlines matching nodes and fades the rest         |
+| 🖼️ **Canvas Themes**         | Auto, light, dark or custom canvas; Readable mode for faint labels     |
 | 📤 **Multi-Format Export**   | PNG, SVG, PDF, JPEG, WebP — with transparent background option         |
 | 📋 **Clipboard Copy**        | Copy diagrams directly to the clipboard                                |
 | ⌨️ **Keyboard Shortcuts**    | Full keyboard navigation (zoom, pan, search, share, rotate)            |

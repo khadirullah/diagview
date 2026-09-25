@@ -255,6 +255,56 @@ describe("Export keeps structural <g> transforms", () => {
   });
 });
 
+describe("Export keeps the author's text colours", () => {
+  let container, modalClone, text;
+
+  beforeEach(() => {
+    container = document.createElement("div");
+    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    svg.setAttribute("viewBox", "0 0 100 100");
+    container.appendChild(svg);
+    document.body.appendChild(container);
+
+    // The modal clone with one label recoloured for the canvas
+    modalClone = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    modalClone.setAttribute("viewBox", "0 0 100 100");
+    text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+    text.setAttribute("fill", "#333333");
+    text.textContent = "Label";
+    text.setAttribute("data-dv-text-orig", "");
+    text.setAttribute("data-dv-text-prio", "");
+    text.style.setProperty("fill", "rgb(250, 250, 250)", "important");
+    modalClone.appendChild(text);
+    document.body.appendChild(modalClone);
+
+    Object.defineProperty(navigator, "clipboard", {
+      value: { writeText: jest.fn(() => Promise.resolve()) },
+      configurable: true,
+    });
+    Object.defineProperty(window, "isSecureContext", { value: true, configurable: true });
+    updateConfig({ security: { mode: "strict" } });
+  });
+
+  afterEach(() => {
+    container.remove();
+    modalClone.remove();
+    jest.clearAllMocks();
+  });
+
+  test("copied SVG markup has the original colours, the modal keeps the readable ones", async () => {
+    await copySVGCode(container, { modalClone });
+
+    const copied = navigator.clipboard.writeText.mock.calls[0][0];
+    expect(copied).toContain("Label");
+    expect(copied).not.toContain("rgb(250, 250, 250)");
+    expect(copied).not.toContain("data-dv-text");
+
+    expect(text.style.getPropertyValue("fill")).toBe("rgb(250, 250, 250)");
+    expect(text.style.getPropertyPriority("fill")).toBe("important");
+    expect(text.getAttribute("data-dv-text-orig")).toBe("");
+  });
+});
+
 describe("Export embeds self-hosted fonts referenced by relative urls", () => {
   let container, styleEl, fetchMock;
 

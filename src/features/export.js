@@ -329,7 +329,14 @@ async function prepareSvgForExport(svg, modalClone) {
   const height = vh;
 
   // CRITICAL FIX: Use sourceSvg (modalClone if in fullscreen)
-  const exportSvg = await cloneSVGForExportAsync(sourceSvg);
+  // Readable text only changes the view; exports keep the author's colours.
+  // The clone reads styles and copies the DOM before its first await, so
+  // the original colours are in place for both.
+  const exportSvg = await (sourceSvg.querySelector?.("[data-dv-text-orig]")
+    ? import("./lazy/readable-text.js").then((m) =>
+        m.withOriginalText(sourceSvg, () => cloneSVGForExportAsync(sourceSvg)),
+      )
+    : cloneSVGForExportAsync(sourceSvg));
 
   if (!exportSvg) return null;
 

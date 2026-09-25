@@ -215,6 +215,9 @@ Or override manually: `DiagView.init({ accentColor: '#60a5fa', backgroundColor: 
 **Q: My brand color doesn't apply inside the diagram itself.**  
 A: DiagView applies the accent color to the UI chrome (buttons and minimap), not to the SVG content itself. To style SVG internals, use your own CSS.
 
+**Q: My diagram text is hard to read on a dark canvas.**  
+A: The canvas theme changes only the background, and the diagram keeps its author's colors. In the fullscreen menu, pick "Readable" under "Text Colours". DiagView then recolors only the text that is hard to read and keeps its hue. Exports keep the original colors. See [Text Colours](USAGE.md#text-colours).
+
 ---
 
 ## Share Links

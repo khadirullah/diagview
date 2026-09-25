@@ -296,6 +296,7 @@ interface PublicState {
   currentDiagramIndex: number;
   meetingMode: boolean;
   searchMatches: Element[];
+  readableText: boolean; // Text Colours set to Readable in the menu
   // Internal collections returned as snapshots:
   cleanupFunctions: Set<Function>;
   modalCleanupFunctions: Set<Function>;

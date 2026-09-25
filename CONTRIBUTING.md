@@ -62,7 +62,7 @@ diagview/
 ├── src/
 │   ├── core/             # State, config, events, lifecycle, utils
 │   ├── features/         # Diagram init, export, keyboard
-│   │   └── lazy/         # Search, minimap, share, rotate, meeting mode
+│   │   └── lazy/         # Search, minimap, share, rotate, meeting mode, readable text
 │   └── ui/               # Modal, floating menu, toast, focus manager
 ├── tests/
 │   ├── *.test.js         # Jest unit tests (one file per module)

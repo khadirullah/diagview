@@ -111,9 +111,10 @@ function parseColorViaBrowser(value) {
 
 /**
  * Parse color string to RGB array
- * @private
+ * @param {string} color - Any CSS colour string
+ * @returns {number[]|null} [r, g, b] or null when the string is not a colour
  */
-function parseColor(color) {
+export function parseColor(color) {
   if (!color || typeof color !== "string") return null;
 
   const trimmed = color.trim().toLowerCase();
@@ -156,9 +157,11 @@ function parseColor(color) {
 
 /**
  * Calculate contrast ratio between two colors (WCAG 2.0)
- * @private
+ * @param {string} color1 - First CSS colour
+ * @param {string} color2 - Second CSS colour
+ * @returns {number} Ratio from 1 to 21, or 1 when either colour does not parse
  */
-function getContrastRatio(color1, color2) {
+export function getContrastRatio(color1, color2) {
   const rgb1 = parseColor(color1);
   const rgb2 = parseColor(color2);
 
@@ -388,39 +391,14 @@ export function setCanvasTheme(mode, customColor = null) {
 
   const theme = syncTheme();
 
-  const modal = document.getElementById("diagview-modal");
-  const svg = modal?.querySelector("svg");
-  if (svg) {
-    normalizeSvgTextContrast(svg, theme.bg);
+  // Readable text is measured against the canvas, so recolour for the new one
+  if (state.readableText) {
+    import("../features/lazy/readable-text.js")
+      .then((m) => m.syncReadableText(theme.bg))
+      .catch(() => {});
   }
 
   return theme;
-}
-
-/**
- * Normalize SVG text nodes for proper contrast against current canvas background
- * @param {SVGElement} svg SVG container element
- * @param {string} [bgOverride] Optional background color override
- */
-export function normalizeSvgTextContrast(svg, bgOverride) {
-  if (!svg) return;
-  const isDarkCanvas =
-    state.activeCanvasThemeMode === "dark" ||
-    (state.activeCanvasThemeMode === "auto" && isDarkMode());
-  const activeBg = bgOverride || (isDarkCanvas ? COLORS.BG_DARK : COLORS.BG_LIGHT);
-
-  const textNodes = svg.querySelectorAll("text, tspan, .title, .titleText, .label text");
-  textNodes.forEach((el) => {
-    const computedFill = getComputedStyle(el).fill || el.getAttribute("fill") || "";
-
-    if (computedFill) {
-      const contrast = getContrastRatio(computedFill, activeBg);
-      if (contrast < 4.5) {
-        const normalized = ensureContrast(computedFill, activeBg);
-        el.style.fill = normalized;
-      }
-    }
-  });
 }
 
 /**
@@ -475,9 +453,17 @@ export function clearThemeCache() {
 export function setupThemeWatchers() {
   if (state.themeObserver) return;
 
+  let lastBg = null;
   const debouncedSync = debounce(() => {
     clearThemeCache();
-    syncTheme();
+    const { bg } = syncTheme();
+    // In Auto mode the canvas follows the page, so readable text follows too
+    if (state.readableText && bg !== lastBg) {
+      import("../features/lazy/readable-text.js")
+        .then((m) => m.syncReadableText(bg))
+        .catch(() => {});
+    }
+    lastBg = bg;
   }, TIMING.THEME_SYNC_DEBOUNCE);
 
   // Watch DOM changes

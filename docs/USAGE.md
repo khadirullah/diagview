@@ -472,7 +472,20 @@ DiagView.init({
 
 ### WCAG contrast enforcement
 
-DiagView automatically checks that the detected text color achieves at least a 4.5:1 contrast ratio against the background. If not, it falls back to white (`#ffffff`) or black (`#000000`) as appropriate.
+DiagView automatically checks that the detected text color achieves at least a 4.5:1 contrast ratio against the background. If not, it falls back to white (`#ffffff`) or black (`#000000`) as appropriate. This check covers the viewer's own text colour, not the text inside your diagram.
+
+### Text Colours
+
+The Canvas Theme section of the fullscreen menu changes only the background behind the diagram. The diagram keeps its author's colours, so dark text drawn for a light page can be hard to read on a dark canvas. The "Text Colours" row under the swatches has two buttons:
+
+- **Original** (default) keeps the diagram's text in the author's colours.
+- **Readable** recolours text whose contrast against what sits behind it is under 4.5:1 (WCAG AA).
+
+DiagView checks a label against its own background first, as with Mermaid edge labels. If the label has none, it uses the filled shape under the text, then the canvas. A dark label inside a light node stays as it is. A dark message label drawn straight on a dark canvas turns light. The new colour keeps the hue, so red text on a dark canvas becomes a lighter red rather than white. DiagView changes the lightness until the label reaches 7:1 (WCAG AAA). If no shade of that hue gets there, it uses white or black.
+
+Readable works on any SVG, including HTML labels inside `<foreignObject>` (Mermaid, draw.io). It skips text painted with a gradient and text over a gradient-filled shape. Lines, arrows and shape outlines keep their colours.
+
+Readable follows canvas changes, including page theme changes in Auto mode, and stays on when you reopen the viewer. A page reload resets it to Original, and DiagView does not save it to `localStorage`. There is no `init()` option for it. It changes only the fullscreen view. Exports, clipboard copies and the diagram on the page keep the author's colours.
 
 ---
 

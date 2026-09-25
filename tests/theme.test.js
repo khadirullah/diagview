@@ -4,13 +4,7 @@
  */
 
 import { jest } from "@jest/globals";
-import {
-  detectTheme,
-  syncTheme,
-  clearThemeCache,
-  setCanvasTheme,
-  normalizeSvgTextContrast,
-} from "../src/core/theme.js";
+import { detectTheme, syncTheme, clearThemeCache, setCanvasTheme } from "../src/core/theme.js";
 import { resetConfig, updateConfig } from "../src/core/config.js";
 import { COLORS } from "../src/core/constants.js";
 
@@ -182,18 +176,6 @@ describe("Theme Module", () => {
     const themeCustom = setCanvasTheme("custom", "#0b0f19");
     expect(themeCustom.bg).toBe("#0b0f19");
     expect(themeCustom.isDark).toBe(true);
-  });
-
-  test("normalizeSvgTextContrast adjusts low-contrast SVG text", () => {
-    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-    const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
-    text.setAttribute("fill", "#000000");
-    svg.appendChild(text);
-
-    setCanvasTheme("dark");
-    normalizeSvgTextContrast(svg, "#000000");
-
-    expect(text.style.fill.toLowerCase()).toBe("#ffffff");
   });
 });
 

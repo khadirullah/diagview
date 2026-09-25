@@ -462,6 +462,12 @@ export async function openFullscreen(element, options = {}) {
     // Phase 4: Lifecycle
     _attachModalLifecycle(element, clone, viewport, panzoom, diagramId);
 
+    // Readable text lasts for the page session, so every new clone gets it.
+    // The modal is open and laid out by now, so labels can be measured.
+    if (state.readableText) {
+      import("../features/lazy/readable-text.js").then((m) => m.syncReadableText()).catch(() => {});
+    }
+
     // Completion UI
     const loading = document.getElementById("diagview-loading");
     if (loading) loading.classList.remove("hide");
