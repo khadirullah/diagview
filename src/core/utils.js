@@ -340,14 +340,6 @@ function normalizeURLValue(value) {
 }
 
 /**
- * Matches dangerous patterns in inline style attribute values.
- * Covers: CSS expression(), javascript: in url(), and external url() refs.
- * Note: This catches inline style="" attributes only. Content inside <style>
- * block elements is NOT currently sanitized (known limitation — would require
- * a CSS parser to do safely without false positives).
- * @private
- */
-/**
  * Patterns that represent active danger (script execution) in CSS.
  * Covers: expression(), javascript:, vbscript:, and hex-encoded bypasses.
  * @private
@@ -422,8 +414,9 @@ function localNameOf(node) {
  * Three modes are supported:
  * - 'strict'     (default) — Blocks dangerous tags, animation vectors,
  *                            style injection, and external <use> hrefs.
- * - 'permissive'           — Blocks only scripts/iframes/objects and on*
- *                            event attributes. Matches legacy v0.x behavior.
+ * - 'permissive'           — Blocks script, iframe, object, applet, embed,
+ *                            form, link, base and meta, on* attributes,
+ *                            dangerous URLs, and SMIL that writes href or on*.
  * - 'off'                  — Returns input unchanged. Use ONLY for SVGs
  *                            from a fully trusted, developer-controlled source.
  *

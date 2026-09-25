@@ -49,8 +49,10 @@ export const INITIAL_CONFIG = {
   // Security & Sanitization
   allowedImageTypes: ["png", "jpeg", "webp", "gif"],
   security: {
-    // 'strict' (Default) - Blocks foreignObject, animate, style injection, etc.
-    // 'permissive' - Only blocks scripts, iframes, objects (v0.x behavior)
+    // 'strict' (Default) - Blocks animation, feImage, remote foreignObject, style injection, etc.
+    // 'permissive' - Blocks scripts, iframes, objects, applets, embeds, forms,
+    //                link/base/meta, on* attributes, dangerous URLs and SMIL
+    //                that writes href or on*
     // 'off' - Skips sanitization (for trusted diagrams only)
     mode: "strict",
     // Allow data-diagview-sanitize attribute to override this mode per-diagram
