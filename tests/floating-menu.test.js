@@ -64,6 +64,15 @@ describe("Floating Menu UI", () => {
     expect(panel).not.toBeNull();
   });
 
+  test("FAB colour follows --dv-accent so accent changes apply while open", () => {
+    // jsdom drops var() values, so watch the assignment itself
+    const proto = Object.getPrototypeOf(document.body.style);
+    const set = jest.spyOn(proto, "backgroundColor", "set");
+    createFloatingMenu(sourceElement, clonedSvg);
+    expect(set).toHaveBeenCalledWith("var(--dv-accent)");
+    set.mockRestore();
+  });
+
   test("FAB toggle button opens and closes the menu", () => {
     createFloatingMenu(sourceElement, clonedSvg);
     const toggle = document.getElementById("dv-toggle");

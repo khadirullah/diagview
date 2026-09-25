@@ -465,7 +465,11 @@ DiagView reads these variables from your stylesheet:
 }
 ```
 
-The background comes from the computed background of `<body>`, then `<html>`. DiagView reads `--background`, then `--bg-color`, then `--body-bg` only when both are transparent. Without `--diagram-accent` or `--diagram-text`, DiagView uses its built-in light or dark colours.
+The background comes from the computed background of `<body>`, then `<html>`. DiagView reads `--background`, then `--bg-color`, then `--body-bg` only when both are transparent. Without `--diagram-text`, DiagView uses its built-in light or dark text colour.
+
+For the accent, DiagView takes the first of these that is set: `accentColor` from `init()` or `configure()`, then the page variable `--diagram-accent`, then its built-in blue. The built-in blue is `#3b82f6` on a light page and `#60a5fa` on a dark one. `--diagram-accent` counts only if it holds a colour, so bare numbers such as `222.2 47.4% 11.2%` are skipped. DiagView does not read the site's `--primary` or `--accent-color`. Many themes set those near black or white, and DiagView draws white icons and text on the accent.
+
+DiagView checks the page again when the `class`, `data-theme` or `style` attribute of `<html>` or `<body>` changes, so an accent picker that sets these variables applies at once. It also watches `data-bs-theme` on `<html>`. An `accentColor` from `init()` stays in place through those changes. To change it later, call `DiagView.configure({ accentColor })`.
 
 ### Manual override
 
@@ -477,7 +481,7 @@ DiagView.init({
 });
 ```
 
-`backgroundColor` and `textColor` accept any colour the browser accepts, including `oklch()`, `lab()` and `color(display-p3 ...)`. A value the browser rejects (a typo such as `#zzzzzz` or an unknown name) is ignored with a console warning and detection continues as if it were `null`.
+`accentColor`, `backgroundColor` and `textColor` accept any colour the browser accepts, including `oklch()`, `lab()` and `color(display-p3 ...)`. A value the browser rejects (a typo such as `#zzzzzz` or an unknown name) is ignored with a console warning and detection continues as if it were `null`.
 
 ### WCAG contrast enforcement
 

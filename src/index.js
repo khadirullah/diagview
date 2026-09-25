@@ -95,6 +95,7 @@ function init(options = {}) {
   }
 
   updateConfig(options);
+  clearThemeCache(); // a new config must not reuse the previous theme
 
   // Initialize components
   injectStyles();

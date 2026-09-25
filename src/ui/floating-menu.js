@@ -5,7 +5,7 @@
  */
 
 import { state, addModalCleanupFunction } from "../core/config.js";
-import { detectTheme, setCanvasTheme } from "../core/theme.js";
+import { setCanvasTheme } from "../core/theme.js";
 import { sanitizeSVG } from "../core/utils.js";
 
 import { exportDiagram } from "../features/export.js";
@@ -21,15 +21,13 @@ export function createFloatingMenu(sourceElement, clonedSvg) {
   const existing = document.getElementById("diagview-temp-menu");
   if (existing) existing.remove();
 
-  const theme = detectTheme();
-
   // Wrapper for menu and FAB
   const container = document.createElement("div");
   container.className = "diagview-fab-container";
   container.id = "diagview-temp-menu";
 
   // 1. FAB Button
-  const fab = _createFAB(container, theme);
+  const fab = _createFAB(container);
 
   // 2. Menu Panel
   const menuPanel = _createMenuPanel(container);
@@ -58,14 +56,14 @@ export function createFloatingMenu(sourceElement, clonedSvg) {
 
 // --- Private Builders ---
 
-function _createFAB(container, theme) {
+function _createFAB(container) {
   const fab = document.createElement("button");
   fab.className = "diagview-fab-btn";
   fab.id = "dv-toggle";
   fab.setAttribute("aria-label", "Toggle menu");
   fab.style.display = "grid";
   fab.style.placeItems = "center";
-  fab.style.backgroundColor = theme.accent;
+  fab.style.backgroundColor = "var(--dv-accent)"; // follows accent changes while open
   fab.style.color = "#fff";
   fab.insertAdjacentHTML("afterbegin", sanitizeSVG(ICONS.menu, "permissive"));
   container.appendChild(fab);

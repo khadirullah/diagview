@@ -278,14 +278,36 @@ function detectBackground(isDark) {
 }
 
 /**
- * Read a colour override from config, returning it only if it parses.
- * @param {"backgroundColor"|"textColor"} key - Config key to read
+ * Whether a string is a CSS colour. Bare HSL triplets such as
+ * "222.2 47.4% 11.2%" (Tailwind/shadcn) are not.
+ * @private
+ */
+function isColor(value) {
+  return typeof CSS !== "undefined" && typeof CSS.supports === "function"
+    ? CSS.supports("color", value)
+    : parseColor(value) !== null;
+}
+
+/**
+ * Read a page CSS variable, returning it only if it is a colour.
+ * @private
  * @returns {string|null} The colour string, or null when unset/invalid
  */
-function validConfigColor(key) {
+function cssVarColor(varName) {
+  const value = getCSSVariable(varName, "", "", false);
+  return value && isColor(value) ? value : null;
+}
+
+/**
+ * Read a colour override from config, returning it only if it parses.
+ * @param {"backgroundColor"|"textColor"|"accentColor"} key - Config key to read
+ * @param {Function} [check] - Colour test, parseColor by default
+ * @returns {string|null} The colour string, or null when unset/invalid
+ */
+function validConfigColor(key, check = parseColor) {
   const value = state.config?.[key];
   if (!value || typeof value !== "string") return null;
-  if (parseColor(value)) return value;
+  if (check(value)) return value;
   console.warn(`DiagView: ${key} "${value}" is not a valid colour, ignoring.`);
   return null;
 }
@@ -363,12 +385,13 @@ export function detectTheme() {
     text = ensureContrast(text, bg);
   }
 
-  // Detect accent color
+  // Accent: config override, then --diagram-accent if it holds a real colour.
+  // --primary is not read. Many sites set it near black or white, and the
+  // buttons and notices draw white on the accent.
   const accent =
-    getCSSVariable("--diagram-accent", COLORS.ACCENT_LIGHT, COLORS.ACCENT_DARK, isDark) ||
-    getCSSVariable("--primary", COLORS.ACCENT_LIGHT, COLORS.ACCENT_DARK, isDark) ||
-    getCSSVariable("--accent-color", COLORS.ACCENT_LIGHT, COLORS.ACCENT_DARK, isDark) ||
-    COLORS.ACCENT_LIGHT;
+    validConfigColor("accentColor", isColor) ||
+    cssVarColor("--diagram-accent") ||
+    (isDark ? COLORS.ACCENT_DARK : COLORS.ACCENT_LIGHT);
 
   const theme = { isDark, bg, text, accent };
 

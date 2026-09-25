@@ -1,6 +1,7 @@
 import { jest } from "@jest/globals";
 import DiagView, { init, destroy } from "../src/index.js";
 import { state, resetConfig, DEFAULT_CONFIG } from "../src/core/config.js";
+import { detectTheme } from "../src/core/theme.js";
 
 jest.useFakeTimers();
 
@@ -121,6 +122,16 @@ describe("DiagView Lifecycle", () => {
 
     init(); // Second time
     expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining("Already initialized"));
+  });
+
+  test("init() applies a new accentColor even after destroy() and a cached theme", async () => {
+    init({ accentColor: "#f59e0b" });
+    expect(detectTheme().accent).toBe("#f59e0b");
+
+    await destroy();
+    detectTheme(); // caches a theme built from the old config
+    init({ accentColor: "#10b981" });
+    expect(detectTheme().accent).toBe("#10b981");
   });
 
   test("destroy() before init() warns and returns early", async () => {

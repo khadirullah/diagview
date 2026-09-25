@@ -123,6 +123,73 @@ describe("Theme Module", () => {
     warn.mockRestore();
   });
 
+  describe("accent colour", () => {
+    const originalCSS = window.CSS;
+    const originalGetComputedStyle = window.getComputedStyle;
+    let vars;
+
+    beforeEach(() => {
+      vars = {};
+      const base = window.getComputedStyle;
+      window.getComputedStyle = (el) => {
+        const style = base(el);
+        const get = style.getPropertyValue.bind(style);
+        style.getPropertyValue = (prop) =>
+          el === document.documentElement && prop in vars ? vars[prop] : get(prop);
+        return style;
+      };
+    });
+
+    afterEach(() => {
+      window.CSS = originalCSS;
+      window.getComputedStyle = originalGetComputedStyle;
+    });
+
+    test("uses the built-in default for light and dark pages", () => {
+      expect(detectTheme().accent).toBe(COLORS.ACCENT_LIGHT);
+      clearThemeCache();
+      document.documentElement.classList.add("dark");
+      expect(detectTheme().accent).toBe(COLORS.ACCENT_DARK);
+    });
+
+    test("reads --diagram-accent and ignores --primary and --accent-color", () => {
+      vars["--primary"] = "#0000aa";
+      vars["--accent-color"] = "#00aa00";
+      expect(detectTheme().accent).toBe(COLORS.ACCENT_LIGHT);
+      clearThemeCache();
+      vars["--diagram-accent"] = " #aa0000 ";
+      expect(detectTheme().accent).toBe("#aa0000");
+    });
+
+    test("skips a --diagram-accent that is a bare HSL triplet", () => {
+      vars["--diagram-accent"] = "222.2 47.4% 11.2%";
+      expect(detectTheme().accent).toBe(COLORS.ACCENT_LIGHT);
+    });
+
+    test("skips the triplet through CSS.supports when the engine has it", () => {
+      const supports = jest.fn((prop, value) => prop === "color" && value.startsWith("#"));
+      window.CSS = { supports };
+      vars["--diagram-accent"] = "222.2 47.4% 11.2%";
+      expect(detectTheme().accent).toBe(COLORS.ACCENT_LIGHT);
+      expect(supports).toHaveBeenCalledWith("color", "222.2 47.4% 11.2%");
+    });
+
+    test("accentColor from config wins over page variables", () => {
+      vars["--diagram-accent"] = "#aa0000";
+      updateConfig({ accentColor: "#f59e0b" });
+      expect(detectTheme().accent).toBe("#f59e0b");
+    });
+
+    test("an invalid accentColor is ignored and the chain continues", () => {
+      const warn = jest.spyOn(console, "warn").mockImplementation(() => {});
+      vars["--diagram-accent"] = "#0000aa";
+      updateConfig({ accentColor: "not-a-colour" });
+      expect(detectTheme().accent).toBe("#0000aa");
+      expect(warn).toHaveBeenCalledWith(expect.stringContaining("accentColor"));
+      warn.mockRestore();
+    });
+  });
+
   test("syncTheme updates root CSS variables", () => {
     document.documentElement.classList.add("dark");
     const theme = syncTheme();

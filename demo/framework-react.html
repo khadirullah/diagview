@@ -409,8 +409,7 @@
             function initOptions() {
                 return {
                     diagramSelector: '.diagram',
-                    showKeyboardHelp: false,
-                    accentColor: (function () { try { return localStorage.getItem('dv-accent'); } catch (e) { return null; } })() || null
+                    showKeyboardHelp: false
                 };
             }
             function DiagViewLifecycle(props) {
