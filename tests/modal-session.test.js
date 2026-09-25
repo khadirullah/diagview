@@ -348,3 +348,48 @@ describe("initial-focus rAF is cancelled on close", () => {
     expect(instances.length).toBe(1);
   });
 });
+
+// ---------------------------------------------------------------------------
+// A diagram over performance.criticalFileLimit must not open or throw
+// ---------------------------------------------------------------------------
+describe("openFullscreen with a diagram over the size limit", () => {
+  let instances;
+
+  beforeEach(() => {
+    resetConfig();
+    document.body.innerHTML = "";
+    instances = installFakePanzoom();
+    updateConfig({ showFirstTimeThemeHint: false, animateOpen: false });
+    createModal();
+  });
+
+  afterEach(async () => {
+    if (state.isModalOpen) await closeModal();
+    await settle();
+    delete window.Panzoom;
+  });
+
+  test("stops before opening and leaves the viewer usable", async () => {
+    const small = makeDiagram("d-small", 0);
+    const viewport = document.getElementById("diagview-modal-viewport");
+    const marker = document.createElement("span");
+    viewport.appendChild(marker);
+
+    updateConfig({ performance: { criticalFileLimit: 10 } });
+    await expect(openFullscreen(small)).resolves.toBeUndefined();
+    await settle();
+    expect(state.isModalOpen).toBe(false);
+    expect(state.isModalOpening).toBe(false);
+    expect(state.activeSourceElement).toBe(null);
+    expect(instances.length).toBe(0);
+    expect(viewport.contains(marker)).toBe(true);
+    expect(document.body.textContent).toContain("Diagram blocked");
+
+    // A normal limit opens the same diagram
+    updateConfig({ performance: { criticalFileLimit: 50000000 } });
+    await openFullscreen(small);
+    await settle();
+    expect(state.isModalOpen).toBe(true);
+    expect(state.activeSourceElement).toBe(small);
+  });
+});

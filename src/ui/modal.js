@@ -123,6 +123,9 @@ export function createModal() {
  */
 function _prepareViewportContent(originalSvg, viewport) {
   const clone = cloneSVGForModal(originalSvg);
+  // Over the size limit or unparseable. cloneSVG has already told the user,
+  // so leave the viewport as it is and let the caller stop.
+  if (!clone) return null;
   viewport.replaceChildren();
 
   // Implement the 'Wrapper Pattern' for perfect performance
@@ -436,6 +439,10 @@ export async function openFullscreen(element, options = {}) {
     state.activeSourceElement = element;
     // Phase 1: Preparation
     const clone = _prepareViewportContent(originalSvg, viewport);
+    if (!clone) {
+      state.activeSourceElement = null;
+      return;
+    }
 
     // Phase 2: UI Activation
     _activateModalUI(modal);
