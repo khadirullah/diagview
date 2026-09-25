@@ -547,6 +547,19 @@ describe("exportDiagram honours the filename and silent options", () => {
     expect(dl.names[0]).toMatch(/\.png$/);
   });
 
+  test.each([
+    ["null", null],
+    ["undefined", undefined],
+  ])("%s options export a PNG with the generated name", async (_label, value) => {
+    const dl = captureDownloads();
+    await expect(exportDiagram(container, "png", value)).resolves.not.toThrow();
+    dl.restore();
+    expect(dl.names).toHaveLength(1);
+    expect(dl.names[0]).toMatch(/\.png$/);
+    expect(dl.names[0]).not.toBe("undefined.png");
+    expect(toastTexts().some((t) => /saved/.test(t))).toBe(true);
+  });
+
   test.each(["png", "webp"])("silent skips the Processing toast for %s", async (mode) => {
     const dl = captureDownloads();
     await exportDiagram(container, mode, { filename: "quiet", silent: true });

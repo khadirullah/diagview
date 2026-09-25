@@ -783,6 +783,9 @@ export async function exportToPDF(sourceElement, options = {}) {
  * Main Export Handler
  */
 export async function exportDiagram(sourceElement, mode, options = {}) {
+  // A null third argument means no options
+  options = options || {};
+
   // Support legacy signature (element, mode, modalClone)
   if ((options && typeof options !== "object") || options?.nodeType === 1) {
     options = { modalClone: options };
