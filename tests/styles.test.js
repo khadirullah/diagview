@@ -28,6 +28,12 @@ describe("styles.css: desktop tooltip", () => {
   });
 });
 
+describe("styles.css: topbar shortcut hint", () => {
+  test("key badge takes the canvas text colour, not the host page's kbd colour", () => {
+    expect(ruleBody(".diagview-shortcut-hint kbd")).toMatch(/color:\s*var\(--dv-text-color\)/);
+  });
+});
+
 describe("styles.css: dead and contradicting rules", () => {
   test("never-emitted helper classes are gone", () => {
     expect(css).not.toContain(".dv-selection-allowed");

@@ -781,6 +781,7 @@
   border-radius: 4px;
   font-family: ui-monospace, monospace;
   font-weight: 600;
+  color: var(--dv-text-color);
   border: 1px solid var(--dv-border-color) !important;
 }
 
