@@ -71,7 +71,14 @@ export default {
 };
 ```
 
-Or install Panzoom locally and import it normally — DiagView uses `window.Panzoom` at runtime if the package is available globally, or falls back gracefully.
+DiagView does not import Panzoom. It only reads `window.Panzoom` at runtime. If you install Panzoom locally, import it and assign it before the viewer first opens. DiagView checks for it each time the viewer opens. Set it before `init()` if you use share links, because a share link opens the viewer right after `init()`.
+
+```javascript
+import Panzoom from "@panzoom/panzoom";
+window.Panzoom = Panzoom;
+```
+
+Without `window.Panzoom`, the viewer still opens but zoom and pan are off. The console logs "Panzoom library not found" and a toast says zoom needs Panzoom. Keyboard shortcuts other than `Esc` and `?` do nothing.
 
 ---
 
@@ -94,6 +101,8 @@ Any element containing an `<svg>` child that matches this selector is enhanced.
 <!-- Not detected by default ❌ -->
 <figure class="my-svg"><svg>...</svg></figure>
 ```
+
+Auto-init only runs when the page has at least one element that matches the default selector. An element with a `data-diagview-auto-init` attribute anywhere on the page forces auto-init, even when the script tag opts out.
 
 To match a custom selector:
 
@@ -154,7 +163,7 @@ DiagView.init({ layout: "floating" });
 
 ### Header
 
-A sticky toolbar is rendered above each diagram at all times. It shows the diagram's title (from `data-title` or the SVG `<title>` element) on the left, and action buttons on the right.
+A toolbar sits above each diagram. On desktop it fades in when you hover the diagram or tab into it; on touch screens it is always visible. It shows the diagram's title (from `data-title` or the SVG `<title>` element) on the left, and action buttons on the right.
 
 ```javascript
 DiagView.init({ layout: "header" });
@@ -183,7 +192,7 @@ DiagView.init({ layout: "header" });
 
 ### Off
 
-No controls are injected. Clicking the diagram opens the fullscreen viewer. The cursor changes to `zoom-in` as the only affordance.
+No controls are injected. Clicking the diagram opens the fullscreen viewer. The cursor changes to `pointer` as the only affordance.
 
 ```javascript
 DiagView.init({ layout: "off" });
@@ -227,7 +236,7 @@ Set any of the following `data-diagview-*` attributes directly on a diagram cont
 
 > **Requires `security.allowOverrides: true`** (the default) for `data-diagview-sanitize` and `data-diagview-allow-remote` to take effect.
 
-`data-diagview-scale` and the watermark overrides apply to every export path: the inline toolbar, the fullscreen menu and the `exportTo*` functions.
+`data-diagview-scale` and the watermark overrides apply to every export path: the inline toolbar, the fullscreen menu and the `exportTo*` functions. On touch devices and narrow screens, `mobileScale` applies instead of `data-diagview-scale`.
 
 ---
 
@@ -247,7 +256,7 @@ DiagView picks the outline colour from the canvas background. It uses `#2563eb` 
 
 ### Activating search
 
-- **Keyboard:** Press `F` (or `/` conceptually) to open and focus the search bar
+- **Keyboard:** Press `F` to open and focus the search bar
 - **Mobile:** Tap the search icon (🔍) in the top bar
 - **Mouse:** Click the search field in the fullscreen topbar
 
@@ -284,7 +293,7 @@ const el = document.querySelector(".diagram");
 
 // Individual format methods
 await DiagView.exportToPNG(el);
-await DiagView.exportToPNG(el, { transparent: true });
+await DiagView.exportToPNG(el, { transparent: true, filename: "my-diagram-2024" }); // omit extension
 await DiagView.exportToSVG(el, { transparent: true });
 await DiagView.exportToJPEG(el);
 await DiagView.exportToWebP(el, { transparent: true });
@@ -292,29 +301,28 @@ await DiagView.exportToPDF(el);
 await DiagView.copyToClipboard(el);
 
 // Generic dispatcher
-await DiagView.exportDiagram(el, "png", {
-  transparent: false,
-  filename: "my-diagram-2024", // omit extension
-});
+await DiagView.exportDiagram(el, "png", { transparent: false });
 ```
+
+`exportDiagram()` takes one of these modes: `png`, `jpeg`, `webp`, `svg`, `pdf`, `copy` (PNG to the clipboard), `copy-svg` (SVG markup to the clipboard), `png-transparent` and `webp-transparent`. It always builds the file name from the diagram title and a timestamp, and ignores `filename`.
 
 Every export function resolves without throwing when the element contains no `<svg>`; a "No diagram found" toast is shown instead. `copyToClipboard()` downloads the PNG when the browser denies the clipboard write (Safari does this once the click that started the export is over).
 
 ### Options
 
-| Option        | Type       | Default        | Description                           |
-| ------------- | ---------- | -------------- | ------------------------------------- |
-| `transparent` | boolean    | `false`        | Transparent background (PNG/SVG/WebP) |
-| `filename`    | string     | auto-generated | Output filename without extension     |
-| `modalClone`  | SVGElement | `null`         | Internal — clone from the open modal  |
-| `silent`      | boolean    | `false`        | Suppress toast notifications          |
+| Option        | Type       | Default        | Description                                                                                                  |
+| ------------- | ---------- | -------------- | ------------------------------------------------------------------------------------------------------------ |
+| `transparent` | boolean    | `false`        | Transparent background (PNG/SVG/WebP). JPEG switches to a transparent PNG; PDF keeps the background          |
+| `filename`    | string     | auto-generated | Output filename without extension. Ignored by `exportDiagram()`                                              |
+| `modalClone`  | SVGElement | `null`         | Internal, clone from the open modal                                                                          |
+| `silent`      | boolean    | `false`        | `exportToPNG()` and `exportToJPEG()` only. Skips the "Processing" toast; success and error toasts still show |
 
 ### Resolution
 
 ```javascript
 DiagView.init({
   highResScale: 4, // Desktop: output is 4× the SVG's intrinsic size
-  mobileScale: 2, // Mobile: output is 2× (auto-detected via pointer: coarse)
+  mobileScale: 2, // Mobile: output is 2× (pointer: coarse or a viewport up to 768 px wide)
   maxPixels: 16777216, // Safety cap — auto-downscales massive diagrams
 });
 ```
@@ -342,21 +350,21 @@ Share the exact zoom level and pan position with anyone. The generated URL conta
 
 ### URL parameters
 
-| Parameter | Description                                      |
-| --------- | ------------------------------------------------ |
-| `dv-idx`  | Diagram index on the page (zero-based)           |
-| `dv-z`    | Zoom scale (3 decimal places)                    |
-| `dv-cx`   | SVG internal X coordinate at viewport center     |
-| `dv-cy`   | SVG internal Y coordinate at viewport center     |
-| `dv-r`    | Rotation angle (0, 90, 180, or 270)              |
-| `dv-q`    | Active search query                              |
-| `dv-t`    | Canvas theme mode (`light`, `dark`, `custom`)    |
-| `dv-c`    | Custom canvas background hex value (without `#`) |
+| Parameter | Description                                                               |
+| --------- | ------------------------------------------------------------------------- |
+| `dv-idx`  | Diagram index on the page (zero-based)                                    |
+| `dv-z`    | Zoom scale (3 decimal places)                                             |
+| `dv-cx`   | X coordinate at the viewport center, in the SVG's units after rotation    |
+| `dv-cy`   | Y coordinate at the viewport center, in the SVG's units after rotation    |
+| `dv-r`    | Rotation angle (90, 180 or 270), left out at 0                            |
+| `dv-q`    | Active search query                                                       |
+| `dv-t`    | Canvas theme mode (`light`, `dark`, `custom`), left out in Auto mode      |
+| `dv-c`    | Custom canvas background hex value (without `#`), only with `dv-t=custom` |
 
 ### Example URL
 
 ```
-https://example.com/docs?dv-idx=2&dv-z=2.500&dv-cx=450&dv-cy=300&dv-r=0&dv-q=auth&dv-t=dark&dv-c=0b0f19
+https://example.com/docs?dv-idx=2&dv-z=2.500&dv-cx=450&dv-cy=300&dv-r=90&dv-t=custom&dv-c=0b0f19&dv-q=auth
 ```
 
 ### Activation
@@ -406,8 +414,8 @@ By default, Panzoom captures all pointer events so dragging pans the diagram. Te
 ### Activation
 
 - **Keyboard:** Press `T` in fullscreen
-- **UI (desktop):** Click the `⎸` button in the topbar
-- **UI (mobile):** Tap the `⎸` icon in the topbar action row
+- **UI (desktop):** Click the I-beam (text cursor) button in the topbar
+- **UI (mobile):** Tap the I-beam icon in the topbar action row
 
 A toast notification confirms when the mode is on or off. The topbar button shows a filled/active state.
 
@@ -419,9 +427,9 @@ A thumbnail of the diagram appears in the bottom-left corner of the fullscreen v
 
 - Accurately scales for both portrait and landscape diagrams
 - Updates on every pan/zoom event (throttled to 100 ms)
-- Shows a blue rectangle indicating the current viewport
+- Shows a rectangle in the accent color indicating the current viewport
 - Supports **click-to-navigate** — clicking any region of the minimap pans the diagram to that area
-- Is hidden on viewports narrower than 768 px
+- Is hidden on viewports 768 px wide or narrower
 
 ```javascript
 DiagView.init({ showMinimap: true }); // enabled by default
@@ -434,7 +442,7 @@ DiagView.init({ showMinimap: false }); // disable
 
 DiagView auto-detects the host page's theme using a cascade of checks:
 
-1. `document.documentElement.classList.contains('dark')` — Tailwind
+1. A `dark` class on `<html>` or `<body>`, as in Tailwind
 2. `data-theme="dark"` on `<html>` or `<body>`
 3. `data-bs-theme="dark"` on `<html>` — Bootstrap
 4. `window.matchMedia('(prefers-color-scheme: dark)')` — OS preference
@@ -448,7 +456,6 @@ DiagView reads these variables from your stylesheet:
   --diagram-accent: #3b82f6; /* accent color */
   --diagram-text: #1e293b; /* text color */
   --background: #ffffff; /* background */
-  /* also checked: --bg-color, --body-bg, --text-color, --foreground */
 }
 
 [data-theme="dark"] {
@@ -457,6 +464,8 @@ DiagView reads these variables from your stylesheet:
   --background: #0f172a;
 }
 ```
+
+The background comes from the computed background of `<body>`, then `<html>`. DiagView reads `--background`, then `--bg-color`, then `--body-bg` only when both are transparent. Without `--diagram-accent` or `--diagram-text`, DiagView uses its built-in light or dark colours.
 
 ### Manual override
 
@@ -474,6 +483,16 @@ DiagView.init({
 
 DiagView automatically checks that the detected text color achieves at least a 4.5:1 contrast ratio against the background. If not, it falls back to white (`#ffffff`) or black (`#000000`) as appropriate. This check covers the viewer's own text colour, not the text inside your diagram.
 
+### Canvas Theme
+
+The "Canvas Theme" section of the fullscreen menu sets the background behind the diagram:
+
+- **Light** uses `#ffffff` and **Dark** uses `#0f172a`.
+- **Auto** (default) follows the host page theme detected above, or `backgroundColor` when you set it. It updates when the page switches theme.
+- The swatch row has a colour picker and four presets: White (`#ffffff`), Dark Slate (`#0b0f19`), Navy (`#0f172a`) and Charcoal (`#1e293b`).
+
+Light, Dark and the swatches override `backgroundColor`. The viewer's own text and controls, including the "?" key badge in the topbar, take their colour from the canvas. DiagView does not save the choice; it lasts until the page reloads or `destroy()` runs. Share links carry it in `dv-t` and `dv-c` (see [Share Links](#8-share-links)). The first time someone opens the viewer, a toast points to this menu. Set `showFirstTimeThemeHint: false` to turn it off.
+
 ### Text Colours
 
 The Canvas Theme section of the fullscreen menu changes only the background behind the diagram. The diagram keeps its author's colours, so dark text drawn for a light page can be hard to read on a dark canvas. The "Text Colours" row under the swatches has two buttons:
@@ -485,19 +504,20 @@ DiagView checks a label against its own background first, as with Mermaid edge l
 
 Readable works on any SVG, including HTML labels inside `<foreignObject>` (Mermaid, draw.io). It skips text painted with a gradient and text over a gradient-filled shape. Lines, arrows and shape outlines keep their colours.
 
-Readable follows canvas changes, including page theme changes in Auto mode, and stays on when you reopen the viewer. A page reload resets it to Original, and DiagView does not save it to `localStorage`. There is no `init()` option for it. It changes only the fullscreen view. Exports, clipboard copies and the diagram on the page keep the author's colours.
+Readable follows canvas changes, including page theme changes in Auto mode, and stays on when you reopen the viewer. A page reload or `destroy()` resets it to Original, and DiagView does not save it to `localStorage`. There is no `init()` option for it. It changes only the fullscreen view. Exports, clipboard copies and the diagram on the page keep the author's colours.
 
 ---
 
 ## 14. SVG Sanitization
 
-DiagView sanitizes all SVG content before rendering to prevent XSS. Three modes are available:
+DiagView never changes the SVG on your page, and the browser renders it as is. DiagView sanitizes its own copies, which are the clone shown in fullscreen and the copy used for exports and clipboard copies. Sanitize untrusted SVG yourself before you put it on the page, for example with `DiagView.utils.sanitizeSVG()`. Three modes are available:
 
 ### `strict` (default)
 
 Blocks all known SVG XSS vectors:
 
-- Dangerous tags: `<script>`, `<iframe>`, `<object>`, `<embed>`, `<foreignObject>`, `<animate>`, `<set>`, `<feimage>`, and others
+- Dangerous tags: `<script>`, `<iframe>`, `<object>`, `<embed>`, `<animate>`, `<set>`, `<feimage>`, and others
+- `<foreignObject>` whose `src` or `data` points to an `http(s)` URL. Other `<foreignObject>` elements stay, since Mermaid and draw.io put their labels in them
 - `on*` event attributes (`onclick`, `onload`, `onerror`, etc.)
 - `javascript:`, `vbscript:`, `data:` URIs (except safe raster images like PNG/JPEG/WebP)
 - External `<use>` references (`https://...`)
@@ -530,7 +550,7 @@ DiagView.init({ security: { mode: "permissive" } });
 
 ```html
 <div class="diagram" data-diagview-sanitize="permissive">
-  <svg><!-- diagram with CSS animations --></svg>
+  <svg><!-- diagram with SMIL animations such as <animate> --></svg>
 </div>
 ```
 
@@ -587,28 +607,28 @@ DiagView.init({ rememberZoom: true });
 
 - State is keyed per `data-diagview-id` (a unique ID generated at init time)
 - Storage is cleared when `DiagView.destroy()` is called
-- State expires when the browser session ends (sessionStorage)
+- The ID is new on every page load, so saved state carries over between opens on the same page but not across a reload
 - Gracefully degrades if sessionStorage is unavailable (private browsing)
 
 ---
 
 ## 17. Keyboard Shortcuts
 
-| Key(s)              | Action                              | Notes                                                                             |
-| ------------------- | ----------------------------------- | --------------------------------------------------------------------------------- |
-| `Esc`               | Close modal or close shortcut panel | Shortcut panel closes first; while searching, clears the query, then exits search |
-| `Space` / `0`       | Reset zoom and center diagram       |                                                                                   |
-| `+` / `=`           | Zoom in                             |                                                                                   |
-| `-` / `_`           | Zoom out                            |                                                                                   |
-| `↑` `↓` `←` `→`     | Pan 40 px                           |                                                                                   |
-| `Shift` + arrows    | Fast pan 120 px                     |                                                                                   |
-| `F`                 | Open and focus search               | On mobile, opens search bar                                                       |
-| `T`                 | Toggle text select mode             |                                                                                   |
-| `R`                 | Rotate 90° clockwise                |                                                                                   |
-| `M`                 | Toggle meeting mode (laser pointer) |                                                                                   |
-| `L`                 | Copy share link                     | Requires HTTPS or localhost                                                       |
-| `?`                 | Show/hide keyboard shortcuts        | Suspended while an input is focused, so `?` can be typed into search              |
-| `Ctrl/Cmd`+anything | Ignored                             | Native browser shortcuts are never intercepted                                    |
+| Key(s)                  | Action                              | Notes                                                                             |
+| ----------------------- | ----------------------------------- | --------------------------------------------------------------------------------- |
+| `Esc`                   | Close modal or close shortcut panel | Shortcut panel closes first; while searching, clears the query, then exits search |
+| `Space` / `0`           | Reset zoom and center diagram       |                                                                                   |
+| `+` / `=`               | Zoom in                             |                                                                                   |
+| `-` / `_`               | Zoom out                            |                                                                                   |
+| `↑` `↓` `←` `→`         | Pan 40 px                           |                                                                                   |
+| `Shift` + arrows        | Fast pan 120 px                     |                                                                                   |
+| `F`                     | Open and focus search               | On mobile, opens search bar                                                       |
+| `T`                     | Toggle text select mode             |                                                                                   |
+| `R`                     | Rotate 90° clockwise                |                                                                                   |
+| `M`                     | Toggle meeting mode (laser pointer) |                                                                                   |
+| `L`                     | Copy share link                     | Clipboard API on HTTPS or localhost, `execCommand('copy')` elsewhere              |
+| `?`                     | Show/hide keyboard shortcuts        | Suspended while an input is focused, so `?` can be typed into search              |
+| `Ctrl/Cmd/Alt`+anything | Ignored                             | Native browser shortcuts are never intercepted                                    |
 
 Shortcuts are disabled when the modal is closed. When an `<input>` or `<textarea>` is focused, all shortcuts except `Esc` are suspended.
 
@@ -628,6 +648,8 @@ DiagView.configure({
 
 `configure()` calls `updateConfig()` internally and re-syncs the theme and branding visibility. It does not re-initialize diagrams.
 
+Options such as `layout` and the button settings apply to diagrams DiagView initializes after the call. To change them for diagrams already on the page, call `destroy()` and then `init()`.
+
 ### Scan for new diagrams
 
 When content is added to the DOM dynamically (e.g. after an API call), call `refresh()`:
@@ -637,9 +659,9 @@ When content is added to the DOM dynamically (e.g. after an API call), call `ref
 DiagView.refresh();
 ```
 
-> **Note:** DiagView also uses a `MutationObserver` to detect and initialize newly added diagrams automatically (with a 100 ms debounce). You only need `refresh()` if you want immediate initialization.
+> **Note:** DiagView also uses a `MutationObserver` to detect and initialize newly added diagrams automatically (with a 100 ms debounce). `refresh()` skips that debounce. Either way, DiagView initializes each diagram once it comes within 200 px of the viewport.
 
-`refresh()` also re-checks diagrams that hit the error boundary ("Diagram Error" placeholder). Replace the broken SVG with a valid one and call `refresh()`; the placeholder is removed and the diagram is initialized normally.
+`refresh()` also re-checks diagrams that hit the error boundary (the error placeholder). Replace the broken SVG with a valid one and call `refresh()`; the placeholder is removed and the diagram is initialized normally.
 
 ### Teardown and reinitialize
 
@@ -650,7 +672,7 @@ await DiagView.destroy();
 DiagView.init({ layout: "header", accentColor: "#ff6b6b" });
 ```
 
-`destroy()` returns every diagram to its pre-init state: wrappers and toolbars are removed, the `data-diagview-*` attributes, the `dv-svg-content` class, inline styles, click handlers, error placeholders and the `--dv-*` variables on `<html>` are all cleared, in every layout and in shadow roots as well. The next `init()` therefore applies its own options to all diagrams again.
+`destroy()` returns every diagram to its pre-init state: wrappers and toolbars are removed, the `data-diagview-*` attributes DiagView added, the `dv-svg-content` class, inline styles, click handlers, error placeholders and the `--dv-*` variables on `<html>` are all cleared, in every layout and in shadow roots as well. The next `init()` therefore applies its own options to all diagrams again. `destroy()` also resets the configuration to the defaults, the Canvas Theme to Auto and Text Colours to Original.
 
 ---
 
@@ -678,10 +700,12 @@ DiagView.init({
 
   onError: (error) => {
     console.error("SVG validation failed:", error.message);
-    // error.message contains the specific validation failure reason
+    // error.message is "DiagView: " followed by the placeholder title and a short reason
   },
 });
 ```
+
+`onExport` fires for the toolbar and menu buttons and for `exportDiagram()`. `format` is the normalised mode, such as `png`, `copy` or `copy-svg`. `png-transparent` and `download` arrive as `png`, and `webp-transparent` arrives as `webp`. The per-format `exportTo*` functions and `copyToClipboard()` do not call it. `onError` fires when a diagram fails validation and shows the error placeholder.
 
 ---
 
@@ -886,7 +910,7 @@ DiagView.init({ naturalPanning: true });
 DiagView.init({
   performance: {
     largeFileThreshold: 500000, // Skip style-baking above 500 KB SVG
-    criticalFileLimit: 10000000, // Block processing above 10 MB SVG
+    criticalFileLimit: 10000000, // Block processing above 10,000,000 characters of serialized SVG
   },
   maxPixels: 25000000, // Allow up to 25MP export (use carefully)
 });
@@ -949,7 +973,7 @@ DiagView.refresh();
 ### Version check
 
 ```javascript
-console.log(DiagView.version); // e.g. "1.0.6"
+console.log(DiagView.version); // e.g. "1.0.12"
 ```
 
 ---
@@ -963,13 +987,21 @@ console.log(DiagView.version); // e.g. "1.0.6"
 3. Check the browser console — errors from SVG validation appear there
 4. Confirm DiagView initialized: `console.log(DiagView.state.isInitialized)`
 
-### "Diagram Error" placeholder instead of a diagram
+### Error placeholder instead of a diagram
 
-The element has no `<svg>` child, or the `<svg>` declares a `viewBox` with zero width or height. Fix the SVG in place and call `DiagView.refresh()`; the placeholder is removed and the diagram is initialized normally.
+DiagView shows a placeholder titled "Syntax Error", "Parse Error", "No Diagram Found" or "Diagram Error" when the `<svg>` fails validation. That happens when the SVG:
+
+- contains a `<parsererror>` element
+- is a diagram library's error output, for example a Mermaid syntax error
+- has no `g`, `path`, `rect`, `circle`, `text`, `line`, `polygon` or `polyline` element
+- declares a `viewBox` with zero width or height
+- has text but no shapes, and the text contains "error" or "failed"
+
+Fix the SVG in place and call `DiagView.refresh()`; the placeholder is removed and the diagram is initialized normally.
 
 ### "Already initialized" warning and my options are ignored
 
-Auto-init ran before your `DiagView.init({...})`. This happens when your call comes after an `await` or from a framework effect. Add `data-diagview-auto-init="false"` to the script tag, or call `init()` synchronously after the library loads (see [Timing](#timing)).
+Auto-init ran before your `DiagView.init({...})`. This happens when your call comes after an `await` or from a framework effect. Add `data-diagview-no-auto-init` to the script tag, or call `init()` synchronously after the library loads (see [Timing](#timing)).
 
 ### `diagramSelector` change has no effect
 
@@ -977,7 +1009,7 @@ Auto-init ran before your `DiagView.init({...})`. This happens when your call co
 
 ### Zoom/pan not working in fullscreen
 
-- Ensure `@panzoom/panzoom` is loaded **before** DiagView
+- Ensure `@panzoom/panzoom` is loaded before you open the viewer, or before `init()` if you use share links
 - Check that `window.Panzoom` is defined in the console
 - Look for "Panzoom library not found" in the console
 
@@ -1003,15 +1035,15 @@ DiagView.init({
 
 ### Clipboard copy fails
 
-Clipboard API requires HTTPS or `localhost`. On HTTP, DiagView falls back to `document.execCommand('copy')`. If the browser denies the write (Safari, once the click that started the export is over) or both paths fail, the PNG is downloaded instead.
+Copying the image needs the Clipboard API, which browsers only offer on HTTPS or `localhost`. Without it, or when the browser denies the write (Safari, once the click that started the export is over), DiagView downloads the PNG instead. Copy SVG and share links fall back to `document.execCommand('copy')` on HTTP.
 
 ### Search highlights nothing
 
-Search matches text inside `<text>` and `.node` elements. Check that your SVG contains visible text nodes.
+Search matches text inside `<text>`, `.node`, `.cluster`, `.edgePath` and `.label` elements. Check that your SVG contains visible text nodes.
 
 ### Share link not working
 
-- Share links require HTTPS or `localhost` for clipboard write
+- On HTTPS or `localhost` the link is copied with the Clipboard API; elsewhere DiagView falls back to `document.execCommand('copy')`
 - The `dv-*` parameters are stripped from the URL after processing to keep bookmarks clean
 
 ### Mobile controls drift when pinch-zooming
@@ -1045,19 +1077,19 @@ DiagView.init({
 
 ### Configuration Options
 
-| Option     | Type    | Default          | Description                                                                  |
-| ---------- | ------- | ---------------- | ---------------------------------------------------------------------------- |
-| `enabled`  | boolean | `false`          | Whether to inject branding on export/download                                |
-| `text`     | string  | `""`             | The branding text (e.g. your domain or name)                                 |
-| `style`    | string  | `"corner"`       | `corner` \| `background` (PowerPoint style) \| `both`                        |
-| `position` | string  | `"bottom-right"` | `top-left` \| `top-right` \| `bottom-left` \| `bottom-right` \| `four-sides` |
-| `opacity`  | number  | `0.2`            | Transparency level (0.0 to 1.0)                                              |
+| Option     | Type    | Default          | Description                                                                                                                               |
+| ---------- | ------- | ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| `enabled`  | boolean | `false`          | Whether to inject branding on export/download                                                                                             |
+| `text`     | string  | `""`             | The branding text (e.g. your domain or name)                                                                                              |
+| `style`    | string  | `"corner"`       | `corner` \| `background` (PowerPoint style) \| `both`                                                                                     |
+| `position` | string  | `"bottom-right"` | `top-left` \| `top-right` \| `bottom-left` \| `bottom-right` \| `center` \| `four-sides`. `four-sides` needs the `corner` or `both` style |
+| `opacity`  | number  | `0.2`            | Transparency level (0.0 to 1.0)                                                                                                           |
 
 ### Branding Styles
 
 #### 1. Full-Canvas Overlay
 
-Places a large, faint version of your text in the center of the diagram, rotated at -30 degrees. This is the most protective option as it covers the main content area. Note: This style is always centered and ignores the `position` setting.
+Places a large, faint version of your text in the center of the diagram, rotated at -30 degrees. This is the most protective option as it covers the main content area. Note: This style is always centered and ignores the `position` setting. With the `corner` style, `position: "center"` draws this layer in place of the corner signature.
 
 #### 2. Corner (Professional Signature)
 
@@ -1069,7 +1101,7 @@ Shows **both** the large background text AND the corner signature.
 
 #### 4. Four Sides
 
-By setting `position: "four-sides"`, you can place your branding on all four edges of the image simultaneously.
+With the `corner` or `both` style, `position: "four-sides"` places your text on all four edges of the image. The `background` style ignores the position.
 
 ### File Size Note
 
