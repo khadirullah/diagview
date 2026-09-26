@@ -64,6 +64,13 @@ describe("styles.css: dead and contradicting rules", () => {
     expect(body).toMatch(/opacity:\s*0\.15\s*!important/);
   });
 
+  test("dimming and undimming a large diagram animate nothing, even with host page transitions", () => {
+    expect(ruleBody(".dv-search-match *")).not.toMatch(/transition\s*:/);
+    const body = ruleBody(".diagview-modal-viewport\n  svg\n  :is(path, rect");
+    expect(body).not.toBeNull();
+    expect(body).toMatch(/transition:\s*none\s*!important/);
+  });
+
   test("search outlines Mermaid 11 shapes drawn inside a g.label-container", () => {
     const body = ruleBody(".dv-search-match > .label-container > :is(");
     expect(body).not.toBeNull();

@@ -240,7 +240,7 @@ Set any of the following `data-diagview-*` attributes directly on a diagram cont
 
 ## 6. Search
 
-Search is available inside the fullscreen viewer. It highlights all nodes whose text content contains the search query (case-insensitive). Everything outside a match fades to 15% opacity, including edges, arrowheads and labels. A matching node stays at full strength with its own colours and label, and its shape gets a 3px outline. In a plain hand-drawn SVG, a matching `<text>` also outlines the smallest filled shape under it.
+Search is available inside the fullscreen viewer. It highlights all nodes whose text content contains the search query (case-insensitive). Everything outside a match drops to 15% opacity at once, including edges, arrowheads and labels. A matching node stays at full strength with its own colours and label, and its shape gets a 3px outline. In a plain hand-drawn SVG, a matching `<text>` also outlines the smallest filled shape under it.
 
 ### Outline colour
 

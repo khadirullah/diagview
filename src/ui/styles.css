@@ -869,7 +869,13 @@
   /* !important: Mermaid sets opacity on some shapes (pie slices) with ID selectors */
   opacity: 0.15 !important;
   pointer-events: none !important;
-  transition: opacity 0.15s ease;
+}
+
+/* Fading thousands of elements at once stalls the page for seconds */
+.diagview-modal-viewport
+  svg
+  :is(path, rect, circle, ellipse, polygon, polyline, line, text, foreignObject, image) {
+  transition: none !important;
 }
 
 /*
