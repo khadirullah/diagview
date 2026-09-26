@@ -41,7 +41,19 @@
             border-radius: 999px;
             border: 1px solid var(--border);
             width: fit-content;
+            max-width: 100%;
+            flex-wrap: wrap;
             box-shadow: var(--shadow-sm);
+        }
+        @media (max-width: 480px) {
+            .performance-selector {
+                padding: 12px 16px;
+                border-radius: var(--r-md);
+            }
+            .performance-selector input[type="range"] {
+                flex: 1;
+                min-width: 0;
+            }
         }
         .performance-selector label {
             font-size: 0.85rem;
