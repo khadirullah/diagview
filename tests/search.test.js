@@ -311,6 +311,8 @@ describe("Search: shapes behind plain SVG text", () => {
     view = { x: 0, y: 0, scale: 1, angle: 0 };
     document.body.innerHTML = "";
     svg = place(document.createElementNS(NS, "svg"), 0, 0, 1000, 1000);
+    svg.getScreenCTM = () => ({ a: view.scale, d: view.scale, e: view.x, f: view.y });
+    svg.getBBox = () => ({ x: 0, y: 0, width: 1000, height: 1000 });
     document.body.appendChild(svg);
     status = document.createElement("div");
     status.id = "diagview-search-status";
@@ -427,6 +429,49 @@ describe("Search: shapes behind plain SVG text", () => {
     flushRaf();
 
     expect(marked()).toEqual([otherBox, otherLabel]);
+  });
+
+  // A wide Graphviz diagram in fullscreen: the SVG element is 1000 x 1000,
+  // but its 1000 x 300 content is drawn in the strip from y = 350 to 650
+  function drawWideDiagram() {
+    svg.getBBox = () => ({ x: 0, y: 0, width: 1000, height: 300 });
+    svg.getScreenCTM = () => ({
+      a: view.scale,
+      d: view.scale,
+      e: view.x,
+      f: view.y + 350 * view.scale,
+    });
+    const background = place(add("polygon", { fill: "white" }), 0, 350, 1000, 300);
+    const box = place(add("polygon"), 100, 400, 200, 100);
+    const label = place(add("text"), 150, 440, 100, 20);
+    label.textContent = "AuthService";
+    const edgeLabel = place(add("text"), 450, 480, 100, 20);
+    edgeLabel.textContent = "lookup";
+    return { background, box, label, edgeLabel };
+  }
+
+  test("an edge label in a wide diagram does not mark the background", () => {
+    const { edgeLabel } = drawWideDiagram();
+
+    performSearch(svg, "lookup");
+    flushRaf();
+
+    expect(marked()).toEqual([edgeLabel]);
+  });
+
+  test("a label in a wide diagram still marks its own box", () => {
+    const { box, label } = drawWideDiagram();
+
+    performSearch(svg, "authservice");
+    flushRaf();
+    expect(marked()).toEqual([box, label]);
+
+    view = { x: -300, y: 120, scale: 2.5, angle: 0 };
+    performSearch(svg, "lookup");
+    flushRaf();
+    performSearch(svg, "authservice");
+    flushRaf();
+    expect(marked()).toEqual([box, label]);
   });
 
   test("a Mermaid node match does not mark a shape of its own", () => {

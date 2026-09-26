@@ -83,18 +83,22 @@ function getSearchCandidates(clone) {
 const SHAPE_SELECTOR = "rect, circle, ellipse, polygon, path";
 
 /**
- * Box of an element as fractions of the SVG's box. Pan and zoom move the
- * SVG and everything in it together, so these stay valid after the user
- * pans or zooms between two searches.
+ * Box of an element in the SVG's own units, through its screen matrix m.
+ * Pan and zoom move the SVG and everything in it together, so these stay
+ * valid after the user pans or zooms between two searches.
  */
-function relativeBox(el, svgBox) {
+function relativeBox(el, m) {
   const r = el.getBoundingClientRect();
   return {
-    left: (r.left - svgBox.left) / svgBox.width,
-    top: (r.top - svgBox.top) / svgBox.height,
-    right: (r.right - svgBox.left) / svgBox.width,
-    bottom: (r.bottom - svgBox.top) / svgBox.height,
+    left: (r.left - m.e) / m.a,
+    top: (r.top - m.f) / m.d,
+    right: (r.right - m.e) / m.a,
+    bottom: (r.bottom - m.f) / m.d,
   };
+}
+
+function size(r) {
+  return (r.right - r.left) * (r.bottom - r.top);
 }
 
 /**
@@ -103,17 +107,21 @@ function relativeBox(el, svgBox) {
  * another angle no longer line up. Edges have no fill, so they never count
  * as a label's shape.
  */
-function getShapeBoxes(clone, svgBox) {
+function getShapeBoxes(clone, m) {
   const cached = state.searchShapeCache.get(clone);
   if (cached && cached.angle === state.rotationAngle) return cached.boxes;
   const boxes = [];
+  // Compare with the drawn content, not the SVG element. In fullscreen a
+  // wide diagram fills only a strip of the element, so its backdrop would
+  // look small next to the element's box.
+  const ink = clone.getBBox();
   for (const el of clone.querySelectorAll(SHAPE_SELECTOR)) {
     if (el.closest("defs, marker, clipPath, mask, pattern")) continue;
     if (getComputedStyle(el).fill === "none") continue;
-    const r = relativeBox(el, svgBox);
-    const area = (r.right - r.left) * (r.bottom - r.top);
+    const r = relativeBox(el, m);
+    const area = size(r);
     // A backdrop covering most of the diagram is not a label's shape
-    if (!area || area > 0.5) continue;
+    if (!area || area * 2 > ink.width * ink.height) continue;
     boxes.push({ el, r, area });
   }
   state.searchShapeCache.set(clone, { angle: state.rotationAngle, boxes });
@@ -133,14 +141,14 @@ function findShapeForText(clone, item) {
     return null;
   }
   // Not laid out yet: measure on a later search instead of caching a miss
-  const svgBox = clone.getBoundingClientRect();
-  if (!svgBox.width || !svgBox.height) return null;
+  const m = clone.getScreenCTM();
+  const t = m && relativeBox(item.el, m);
+  if (!t || !size(t)) return null;
   item.shape = null;
-  const t = relativeBox(item.el, svgBox);
   const cx = (t.left + t.right) / 2;
   const cy = (t.top + t.bottom) / 2;
   let best = Infinity;
-  for (const b of getShapeBoxes(clone, svgBox)) {
+  for (const b of getShapeBoxes(clone, m)) {
     if (b.area < best && cx >= b.r.left && cx <= b.r.right && cy >= b.r.top && cy <= b.r.bottom) {
       item.shape = b.el;
       best = b.area;
