@@ -618,21 +618,21 @@ DiagView.init({ rememberZoom: true });
 
 ## 17. Keyboard Shortcuts
 
-| Key(s)                  | Action                              | Notes                                                                             |
-| ----------------------- | ----------------------------------- | --------------------------------------------------------------------------------- |
-| `Esc`                   | Close modal or close shortcut panel | Shortcut panel closes first; while searching, clears the query, then exits search |
-| `Space` / `0`           | Reset zoom and center diagram       |                                                                                   |
-| `+` / `=`               | Zoom in                             |                                                                                   |
-| `-` / `_`               | Zoom out                            |                                                                                   |
-| `↑` `↓` `←` `→`         | Pan 40 px                           |                                                                                   |
-| `Shift` + arrows        | Fast pan 120 px                     |                                                                                   |
-| `F`                     | Open and focus search               | On mobile, opens search bar                                                       |
-| `T`                     | Toggle text select mode             |                                                                                   |
-| `R`                     | Rotate 90° clockwise                |                                                                                   |
-| `M`                     | Toggle meeting mode (laser pointer) |                                                                                   |
-| `L`                     | Copy share link                     | Clipboard API on HTTPS or localhost, `execCommand('copy')` elsewhere              |
-| `?`                     | Show/hide keyboard shortcuts        | Suspended while an input is focused, so `?` can be typed into search              |
-| `Ctrl/Cmd/Alt`+anything | Ignored                             | Native browser shortcuts are never intercepted                                    |
+| Key(s)                  | Action                              | Notes                                                                                                                                     |
+| ----------------------- | ----------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| `Esc`                   | Close modal or close shortcut panel | Shortcut panel closes first; while searching, clears the query, then exits search; an open ☰ menu closes and focus returns to its button |
+| `Space` / `0`           | Reset zoom and center diagram       |                                                                                                                                           |
+| `+` / `=`               | Zoom in                             |                                                                                                                                           |
+| `-` / `_`               | Zoom out                            |                                                                                                                                           |
+| `↑` `↓` `←` `→`         | Pan 40 px                           |                                                                                                                                           |
+| `Shift` + arrows        | Fast pan 120 px                     |                                                                                                                                           |
+| `F`                     | Open and focus search               | On mobile, opens search bar                                                                                                               |
+| `T`                     | Toggle text select mode             |                                                                                                                                           |
+| `R`                     | Rotate 90° clockwise                |                                                                                                                                           |
+| `M`                     | Toggle meeting mode (laser pointer) |                                                                                                                                           |
+| `L`                     | Copy share link                     | Clipboard API on HTTPS or localhost, `execCommand('copy')` elsewhere                                                                      |
+| `?`                     | Show/hide keyboard shortcuts        | Suspended while an input is focused, so `?` can be typed into search                                                                      |
+| `Ctrl/Cmd/Alt`+anything | Ignored                             | Native browser shortcuts are never intercepted                                                                                            |
 
 Shortcuts are disabled when the modal is closed. When an `<input>` or `<textarea>` is focused, all shortcuts except `Esc` are suspended.
 

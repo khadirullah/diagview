@@ -43,6 +43,14 @@ function handleKeyboardShortcut(e) {
       return;
     }
 
+    // An open ☰ menu closes first and hands focus back to its button
+    const fab = document.querySelector("#dv-toggle.open");
+    if (fab) {
+      fab.click();
+      fab.focus();
+      return;
+    }
+
     // Otherwise close the main modal
     closeModal();
     return;

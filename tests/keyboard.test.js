@@ -221,4 +221,20 @@ describe("Two-stage Escape while searching", () => {
 
     expect(closeModalMock).toHaveBeenCalledTimes(1);
   });
+
+  test("Escape with the menu open closes only the menu and focuses its button", () => {
+    const fab = document.createElement("button");
+    fab.id = "dv-toggle";
+    fab.className = "open";
+    fab.onclick = () => fab.classList.remove("open");
+    document.body.appendChild(fab);
+
+    pressEscape();
+    expect(fab.classList.contains("open")).toBe(false);
+    expect(document.activeElement).toBe(fab);
+    expect(closeModalMock).not.toHaveBeenCalled();
+
+    pressEscape();
+    expect(closeModalMock).toHaveBeenCalledTimes(1);
+  });
 });

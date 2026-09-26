@@ -228,20 +228,20 @@ Any diagram can override the global configuration using `data-diagview-*` attrib
 
 All shortcuts are active when the fullscreen modal is open.
 
-| Key              | Action                                                  |
-| ---------------- | ------------------------------------------------------- |
-| `Esc`            | Close fullscreen (keyboard help and search close first) |
-| `Space` / `0`    | Reset zoom — fit diagram to screen                      |
-| `+` / `=`        | Zoom in                                                 |
-| `-` / `_`        | Zoom out                                                |
-| `↑` `↓` `←` `→`  | Pan diagram                                             |
-| `Shift` + `↑↓←→` | Fast pan (3× speed)                                     |
-| `F`              | Focus search input                                      |
-| `T`              | Toggle text-select mode (copy SVG labels)               |
-| `R`              | Rotate 90° clockwise                                    |
-| `M`              | Toggle meeting mode (laser pointer)                     |
-| `L`              | Copy share link to clipboard                            |
-| `?`              | Show/hide keyboard shortcuts panel                      |
+| Key              | Action                                                               |
+| ---------------- | -------------------------------------------------------------------- |
+| `Esc`            | Close fullscreen (keyboard help, search and the ☰ menu close first) |
+| `Space` / `0`    | Reset zoom — fit diagram to screen                                   |
+| `+` / `=`        | Zoom in                                                              |
+| `-` / `_`        | Zoom out                                                             |
+| `↑` `↓` `←` `→`  | Pan diagram                                                          |
+| `Shift` + `↑↓←→` | Fast pan (3× speed)                                                  |
+| `F`              | Focus search input                                                   |
+| `T`              | Toggle text-select mode (copy SVG labels)                            |
+| `R`              | Rotate 90° clockwise                                                 |
+| `M`              | Toggle meeting mode (laser pointer)                                  |
+| `L`              | Copy share link to clipboard                                         |
+| `?`              | Show/hide keyboard shortcuts panel                                   |
 
 ---
 
