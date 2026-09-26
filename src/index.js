@@ -24,6 +24,7 @@ import {
   setupThemeWatchers,
   teardownThemeWatchers,
   syncTheme,
+  syncReadable,
   clearThemeCache,
 } from "./core/theme.js";
 import { injectStyles, removeStyles, injectStylesInto, removeStylesFrom } from "./ui/styles.js";
@@ -279,7 +280,7 @@ function configure(options = {}) {
 
   updateConfig(options);
   clearThemeCache(); // colour overrides must not wait for the cache to expire
-  syncTheme();
+  syncReadable(syncTheme().bg);
   syncBrandingVisibility();
 }
 

@@ -14,6 +14,7 @@ import {
   syncReadableText,
 } from "../src/features/lazy/readable-text.js";
 import { createFloatingMenu } from "../src/ui/floating-menu.js";
+import { configure, destroy, init } from "../src/index.js";
 
 const NS = "http://www.w3.org/2000/svg";
 const DARK = "#0b0f19";
@@ -366,6 +367,32 @@ describe("Readable text: modal wiring", () => {
 
     expect(viewportText.style.getPropertyValue("fill")).toBe("");
     expect(viewportText.hasAttribute("data-dv-text-orig")).toBe(false);
+  });
+
+  test("configure() with a new backgroundColor recolours for that canvas", async () => {
+    const hadMatchMedia = "matchMedia" in window;
+    window.matchMedia ??= () => ({
+      matches: false,
+      addEventListener() {},
+      removeEventListener() {},
+    });
+    try {
+      await init({ backgroundColor: LIGHT });
+      buildModal();
+      theme.setCanvasTheme("auto");
+      state.readableText = true;
+
+      configure({ backgroundColor: DARK });
+      await flush();
+      expect(viewportText.style.getPropertyValue("fill")).not.toBe("");
+
+      configure({ backgroundColor: LIGHT });
+      await flush();
+      expect(viewportText.style.getPropertyValue("fill")).toBe("");
+    } finally {
+      await destroy();
+      if (!hadMatchMedia) delete window.matchMedia;
+    }
   });
 
   test("syncReadableText follows the state", () => {

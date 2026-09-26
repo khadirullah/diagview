@@ -433,15 +433,18 @@ export function setCanvasTheme(mode, customColor = null) {
   clearThemeCache();
 
   const theme = syncTheme();
-
-  // Readable text is measured against the canvas, so recolour for the new one
-  if (state.readableText) {
-    import("../features/lazy/readable-text.js")
-      .then((m) => m.syncReadableText(theme.bg))
-      .catch(() => {});
-  }
-
+  syncReadable(theme.bg);
   return theme;
+}
+
+/**
+ * Readable text is measured against the canvas, so recolour for a new one.
+ * @param {string} bg - Canvas colour
+ */
+export function syncReadable(bg) {
+  if (state.readableText) {
+    import("../features/lazy/readable-text.js").then((m) => m.syncReadableText(bg)).catch(() => {});
+  }
 }
 
 /**
@@ -502,11 +505,7 @@ export function setupThemeWatchers() {
     clearThemeCache();
     const { bg } = syncTheme();
     // In Auto mode the canvas follows the page, so readable text follows too
-    if (state.readableText && bg !== lastBg) {
-      import("../features/lazy/readable-text.js")
-        .then((m) => m.syncReadableText(bg))
-        .catch(() => {});
-    }
+    if (bg !== lastBg) syncReadable(bg);
     lastBg = bg;
   }, TIMING.THEME_SYNC_DEBOUNCE);
 
