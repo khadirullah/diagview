@@ -539,10 +539,7 @@ body.ready * {
 .card .mermaid,
 .card .stress-test {
   border-radius: 0 !important;
-  border-top: none !important;
-  border-left: none !important;
-  border-right: none !important;
-  border-bottom: none !important;
+  border: none !important;
   border-top: 1px solid var(--border) !important;
 }
 
