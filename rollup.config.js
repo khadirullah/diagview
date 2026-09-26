@@ -14,13 +14,24 @@ const pkg = JSON.parse(fs.readFileSync(new URL("./package.json", import.meta.url
 const production = !process.env.ROLLUP_WATCH;
 const analyze = !!process.env.ANALYZE;
 
+// Strip comments and layout whitespace from the CSS that gets inlined into
+// the bundles. The rules stay the same. dist/diagview.css keeps the source.
+function minifyCss(css) {
+  return css
+    .replace(/\/\*[\s\S]*?\*\//g, "")
+    .replace(/\s+/g, " ")
+    .replace(/ ?([{};>]) ?/g, "$1")
+    .replace(/;}/g, "}")
+    .trim();
+}
+
 function stringPlugin() {
   return {
     name: "string",
     transform(code, id) {
       if (id.endsWith(".css")) {
         return {
-          code: `export default ${JSON.stringify(code)};`,
+          code: `export default ${JSON.stringify(minifyCss(code))};`,
           map: null,
         };
       }
