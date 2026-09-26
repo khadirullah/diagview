@@ -727,6 +727,7 @@ footer::before {
   overflow-x: auto;
   color: #e2e8f0;
   box-shadow: var(--shadow-md);
+  scrollbar-color: #334155 transparent;
 }
 
 .code-nav {
