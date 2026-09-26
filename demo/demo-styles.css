@@ -125,7 +125,10 @@ body.ready * {
 }
 
 @media (max-width: 639px) {
+  /* The stacked nav takes two or three rows, so let it scroll away with
+     the page instead of covering the top of every screen */
   .controls {
+    position: relative;
     height: auto;
     flex-direction: column;
     padding: 12px 16px;
@@ -133,7 +136,7 @@ body.ready * {
     align-items: center;
   }
   body {
-    padding-top: 110px !important; /* Extra space for stacked nav */
+    padding-top: 0 !important;
   }
   .brand {
     margin-bottom: 4px;
