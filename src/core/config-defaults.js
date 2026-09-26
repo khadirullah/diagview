@@ -185,9 +185,8 @@ export const INITIAL_CONFIG = {
   toastDuration: TIMING.TOAST_DURATION,
   errorToastDuration: TIMING.ERROR_TOAST_DURATION,
 
-  // CDN URL for PDF library
-  // WARNING: If you change this URL, you must also update pdfLibraryIntegrity
-  // or set it to null, otherwise the browser will block the script (SRI).
+  // CDN URL for PDF library. A new URL without its own pdfLibraryIntegrity
+  // turns the SRI check off, and the default URL gets its hash back.
   pdfLibraryUrl: "https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js",
   pdfLibraryIntegrity:
     "sha512-qZvrmS2ekKPF2mSznTQsxqPgnpkI4DNTlrdUmTzrDgektczlKNRRhy5X5AAOnx5S09ydFYWWNSfcEqDTTHgtNA==",
