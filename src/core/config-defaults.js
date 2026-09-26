@@ -83,7 +83,7 @@ import { deepMerge, deepFreeze } from "./state-utils.js";
  * @property {number} minZoomScale - Smallest zoom, 0.01 to 1
  * @property {number} zoomAnimationDuration - Zoom animation in milliseconds
  * @property {number} panAnimationDuration - Pan animation in milliseconds
- * @property {((mode: string, filename: string) => void)|null} onExport - Called after an export with the format and the file name without extension
+ * @property {((mode: string, filename: string) => void)|null} onExport - Called after a successful export with the format and the file name without extension
  * @property {((error: Error) => void)|null} onError - Called when a diagram fails to render
  * @property {((scale: number) => void)|null} onZoomChange - Called with the new zoom scale
  * @property {(() => void)|null} onOpen - Called after the viewer opens

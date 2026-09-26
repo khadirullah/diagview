@@ -452,7 +452,7 @@ DiagView.init({
   // ── Callbacks ────────────────────────────────────
   onOpen: null, // () => void — modal opened
   onClose: null, // () => void — modal closed
-  onExport: null, // (format, filename) => void — export complete
+  onExport: null, // (format, filename) => void — export succeeded
   onZoomChange: null, // (scale) => void — zoom level changed
   onError: null, // (error) => void — SVG validation failed
 

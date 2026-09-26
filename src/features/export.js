@@ -573,13 +573,16 @@ export async function renderToCanvas(sourceElement, modalClone, transparent = fa
  * @returns {Promise<void>} Resolves when the download has started
  */
 export async function exportToSVG(sourceElement, options = {}) {
-  const originalSvg = resolveSourceSvg(sourceElement);
-  if (!originalSvg) return;
+  const svg = resolveSourceSvg(sourceElement);
+  if (svg) await saveSVG(svg, options.filename || generateFilename(svg), options);
+}
 
-  const filename = options.filename || generateFilename(originalSvg);
-  const isTransparent = options.transparent || false;
-  const modalClone = options.modalClone || null;
-
+/**
+ * The internal export paths resolve to true once the user has the file and
+ * to undefined after a failure, so exportDiagram() knows to fire onExport.
+ * @private
+ */
+async function saveSVG(originalSvg, filename, { transparent: isTransparent, modalClone }) {
   try {
     const prepared = await prepareSvgForExport(originalSvg, modalClone);
     // Over the size limit. cloneSVG has already shown "Diagram blocked".
@@ -609,6 +612,7 @@ export async function exportToSVG(sourceElement, options = {}) {
 
     downloadFile(downloadUrl, `${filename}.svg`);
     showSuccessToast("SVG saved");
+    return true;
   } catch (e) {
     showErrorToast("SVG Failed", e.message);
   }
@@ -618,7 +622,7 @@ export async function exportToSVG(sourceElement, options = {}) {
  * Copy raw SVG vector markup directly to clipboard
  * @param {HTMLElement} sourceElement - Element containing SVG
  * @param {ExportOptions} [options={}] - Reads modalClone
- * @returns {Promise<void>} Resolves when the markup is copied
+ * @returns {Promise<boolean|undefined>} True once the markup is copied
  */
 export async function copySVGCode(sourceElement, options = {}) {
   const originalSvg = sourceElement.querySelector("svg");
@@ -646,13 +650,15 @@ export async function copySVGCode(sourceElement, options = {}) {
       document.body.removeChild(input);
       showSuccessToast("📋 SVG Code copied to clipboard!");
     }
+    return true;
   } catch (e) {
     showErrorToast("Copy SVG Failed", e.message);
   }
 }
 
 /**
- * Internal Image Export Processor
+ * Internal Image Export Processor. Resolves to true once the image is saved,
+ * copied, or downloaded because the clipboard was unavailable.
  */
 async function processImageExport(
   sourceElement,
@@ -742,6 +748,7 @@ async function processImageExport(
         setTimeout(() => URL.revokeObjectURL(downloadUrl), TIMING.BUTTON_SUCCESS_DURATION);
         showSuccessToast(`${scale.toFixed(1)}x ${label} saved`);
       }
+      return true;
     } finally {
       // DOM-4: Release canvas memory immediately
       if (canvasRef) {
@@ -776,7 +783,7 @@ export async function exportToPNG(sourceElement, options = {}) {
   const sourceSvg = resolveSourceSvg(sourceElement);
   if (!sourceSvg) return;
   const filename = options.filename || generateFilename(sourceSvg);
-  return processImageExport(
+  await processImageExport(
     sourceElement,
     filename,
     "png",
@@ -797,7 +804,7 @@ export async function exportToJPEG(sourceElement, options = {}) {
   const sourceSvg = resolveSourceSvg(sourceElement);
   if (!sourceSvg) return;
   const filename = options.filename || generateFilename(sourceSvg);
-  return processImageExport(
+  await processImageExport(
     sourceElement,
     filename,
     "jpeg",
@@ -818,7 +825,7 @@ export async function exportToWebP(sourceElement, options = {}) {
   const sourceSvg = resolveSourceSvg(sourceElement);
   if (!sourceSvg) return;
   const filename = options.filename || generateFilename(sourceSvg);
-  return processImageExport(
+  await processImageExport(
     sourceElement,
     filename,
     "webp",
@@ -840,7 +847,7 @@ export async function copyToClipboard(sourceElement, options = {}) {
   const sourceSvg = resolveSourceSvg(sourceElement);
   if (!sourceSvg) return;
   const filename = options.filename || generateFilename(sourceSvg);
-  return processImageExport(sourceElement, filename, "png", false, true, options.modalClone);
+  await processImageExport(sourceElement, filename, "png", false, true, options.modalClone);
 }
 
 /**
@@ -851,12 +858,16 @@ export async function copyToClipboard(sourceElement, options = {}) {
  * @returns {Promise<void>} Resolves when the download has started
  */
 export async function exportToPDF(sourceElement, options = {}) {
-  const sourceSvg = resolveSourceSvg(sourceElement);
-  if (!sourceSvg) return;
-  const filename = options.filename || generateFilename(sourceSvg);
-  const transparent = options.transparent || false;
-  const modalClone = options.modalClone || null;
+  const svg = resolveSourceSvg(sourceElement);
+  if (svg) await savePDF(sourceElement, options.filename || generateFilename(svg), options);
+}
 
+/**
+ * Resolves to true once the PDF is saved. The PNG fallback resolves to
+ * undefined because no PDF was made.
+ * @private
+ */
+async function savePDF(sourceElement, filename, { transparent, modalClone }) {
   try {
     showInfoToast("Generating PDF...");
     const pdfUrl = state.config.pdfLibraryUrl;
@@ -885,9 +896,9 @@ export async function exportToPDF(sourceElement, options = {}) {
     pdf.addImage(imgData, "PNG", 0, 0, width, height, undefined, "FAST");
     pdf.save(`${filename}.pdf`);
     showSuccessToast("PDF saved");
+    return true;
   } catch (e) {
-    if (e?.dvReported) return;
-    showErrorToast("PDF Failed", e.message);
+    if (!e?.dvReported) showErrorToast("PDF Failed", e.message);
   }
 }
 
@@ -898,7 +909,7 @@ export async function exportToPDF(sourceElement, options = {}) {
  * @param {ExportOptions|SVGSVGElement|null} [options={}] - Reads filename, transparent,
  *   silent and modalClone. silent applies to png, jpeg and webp. An SVG element here
  *   is the old third argument and works as modalClone.
- * @returns {Promise<void>} Resolves after the export and the onExport callback
+ * @returns {Promise<void>} Resolves after the export and, when it succeeded, the onExport callback
  */
 export async function exportDiagram(sourceElement, mode, options = {}) {
   // A null third argument means no options
@@ -931,49 +942,38 @@ export async function exportDiagram(sourceElement, mode, options = {}) {
     mode = "png";
   }
 
+  const opts = { transparent: isTransparent, modalClone };
+  let ok;
   switch (mode) {
     case "svg":
-      await exportToSVG(sourceElement, { filename, transparent: isTransparent, modalClone });
+      ok = await saveSVG(svg, filename, opts);
       break;
     case "copy-svg":
-      await copySVGCode(sourceElement, { filename, modalClone });
+      ok = await copySVGCode(sourceElement, { filename, modalClone });
       break;
     case "copy":
-      await copyToClipboard(sourceElement, { filename, modalClone });
-      break;
-    case "jpeg":
-      await exportToJPEG(sourceElement, {
-        filename,
-        transparent: isTransparent,
-        modalClone,
-        silent,
-      });
-      break;
-    case "png":
-      await exportToPNG(sourceElement, {
-        filename,
-        transparent: isTransparent,
-        modalClone,
-        silent,
-      });
-      break;
-    case "webp":
-      await exportToWebP(sourceElement, {
-        filename,
-        transparent: isTransparent,
-        modalClone,
-        silent,
-      });
+      ok = await processImageExport(sourceElement, filename, "png", false, true, modalClone);
       break;
     case "pdf":
-      await exportToPDF(sourceElement, { filename, transparent: isTransparent, modalClone });
+      ok = await savePDF(sourceElement, filename, opts);
       break;
-    default:
-      await exportToPNG(sourceElement, { filename, modalClone, silent });
+    default: {
+      // Unknown modes export an opaque PNG
+      const known = /^(png|jpeg|webp)$/.test(mode);
+      ok = await processImageExport(
+        sourceElement,
+        filename,
+        known ? mode : "png",
+        known && isTransparent,
+        false,
+        modalClone,
+        silent,
+      );
+    }
   }
 
-  // Fire onExport callback after export completes (matches onOpen/onClose pattern)
-  if (state.config.onExport) {
+  // Fire onExport only when the user got the file (matches onOpen/onClose pattern)
+  if (ok && state.config.onExport) {
     try {
       state.config.onExport(mode, filename);
     } catch (e) {

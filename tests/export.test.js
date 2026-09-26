@@ -828,3 +828,140 @@ describe("Export over performance.criticalFileLimit", () => {
     expect(toastTexts().some((t) => /PDF Failed/.test(t))).toBe(true);
   });
 });
+
+describe("onExport fires only after a successful export", () => {
+  let container, onExport, clickSpy, errorSpy;
+  const toastTexts = () =>
+    Array.from(document.querySelectorAll("#diagview-toast-container .diagview-toast")).map(
+      (t) => t.textContent,
+    );
+  const mockImage = (fail) => {
+    global.Image = jest.fn(() => {
+      const img = document.createElement("img");
+      Object.defineProperty(img, "src", {
+        set(val) {
+          this._src = val;
+          setTimeout(() => (fail ? this.onerror?.() : this.onload?.()), 5);
+        },
+        get() {
+          return this._src;
+        },
+      });
+      return img;
+    });
+  };
+
+  beforeEach(() => {
+    container = document.createElement("div");
+    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    svg.setAttribute("viewBox", "0 0 100 100");
+    svg.appendChild(document.createElementNS("http://www.w3.org/2000/svg", "rect"));
+    container.appendChild(svg);
+    document.body.appendChild(container);
+    onExport = jest.fn();
+    updateConfig({ highResScale: 1, maxPixels: 16000000, onExport });
+    global.URL.createObjectURL = jest.fn().mockReturnValue("blob:mock-url");
+    global.URL.revokeObjectURL = jest.fn();
+    mockImage(false);
+    HTMLCanvasElement.prototype.toBlob = function (cb, type) {
+      cb(new Blob(["img"], { type: type || "image/png" }));
+    };
+    global.ClipboardItem = class {
+      constructor(items) {
+        this.items = items;
+      }
+    };
+    clickSpy = jest.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => {});
+    errorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    container.remove();
+    hideToast();
+    document.getElementById("diagview-toast-container")?.remove();
+    updateConfig({ onExport: null, performance: { criticalFileLimit: 50000000 } });
+    clickSpy.mockRestore();
+    errorSpy.mockRestore();
+    delete global.ClipboardItem;
+    delete navigator.clipboard;
+    delete window.jspdf;
+    jest.restoreAllMocks();
+  });
+
+  test.each(["png", "jpeg", "webp", "svg"])("a %s download fires it once", async (mode) => {
+    await exportDiagram(container, mode, { filename: "ok" });
+    expect(onExport).toHaveBeenCalledTimes(1);
+    expect(onExport).toHaveBeenCalledWith(mode, "ok");
+  });
+
+  test("Copy Image that downloads the PNG instead still fires it", async () => {
+    Object.defineProperty(navigator, "clipboard", { value: undefined, configurable: true });
+    await exportDiagram(container, "copy", { filename: "ok" });
+    expect(toastTexts().some((t) => t.includes("Clipboard unavailable"))).toBe(true);
+    expect(onExport).toHaveBeenCalledWith("copy", "ok");
+  });
+
+  test.each(["svg", "copy-svg", "png", "copy", "pdf"])(
+    "%s blocked by the size limit does not fire it",
+    async (mode) => {
+      updateConfig({ performance: { criticalFileLimit: 10 } });
+      window.jspdf = { jsPDF: jest.fn() };
+      await exportDiagram(container, mode);
+      expect(toastTexts().some((t) => t.includes("Diagram blocked"))).toBe(true);
+      expect(onExport).not.toHaveBeenCalled();
+    },
+  );
+
+  test.each([
+    ["svg", "SVG Failed"],
+    ["copy-svg", "Copy SVG Failed"],
+    ["png", "Export Failed"],
+  ])("%s that fails while preparing the SVG does not fire it", async (mode, notice) => {
+    const ready = Promise.reject(new Error("fonts broke"));
+    ready.catch(() => {});
+    Object.defineProperty(document, "fonts", { value: { ready }, configurable: true });
+    await exportDiagram(container, mode);
+    delete document.fonts;
+    expect(toastTexts().some((t) => t.includes(notice))).toBe(true);
+    expect(onExport).not.toHaveBeenCalled();
+  });
+
+  test("an image that fails to load does not fire it", async () => {
+    mockImage(true);
+    await exportDiagram(container, "png");
+    expect(toastTexts().some((t) => t.includes("Export Failed"))).toBe(true);
+    expect(onExport).not.toHaveBeenCalled();
+  });
+
+  test("a tainted canvas does not fire it", async () => {
+    HTMLCanvasElement.prototype.toBlob = () => {
+      throw new DOMException("Tainted canvases may not be exported", "SecurityError");
+    };
+    await exportDiagram(container, "png");
+    expect(toastTexts().some((t) => t.includes("cross-origin image"))).toBe(true);
+    expect(onExport).not.toHaveBeenCalled();
+  });
+
+  test("a PDF that falls back to PNG because jsPDF did not load does not fire it", async () => {
+    // A script tag for the URL already exists, so loadScript resolves without jsPDF
+    const url = "https://example.test/jspdf-missing.js";
+    updateConfig({ pdfLibraryUrl: url, pdfLibraryIntegrity: null });
+    const script = document.createElement("script");
+    script.src = url;
+    document.head.appendChild(script);
+    await exportDiagram(container, "pdf");
+    script.remove();
+    expect(toastTexts().some((t) => t.includes("PDF engine unavailable"))).toBe(true);
+    expect(onExport).not.toHaveBeenCalled();
+  });
+
+  test("a clipboard write that fails does not fire it", async () => {
+    Object.defineProperty(navigator, "clipboard", {
+      value: { write: jest.fn(() => Promise.reject(new DOMException("Bad", "DataError"))) },
+      configurable: true,
+    });
+    await exportDiagram(container, "copy");
+    expect(toastTexts().some((t) => t.includes("Export Failed"))).toBe(true);
+    expect(onExport).not.toHaveBeenCalled();
+  });
+});

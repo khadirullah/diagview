@@ -140,7 +140,7 @@ await DiagView.exportDiagram(el, "pdf");
 await DiagView.exportDiagram(el, "copy");
 ```
 
-`"copy"` puts a PNG on the clipboard and `"copy-svg"` copies the SVG markup as text. `"png-transparent"` and `"webp-transparent"` export with a transparent background. `"download"` exports a PNG. An unknown mode exports a PNG. You may omit `options` or pass `null`. `exportDiagram()` uses `filename` when you pass one and otherwise names the file from the diagram's title. It passes `silent` on to PNG, JPEG and WebP exports. It is the call the toolbar and the fullscreen menu use, and the only export call that fires the `onExport` callback. The `exportTo*()` methods and `copyToClipboard()` do not fire it.
+`"copy"` puts a PNG on the clipboard and `"copy-svg"` copies the SVG markup as text. `"png-transparent"` and `"webp-transparent"` export with a transparent background. `"download"` exports a PNG. An unknown mode exports a PNG. You may omit `options` or pass `null`. `exportDiagram()` uses `filename` when you pass one and otherwise names the file from the diagram's title. It passes `silent` on to PNG, JPEG and WebP exports. It is the call the toolbar and the fullscreen menu use, and the only export call that fires the `onExport` callback. It fires only after the export succeeds, so a failed or blocked export does not fire it. The `exportTo*()` methods and `copyToClipboard()` do not fire it.
 
 ### `DiagView.exportToPNG(element, options?)`
 
