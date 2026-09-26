@@ -136,6 +136,11 @@
             }
         }
 
+        /* Let the long card titles wrap instead of cutting them off */
+        .rx-cards .card-header h3 {
+            white-space: normal;
+        }
+
         .rx-cards .card .diagram-host {
             display: flex;
             flex-direction: column;
@@ -389,7 +394,7 @@
                     + '<defs><marker id="ar-' + title.replace(/\W/g, '') + '" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="' + c + '"/></marker></defs>'
                     + '<text x="320" y="30" text-anchor="middle" font-family="sans-serif" font-size="16" font-weight="700" fill="' + c + '">' + title + '</text>'
                     + ['Request', 'Validate', 'Render', 'Deliver'].map(function (label, i) {
-                        var x = 40 + i * 160;
+                        var x = 20 + i * 160;
                         return '<rect x="' + x + '" y="90" width="120" height="50" rx="10" fill="' + a + '" stroke="' + c + '" stroke-width="2"/>'
                             + '<text x="' + (x + 60) + '" y="120" text-anchor="middle" font-family="sans-serif" font-size="14" fill="' + b + '">' + label + '</text>'
                             + (i < 3 ? '<line x1="' + (x + 120) + '" y1="115" x2="' + (x + 160) + '" y2="115" stroke="' + c + '" stroke-width="2" marker-end="url(#ar-' + title.replace(/\W/g, '') + ')"/>' : '');
