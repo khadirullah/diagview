@@ -543,6 +543,35 @@ body.ready * {
   border-top: 1px solid var(--border) !important;
 }
 
+/* Mermaid's default theme draws lines, arrowheads and labels in near-black,
+   which disappears on the dark page. The fullscreen copy is not inside
+   .mermaid, so it keeps the viewer's own colours. Edge label text uses
+   -webkit-text-fill-color and a background, which a PNG or SVG download
+   does not copy, so downloaded labels keep Mermaid's light box. */
+.dark .mermaid .flowchart-link,
+.dark .mermaid .messageLine0,
+.dark .mermaid .messageLine1 {
+  stroke: #94a3b8 !important;
+}
+
+.dark .mermaid marker path,
+.dark .mermaid marker circle {
+  fill: #94a3b8 !important;
+  stroke: #94a3b8 !important;
+}
+
+.dark .mermaid .edgeLabel {
+  /* the diagram area colour on a dark card */
+  background-color: #181f2e !important;
+  -webkit-text-fill-color: #cbd5e1;
+}
+
+.dark .mermaid .messageText,
+.dark .mermaid .pieTitleText,
+.dark .mermaid .legend text {
+  fill: #cbd5e1 !important;
+}
+
 /* ─────────────────────────────────────────────────────────────
    8. Buttons
    ───────────────────────────────────────────────────────────── */
