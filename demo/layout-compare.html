@@ -426,6 +426,8 @@
             const accent = accentColor || '#6366f1';
             const fill = accent + '18';
             const stroke = accent;
+            // Each diagram needs its own marker id, or all three use the first one's colour
+            const markerId = 'arrow-' + accent.slice(1);
 
             // Node definitions: [id, label, x, y, w, h]
             const nodes = [
@@ -455,13 +457,13 @@
                 const g = document.createElementNS(NS, 'g');
                 g.setAttribute('class', 'edgePath');
                 const path = document.createElementNS(NS, 'path');
-                const mx = (x1 + x2) / 2;
-                path.setAttribute('d', `M ${x1} ${y1} C ${x1} ${mx} ${x2} ${mx} ${x2} ${y2}`);
+                const my = (y1 + y2) / 2;
+                path.setAttribute('d', `M ${x1} ${y1} C ${x1} ${my} ${x2} ${my} ${x2} ${y2}`);
                 path.setAttribute('fill', 'none');
                 path.setAttribute('stroke', stroke);
                 path.setAttribute('stroke-width', '1.5');
                 path.setAttribute('stroke-opacity', '0.5');
-                path.setAttribute('marker-end', 'url(#arrow)');
+                path.setAttribute('marker-end', `url(#${markerId})`);
                 g.appendChild(path);
                 svg.appendChild(g);
             });
@@ -469,7 +471,7 @@
             // Arrowhead marker
             const defs = document.createElementNS(NS, 'defs');
             const marker = document.createElementNS(NS, 'marker');
-            marker.setAttribute('id', 'arrow');
+            marker.setAttribute('id', markerId);
             marker.setAttribute('markerWidth', '8');
             marker.setAttribute('markerHeight', '8');
             marker.setAttribute('refX', '6');
