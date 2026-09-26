@@ -4,7 +4,11 @@
  */
 
 import { jest } from "@jest/globals";
-import { pushModalHistoryState, cleanupModalHistoryState } from "../src/ui/viewport.js";
+import {
+  pushModalHistoryState,
+  cleanupModalHistoryState,
+  resetViewportState,
+} from "../src/ui/viewport.js";
 import { state, resetConfig } from "../src/core/config.js";
 
 describe("History State Management", () => {
@@ -48,6 +52,86 @@ describe("History State Management", () => {
 
     // Clean up the other library's state manually
     history.back();
+  });
+});
+
+describe("History state across a quick close and reopen", () => {
+  const popstate = () => new Promise((r) => window.addEventListener("popstate", r, { once: true }));
+
+  beforeEach(() => {
+    resetViewportState();
+    state.isModalOpen = false;
+  });
+
+  afterEach(() => {
+    state.isModalOpen = false;
+    resetViewportState();
+  });
+
+  test("a reopen during the pending back() pushes its entry once back() settles", async () => {
+    const first = jest.fn();
+    const second = jest.fn();
+    state.isModalOpen = true;
+    pushModalHistoryState(first);
+    const lengthOpen = history.length;
+
+    // Close, then reopen before the async back() has landed
+    state.isModalOpen = false;
+    const settled = popstate();
+    cleanupModalHistoryState();
+    state.isModalOpen = true;
+    pushModalHistoryState(second);
+    await settled;
+
+    expect(history.state).toEqual({ diagviewModal: true });
+    expect(history.length).toBe(lengthOpen);
+    // The stale popstate from the close did not close the new session
+    expect(first).not.toHaveBeenCalled();
+    expect(second).not.toHaveBeenCalled();
+
+    // Back now closes the reopened viewer
+    const back = popstate();
+    history.back();
+    await back;
+    expect(second).toHaveBeenCalledTimes(1);
+  });
+
+  test("a push deferred by a reopen is dropped when that session closes first", async () => {
+    state.isModalOpen = true;
+    pushModalHistoryState(jest.fn());
+
+    state.isModalOpen = false;
+    const settled = popstate();
+    cleanupModalHistoryState();
+    state.isModalOpen = true;
+    pushModalHistoryState(jest.fn());
+    state.isModalOpen = false;
+    cleanupModalHistoryState();
+    await settled;
+
+    expect(history.state?.diagviewModal).toBeUndefined();
+  });
+
+  test("the lock still lifts on the timeout when no popstate arrives", () => {
+    jest.useFakeTimers();
+    try {
+      const back = jest.spyOn(history, "back").mockImplementation(() => {});
+      state.isModalOpen = true;
+      pushModalHistoryState(jest.fn());
+      state.isModalOpen = false;
+      cleanupModalHistoryState();
+      back.mockRestore();
+
+      const pushSpy = jest.spyOn(history, "pushState");
+      state.isModalOpen = true;
+      pushModalHistoryState(jest.fn());
+      expect(pushSpy).not.toHaveBeenCalled();
+      jest.advanceTimersByTime(100);
+      expect(pushSpy).toHaveBeenCalledTimes(1);
+      pushSpy.mockRestore();
+    } finally {
+      jest.useRealTimers();
+    }
   });
 });
 

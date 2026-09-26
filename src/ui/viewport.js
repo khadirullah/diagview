@@ -22,12 +22,19 @@ import { TIMING } from "../core/constants.js";
 let _historyStatePushed = false;
 let _popstateHandler = null;
 let _historyTransitionLock = false;
+let _pendingPush = null;
+let _releaseLock = null;
 
 /**
  * Push a history entry when modal opens.
  */
 export function pushModalHistoryState(onBackButton) {
-  if (_historyStatePushed || _historyTransitionLock) return;
+  if (_historyStatePushed) return;
+  // A close is still popping its entry. Push once that popstate lands.
+  if (_historyTransitionLock) {
+    _pendingPush = onBackButton;
+    return;
+  }
 
   history.pushState({ diagviewModal: true }, "");
   _historyStatePushed = true;
@@ -46,6 +53,7 @@ export function pushModalHistoryState(onBackButton) {
  * Clean up history state when modal closes normally.
  */
 export function cleanupModalHistoryState() {
+  _pendingPush = null;
   if (_popstateHandler) {
     window.removeEventListener("popstate", _popstateHandler);
     _popstateHandler = null;
@@ -56,10 +64,21 @@ export function cleanupModalHistoryState() {
     if (history.state && history.state.diagviewModal) {
       _historyTransitionLock = true;
       history.back();
-      // Lock prevents a new push during the async back transition
-      setTimeout(() => {
+      // Lock blocks a new push until this back() lands. It lifts on the
+      // popstate from back(), or on the timeout if none arrives. A deferred
+      // push adds its listener during that dispatch, so the stale popstate
+      // never reaches it and cannot close the reopened modal.
+      const timer = setTimeout(() => _releaseLock?.(), TIMING.CLEANUP_DELAY);
+      _releaseLock = () => {
+        clearTimeout(timer);
+        window.removeEventListener("popstate", _releaseLock);
+        _releaseLock = null;
         _historyTransitionLock = false;
-      }, TIMING.CLEANUP_DELAY);
+        const onBack = _pendingPush;
+        _pendingPush = null;
+        if (onBack && state.isModalOpen) pushModalHistoryState(onBack);
+      };
+      window.addEventListener("popstate", _releaseLock);
     }
   }
 }
@@ -181,6 +200,8 @@ export function stopVisualViewportSync() {
  * Reset all module-level state.
  */
 export function resetViewportState() {
+  _pendingPush = null;
+  _releaseLock?.();
   _historyStatePushed = false;
   _historyTransitionLock = false;
 
