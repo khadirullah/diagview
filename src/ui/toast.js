@@ -60,6 +60,12 @@ export function showToast(message, type = "success", duration = null) {
     targetParent.appendChild(container);
   }
 
+  // Only the latest notice shows, so a result replaces its progress notice.
+  // Errors and warnings stay for their full time unless another one follows.
+  container
+    .querySelectorAll(type === "error" ? ".diagview-toast" : ".diagview-toast:not([role=alert])")
+    .forEach((t) => t.remove());
+
   // 2. Create new toast element
   const toast = document.createElement("div");
   toast.className = `diagview-toast diagview-toast-${type}`;

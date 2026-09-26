@@ -897,7 +897,7 @@ async function savePDF(sourceElement, filename, { transparent, modalClone }) {
 
     // Fallback: If no jsPDF, save as PNG
     if (!window.jspdf) {
-      showInfoToast("PDF engine unavailable, falling back to PNG...");
+      showWarningToast("PDF engine unavailable, falling back to PNG...");
       await exportToPNG(sourceElement, { filename, modalClone, silent: true });
       return;
     }

@@ -1,7 +1,13 @@
 import { jest } from "@jest/globals";
 import { state, resetConfig, updateConfig } from "../src/core/config.js";
 import { clearThemeCache } from "../src/core/theme.js";
-import { showToast, showSuccessToast, showErrorToast } from "../src/ui/toast.js";
+import {
+  showToast,
+  showSuccessToast,
+  showErrorToast,
+  showInfoToast,
+  showWarningToast,
+} from "../src/ui/toast.js";
 
 describe("Toast Notification System", () => {
   beforeEach(() => {
@@ -80,6 +86,47 @@ describe("Toast Notification System", () => {
     showErrorToast("Error", "Details");
     jest.advanceTimersByTime(1);
     expect(document.body.textContent).toContain("✕ Error: Details");
+  });
+
+  describe("one notice at a time", () => {
+    const shown = () => [...document.querySelectorAll(".diagview-toast")].map((t) => t.textContent);
+
+    test("the result replaces its progress notice", () => {
+      showInfoToast("Processing PNG...");
+      showSuccessToast("2.0x PNG saved");
+      expect(shown()).toEqual(["✓ 2.0x PNG saved"]);
+    });
+
+    test("a new notice replaces the previous one", () => {
+      showSuccessToast("Rotated 90°");
+      showSuccessToast("Rotated 180°");
+      showSuccessToast("Rotated 270°");
+      expect(shown()).toEqual(["✓ Rotated 270°"]);
+    });
+
+    test("a warning stays under the result that follows it", () => {
+      showWarningToast("Switched to Transparent PNG");
+      showSuccessToast("Transparent PNG saved");
+      expect(shown()).toEqual(["⚠ Switched to Transparent PNG", "✓ Transparent PNG saved"]);
+
+      showSuccessToast("Copied");
+      expect(shown()).toEqual(["⚠ Switched to Transparent PNG", "✓ Copied"]);
+    });
+
+    test("an error replaces everything on screen", () => {
+      showWarningToast("Switched to Transparent PNG");
+      showInfoToast("Processing PNG...");
+      showErrorToast("Export Failed");
+      expect(shown()).toEqual(["✕ Export Failed"]);
+    });
+
+    test("a replaced notice's timer leaves the new one alone", () => {
+      showSuccessToast("First");
+      jest.advanceTimersByTime(1000);
+      showToast("Second", "success", 0);
+      jest.advanceTimersByTime(10000);
+      expect(shown()).toEqual(["Second"]);
+    });
   });
 
   describe("where the container goes", () => {

@@ -14,6 +14,26 @@ import {
 import { hideToast } from "../src/ui/toast.js";
 import { state, updateConfig } from "../src/core/config.js";
 
+// A new notice replaces the last one, so keep every notice that was shown
+const recordToasts = () => {
+  const seen = [];
+  const note = (records) => {
+    for (const r of records) {
+      for (const n of r.addedNodes) {
+        if (n.classList?.contains("diagview-toast")) seen.push(n.textContent);
+        n.querySelectorAll?.(".diagview-toast").forEach((t) => seen.push(t.textContent));
+      }
+    }
+  };
+  const mo = new MutationObserver(note);
+  mo.observe(document.body, { childList: true, subtree: true });
+  return () => {
+    note(mo.takeRecords());
+    mo.disconnect();
+    return seen;
+  };
+};
+
 describe("Export Functionality", () => {
   let container, svg;
 
@@ -754,18 +774,22 @@ describe("exportDiagram honours the filename and silent options", () => {
 
   test.each(["png", "webp"])("silent skips the Processing toast for %s", async (mode) => {
     const dl = captureDownloads();
+    const shown = recordToasts();
     await exportDiagram(container, mode, { filename: "quiet", silent: true });
     dl.restore();
-    const texts = toastTexts();
+    const texts = shown();
     expect(texts.some((t) => /Processing/.test(t))).toBe(false);
     expect(texts.some((t) => /saved/.test(t))).toBe(true);
   });
 
   test.each(["png", "webp"])("without silent the Processing toast shows for %s", async (mode) => {
     const dl = captureDownloads();
+    const shown = recordToasts();
     await exportDiagram(container, mode, { filename: "loud" });
     dl.restore();
-    expect(toastTexts().some((t) => /Processing/.test(t))).toBe(true);
+    expect(shown().some((t) => /Processing/.test(t))).toBe(true);
+    // The result replaces the progress notice
+    expect(toastTexts()).toEqual([expect.stringMatching(/saved/)]);
   });
 
   test("onExport receives the filename that was used", async () => {
