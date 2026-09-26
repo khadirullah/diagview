@@ -76,6 +76,11 @@
             box-shadow: var(--shadow-md), 0 0 0 1px var(--accent-glow);
         }
 
+        /* Keep the section title below the fixed header when the page jumps here */
+        #layouts {
+            scroll-margin-top: calc(var(--navbar-h) + 16px);
+        }
+
         .feature-icon {
             font-size: 2.2rem;
             margin-bottom: 16px;
