@@ -163,4 +163,56 @@ describe("Floating Menu UI", () => {
     expect(jpegBtn.hasAttribute("disabled")).toBe(false);
     expect(pdfBtn.hasAttribute("disabled")).toBe(false);
   });
+  describe("Canvas theme selection", () => {
+    const selected = () =>
+      [
+        ...document.querySelectorAll(
+          "#dv-menu-panel .dv-theme-modes:not(.dv-text-modes) button, .dv-swatches > *",
+        ),
+      ]
+        .filter((el) => el.classList.contains("active"))
+        .map((el) => el.dataset.canvas || el.title);
+
+    test("marks only the option that matches the canvas", () => {
+      createFloatingMenu(sourceElement, clonedSvg);
+      expect(selected()).toEqual(["auto"]);
+
+      document.querySelector('[data-canvas="light"]').click();
+      expect(selected()).toEqual(["light"]);
+
+      document.querySelector('[data-canvas="#1e293b"]').click();
+      expect(selected()).toEqual(["#1e293b"]);
+
+      document.querySelector('[data-canvas="auto"]').click();
+      expect(selected()).toEqual(["auto"]);
+    });
+
+    test("custom colour picker clears the swatches and marks itself", () => {
+      createFloatingMenu(sourceElement, clonedSvg);
+      document.querySelector('[data-canvas="#0f172a"]').click();
+
+      const input = document.querySelector(".dv-custom-color-input");
+      input.value = "#123456";
+      input.dispatchEvent(new Event("input"));
+      expect(selected()).toEqual(["Custom Color Picker"]);
+
+      // A picked colour that equals a swatch marks that swatch instead
+      input.value = "#ffffff";
+      input.dispatchEvent(new Event("input"));
+      expect(selected()).toEqual(["#ffffff"]);
+    });
+
+    test("reflects the current canvas when rebuilt or reopened", () => {
+      state.activeCanvasThemeMode = "custom";
+      state.customCanvasColor = "#0B0F19";
+      createFloatingMenu(sourceElement, clonedSvg);
+      expect(selected()).toEqual(["#0b0f19"]);
+
+      // Changed elsewhere (e.g. a share link) while the menu was closed
+      state.activeCanvasThemeMode = "dark";
+      state.customCanvasColor = null;
+      document.getElementById("dv-toggle").click();
+      expect(selected()).toEqual(["dark"]);
+    });
+  });
 });

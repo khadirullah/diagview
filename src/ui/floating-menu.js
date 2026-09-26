@@ -34,7 +34,7 @@ export function createFloatingMenu(sourceElement, clonedSvg) {
 
   // 3. Sections
   const zoomElements = _createZoomSection(menuPanel);
-  _createCanvasThemeSection(menuPanel);
+  const markCanvas = _createCanvasThemeSection(menuPanel);
   const { transChk, expGrid } = _createExportSection(menuPanel);
   const toolsContainer = _createToolsSection(menuPanel);
   _createMenuFooter(menuPanel);
@@ -48,7 +48,7 @@ export function createFloatingMenu(sourceElement, clonedSvg) {
 
   // 4. Setup Logic & Wiring
   _setupMenuController(
-    { container, fab, menuPanel, zoomElements, transChk, expGrid, toolsContainer },
+    { container, fab, menuPanel, zoomElements, transChk, expGrid, toolsContainer, markCanvas },
     sourceElement,
     clonedSvg,
   );
@@ -143,12 +143,11 @@ function _createCanvasThemeSection(menuPanel) {
     btn.type = "button";
     btn.className = "dv-theme-btn";
     btn.textContent = label;
-    if (state.activeCanvasThemeMode === mode) btn.classList.add("active");
+    btn.dataset.canvas = mode;
 
     btn.onclick = () => {
-      modeGroup.querySelectorAll(".dv-theme-btn").forEach((b) => b.classList.remove("active"));
-      btn.classList.add("active");
       setCanvasTheme(mode);
+      markCanvas();
     };
     modeGroup.appendChild(btn);
   });
@@ -169,6 +168,7 @@ function _createCanvasThemeSection(menuPanel) {
   customInput.oninput = (e) => {
     const val = e.target.value;
     setCanvasTheme("custom", val);
+    markCanvas();
   };
 
   customWrapper.appendChild(customInput);
@@ -187,12 +187,12 @@ function _createCanvasThemeSection(menuPanel) {
     sw.className = "dv-swatch-btn";
     sw.title = name;
     sw.style.backgroundColor = color;
+    sw.dataset.canvas = color;
     if (color === "#ffffff") sw.style.border = "1px solid #cbd5e1";
 
     sw.onclick = () => {
-      swatchGroup.querySelectorAll(".dv-swatch-btn").forEach((s) => s.classList.remove("active"));
-      sw.classList.add("active");
       setCanvasTheme("custom", color);
+      markCanvas();
     };
     swatchGroup.appendChild(sw);
   });
@@ -241,6 +241,21 @@ function _createCanvasThemeSection(menuPanel) {
   themeSec.appendChild(textLbl);
   themeSec.appendChild(textGroup);
   menuPanel.appendChild(themeSec);
+
+  // Exactly one option shows as selected: the mode, the matching swatch, or the picker
+  function markCanvas() {
+    const mode = state.activeCanvasThemeMode;
+    const color = mode === "custom" && (state.customCanvasColor || "").toLowerCase();
+    let matched = false;
+    themeSec.querySelectorAll("[data-canvas]").forEach((el) => {
+      const on = el.dataset.canvas === mode || el.dataset.canvas === color;
+      matched ||= on;
+      el.classList.toggle("active", on);
+    });
+    customWrapper.classList.toggle("active", !!color && !matched);
+  }
+  markCanvas();
+  return markCanvas;
 }
 
 function _createExportSection(menuPanel) {
@@ -352,7 +367,8 @@ function _createMenuFooter(menuPanel) {
  * @private
  */
 function _setupMenuController(elements, sourceElement, clonedSvg) {
-  const { container, fab, menuPanel, zoomElements, transChk, expGrid, toolsContainer } = elements;
+  const { container, fab, menuPanel, zoomElements, transChk, expGrid, toolsContainer, markCanvas } =
+    elements;
   const { zoomInBtn, zoomOutBtn, resetBtn } = zoomElements;
 
   let isOpen = false;
@@ -392,6 +408,7 @@ function _setupMenuController(elements, sourceElement, clonedSvg) {
     fab.setAttribute("aria-expanded", isOpen);
 
     if (isOpen) {
+      markCanvas(); // the canvas may have changed since the menu was built
       requestAnimationFrame(() => {
         if (isOpen) menuPanel.focus();
       });
