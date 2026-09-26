@@ -298,6 +298,10 @@ function cssVarColor(varName) {
   return value && isColor(value) ? value : null;
 }
 
+// Last invalid value warned about per config key. Theme detection runs many
+// times per page, so each bad value warns once.
+const warnedColors = {};
+
 /**
  * Read a colour override from config, returning it only if it parses.
  * @param {"backgroundColor"|"textColor"|"accentColor"} key - Config key to read
@@ -308,7 +312,10 @@ function validConfigColor(key, check = parseColor) {
   const value = state.config?.[key];
   if (!value || typeof value !== "string") return null;
   if (check(value)) return value;
-  console.warn(`DiagView: ${key} "${value}" is not a valid colour, ignoring.`);
+  if (warnedColors[key] !== value) {
+    warnedColors[key] = value;
+    console.warn(`DiagView: ${key} "${value}" is not a valid colour, ignoring.`);
+  }
   return null;
 }
 

@@ -338,11 +338,27 @@ describe("Theme Module: modern colour syntax and rejected colours", () => {
     expect(theme.text).not.toBe("notacolour");
     expect(warn).toHaveBeenCalledWith(expect.stringContaining("textColor"));
 
-    warn.mockClear();
     clearThemeCache();
     theme = detectTheme();
     expect(theme.text).not.toBe("notacolour");
-    expect(warn).toHaveBeenCalledWith(expect.stringContaining("textColor"));
+  });
+
+  test("each invalid colour warns once, a new invalid value warns again", () => {
+    updateConfig({ accentColor: "bad-accent", backgroundColor: "bad-bg", textColor: "bad-text" });
+    const colourWarnings = () =>
+      warn.mock.calls.filter(([msg]) => String(msg).includes("is not a valid colour"));
+
+    for (let i = 0; i < 3; i++) {
+      clearThemeCache();
+      detectTheme();
+    }
+    expect(colourWarnings()).toHaveLength(3);
+
+    updateConfig({ accentColor: "worse-accent" });
+    clearThemeCache();
+    detectTheme();
+    expect(colourWarnings()).toHaveLength(4);
+    expect(colourWarnings()[3][0]).toContain('accentColor "worse-accent"');
   });
 
   test("a named colour still resolves through computed style", () => {
