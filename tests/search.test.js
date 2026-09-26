@@ -445,4 +445,41 @@ describe("Search: shapes behind plain SVG text", () => {
     expect(shape.classList.contains("dv-search-match")).toBe(false);
     expect(window.getComputedStyle).not.toHaveBeenCalled();
   });
+
+  // Graphviz and PlantUML shapes and text often have no class at all, and
+  // Mermaid can repeat a class. Clearing must leave both as they were.
+  function drawMixedDiagram() {
+    svg.setAttribute("class", "flowchart flowchart dv-svg-content");
+    drawPlainDiagram();
+    const node = add("g", { class: "node default default", id: "flowchart-A-0" });
+    place(add("rect", {}, node), 700, 100, 200, 80);
+    add("text", {}, add("g", { class: "label" }, node)).textContent = "Auth Gateway";
+  }
+
+  test("clearing with an empty query restores the SVG markup exactly", () => {
+    drawMixedDiagram();
+    const before = svg.outerHTML;
+
+    performSearch(svg, "auth");
+    flushRaf();
+    expect(marked().length).toBe(3);
+    performSearch(svg, "billing");
+    flushRaf();
+    performSearch(svg, "");
+
+    expect(svg.outerHTML).toBe(before);
+  });
+
+  test("clearSearch restores the SVG markup exactly", () => {
+    drawMixedDiagram();
+    document.body.innerHTML = `<div id="diagview-modal-viewport"></div>`;
+    document.getElementById("diagview-modal-viewport").appendChild(svg);
+    const before = svg.outerHTML;
+
+    performSearch(svg, "a");
+    flushRaf();
+    clearSearch();
+
+    expect(svg.outerHTML).toBe(before);
+  });
 });

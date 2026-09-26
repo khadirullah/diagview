@@ -30,6 +30,27 @@ let searchGeneration = 0;
 let markedShapes = [];
 
 /**
+ * Class attributes as they were before search marked each element (null
+ * when there was none). Clearing puts the exact value back, so no empty
+ * class="" is left and duplicate classes survive.
+ * @type {Map<Element, string|null>}
+ */
+let savedClass = new Map();
+
+function mark(el, cls) {
+  if (!savedClass.has(el)) savedClass.set(el, el.getAttribute("class"));
+  el.classList.add(cls);
+}
+
+function unmark(el, cls) {
+  const prev = savedClass.get(el);
+  if (prev === undefined) return el.classList.remove(cls);
+  savedClass.delete(el);
+  if (prev === null) el.removeAttribute("class");
+  else el.setAttribute("class", prev);
+}
+
+/**
  * Initialize or retrieve search cache
  * O(N) read operation, done once per diagram instance (or refresh)
  */
@@ -149,9 +170,9 @@ function clearHighlights(clone) {
   const toClean = state.searchMatches;
   state.searchMatches = []; // EVT-2: Clear state matches
   for (let i = 0; i < toClean.length; i++) {
-    toClean[i].classList.remove("dv-search-match");
+    unmark(toClean[i], "dv-search-match");
   }
-  for (const el of markedShapes) el.classList.remove("dv-search-match");
+  for (const el of markedShapes) unmark(el, "dv-search-match");
   markedShapes = [];
 
   const statusEl = document.getElementById("diagview-search-status");
@@ -170,7 +191,7 @@ export function performSearch(clone, query) {
   if (!lq || !clone) {
     if (clone) {
       clearHighlights(clone);
-      clone.classList.remove("dv-searching");
+      unmark(clone, "dv-searching");
     }
     state.searchMatches = [];
     return;
@@ -183,7 +204,7 @@ export function performSearch(clone, query) {
   state.searchRafId = requestAnimationFrame(() => {
     state.searchRafId = null;
     if (gen !== searchGeneration) return;
-    clone.classList.add("dv-searching");
+    mark(clone, "dv-searching");
 
     const shapes = new Set();
 
@@ -194,23 +215,19 @@ export function performSearch(clone, query) {
       const isSearchMatch = item.el.classList.contains("dv-search-match");
 
       if (isMatch) {
-        if (!isSearchMatch) {
-          item.el.classList.add("dv-search-match");
-        }
+        if (!isSearchMatch) mark(item.el, "dv-search-match");
         newMatches.push(item.el);
         const shape = findShapeForText(clone, item);
         if (shape) shapes.add(shape);
       } else {
-        if (isSearchMatch) {
-          item.el.classList.remove("dv-search-match");
-        }
+        if (isSearchMatch) unmark(item.el, "dv-search-match");
       }
     }
 
     for (const el of markedShapes) {
-      if (!shapes.has(el)) el.classList.remove("dv-search-match");
+      if (!shapes.has(el)) unmark(el, "dv-search-match");
     }
-    for (const el of shapes) el.classList.add("dv-search-match");
+    for (const el of shapes) mark(el, "dv-search-match");
     markedShapes = [...shapes];
 
     state.searchMatches = newMatches;
@@ -244,7 +261,7 @@ export function clearSearch() {
   const clone = viewport?.querySelector("svg");
 
   if (clone) {
-    clone.classList.remove("dv-searching");
+    unmark(clone, "dv-searching");
     clearHighlights(clone);
   }
 
@@ -348,6 +365,7 @@ export function setupSearch(clone, initialQuery = "") {
 export function resetSearch() {
   searchGeneration = 0;
   markedShapes = [];
+  savedClass = new Map();
   if (state.searchRafId) {
     cancelAnimationFrame(state.searchRafId);
     state.searchRafId = null;
