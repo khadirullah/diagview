@@ -177,6 +177,19 @@ export function getContrastRatio(color1, color2) {
 }
 
 /**
+ * Colour for text and icons drawn on the accent. White while it reaches
+ * 3:1, the minimum for icons and controls, so the usual blue and red keep
+ * their white icons. Below that, near-black if it reads better.
+ * @param {string} accent - Accent colour
+ * @returns {string} "#fff" or the dark canvas colour
+ */
+export function onAccentColor(accent) {
+  const dark = COLORS.BG_DARK;
+  const white = getContrastRatio("#fff", accent);
+  return white < 3 && getContrastRatio(dark, accent) > white ? dark : "#fff";
+}
+
+/**
  * Ensure color has sufficient contrast against background
  * @private
  */
@@ -393,14 +406,14 @@ export function detectTheme() {
   }
 
   // Accent: config override, then --diagram-accent if it holds a real colour.
-  // --primary is not read. Many sites set it near black or white, and the
-  // buttons and notices draw white on the accent.
+  // --primary is not read. Many sites set it near black or white, which
+  // makes the accent buttons and notices hard to tell from the page.
   const accent =
     validConfigColor("accentColor", isColor) ||
     cssVarColor("--diagram-accent") ||
     (isDark ? COLORS.ACCENT_DARK : COLORS.ACCENT_LIGHT);
 
-  const theme = { isDark, bg, text, accent };
+  const theme = { isDark, bg, text, accent, onAccent: onAccentColor(accent) };
 
   // Cache theme
   state.themeCache = theme;
@@ -442,6 +455,7 @@ export function syncTheme() {
   root.style.setProperty("--dv-bg", theme.bg);
   root.style.setProperty("--dv-text-color", theme.text);
   root.style.setProperty("--dv-accent", theme.accent);
+  root.style.setProperty("--dv-on-accent", theme.onAccent);
 
   // The search outline follows the canvas, never the diagram's own colours.
   // Pick whichever ring colour stands out more against the canvas.
@@ -558,6 +572,7 @@ export function teardownThemeWatchers() {
   root.style.removeProperty("--dv-bg");
   root.style.removeProperty("--dv-text-color");
   root.style.removeProperty("--dv-accent");
+  root.style.removeProperty("--dv-on-accent");
   root.style.removeProperty("--dv-search-ring");
 
   clearThemeCache();

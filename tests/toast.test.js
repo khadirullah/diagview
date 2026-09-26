@@ -1,5 +1,6 @@
 import { jest } from "@jest/globals";
-import { state, resetConfig } from "../src/core/config.js";
+import { state, resetConfig, updateConfig } from "../src/core/config.js";
+import { clearThemeCache } from "../src/core/theme.js";
 import { showToast, showSuccessToast, showErrorToast } from "../src/ui/toast.js";
 
 describe("Toast Notification System", () => {
@@ -49,6 +50,18 @@ describe("Toast Notification System", () => {
     // Advance transition timer (300ms in toast.js)
     jest.advanceTimersByTime(400);
     expect(document.getElementById("diagview-toast-container")).toBeNull();
+  });
+
+  test("success toast text contrasts with the accent on a light page", () => {
+    updateConfig({ accentColor: "#dc2626" });
+    showToast("Red", "success", 0);
+    expect(document.querySelector(".diagview-toast").style.color).toBe("rgb(255, 255, 255)");
+    document.body.innerHTML = "";
+    clearThemeCache();
+    updateConfig({ accentColor: "#f59e0b" });
+    showToast("Amber", "success", 0);
+    expect(document.querySelector(".diagview-toast").style.color).toBe("rgb(15, 23, 42)");
+    clearThemeCache();
   });
 
   test("duration 0 does not auto-hide", () => {

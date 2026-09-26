@@ -22,6 +22,7 @@
   --dv-text-color: inherit;
   --dv-border-color: rgba(128, 128, 128, 0.2);
   --dv-accent: #3b82f6;
+  --dv-on-accent: #fff; /* text on the accent, set by syncTheme */
   /* Default Fallback */
   --dv-primary: var(--dv-accent);
   --dv-popover-bg: rgba(128, 128, 128, 0.08);
@@ -526,7 +527,7 @@
     border-color: var(--dv-accent, #3b82f6) !important;
   }
   .dv-text-select-btn.active {
-    color: #ffffff !important;
+    color: var(--dv-on-accent) !important;
     border-color: var(--dv-accent, #3b82f6) !important;
     background: var(--dv-accent, #3b82f6) !important;
     box-shadow: 0 0 12px rgba(59, 130, 246, 0.4);
@@ -963,7 +964,7 @@
   width: clamp(44px, 8vw, 56px);
   height: clamp(44px, 8vw, 56px);
   background: var(--dv-accent);
-  color: white !important;
+  color: var(--dv-on-accent) !important;
   border-radius: 16px;
   display: flex !important;
   align-items: center;
@@ -987,8 +988,6 @@
 .diagview-fab-btn.open {
   border-radius: 50%;
   transform: rotate(90deg);
-  background: var(--dv-bg);
-  color: var(--dv-text-color) !important;
   border: 1px solid var(--dv-border-color) !important;
 }
 
@@ -1135,7 +1134,7 @@
 
 .dv-zoom button:hover {
   background: var(--dv-primary, var(--dv-accent, #3b82f6));
-  color: #fff;
+  color: var(--dv-on-accent);
   transform: translateY(-1px);
 }
 
@@ -1177,7 +1176,7 @@
 .dv-exp button:hover {
   background: var(--dv-primary, var(--dv-accent, #3b82f6));
   border-color: transparent;
-  color: #fff;
+  color: var(--dv-on-accent);
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
@@ -1284,7 +1283,7 @@
 
 .dv-theme-btn.active {
   background: var(--dv-primary, var(--dv-accent, #3b82f6));
-  color: #ffffff;
+  color: var(--dv-on-accent);
   border-color: transparent;
 }
 
@@ -1371,16 +1370,16 @@
 
 .dv-menu-item:hover {
   background: var(--dv-primary, var(--dv-accent, #3b82f6));
-  color: white;
+  color: var(--dv-on-accent);
 }
 
 .dv-menu-item:hover svg {
-  stroke: white;
+  stroke: var(--dv-on-accent);
 }
 
 .dv-menu-item.active {
   background: var(--dv-primary);
-  color: white !important;
+  color: var(--dv-on-accent) !important;
 }
 
 .dv-menu-item svg {
@@ -1516,7 +1515,7 @@
   border-radius: 12px;
   font: 600 14px system-ui;
   background: var(--dv-accent);
-  color: #fff;
+  color: var(--dv-on-accent);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
   white-space: normal;
   text-align: center;
@@ -1589,7 +1588,7 @@
 /* Style: solid (High Contrast) */
 .dv-btn-solid {
   background: var(--dv-accent) !important;
-  color: #fff !important;
+  color: var(--dv-on-accent) !important;
   border: 1px solid transparent !important;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
 }

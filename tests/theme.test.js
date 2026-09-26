@@ -4,7 +4,13 @@
  */
 
 import { jest } from "@jest/globals";
-import { detectTheme, syncTheme, clearThemeCache, setCanvasTheme } from "../src/core/theme.js";
+import {
+  detectTheme,
+  syncTheme,
+  clearThemeCache,
+  setCanvasTheme,
+  onAccentColor,
+} from "../src/core/theme.js";
 import { resetConfig, updateConfig } from "../src/core/config.js";
 import { COLORS } from "../src/core/constants.js";
 
@@ -143,6 +149,33 @@ describe("Theme Module", () => {
     afterEach(() => {
       window.CSS = originalCSS;
       window.getComputedStyle = originalGetComputedStyle;
+    });
+
+    test("text on the accent stays white down to 3:1, then turns near-black", () => {
+      const dark = COLORS.BG_DARK;
+      expect(onAccentColor("#3b82f6")).toBe("#fff");
+      expect(onAccentColor("#ef4444")).toBe("#fff");
+      expect(onAccentColor("#dc2626")).toBe("#fff");
+      expect(onAccentColor("#1d4ed8")).toBe("#fff");
+      expect(onAccentColor("#60a5fa")).toBe(dark);
+      expect(onAccentColor("#f59e0b")).toBe(dark);
+      expect(onAccentColor("#22c55e")).toBe(dark);
+      expect(onAccentColor("#fafafa")).toBe(dark);
+      // Unparseable colours keep the old white
+      expect(onAccentColor("not-a-colour")).toBe("#fff");
+    });
+
+    test("syncTheme publishes --dv-on-accent for the current accent", () => {
+      updateConfig({ accentColor: "#f59e0b" });
+      const theme = syncTheme();
+      expect(theme.onAccent).toBe(COLORS.BG_DARK);
+      expect(document.documentElement.style.getPropertyValue("--dv-on-accent")).toBe(
+        COLORS.BG_DARK,
+      );
+      clearThemeCache();
+      updateConfig({ accentColor: "#dc2626" });
+      syncTheme();
+      expect(document.documentElement.style.getPropertyValue("--dv-on-accent")).toBe("#fff");
     });
 
     test("uses the built-in default for light and dark pages", () => {

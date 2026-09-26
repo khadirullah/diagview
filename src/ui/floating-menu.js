@@ -64,7 +64,6 @@ function _createFAB(container) {
   fab.style.display = "grid";
   fab.style.placeItems = "center";
   fab.style.backgroundColor = "var(--dv-accent)"; // follows accent changes while open
-  fab.style.color = "#fff";
   fab.insertAdjacentHTML("afterbegin", sanitizeSVG(ICONS.menu, "permissive"));
   container.appendChild(fab);
   return fab;

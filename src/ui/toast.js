@@ -70,7 +70,7 @@ export function showToast(message, type = "success", duration = null) {
     theme = detectTheme();
   } catch (e) {
     // Fallback to safe theme if detection fails during rapid transitions
-    theme = { isDark: true, accent: "#3b82f6", text: "#ffffff" };
+    theme = { isDark: true, accent: "#3b82f6", text: "#ffffff", onAccent: "#fff" };
   }
   const toastConfig = TOAST_TYPES[type] || TOAST_TYPES.info;
 
@@ -85,7 +85,7 @@ export function showToast(message, type = "success", duration = null) {
     toast.setAttribute("aria-live", "polite");
     if (type === "success") {
       toast.style.backgroundColor = theme.accent;
-      toast.style.color = theme.isDark ? "#ffffff" : theme.text;
+      toast.style.color = theme.onAccent;
     } else {
       toast.style.backgroundColor = toastConfig.bg;
       toast.style.color = toastConfig.text;

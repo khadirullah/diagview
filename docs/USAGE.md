@@ -465,7 +465,9 @@ DiagView reads these variables from your stylesheet:
 
 The background comes from the computed background of `<body>`, then `<html>`. DiagView reads `--background`, then `--bg-color`, then `--body-bg` only when both are transparent. Without `--diagram-text`, DiagView uses its built-in light or dark text colour.
 
-For the accent, DiagView takes the first of these that is set: `accentColor` from `init()` or `configure()`, then the page variable `--diagram-accent`, then its built-in blue. The built-in blue is `#3b82f6` on a light page and `#60a5fa` on a dark one. `--diagram-accent` counts only if it holds a colour, so bare numbers such as `222.2 47.4% 11.2%` are skipped. DiagView does not read the site's `--primary` or `--accent-color`. Many themes set those near black or white, and DiagView draws white icons and text on the accent.
+For the accent, DiagView takes the first of these that is set: `accentColor` from `init()` or `configure()`, then the page variable `--diagram-accent`, then its built-in blue. The built-in blue is `#3b82f6` on a light page and `#60a5fa` on a dark one. `--diagram-accent` counts only if it holds a colour, so bare numbers such as `222.2 47.4% 11.2%` are skipped. DiagView does not read the site's `--primary` or `--accent-color`. Many themes set those near black or white, and the accent buttons would blend into the page.
+
+Text and icons on the accent are white while white reaches 3:1 against it, the minimum for icons and controls. Below that they turn near-black (`#0f172a`). The built-in blue and a red accent keep white, while amber, light green and the dark-page blue `#60a5fa` get dark text. DiagView stores the pick in `--dv-on-accent` on `<html>`, next to `--dv-accent`.
 
 DiagView checks the page again when the `class`, `data-theme` or `style` attribute of `<html>` or `<body>` changes, so an accent picker that sets these variables applies at once. It also watches `data-bs-theme` on `<html>`. An `accentColor` from `init()` stays in place through those changes. To change it later, call `DiagView.configure({ accentColor })`.
 
