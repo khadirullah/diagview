@@ -30,7 +30,6 @@
         var root = document.documentElement.style;
         root.setProperty('--accent', color);
         root.setProperty('--diagram-accent', color);
-        root.setProperty('--dv-accent', color);
     }
 
     // Restore saved accent color
