@@ -129,7 +129,7 @@ DiagView.init({
 A: When `transparent: true` is passed to JPEG export, DiagView automatically switches to transparent PNG (JPEG does not support transparency) and shows a warning toast.
 
 **Q: Clipboard copy fails on my site. Why?**  
-A: Copying an image needs the Clipboard API, which browsers only offer on HTTPS or `localhost`. Without it, or if the browser denies the write (Safari does once the click that started the export is over), DiagView downloads the PNG instead and the toast says so. "Copy SVG" in the fullscreen menu copies text, and on plain HTTP it falls back to `document.execCommand('copy')`.
+A: Copying an image needs the Clipboard API, which browsers only offer on HTTPS or `localhost`. Without it, or if the browser denies the write (Safari does once the click that started the export is over), DiagView downloads the PNG instead and the toast says so. "Copy SVG" in the fullscreen menu copies text, and on plain HTTP it falls back to `document.execCommand('copy')`. If the browser refuses that copy or denies the write, DiagView downloads the .svg file instead.
 
 **Q: I'm hitting the export size limit. How do I increase it?**
 

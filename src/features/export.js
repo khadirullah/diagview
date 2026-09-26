@@ -602,15 +602,7 @@ async function saveSVG(originalSvg, filename, { transparent: isTransparent, moda
       svg.insertBefore(rect, svg.firstChild);
     }
 
-    const data = await serializeSVGAsync(svg);
-
-    // Use DataURL for small SVGs to ensure filename compatibility on file://
-    const isSmall = data.length < EXPORT.LARGE_FILE_THRESHOLD;
-    const downloadUrl = isSmall
-      ? "data:image/svg+xml;charset=utf-8," + encodeURIComponent(data)
-      : URL.createObjectURL(new Blob([data], { type: "image/svg+xml;charset=utf-8" }));
-
-    downloadFile(downloadUrl, `${filename}.svg`);
+    downloadSVG(await serializeSVGAsync(svg), filename);
     showSuccessToast("SVG saved");
     return true;
   } catch (e) {
@@ -619,26 +611,46 @@ async function saveSVG(originalSvg, filename, { transparent: isTransparent, moda
 }
 
 /**
- * Copy raw SVG vector markup directly to clipboard
+ * Download SVG markup as a .svg file
+ * @private
+ */
+function downloadSVG(data, filename) {
+  // Use DataURL for small SVGs to ensure filename compatibility on file://
+  const isSmall = data.length < EXPORT.LARGE_FILE_THRESHOLD;
+  const downloadUrl = isSmall
+    ? "data:image/svg+xml;charset=utf-8," + encodeURIComponent(data)
+    : URL.createObjectURL(new Blob([data], { type: "image/svg+xml;charset=utf-8" }));
+
+  downloadFile(downloadUrl, `${filename}.svg`);
+}
+
+/**
+ * Copy raw SVG vector markup directly to clipboard. When the clipboard is
+ * unavailable or denies the write, the markup downloads as a .svg file.
  * @param {HTMLElement} sourceElement - Element containing SVG
- * @param {ExportOptions} [options={}] - Reads modalClone
- * @returns {Promise<boolean|undefined>} True once the markup is copied
+ * @param {ExportOptions} [options={}] - Reads filename and modalClone. filename names the
+ *   download used when the clipboard is unavailable.
+ * @returns {Promise<boolean|undefined>} True once the markup is copied or downloaded
  */
 export async function copySVGCode(sourceElement, options = {}) {
   const originalSvg = sourceElement.querySelector("svg");
   if (!originalSvg) return showErrorToast("No SVG found");
 
-  const modalClone = options.modalClone || null;
-
   try {
-    const prepared = await prepareSvgForExport(originalSvg, modalClone);
+    const prepared = await prepareSvgForExport(originalSvg, options.modalClone);
     // Over the size limit. cloneSVG has already shown "Diagram blocked".
     if (!prepared) return;
     const data = await serializeSVGAsync(prepared.svg);
 
+    let copied;
     if (navigator.clipboard && window.isSecureContext) {
-      await navigator.clipboard.writeText(data);
-      showSuccessToast("📋 SVG Code copied to clipboard!");
+      try {
+        await navigator.clipboard.writeText(data);
+        copied = true;
+      } catch (err) {
+        // Firefox and Safari deny the write once the click is too far back
+        if (err?.name !== "NotAllowedError") throw err;
+      }
     } else {
       const input = document.createElement("textarea");
       input.value = data;
@@ -646,9 +658,15 @@ export async function copySVGCode(sourceElement, options = {}) {
       input.style.opacity = "0";
       document.body.appendChild(input);
       input.select();
-      document.execCommand("copy");
-      document.body.removeChild(input);
+      // Returns false when the browser refuses to copy
+      copied = document.execCommand?.("copy");
+      input.remove();
+    }
+    if (copied) {
       showSuccessToast("📋 SVG Code copied to clipboard!");
+    } else {
+      downloadSVG(data, options.filename || generateFilename(originalSvg));
+      showSuccessToast("SVG downloaded (Clipboard unavailable)");
     }
     return true;
   } catch (e) {

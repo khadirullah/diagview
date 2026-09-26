@@ -304,7 +304,7 @@ await DiagView.exportDiagram(el, "png", { transparent: false });
 
 `exportDiagram()` takes one of these modes: `png`, `jpeg`, `webp`, `svg`, `pdf`, `copy` (PNG to the clipboard), `copy-svg` (SVG markup to the clipboard), `png-transparent`, `webp-transparent` and `download` (a PNG). It uses `filename` when you pass one, and otherwise builds the name from the diagram title and a timestamp.
 
-Every export function resolves without throwing when the element contains no `<svg>`; a "No diagram found" toast is shown instead. `copyToClipboard()` downloads the PNG when the browser denies the clipboard write (Safari does this once the click that started the export is over).
+Every export function resolves without throwing when the element contains no `<svg>`; a "No diagram found" toast is shown instead. `copyToClipboard()` downloads the PNG when the browser denies the clipboard write (Safari does this once the click that started the export is over). `exportDiagram(el, "copy-svg")` downloads the .svg file in the same case.
 
 ### Options
 
@@ -1038,7 +1038,7 @@ DiagView.init({
 
 ### Clipboard copy fails
 
-Copying the image needs the Clipboard API, which browsers only offer on HTTPS or `localhost`. Without it, or when the browser denies the write (Safari, once the click that started the export is over), DiagView downloads the PNG instead. Copy SVG and share links fall back to `document.execCommand('copy')` on HTTP.
+Copying the image needs the Clipboard API, which browsers only offer on HTTPS or `localhost`. Without it, or when the browser denies the write (Safari, once the click that started the export is over), DiagView downloads the PNG instead. Copy SVG and share links fall back to `document.execCommand('copy')` on HTTP. When the browser refuses the copy, Copy SVG downloads the .svg file instead.
 
 ### Search highlights nothing
 

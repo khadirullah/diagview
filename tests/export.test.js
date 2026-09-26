@@ -965,3 +965,90 @@ describe("onExport fires only after a successful export", () => {
     expect(onExport).not.toHaveBeenCalled();
   });
 });
+
+describe("Copy SVG falls back to a download when the clipboard is unavailable", () => {
+  let container, onExport, downloads, clickSpy;
+  const toastTexts = () =>
+    Array.from(document.querySelectorAll("#diagview-toast-container .diagview-toast")).map(
+      (t) => t.textContent,
+    );
+  const setClipboard = (value, secure = true) => {
+    Object.defineProperty(navigator, "clipboard", { value, configurable: true });
+    Object.defineProperty(window, "isSecureContext", { value: secure, configurable: true });
+  };
+
+  beforeEach(() => {
+    container = document.createElement("div");
+    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    svg.setAttribute("viewBox", "0 0 100 100");
+    container.appendChild(svg);
+    document.body.appendChild(container);
+    onExport = jest.fn();
+    updateConfig({ onExport });
+    downloads = [];
+    clickSpy = jest.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(function () {
+      downloads.push({ name: this.download, href: this.href });
+    });
+  });
+
+  afterEach(() => {
+    container.remove();
+    hideToast();
+    document.getElementById("diagview-toast-container")?.remove();
+    updateConfig({ onExport: null });
+    clickSpy.mockRestore();
+    delete navigator.clipboard;
+    delete document.execCommand;
+  });
+
+  const expectSvgDownload = () => {
+    expect(downloads).toHaveLength(1);
+    expect(downloads[0].name).toBe("arch.svg");
+    expect(decodeURIComponent(downloads[0].href)).toContain("<svg");
+    expect(toastTexts().some((t) => t.includes("SVG downloaded (Clipboard unavailable)"))).toBe(
+      true,
+    );
+    expect(toastTexts().some((t) => t.includes("Failed"))).toBe(false);
+    expect(onExport).toHaveBeenCalledWith("copy-svg", "arch");
+  };
+
+  test("a denied clipboard write downloads the .svg", async () => {
+    const writeText = jest.fn(() => Promise.reject(new DOMException("No", "NotAllowedError")));
+    setClipboard({ writeText });
+    await exportDiagram(container, "copy-svg", { filename: "arch" });
+    expect(writeText).toHaveBeenCalledTimes(1);
+    expectSvgDownload();
+  });
+
+  test("a page without the Clipboard API downloads the .svg when copying is refused", async () => {
+    setClipboard(undefined, false);
+    document.execCommand = jest.fn(() => false);
+    await exportDiagram(container, "copy-svg", { filename: "arch" });
+    expect(document.execCommand).toHaveBeenCalledWith("copy");
+    expectSvgDownload();
+  });
+
+  test("execCommand copy that works does not download", async () => {
+    setClipboard(undefined, false);
+    document.execCommand = jest.fn(() => true);
+    await exportDiagram(container, "copy-svg", { filename: "arch" });
+    expect(downloads).toHaveLength(0);
+    expect(toastTexts().some((t) => t.includes("SVG Code copied"))).toBe(true);
+    expect(onExport).toHaveBeenCalledWith("copy-svg", "arch");
+  });
+
+  test("copySVGCode names the fallback download from the diagram without a filename", async () => {
+    setClipboard(undefined, false);
+    await copySVGCode(container);
+    expect(downloads).toHaveLength(1);
+    expect(downloads[0].name).toMatch(/^diagram_export_.*\.svg$/);
+  });
+
+  test("any other clipboard error still shows Copy SVG Failed", async () => {
+    setClipboard({ writeText: jest.fn(() => Promise.reject(new TypeError("broken"))) });
+    await exportDiagram(container, "copy-svg", { filename: "arch" });
+    expect(downloads).toHaveLength(0);
+    expect(toastTexts().some((t) => t.includes("Copy SVG Failed"))).toBe(true);
+    expect(onExport).not.toHaveBeenCalled();
+  });
+});
