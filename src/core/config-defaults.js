@@ -34,7 +34,6 @@ import { deepMerge, deepFreeze } from "./state-utils.js";
  */
 
 /**
- * Export matches these without regard to case, so "Corner" and "CORNER" work too.
  * @typedef {"corner"|"background"|"both"} WatermarkStyle
  */
 
@@ -43,12 +42,22 @@ import { deepMerge, deepFreeze } from "./state-utils.js";
  */
 
 /**
+ * Export matches watermark values without regard to case. This accepts each
+ * part between hyphens in lower, upper or capitalised case, so "Corner",
+ * "TOP-LEFT" and "Top-Left" all type check.
+ * @template {string} S
+ * @typedef {S extends `${infer A}-${infer B}`
+ *   ? `${A|Uppercase<A>|Capitalize<A>}-${AnyCase<B>}`
+ *   : S|Uppercase<S>|Capitalize<S>} AnyCase
+ */
+
+/**
  * Watermark drawn on exported images only.
  * @typedef {object} DiagViewWatermarkConfig
  * @property {boolean} enabled - Draw the watermark
  * @property {string} text - Watermark text
- * @property {WatermarkStyle|Capitalize<WatermarkStyle>|Uppercase<WatermarkStyle>} style - Corner text, a large centred mark, or both
- * @property {WatermarkPosition|Capitalize<WatermarkPosition>|Uppercase<WatermarkPosition>} position - Where corner text goes
+ * @property {AnyCase<WatermarkStyle>} style - Corner text, a large centred mark, or both
+ * @property {AnyCase<WatermarkPosition>} position - Where corner text goes
  * @property {number} opacity - From 0 to 1
  */
 
