@@ -219,6 +219,21 @@ describe("destroy() restores every touched element", () => {
     expect(root.style.getPropertyValue("--dv-search-ring")).toBe("");
   });
 
+  test("init applies the accent before the viewer ever opens", async () => {
+    document.body.innerHTML = `<div class="diagram">${SVG}</div>`;
+    const root = document.documentElement;
+
+    DiagView.init({ accentColor: "#ff0000", layout: "header" });
+    expect(root.style.getPropertyValue("--dv-accent")).toBe("#ff0000");
+    expect(root.style.getPropertyValue("--dv-bg")).not.toBe("");
+
+    // destroy clears the variables, so a second init must write them again
+    await DiagView.destroy();
+    expect(root.style.getPropertyValue("--dv-accent")).toBe("");
+    DiagView.init({ accentColor: "#00aa00" });
+    expect(root.style.getPropertyValue("--dv-accent")).toBe("#00aa00");
+  });
+
   test("shadow-root diagrams are unwrapped on destroy", async () => {
     const host = document.createElement("div");
     document.body.appendChild(host);

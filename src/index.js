@@ -103,6 +103,7 @@ function init(options = {}) {
   syncBrandingVisibility();
   setupKeyboardShortcuts();
   setupThemeWatchers();
+  syncTheme(); // page buttons use the accent before the viewer first opens
   observeDiagrams();
 
   // Attach close handler
