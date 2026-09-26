@@ -34,10 +34,13 @@ export function applyRotationAngle(angle) {
     svgEl.appendChild(rotGroup);
   }
 
-  // Rotate around the SVG content center (viewBox midpoint)
-  const vb = svgEl.viewBox?.baseVal;
-  const cx = vb ? vb.x + vb.width / 2 : 0;
-  const cy = vb ? vb.y + vb.height / 2 : 0;
+  // Rotate around the centre of the unrotated viewBox, captured on the first
+  // turn. Re-measuring the bbox every turn grew the view by the 5% padding
+  // each time on SVGs with width="100%" shapes, which size to the viewBox.
+  const b = (svgEl._dvVb ||= (svgEl.getAttribute("viewBox") || "").split(/[\s,]+/).map(Number));
+  const [x, y = 0, w = 0, h = 0] = b;
+  const cx = x + w / 2;
+  const cy = y + h / 2;
   rotGroup.setAttribute("transform", `rotate(${state.rotationAngle}, ${cx}, ${cy})`);
 
   // Remove CSS rotation from the rotator div — SVG handles it now
@@ -46,9 +49,13 @@ export function applyRotationAngle(angle) {
     rotator.style.height = "100%";
   }
 
-  // RE-CENTER: Update the viewBox to match the new rotated bounds.
-  // This prevents the diagram from being clipped by the original viewBox.
-  centerSVGViewBox(svgEl);
+  // Fit the viewBox to the rotated box: same centre, sides swapped at 90/270
+  if (w > 0 && h > 0) {
+    const [vw, vh] = state.rotationAngle % 180 ? [h, w] : [w, h];
+    svgEl.setAttribute("viewBox", `${cx - vw / 2} ${cy - vh / 2} ${vw} ${vh}`);
+  } else {
+    centerSVGViewBox(svgEl);
+  }
   return true;
 }
 
@@ -92,7 +99,9 @@ export function resetRotation() {
   cleanupRotation();
 
   const svgEl = document.querySelector("#diagview-modal-viewport svg");
-  if (svgEl) {
+  if (svgEl?._dvVb) {
+    svgEl.setAttribute("viewBox", svgEl._dvVb.join(" "));
+  } else if (svgEl) {
     centerSVGViewBox(svgEl);
   }
 

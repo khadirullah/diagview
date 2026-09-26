@@ -85,3 +85,40 @@ describe("Rotation Logic", () => {
     expect(mockPanzoom.zoom).toHaveBeenCalledWith(1.5, { animate: false });
   });
 });
+
+describe("Rotation viewBox", () => {
+  let svg;
+  beforeEach(() => {
+    resetConfig();
+    state.rotationAngle = 0;
+    state.activePanzoom = mockPanzoom;
+    const rotator = document.getElementById("diagview-rotator");
+    rotator.innerHTML = `<svg viewBox="-20 10 400 200"><rect width="100%" height="100%"/></svg>`;
+    svg = rotator.querySelector("svg");
+  });
+
+  const viewBox = () => svg.getAttribute("viewBox").split(" ").map(Number);
+
+  test("turns about the unrotated centre and swaps the sides", () => {
+    rotateDiagram();
+    expect(viewBox()).toEqual([80, -90, 200, 400]);
+    expect(svg.querySelector(".dv-rot-g").getAttribute("transform")).toBe("rotate(90, 180, 110)");
+  });
+
+  test("four turns return to the starting viewBox and eight do not grow it", () => {
+    for (let i = 0; i < 4; i++) rotateDiagram();
+    expect(viewBox()).toEqual([-20, 10, 400, 200]);
+    for (let i = 0; i < 4; i++) rotateDiagram();
+    expect(viewBox()).toEqual([-20, 10, 400, 200]);
+    expect(svg.querySelector(".dv-rot-g").getAttribute("transform")).toBe("rotate(0, 180, 110)");
+  });
+
+  test("resetRotation restores the unrotated viewBox", () => {
+    rotateDiagram();
+    rotateDiagram();
+    rotateDiagram();
+    resetRotation();
+    expect(viewBox()).toEqual([-20, 10, 400, 200]);
+    expect(svg.querySelector(".dv-rot-g")).toBeNull();
+  });
+});
