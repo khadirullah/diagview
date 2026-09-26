@@ -29,7 +29,16 @@
 
     <style>
         :root { --diagram-accent: #f59e0b; }
-        .stress-container { max-width: 1400px; margin: 0 auto; }
+        .stress-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 clamp(16px, 4vw, 24px);
+        }
+        .stress-container .stress-test {
+            flex: 1;
+            border: none;
+            background: var(--card-bg);
+        }
         .performance-selector {
             display: flex;
             align-items: center;
@@ -129,13 +138,12 @@
     </section>
 
     <div class="stress-container">
-        <div class="card" style="height: 80vh;">
+        <div class="card">
             <div class="card-header">
                 <h3 id="test-title">2,500 Node Performance Grid</h3>
                 <span class="card-badge stress-badge" id="test-badge">2.5k Nodes</span>
             </div>
-            <div class="stress-test" data-title="Performance Grid"
-                style="height: 100%; flex: 1; border: none; background: var(--card-bg);">
+            <div class="stress-test" data-title="Performance Grid">
                 <svg id="stress-svg" width="3000" height="3000" viewBox="0 0 3000 3000"
                     xmlns="http://www.w3.org/2000/svg">
                     <rect width="100%" height="100%" fill="transparent" />
