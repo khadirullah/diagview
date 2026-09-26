@@ -194,6 +194,14 @@
                 grid-template-columns: 1fr;
             }
         }
+        /* Before/after pairs sit side by side only when both columns fit,
+           otherwise they stack so no line gets cut off. */
+        .code-compare {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(min(100%, 36ch), 1fr));
+            gap: 1.8em 2em;
+            margin-bottom: 1.8em;
+        }
     </style>
 
     <script src="demo-runtime.js"></script>
@@ -299,19 +307,31 @@
                 <h2 class="section-title" style="font-size:1.3rem">Why the container matters</h2>
             </div>
             <div class="code-block">
-                <pre><code><span class="c">// SAFE — what React rendered            // what the DOM looks like after DiagView init</span>
-&lt;<span class="t">div</span> <span class="a">class</span>=<span class="v">"diagram-host"</span>&gt;               &lt;<span class="t">div</span> <span class="a">class</span>=<span class="v">"diagram-host"</span>&gt;          <span class="c">← React removes this</span>
-  &lt;<span class="t">div</span> <span class="a">class</span>=<span class="v">"diagram"</span>&gt;…&lt;/<span class="t">div</span>&gt;             &lt;<span class="t">div</span> <span class="a">class</span>=<span class="v">"diagview-wrapper"</span>&gt;
-&lt;/<span class="t">div</span>&gt;                                     &lt;<span class="t">div</span> <span class="a">class</span>=<span class="v">"diagview-viewport"</span>&gt;
-                                              &lt;<span class="t">div</span> <span class="a">class</span>=<span class="v">"diagram"</span>&gt;…&lt;/<span class="t">div</span>&gt;   <span class="c">← goes away with it</span>
-                                          …
-
-<span class="c">// UNSAFE — what React rendered          // after DiagView init</span>
-&lt;<span class="t">div</span> <span class="a">class</span>=<span class="v">"diagram"</span>&gt;…&lt;/<span class="t">div</span>&gt;               &lt;<span class="t">div</span> <span class="a">class</span>=<span class="v">"diagview-wrapper"</span>&gt;
-                                            &lt;<span class="t">div</span> <span class="a">class</span>=<span class="v">"diagview-viewport"</span>&gt;
-                                              &lt;<span class="t">div</span> <span class="a">class</span>=<span class="v">"diagram"</span>&gt;…&lt;/<span class="t">div</span>&gt;   <span class="c">← React still thinks this is</span>
-                                                                             <span class="c">   a child of the original parent</span>
-<span class="c">// On unmount React calls originalParent.removeChild(diagram) → NotFoundError</span></code></pre>
+                <div class="code-compare">
+                    <pre><code><span class="c">// SAFE — what React rendered</span>
+&lt;<span class="t">div</span> <span class="a">class</span>=<span class="v">"diagram-host"</span>&gt;
+  &lt;<span class="t">div</span> <span class="a">class</span>=<span class="v">"diagram"</span>&gt;…&lt;/<span class="t">div</span>&gt;
+&lt;/<span class="t">div</span>&gt;</code></pre>
+                    <pre><code><span class="c">// after DiagView init</span>
+&lt;<span class="t">div</span> <span class="a">class</span>=<span class="v">"diagram-host"</span>&gt;
+  &lt;<span class="t">div</span> <span class="a">class</span>=<span class="v">"diagview-wrapper"</span>&gt;
+    &lt;<span class="t">div</span> <span class="a">class</span>=<span class="v">"diagview-viewport"</span>&gt;
+      &lt;<span class="t">div</span> <span class="a">class</span>=<span class="v">"diagram"</span>&gt;…&lt;/<span class="t">div</span>&gt;
+  …
+<span class="c">// React removes .diagram-host,</span>
+<span class="c">// and .diagram goes away with it</span></code></pre>
+                    <pre><code><span class="c">// UNSAFE — what React rendered</span>
+&lt;<span class="t">div</span> <span class="a">class</span>=<span class="v">"diagram"</span>&gt;…&lt;/<span class="t">div</span>&gt;</code></pre>
+                    <pre><code><span class="c">// after DiagView init</span>
+&lt;<span class="t">div</span> <span class="a">class</span>=<span class="v">"diagview-wrapper"</span>&gt;
+  &lt;<span class="t">div</span> <span class="a">class</span>=<span class="v">"diagview-viewport"</span>&gt;
+    &lt;<span class="t">div</span> <span class="a">class</span>=<span class="v">"diagram"</span>&gt;…&lt;/<span class="t">div</span>&gt;
+<span class="c">// React still thinks .diagram is</span>
+<span class="c">// a child of the original parent</span></code></pre>
+                </div>
+                <pre><code><span class="c">// On unmount React calls</span>
+originalParent.removeChild(diagram)
+<span class="c">// → NotFoundError</span></code></pre>
             </div>
             <div class="section-header" style="margin-top: 24px;">
                 <h2 class="section-title" style="font-size:1.3rem">The one rule</h2>
