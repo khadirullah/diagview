@@ -102,7 +102,9 @@
             <div class="mermaid" 
                 data-diagview-watermark="true"
                 data-diagview-watermark-text="© DiagView Mermaid Demo"
-                data-diagview-watermark-style="corner">
+                data-diagview-watermark-style="both"
+                data-diagview-watermark-pos="four-sides"
+                data-diagview-watermark-opacity="0.2">
                 graph TD
                 A[Start] --> B{Process}
                 B -->|Success| C[Done]
@@ -121,7 +123,7 @@
             <p style="margin: 0 1.5rem 1rem; font-size: 0.85rem; color: var(--muted);">Centered overlay + Corner attribution. Fully protected PlantUML exports.</p>
             <div class="diagram" 
                 data-diagview-watermark="true"
-                data-diagview-watermark-text="© DiagView PlantUML Protection"
+                data-diagview-watermark-text="© DiagView PlantUML"
                 data-diagview-watermark-style="both"
                 data-diagview-watermark-opacity="0.2">
                 <!-- We'll fetch this in the script below to make it an inline SVG -->
@@ -249,14 +251,6 @@
                 if (container) container.innerHTML = svgText;
             } catch (e) {
                 console.error("Failed to fetch PlantUML", e);
-            }
-
-            // 2. Setup Mermaid with "Maximum Coverage"
-            const mermaidDiv = document.querySelector('.mermaid');
-            if (mermaidDiv) {
-                mermaidDiv.dataset.diagviewWatermarkStyle = "both";
-                mermaidDiv.dataset.diagviewWatermarkPos = "four-sides";
-                mermaidDiv.dataset.diagviewWatermarkOpacity = "0.2";
             }
 
             await mermaid.run();
