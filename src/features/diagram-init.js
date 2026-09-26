@@ -21,6 +21,9 @@ const cleanupMap = new WeakMap();
 // and shadow-root diagrams that have no wrapper to find them by).
 const trackedElements = new Set();
 
+// data-diagview-accent is gone, so point to its replacement once per page
+let accentWarned = false;
+
 /**
  * Check if SVG is valid and renderable
  */
@@ -227,6 +230,11 @@ function readElementOverrides(element) {
         `DiagView: data-diagview-scale "${dataset.diagviewScale}" must be 1–10, ignoring.`,
       );
     }
+  }
+
+  if ("diagviewAccent" in dataset && !accentWarned) {
+    accentWarned = true;
+    console.warn("DiagView: data-diagview-accent was removed, use accentColor or --diagram-accent");
   }
 
   // data-diagview-sanitize="strict|permissive|off" and

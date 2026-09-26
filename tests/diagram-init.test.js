@@ -259,6 +259,20 @@ describe("Diagram Init: readElementOverrides", () => {
     warnSpy.mockRestore();
   });
 
+  test("data-diagview-accent warns once per page, not once per element", () => {
+    const warnSpy = jest.spyOn(console, "warn").mockImplementation(() => {});
+    const second = container.cloneNode(true);
+    document.body.appendChild(second);
+    container.dataset.diagviewAccent = "#ff0000";
+    second.dataset.diagviewAccent = "#00ff00";
+    initializeDiagram(container);
+    initializeDiagram(second);
+    const accentWarnings = warnSpy.mock.calls.filter(([m]) => m.includes("data-diagview-accent"));
+    expect(accentWarnings).toHaveLength(1);
+    expect(accentWarnings[0][0]).toMatch(/accentColor.*--diagram-accent/);
+    warnSpy.mockRestore();
+  });
+
   test("respects data-diagview-sanitize override", () => {
     container.dataset.diagviewSanitize = "permissive";
     initializeDiagram(container);
