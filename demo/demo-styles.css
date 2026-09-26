@@ -10,7 +10,7 @@
 :root {
   /* Core colors */
   --accent: #3b82f6;
-  --accent-glow: rgba(59, 130, 246, 0.2);
+  --accent-glow: color-mix(in srgb, var(--accent) 20%, transparent);
   --bg: #f8fafc;
   --bg-2: #f1f5f9;
   --card-bg: #ffffff;
@@ -42,7 +42,7 @@
 }
 
 .dark {
-  --accent-glow: rgba(59, 130, 246, 0.25);
+  --accent-glow: color-mix(in srgb, var(--accent) 25%, transparent);
   --bg: #080e1a;
   --bg-2: #0f172a;
   --card-bg: #111827;
@@ -350,7 +350,7 @@ body.ready * {
   text-transform: uppercase;
   background: var(--accent-glow);
   color: var(--accent);
-  border: 1px solid rgba(59, 130, 246, 0.25);
+  border: 1px solid color-mix(in srgb, var(--accent) 25%, transparent);
   white-space: nowrap;
 }
 
@@ -459,7 +459,7 @@ body.ready * {
   flex-shrink: 0;
   background: var(--accent-glow);
   color: var(--accent);
-  border: 1px solid rgba(59, 130, 246, 0.22);
+  border: 1px solid color-mix(in srgb, var(--accent) 22%, transparent);
 }
 
 .card-badge.mermaid-badge {
