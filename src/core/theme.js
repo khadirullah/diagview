@@ -314,6 +314,8 @@ function cssVarColor(varName) {
 // Last invalid value warned about per config key. Theme detection runs many
 // times per page, so each bad value warns once.
 const warnedColors = {};
+// Colour pairs already warned about for low contrast
+const warnedContrast = new Set();
 
 /**
  * Read a colour override from config, returning it only if it parses.
@@ -399,9 +401,13 @@ export function detectTheme() {
   // Ensure sufficient contrast (WCAG AA: 4.5:1)
   const contrast = getContrastRatio(bg, text);
   if (contrast < 4.5) {
-    console.warn(
-      `DiagView: Low contrast detected (${contrast.toFixed(2)}:1), using high-contrast fallback`,
-    );
+    const pair = bg + "|" + text;
+    if (!warnedContrast.has(pair)) {
+      warnedContrast.add(pair);
+      console.warn(
+        `DiagView: Low contrast detected (${contrast.toFixed(2)}:1), using high-contrast fallback`,
+      );
+    }
     text = ensureContrast(text, bg);
   }
 

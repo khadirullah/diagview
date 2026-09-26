@@ -394,6 +394,23 @@ describe("Theme Module: modern colour syntax and rejected colours", () => {
     expect(colourWarnings()[3][0]).toContain('accentColor "worse-accent"');
   });
 
+  test("low contrast warns once per colour pair", () => {
+    const contrastWarnings = () =>
+      warn.mock.calls.filter(([msg]) => String(msg).includes("Low contrast"));
+    updateConfig({ backgroundColor: "#fdfdfd", textColor: "#fcfcfc" });
+
+    for (let i = 0; i < 3; i++) {
+      clearThemeCache();
+      detectTheme();
+    }
+    expect(contrastWarnings()).toHaveLength(1);
+
+    updateConfig({ backgroundColor: "#010101", textColor: "#020202" });
+    clearThemeCache();
+    detectTheme();
+    expect(contrastWarnings()).toHaveLength(2);
+  });
+
   test("a named colour still resolves through computed style", () => {
     chromeLike({ parserColor: "rgb(102, 51, 153)" });
     updateConfig({ backgroundColor: "rebeccapurple" });
