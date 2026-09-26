@@ -4,7 +4,12 @@
  */
 import { jest } from "@jest/globals";
 import { state, resetConfig } from "../src/core/config.js";
-import { setupFocusTrap, invalidateFocusableCache } from "../src/ui/focus-manager.js";
+import {
+  setupFocusTrap,
+  invalidateFocusableCache,
+  saveFocus,
+  restoreFocus,
+} from "../src/ui/focus-manager.js";
 
 describe("focus trap ignores unrendered and closed-search controls", () => {
   let modal, cleanupTrap;
@@ -106,5 +111,55 @@ describe("focus trap ignores unrendered and closed-search controls", () => {
     document.getElementById("dv-toggle").focus();
     pressTab();
     expect(document.activeElement.id).toBe("diagview-search");
+  });
+});
+
+describe("focus returns to the diagram after closing", () => {
+  let diagram, other;
+
+  beforeEach(() => {
+    document.body.innerHTML = '<div id="d"></div><button id="o"></button>';
+    diagram = document.getElementById("d");
+    other = document.getElementById("o");
+    state.activeSourceElement = diagram;
+  });
+
+  afterEach(() => {
+    state.activeSourceElement = null;
+  });
+
+  test("a diagram opened by clicking it gets focus back, outside the tab order", () => {
+    document.activeElement.blur();
+    saveFocus();
+    const focusSpy = jest.spyOn(diagram, "focus");
+    restoreFocus();
+
+    expect(document.activeElement).toBe(diagram);
+    expect(focusSpy).toHaveBeenCalledWith({ preventScroll: true });
+    expect(diagram.getAttribute("tabindex")).toBe("-1");
+
+    other.focus();
+    expect(diagram.hasAttribute("tabindex")).toBe(false);
+  });
+
+  test("an existing tabindex on the diagram is left alone", () => {
+    diagram.setAttribute("tabindex", "0");
+    document.activeElement.blur();
+    saveFocus();
+    restoreFocus();
+    other.focus();
+
+    expect(document.activeElement).toBe(other);
+    expect(diagram.getAttribute("tabindex")).toBe("0");
+  });
+
+  test("a focused opener still gets focus back", () => {
+    other.focus();
+    saveFocus();
+    other.blur();
+    restoreFocus();
+
+    expect(document.activeElement).toBe(other);
+    expect(diagram.hasAttribute("tabindex")).toBe(false);
   });
 });

@@ -721,7 +721,7 @@ Live example: [React 18 + StrictMode demo](https://khadirullah.github.io/diagvie
 >
 > Do not re-render the diagram element itself with new content once DiagView has initialized it. Render a new one (inside the container) or call `DiagView.refresh()` after replacing the SVG.
 >
-> If you would rather DiagView never touch the DOM around your element, use `layout: "off"`. It attaches a click handler and nothing else. Fullscreen, zoom, search, minimap and export all still work; only the inline toolbar is dropped. Pair it with `DiagView.openFullscreen(el)` / `DiagView.exportDiagram(el, ...)` from your own buttons if you need them.
+> If you would rather DiagView never touch the DOM around your element, use `layout: "off"`. It attaches a click handler and nothing else. Fullscreen, zoom, search, minimap and export all still work; only the inline toolbar is dropped. Closing the viewer puts focus back on the diagram. Pair it with `DiagView.openFullscreen(el)` / `DiagView.exportDiagram(el, ...)` from your own buttons if you need them.
 >
 > **React StrictMode / hot reload:** the development-only destroy-then-init sequence is handled by `init()` itself, which queues behind an in-flight `destroy()`. You do not need to await either call in an effect.
 >

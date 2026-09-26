@@ -58,7 +58,15 @@ export function isInputFocused() {
  * Save current focus state
  */
 export function saveFocus() {
-  state.lastActiveElement = document.activeElement;
+  let el = document.activeElement;
+  // Clicking a diagram with no toolbar (layout "off") leaves focus on body.
+  // Return to the diagram instead, so keyboard users keep their place. It
+  // holds tabindex -1 until it loses focus, so it never joins the tab order.
+  if (el === document.body && (el = state.activeSourceElement) && !el.hasAttribute("tabindex")) {
+    el.tabIndex = -1;
+    el.addEventListener("blur", () => el.removeAttribute("tabindex"), { once: true });
+  }
+  state.lastActiveElement = el;
 }
 
 /**
@@ -66,20 +74,9 @@ export function saveFocus() {
  */
 export function restoreFocus() {
   const target = state.lastActiveElement;
-  if (target) {
-    try {
-      // Only focus if still in the document
-      if (document.contains(target)) {
-        target.focus({ preventScroll: true });
-      } else {
-        // Fallback: focus the document body so keyboard navigation resumes
-        document.body.focus();
-      }
-    } catch (e) {
-      document.body.focus();
-    }
-  }
   state.lastActiveElement = null;
+  // Fall back to body when the element left the document
+  if (target) (document.contains(target) ? target : document.body).focus({ preventScroll: true });
 }
 
 /**
