@@ -155,8 +155,7 @@ function createHelpModal() {
 
   closeBtn.addEventListener("click", hideKeyboardHelp);
 
-  // Reset timer on any interaction with the modal
-  content.addEventListener("mousemove", startAutoCloseTimer);
+  // Reset timer on touch; mouse hover pauses it (see setupAutoPauseEvents)
   content.addEventListener("touchstart", startAutoCloseTimer);
 
   // SEC-7: Determine the best parent for the help modal.
@@ -166,8 +165,8 @@ function createHelpModal() {
   const targetParent = modal && document.contains(modal) ? modal : document.body;
   targetParent.appendChild(helpModal);
 
-  // Initialize pause events
-  cleanupPause = setupAutoPauseEvents(helpModal);
+  // Pause on the card, not the full-screen backdrop that is always under the pointer
+  cleanupPause = setupAutoPauseEvents(content);
 
   return helpModal;
 }
@@ -181,12 +180,12 @@ export function showKeyboardHelp() {
   const modal = createHelpModal();
   modal.classList.add("show");
 
-  // Start auto-close timer
-  startAutoCloseTimer();
-
   // Focus close button for accessibility
   const closeBtn = modal.querySelector(".diagview-help-close");
   if (closeBtn) closeBtn.focus();
+
+  // Start the timer after focusing: the focus pause listener would clear it
+  startAutoCloseTimer();
 }
 
 /**
