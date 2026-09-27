@@ -60,19 +60,127 @@ export function applyRotationAngle(angle) {
 }
 
 /**
+ * The diagram content: the rotation group once one exists, else the SVG.
+ * Its local coordinates are the unrotated diagram's either way.
+ * @returns {SVGGraphicsElement|null} The content element, or null
+ */
+function contentRoot() {
+  const svg = modalSvg();
+  return svg?.querySelector(":scope > g.dv-rot-g") || svg;
+}
+
+/**
+ * The modal diagram, which is also the element Panzoom moves.
+ * @returns {SVGSVGElement|null} The SVG, or null
+ */
+function modalSvg() {
+  return document.querySelector("#diagview-rotator svg");
+}
+
+/**
+ * Map a screen point into an element's local coordinates, or back out.
+ * @param {SVGGraphicsElement} el - Element whose screen CTM is used
+ * @param {number} x - X coordinate
+ * @param {number} y - Y coordinate
+ * @param {boolean} [invert] - Map from screen into local space
+ * @returns {number[]|null} [x, y], or null when there is no usable CTM
+ */
+function mapPoint(el, x, y, invert) {
+  const m = el.getScreenCTM?.();
+  if (!m) return null;
+  if (!invert) return [m.a * x + m.c * y + m.e, m.b * x + m.d * y + m.f];
+  const det = m.a * m.d - m.b * m.c;
+  if (!det) return null;
+  const dx = x - m.e;
+  const dy = y - m.f;
+  return [(m.d * dx - m.c * dy) / det, (m.a * dy - m.b * dx) / det];
+}
+
+/**
+ * Write Panzoom's current pan and scale to the DOM now. Panzoom applies
+ * them on the next frame, and a running transition shows a halfway value,
+ * so without this a measurement can see an old view and a new viewBox can
+ * paint one frame at the old pan.
+ * @param {*} pz - Panzoom instance
+ */
+function applyTransformNow(pz) {
+  const el = modalSvg();
+  const opts = pz.getOptions?.();
+  if (!el || typeof opts?.setTransform !== "function") return;
+  el.style.transition = "none";
+  opts.setTransform(el, { ...pz.getPan(), scale: pz.getScale() }, opts);
+}
+
+/**
+ * The diagram point under the viewport centre, for rotateKeepsView.
+ * @returns {{cx: number, cy: number, point: number[]}|null} Centre and point
+ */
+function viewCentre() {
+  const viewport = document.getElementById("diagview-modal-viewport");
+  const root = contentRoot();
+  if (!viewport || !root) return null;
+  applyTransformNow(state.activePanzoom);
+  const r = viewport.getBoundingClientRect();
+  const cx = r.left + r.width / 2;
+  const cy = r.top + r.height / 2;
+  const point = mapPoint(root, cx, cy, true);
+  return point && { cx, cy, point, unit: screenUnit(root) };
+}
+
+/**
+ * Screen pixels per diagram unit, from the element's screen CTM.
+ * @param {SVGGraphicsElement} el - Element to measure
+ * @returns {number} Pixels per unit, or 0 when there is no CTM
+ */
+function screenUnit(el) {
+  const m = el.getScreenCTM?.();
+  return m ? Math.hypot(m.a, m.b) : 0;
+}
+
+/**
+ * Pan so the point that was under the viewport centre is back there, at the
+ * same zoom scale.
+ * @param {{cx: number, cy: number, point: number[]}} keep - From viewCentre()
+ * @returns {boolean} False when the view could not be measured
+ */
+function keepView({ cx, cy, point, unit }) {
+  const pz = state.activePanzoom;
+  const root = contentRoot();
+  // The rotated viewBox fits the viewport at a different size. Change the
+  // zoom by that ratio so the diagram looks the same size after the turn.
+  const after = root ? screenUnit(root) : 0;
+  if (unit && after) {
+    pz.zoom(pz.getScale() * (unit / after), { animate: false });
+    applyTransformNow(pz);
+  }
+  const at = root && mapPoint(root, point[0], point[1]);
+  if (!at) return false;
+  const scale = pz.getScale();
+  pz.pan((cx - at[0]) / scale, (cy - at[1]) / scale, { animate: false, relative: true });
+  applyTransformNow(pz);
+  return true;
+}
+
+/**
  * Rotate diagram by 90 degrees
  * Architecture Fix: Rotates an inner <g> instead of the parent <div>.
  */
 export function rotateDiagram() {
+  const keep = state.config.rotateKeepsView && state.activePanzoom ? viewCentre() : null;
+
   if (!applyRotationAngle(state.rotationAngle + 90)) return;
 
-  // Recalibrate panzoom so it recalculates bounds
-  state.activePanzoom?.reset({ animate: true });
+  if (!keep || !keepView(keep)) {
+    // Recalibrate panzoom so it recalculates bounds
+    state.activePanzoom?.reset({ animate: true });
+  }
 
   showSuccessToast(`Rotated ${state.rotationAngle}°`);
 
-  // Emit panzoomchange for minimap + zoom display sync
-  const panzoomEl = state.activePanzoom?.elem;
+  // Emit panzoomchange for minimap + zoom display sync. Panzoom has no
+  // elem property, so only a kept view, whose pan may not change and so
+  // may fire no event of its own, finds the element.
+  const panzoomEl = keep ? modalSvg() : state.activePanzoom?.elem;
   if (panzoomEl) {
     panzoomEl.dispatchEvent(
       new CustomEvent("panzoomchange", {

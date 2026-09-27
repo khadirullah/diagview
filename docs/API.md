@@ -369,6 +369,7 @@ interface DiagViewConfig {
 
   // Interaction
   naturalPanning: boolean; // default: false
+  rotateKeepsView: boolean; // default: false; true = rotate keeps the view (size on screen and centre), zoom % adjusts
   rememberZoom: boolean; // default: false
   showMinimap: boolean; // default: true
 

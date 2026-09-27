@@ -394,7 +394,13 @@ Renders a red laser-pointer dot that follows the mouse (or touch point). Designe
 
 ## 10. Rotation
 
-Rotates the diagram by 90° clockwise. Panzoom is recalibrated after each rotation so that zoom/pan remain accurate.
+Rotates the diagram by 90° clockwise. By default each turn resets the view and fits the rotated diagram, so a zoomed-in view goes back to 100%.
+
+Set `rotateKeepsView: true` to keep the view instead. The diagram turns about the point at the centre of the viewer, that point stays at the centre, and the diagram stays the same size on screen. The zoom % changes, because the rotated diagram fits the viewer at a different size. A wide diagram turned upright reads a higher zoom % than before. If the new zoom would pass `minZoomScale` or `maxZoomScale`, it stops at the limit and the diagram grows or shrinks by the difference.
+
+```javascript
+DiagView.init({ rotateKeepsView: true });
+```
 
 ### Activation
 

@@ -76,6 +76,7 @@ import { deepMerge, deepFreeze } from "./state-utils.js";
  * @property {number} helpTimeout - Milliseconds before the shortcuts panel closes, 0 keeps it open
  * @property {string} diagramSelector - CSS selector for diagram containers
  * @property {boolean} naturalPanning - Arrow keys move the diagram in the arrow's direction
+ * @property {boolean} rotateKeepsView - Rotating keeps the view, the same size on screen and the same centre, instead of fitting the diagram. The zoom % adjusts.
  * @property {boolean} showMinimap - Show the minimap in the viewer
  * @property {boolean} rememberZoom - Keep each diagram's zoom and pan in session storage
  * @property {boolean} animateOpen - Animate the viewer opening
@@ -149,6 +150,7 @@ export const INITIAL_CONFIG = {
 
   // Interaction options
   naturalPanning: false,
+  rotateKeepsView: false,
 
   // Feature toggles
   showMinimap: true,

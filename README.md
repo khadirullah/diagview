@@ -411,6 +411,7 @@ DiagView.init({
 
   // ── Interaction ──────────────────────────────────
   naturalPanning: false, // true = scroll-like pan direction
+  rotateKeepsView: false, // true = rotating keeps the view (same size on screen, same centre)
   rememberZoom: false, // true = restore zoom/pan across modal opens (session)
   showMinimap: true, // Show minimap when diagram overflows viewport
 
