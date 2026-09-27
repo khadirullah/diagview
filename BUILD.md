@@ -54,14 +54,15 @@ This runs five steps internally:
 
 ### Build outputs
 
-| File                       | Format       | Purpose                                |
-| -------------------------- | ------------ | -------------------------------------- |
-| `dist/diagview.umd.js`     | UMD          | Browser `<script>` tag (unminified)    |
-| `dist/diagview.umd.min.js` | UMD minified | Browser `<script>` tag (production)    |
-| `dist/esm/index.js`        | ESM          | Bundlers (Vite, Webpack, Rollup)       |
-| `dist/esm/*-<hash>.js`     | ESM chunks   | Lazy-loaded features for the ESM build |
-| `dist/diagview.css`        | CSS          | Optional stylesheet (`diagview/style`) |
-| `dist/index.d.ts`          | TypeScript   | Type definitions                       |
+| File                       | Format       | Purpose                                                          |
+| -------------------------- | ------------ | ---------------------------------------------------------------- |
+| `dist/diagview.umd.js`     | UMD          | Browser `<script>` tag (unminified)                              |
+| `dist/diagview.umd.min.js` | UMD minified | Browser `<script>` tag (production)                              |
+| `dist/esm/index.js`        | ESM          | Bundlers (Vite, Webpack, Rollup)                                 |
+| `dist/esm/*-<hash>.js`     | ESM chunks   | Lazy-loaded features and shared code for the ESM build           |
+| `dist/diagview.css`        | CSS          | Optional stylesheet (`diagview/style`)                           |
+| `dist/index.d.ts`          | TypeScript   | Type definitions, per-module `.d.ts` files in matching folders   |
+| `dist/**/*.map`            | Source maps  | For the minified UMD bundle, the ESM files and the `.d.ts` files |
 
 ### Clean only
 
