@@ -1502,8 +1502,11 @@
 .diagview-toast-container {
   position: fixed;
   bottom: 24px;
-  left: 50%;
-  transform: translateX(-50%);
+  /* Centred with auto margins rather than a transform, so the theme hint
+     below can be placed against the modal like the menu button is */
+  left: 0;
+  right: 0;
+  margin: 0 auto;
   display: flex;
   flex-direction: column-reverse;
   gap: 10px;
@@ -1531,28 +1534,30 @@
   line-height: 1.4;
 }
 
-/* On phones the toast spans the screen width, so the first-time theme hint
-   sits above the menu button, flush right, with a tail pointing at it. */
-@media (max-width: 639px) {
-  .diagview-toast-menu-hint {
-    position: relative;
-    align-self: flex-end;
-    /* FAB offset + FAB size + 12px gap, less the container's own 24px */
-    margin-bottom: calc(clamp(12px, 3vh, 24px) + clamp(44px, 8vw, 56px) - 12px);
-    border-bottom-right-radius: 4px;
-  }
+/* The first-time theme hint sits just above the menu button, flush with
+   its right edge, with a tail pointing at it. That keeps it off the button
+   and off the middle of the diagram. It uses the button's own offsets and
+   sizes, and like the button it is fixed to the modal inside a zoomed
+   container, so the two stay lined up when the page is zoomed out. */
+.diagview-toast-menu-hint {
+  position: fixed;
+  right: clamp(12px, 3vw, 24px);
+  /* FAB offset + FAB size + 12px gap */
+  bottom: calc(clamp(12px, 3vh, 24px) + clamp(44px, 8vw, 56px) + 12px);
+  max-width: min(90%, 360px);
+  border-bottom-right-radius: 4px;
+}
 
-  .diagview-toast-menu-hint::after {
-    content: "";
-    position: absolute;
-    bottom: -5px;
-    /* FAB centre from the screen edge, less the container's right margin */
-    right: calc(clamp(12px, 3vw, 24px) + clamp(44px, 8vw, 56px) / 2 - max(5vw, 50vw - 250px) - 5px);
-    width: 10px;
-    height: 10px;
-    background: inherit;
-    transform: rotate(45deg);
-  }
+.diagview-toast-menu-hint::after {
+  content: "";
+  position: absolute;
+  bottom: -5px;
+  /* Centre of the FAB, which shares the hint's right edge */
+  right: calc(clamp(44px, 8vw, 56px) / 2 - 5px);
+  width: 10px;
+  height: 10px;
+  background: inherit;
+  transform: rotate(45deg);
 }
 
 /* Accessibility */
