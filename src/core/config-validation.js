@@ -1,4 +1,4 @@
-import { ZOOM, LAYOUTS, EXPORT } from "./constants.js";
+import { ZOOM, LAYOUTS, EXPORT, SECURITY_MODES } from "./constants.js";
 import { DEFAULT_CONFIG } from "./config-defaults.js";
 import { deepMerge } from "./state-utils.js";
 
@@ -108,6 +108,13 @@ export function validateConfig(config, previous = DEFAULT_CONFIG) {
       config[key] = deepMerge({}, fallback(key));
     }
   });
+
+  // An unknown mode would work as strict, so say so and store that
+  const { mode } = config["security"];
+  if (!SECURITY_MODES.includes(mode)) {
+    console.warn(`DiagView: Unknown security.mode "${mode}", using "strict"`);
+    config["security"].mode = "strict";
+  }
 
   const types = config["allowedImageTypes"];
   if (!Array.isArray(types) || !types.every((t) => typeof t === "string")) {

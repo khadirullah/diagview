@@ -1,6 +1,7 @@
 import { state } from "./config.js";
 import { sanitizeSVG, fixIds, generateUniqueId, inertDocument } from "./utils.js";
 import { showErrorToast, showInfoToast } from "../ui/toast.js";
+import { SECURITY_MODES } from "./constants.js";
 
 /**
  * CSS style properties to preserve when cloning
@@ -346,7 +347,8 @@ export function cloneSVG(svg, options = {}) {
   return clone;
 }
 
-const SECURITY_MODES = ["strict", "permissive", "off"];
+/** Unknown data-diagview-sanitize values already warned about */
+const warnedModes = new Set();
 
 /**
  * Resolve the effective security settings for one diagram container.
@@ -383,9 +385,9 @@ export function resolveElementSecurity(container, options = {}) {
           `DiagView: SVG sanitization disabled on element via data-diagview-sanitize="off". Ensure the SVG source is trusted.`,
         );
       }
-    } else if (options.warn) {
+    } else if (options.warn && warnedModes.size < warnedModes.add(v).size) {
       console.warn(
-        `DiagView: Unknown data-diagview-sanitize value "${dataset.diagviewSanitize}". Must be "strict", "permissive", or "off". Ignoring.`,
+        `DiagView: Unknown data-diagview-sanitize "${dataset.diagviewSanitize}", using "${resolved.mode}"`,
       );
     }
   }

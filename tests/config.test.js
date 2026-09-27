@@ -149,6 +149,20 @@ describe("Core Config: validateConfig gaps", () => {
     expect(state.config.exportFonts).toBe("none");
   });
 
+  test("an unknown security.mode warns once and uses strict", () => {
+    updateConfig({ security: { mode: "permissive" } });
+    updateConfig({ security: { mode: "off" } });
+    expect(warn).not.toHaveBeenCalled();
+
+    updateConfig({ security: { mode: "stirct" } });
+    expect(warn).toHaveBeenCalledWith('DiagView: Unknown security.mode "stirct", using "strict"');
+    expect(state.config.security.mode).toBe("strict");
+
+    warn.mockClear();
+    updateConfig({ security: { allowRemoteResources: true } });
+    expect(warn).not.toHaveBeenCalled();
+  });
+
   test("timing keys reject non-numbers", () => {
     updateConfig({ toastDuration: "fast" });
     expect(warn).toHaveBeenCalledWith(expect.stringContaining("toastDuration"));

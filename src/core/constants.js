@@ -106,6 +106,9 @@ export const LAYOUTS = {
   OFF: "off",
 };
 
+/** Values of security.mode and data-diagview-sanitize */
+export const SECURITY_MODES = ["strict", "permissive", "off"];
+
 /**
  * Button styles
  */

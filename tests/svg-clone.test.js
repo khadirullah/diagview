@@ -249,6 +249,21 @@ describe("Per-element security overrides (allowOverrides gate)", () => {
     expect(resolveElementSecurity(null).mode).toBe("strict");
   });
 
+  test("an unknown data-diagview-sanitize value warns once per value and names the mode used", () => {
+    const warn = jest.spyOn(console, "warn").mockImplementation(() => {});
+    updateConfig({ security: { mode: "permissive" } });
+    container.dataset.diagviewSanitize = "premissive";
+    expect(resolveElementSecurity(container, { warn: true }).mode).toBe("permissive");
+    resolveElementSecurity(container, { warn: true });
+    container.dataset.diagviewSanitize = "none";
+    resolveElementSecurity(container, { warn: true });
+    expect(warn.mock.calls.map((c) => c[0])).toEqual([
+      'DiagView: Unknown data-diagview-sanitize "premissive", using "permissive"',
+      'DiagView: Unknown data-diagview-sanitize "none", using "permissive"',
+    ]);
+    warn.mockRestore();
+  });
+
   test("cloneSVGForModal still sanitizes when allowOverrides is false and element says off", () => {
     updateConfig({ security: { allowOverrides: false } });
     container.dataset.diagviewSanitize = "off";

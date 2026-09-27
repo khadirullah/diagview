@@ -629,6 +629,8 @@ DiagView.init({ security: { mode: "permissive" } });
 </div>
 ```
 
+A mistyped mode logs a warning. An unknown `security.mode` uses `strict`. An unknown `data-diagview-sanitize` value uses the global mode and warns once per value.
+
 ### Allowing remote resources
 
 By default, `@import` and external `url()` in SVG `<style>` blocks are blocked in strict mode. To allow them (e.g. for Google Fonts embedded in a diagram):
