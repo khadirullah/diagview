@@ -348,11 +348,13 @@ function _createMenuFooter(menuPanel) {
   brandLink.className = "dv-menu-brand";
   brandLink.href = BRANDING.URL;
   brandLink.target = "_blank";
+  brandLink.rel = "noopener noreferrer";
   brandLink.textContent = BRANDING.LABEL;
 
   const authorLink = document.createElement("a");
   authorLink.href = BRANDING.AUTHOR_URL;
   authorLink.target = "_blank";
+  authorLink.rel = "noopener noreferrer";
   authorLink.textContent = BRANDING.AUTHOR_NAME;
 
   footer.appendChild(brandLink);

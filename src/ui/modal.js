@@ -535,6 +535,7 @@ function _createModalTopbar(content) {
   const brandingLink = document.createElement("a");
   brandingLink.href = BRANDING.URL;
   brandingLink.target = "_blank";
+  brandingLink.rel = "noopener noreferrer";
   brandingLink.className = "diagview-branding";
   brandingLink.title = `${BRANDING.LABEL} by Khadirullah`;
   brandingLink.textContent = BRANDING.LABEL;

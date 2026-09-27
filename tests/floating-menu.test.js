@@ -64,6 +64,14 @@ describe("Floating Menu UI", () => {
     expect(panel).not.toBeNull();
   });
 
+  test("footer links that open a new tab do not expose window.opener", () => {
+    createFloatingMenu(sourceElement, clonedSvg);
+
+    const links = [...document.querySelectorAll('.dv-menu-footer a[target="_blank"]')];
+    expect(links).toHaveLength(2);
+    links.forEach((a) => expect(a.rel).toBe("noopener noreferrer"));
+  });
+
   test("FAB colour follows --dv-accent so accent changes apply while open", () => {
     // jsdom drops var() values, so watch the assignment itself
     const proto = Object.getPrototypeOf(document.body.style);

@@ -171,6 +171,13 @@ describe("Modal System", () => {
     expect(panzoomMock.reset).toHaveBeenCalled();
   });
 
+  test("links that open a new tab do not expose window.opener", async () => {
+    await openFullscreen(container);
+    const links = [...document.querySelectorAll('a[target="_blank"]')];
+    expect(links.length).toBeGreaterThanOrEqual(1);
+    links.forEach((a) => expect(a.rel).toBe("noopener noreferrer"));
+  });
+
   test("shows first-time theme hint toast when enabled", async () => {
     localStorage.removeItem("diagview-canvas-hint-shown");
     updateConfig({ showFirstTimeThemeHint: true });
