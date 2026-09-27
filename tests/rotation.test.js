@@ -6,7 +6,11 @@
 import { jest } from "@jest/globals";
 import { state, resetConfig, updateConfig } from "../src/core/config.js";
 import { rotateDiagram, resetRotation } from "../src/features/lazy/rotate.js";
-import { saveZoomState, restoreZoomState } from "../src/features/panzoom-integration.js";
+import {
+  saveZoomState,
+  restoreZoomState,
+  initializePanzoom,
+} from "../src/features/panzoom-integration.js";
 
 // Mock DOM
 document.body.innerHTML = `
@@ -247,6 +251,35 @@ describe("rotateKeepsView", () => {
     expect(pz.getScale()).toBe(2.2);
     expect(current().point).toEqual(before.point);
     expect(current().unit).toBeCloseTo(4.4, 9);
+  });
+
+  test("tells the minimap and zoom display about the turn in both modes", () => {
+    const svg = document.querySelector("#diagview-rotator svg");
+    const seen = [];
+    svg.addEventListener("panzoomchange", (e) => seen.push(e.detail));
+    rotateDiagram();
+    updateConfig({ rotateKeepsView: true });
+    rotateDiagram();
+    // The kept view turns sideways to upright, so its zoom % drops to 1.6
+    expect(seen).toEqual([
+      { scale: 2, isRotation: true },
+      { scale: 1.6, isRotation: true },
+    ]);
+  });
+
+  test("onZoomChange skips the turn event, which changes no zoom", () => {
+    const onZoomChange = jest.fn();
+    updateConfig({ onZoomChange });
+    window.Panzoom = jest.fn(() => pz);
+    const svg = document.querySelector("#diagview-rotator svg");
+    initializePanzoom(svg);
+    rotateDiagram();
+    expect(onZoomChange).not.toHaveBeenCalled();
+    svg.dispatchEvent(new CustomEvent("panzoomchange", { detail: { scale: 3 } }));
+    expect(onZoomChange).toHaveBeenCalledWith(3);
+    for (const fn of Array.from(state.modalCleanupFunctions)) fn();
+    state.modalCleanupFunctions.clear();
+    delete window.Panzoom;
   });
 
   test("falls back to a reset when the view cannot be measured", () => {

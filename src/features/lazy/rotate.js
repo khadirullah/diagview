@@ -178,9 +178,8 @@ export function rotateDiagram() {
   showSuccessToast(`Rotated ${state.rotationAngle}°`);
 
   // Emit panzoomchange for minimap + zoom display sync. Panzoom has no
-  // elem property, so only a kept view, whose pan may not change and so
-  // may fire no event of its own, finds the element.
-  const panzoomEl = keep ? modalSvg() : state.activePanzoom?.elem;
+  // elem property, so the event goes to the SVG it moves.
+  const panzoomEl = state.activePanzoom && modalSvg();
   if (panzoomEl) {
     panzoomEl.dispatchEvent(
       new CustomEvent("panzoomchange", {

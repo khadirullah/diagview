@@ -60,6 +60,8 @@ export function initializePanzoom(element, options = {}) {
     // listener would pin each discarded clone in memory until destroy().
     if (state.config.onZoomChange) {
       addModalListener(element, "panzoomchange", (e) => {
+        // A turn changes no zoom. Panzoom's own event reports any new scale.
+        if (e.detail?.isRotation) return;
         state.config.onZoomChange(e.detail.scale);
       });
     }
