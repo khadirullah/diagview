@@ -445,7 +445,7 @@ DiagView.init({
 
   // ── Notifications ────────────────────────────────
   toastDuration: 2500, // Success and info toast duration (ms)
-  errorToastDuration: 5000, // Error toast duration (ms)
+  errorToastDuration: 5000, // Error toast duration (ms); warnings always stay 5000
 
   // ── PDF ──────────────────────────────────────────
   pdfLibraryUrl: "https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js",

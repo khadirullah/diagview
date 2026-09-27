@@ -402,7 +402,7 @@ interface DiagViewConfig {
 
   // Notifications
   toastDuration: number; // default: 2500 (ms), success and info notices
-  errorToastDuration: number; // default: 5000 (ms), error notices
+  errorToastDuration: number; // default: 5000 (ms), error notices (warnings always stay 5000)
   showFirstTimeThemeHint: boolean; // default: true
 
   // PDF
