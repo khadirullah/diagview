@@ -1,10 +1,10 @@
 /**
- * The UMD build attaches every *named* export of src/index.js to the
- * window.DiagView global (Rollup `exports: "named"`). Members that only live
- * on the default export object are therefore invisible to script-tag users.
- * This guards that the documented surface exists as named exports too.
+ * The UMD build (src/umd.js) exposes the default DiagView object as the
+ * window.DiagView global and as require("diagview"). The ESM build keeps the
+ * named exports. This guards that both carry the same documented surface.
  */
 import * as mod from "../src/index.js";
+import umd from "../src/umd.js";
 
 describe("Named exports match the documented DiagView surface", () => {
   test("state and utils are named exports, identical to the default object's", () => {
@@ -25,5 +25,17 @@ describe("Named exports match the documented DiagView surface", () => {
   test("version is exported by name", () => {
     expect(typeof mod.version).toBe("string");
     expect(mod.version).toBe(mod.default.version);
+  });
+});
+
+describe("UMD entry", () => {
+  test("exports the DiagView object with every named export and no default key", () => {
+    expect(umd).toBe(mod.default);
+    const names = Object.keys(mod).filter((key) => key !== "default");
+    expect(Object.keys(umd).sort()).toEqual(names.sort());
+  });
+
+  test("keeps .default pointing at itself for older code", () => {
+    expect(umd.default).toBe(umd);
   });
 });

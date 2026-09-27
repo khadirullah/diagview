@@ -5,6 +5,7 @@ const assert = require("node:assert/strict");
 
 const required = require("diagview");
 assert.equal(typeof required.init, "function", 'require("diagview").init is not a function');
+assert.ok(!Object.keys(required).includes("default"), 'require("diagview") lists a default key');
 
 import("diagview").then((mod) => {
   assert.equal(typeof mod.init, "function", 'import("diagview") has no init export');

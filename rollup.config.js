@@ -82,13 +82,15 @@ export default [
   // UMD build (browser <script> tag) - NO CODE SPLITTING
   // The same bundle is also written as .cjs for require("diagview"). The
   // package is "type": "module", so Node reads any .js file in it as ESM.
+  // src/umd.js exports the DiagView object alone, so the global and
+  // require() hold the API without a "default" key.
   {
-    input: "src/index.js",
+    input: "src/umd.js",
     output: ["dist/diagview.umd.js", "dist/diagview.umd.cjs"].map((file) => ({
       file,
       format: "umd",
       name: "DiagView",
-      exports: "named",
+      exports: "default",
       globals: {
         "@panzoom/panzoom": "Panzoom",
       },
@@ -112,12 +114,12 @@ export default [
 
   // UMD minified (production) - NO CODE SPLITTING
   {
-    input: "src/index.js",
+    input: "src/umd.js",
     output: {
       file: "dist/diagview.umd.min.js",
       format: "umd",
       name: "DiagView",
-      exports: "named",
+      exports: "default",
       globals: {
         "@panzoom/panzoom": "Panzoom",
       },

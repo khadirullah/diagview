@@ -60,6 +60,8 @@ Open a page in `demo/` in your browser. The demo pages load the released `diagvi
 ```
 diagview/
 ├── src/
+│   ├── index.js          # Public API, entry for the ESM build
+│   ├── umd.js            # Entry for the UMD and CommonJS builds
 │   ├── core/             # State, config, events, lifecycle, utils
 │   ├── features/         # Diagram init, export, keyboard, pan/zoom
 │   │   └── lazy/         # Search, minimap, share, rotate, meeting mode, readable text
