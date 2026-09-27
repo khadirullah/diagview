@@ -6,419 +6,396 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" type="image/jpeg" href="images/logo.jpg" sizes="1024x1024">
     <link rel="apple-touch-icon" href="images/logo.jpg">
-    <title>DiagView — Layout Comparison</title>
+    <title>DiagView - Layout Comparison</title>
     <meta property="og:image" content="https://khadirullah.github.io/diagview/images/hero.jpg">
     <meta name="description"
-        content="Compare DiagView's three layout modes — floating, header, and off — side by side on a single page using per-diagram data-diagview-layout overrides.">
+        content="Compare the DiagView floating, header and off layouts side by side on one page, each set with a per-diagram data-diagview-layout attribute.">
 
+    <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono&display=swap"
+    <link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
         rel="stylesheet">
-
-    <link rel="stylesheet" href="demo-styles.css">
 
     <!-- Panzoom (required for fullscreen zoom/pan) -->
     <script src="https://cdn.jsdelivr.net/npm/@panzoom/panzoom@4.5.1/dist/panzoom.min.js"></script>
 
-    <!-- DiagView — CDN (Online) -->
+    <!-- Styles -->
+    <link rel="stylesheet" href="demo-styles.css">
+
+    <!-- Primary: CDN (Online) -->
+    <!-- DiagView Core -->
     <script src="https://unpkg.com/diagview@1.0.12/dist/diagview.umd.js" data-diagview-no-auto-init></script>
 
     <!-- Development Mode: Uncomment below to use local file -->
     <!-- <script src="../dist/diagview.umd.js" data-diagview-no-auto-init></script> -->
 
-    <script src="demo-runtime.js"></script>
-
     <style>
-        body {
-            padding-top: 90px;
+        /* Each layout keeps its own colour for the tag dot and the heading dot.
+           The diagrams get the same colours from buildArchSvg below. */
+        .floating {
+            --mode: #d97706;
         }
 
-        .hero {
-            text-align: center;
-            padding: 48px 24px 32px;
-            max-width: 780px;
-            margin: 0 auto;
+        .header {
+            --mode: #6366f1;
         }
 
-        .hero h1 {
-            font-size: clamp(1.8rem, 4vw, 2.6rem);
-            margin-bottom: 12px;
+        .off {
+            --mode: #059669;
         }
 
-        .hero p {
-            font-size: 1.05rem;
-            opacity: .72;
-            max-width: 560px;
-            margin: 0 auto 24px;
+        .dark .floating {
+            --mode: #fbbf24;
         }
 
-        .badge-row {
-            display: flex;
-            justify-content: center;
-            gap: 10px;
-            flex-wrap: wrap;
-            margin-bottom: 0;
+        .dark .header {
+            --mode: #a5b4fc;
         }
 
-        .badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            padding: 5px 14px;
-            border-radius: 999px;
-            font-size: .78rem;
-            font-weight: 600;
-            letter-spacing: .5px;
-            text-transform: uppercase;
+        .dark .off {
+            --mode: #6ee7b7;
         }
 
-        .badge.floating {
-            background: rgba(245, 158, 11, .12);
-            color: #f59e0b;
-            border: 1px solid rgba(245, 158, 11, .3);
+        .compare > .card {
+            --stage-h: 250px;
         }
 
-        .badge.header {
-            background: rgba(99, 102, 241, .12);
-            color: #6366f1;
-            border: 1px solid rgba(99, 102, 241, .3);
+        .card .tag .dot {
+            background: var(--mode);
         }
 
-        .badge.off {
-            background: rgba(16, 185, 129, .12);
-            color: #10b981;
-            border: 1px solid rgba(16, 185, 129, .3);
+        /* The off layout has no wrapper, so the bare diagram gets the same
+           height and inner padding the wrapped ones have */
+        .card > .diagram[data-diagview-layout="off"] {
+            min-height: var(--stage-h);
+            padding: 22px;
         }
 
-        /* ── Comparison grid ── */
-        .compare-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 28px;
-            max-width: 1300px;
-            margin: 0 auto 60px;
-            padding: 0 24px;
-        }
-
-        .layout-card {
-            display: flex;
-            flex-direction: column;
-            gap: 0;
-            border-radius: 16px;
-            overflow: hidden;
-            border: 1px solid var(--border);
-            background: var(--card-bg);
-            transition: box-shadow .25s, transform .25s;
-        }
-
-        .layout-card:hover {
-            box-shadow: 0 12px 40px rgba(0, 0, 0, .18);
-            transform: translateY(-3px);
-        }
-
-        .card-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 16px 20px 12px;
-            border-bottom: 1px solid var(--border);
-        }
-
-        .card-header h3 {
-            font-size: 1rem;
-            font-weight: 700;
-            margin: 0;
-        }
-
-        /* Diagram container inside each card */
-        .layout-card .diagram {
-            border-radius: 0 !important;
-            border: none !important;
-        }
-
-        /* The off layout has no wrapper, so give its diagram the inset the others get */
-        .layout-card .diagram[data-diagview-layout="off"] {
-            padding: 20px;
-        }
-
-        /* Code snippet */
+        /* Attribute line under each diagram */
         .attr-snippet {
-            padding: 14px 20px;
-            background: var(--card-bg);
-            border-top: 1px solid var(--border);
-            font-family: 'JetBrains Mono', monospace;
-            font-size: .72rem;
-            color: var(--muted, #888);
-            overflow-x: auto;
-            white-space: pre-wrap;
+            font-family: var(--mono);
+            font-size: 0.78rem;
             line-height: 1.6;
+            font-variant-ligatures: none;
+            overflow-wrap: anywhere;
         }
 
-        .attr-key {
-            color: #818cf8;
+        .attr-snippet .a {
+            color: var(--accent-ink);
         }
 
-        .attr-val {
-            color: #34d399;
+        .attr-snippet .v {
+            color: #0f7a55;
         }
 
-        /* Info section */
-        .info-section {
-            max-width: 860px;
-            margin: 0 auto 60px;
-            padding: 0 24px;
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-            gap: 20px;
+        .dark .attr-snippet .v {
+            color: #6ee7b7;
         }
 
-        .info-card {
-            padding: 24px;
-            border-radius: 14px;
-            border: 1px solid var(--border);
-            background: var(--card-bg);
+        .attr-snippet .hint {
+            display: block;
+            font-family: var(--font);
+            font-size: 0.85rem;
         }
 
-        .info-card .icon {
-            font-size: 1.8rem;
-            margin-bottom: 10px;
+        .cols .mode-name {
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
 
-        .info-card h4 {
-            font-size: .95rem;
-            font-weight: 700;
-            margin: 0 0 6px;
+        .cols .mode-name::before {
+            content: "";
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--mode);
+            flex-shrink: 0;
         }
 
-        .info-card p {
-            font-size: .85rem;
-            opacity: .7;
-            margin: 0;
-            line-height: 1.6;
-        }
+        @media (max-width: 600px) {
+            .crumbs {
+                display: none;
+            }
 
-        /* Code-block styling is now mostly global, but we can add specific tweaks here if needed */
-
-
-        .code-block .kw {
-            color: #818cf8;
-        }
-
-        .code-block .str {
-            color: #34d399;
-        }
-
-        .code-block .cmt {
-            color: #64748b;
-        }
-
-        .code-block .tag {
-            color: #f472b6;
-        }
-
-        .code-block .atn {
-            color: #7dd3fc;
-        }
-
-        .code-block .atv {
-            color: #a3e635;
+            .compare > .card {
+                --stage-h: 220px;
+            }
         }
     </style>
+
+    <script src="demo-runtime.js"></script>
 </head>
 
 <body>
 
-    <div class="controls">
-        <div class="brand">
-            <a href="index.html">
-                <img src="images/logo.jpg" alt="DiagView"
-                    style="width:32px;height:32px;border-radius:8px;object-fit:cover;flex-shrink:0">
-                <div class="brand-meta">
-                    <span class="brand-label">DiagView</span>
-                    <span class="brand-name">Layout Compare</span>
-                </div>
+    <header class="nav">
+        <div class="wrap">
+            <a class="brand" href="index.html" aria-label="DiagView demo hub">
+                <svg class="brand-mark" viewBox="0 0 24 24" aria-hidden="true">
+                    <path class="e" d="M12 4.5 4.5 18.5h15Z M12 4.5v7.5 M4.5 18.5 12 12l7.5 6.5" fill="none" />
+                    <circle class="n" cx="12" cy="4.5" r="2.6" />
+                    <circle class="n" cx="12" cy="12" r="2.2" />
+                    <circle class="n" cx="4.5" cy="18.5" r="2.6" />
+                    <circle class="n" cx="19.5" cy="18.5" r="2.6" />
+                </svg>
             </a>
-        </div>
-        <div class="toggles">
-            <label class="accent-label">
-                <span>Security</span>
-                <select id="securitySelector" title="Toggle SVG Sanitization Level">
-                    <option value="strict">Strict (High)</option>
-                    <option value="permissive">Permissive</option>
-                    <option value="off">Off (Trusted)</option>
-                </select>
-            </label>
-            <label class="accent-label">
-                <span>Accent</span>
-                <input type="color" id="accentPicker" value="#6366f1">
-            </label>
-            <button class="toggle-btn" onclick="toggleTheme()" title="Toggle Dark/Light Mode" aria-label="Toggle dark mode">🌓</button>
-            <a href="index.html" class="toggle-btn" style="background:var(--accent);color:#fff;border:none">← Hub</a>
-        </div>
-    </div>
-
-    <section class="page-hero">
-        <h1>Per-Diagram Layout Control</h1>
-        <p>Three different layout modes on a <strong>single page</strong>, each set with a single HTML attribute.
-            Click <em>Destroy DiagView</em> above to see the bare diagrams, then restore.</p>
-        <div class="badge-row">
-            <span class="badge floating">⊙ Floating</span>
-            <span class="badge header">▬ Header bar</span>
-            <span class="badge off">✕ Off (click-only)</span>
-        </div>
-    </section>
-
-    <!-- Comparison grid -->
-    <div class="compare-grid">
-
-        <!-- ── FLOATING ── -->
-        <div class="layout-card">
-            <div class="card-header">
-                <h3>Floating</h3>
-                <span class="badge floating">floating</span>
-            </div>
-            <div class="diagram" data-diagview-layout="floating"
-                data-title="Microservices Architecture (Floating)" id="diag-floating">
-                <!-- SVG injected by JS -->
-            </div>
-            <div class="attr-snippet"><span class="attr-key">data-diagview-layout</span>=<span
-                    class="attr-val">"floating"</span>
+            <nav class="crumbs" aria-label="Breadcrumb">
+                <a href="index.html">Demo hub</a>
+                <span class="sep" aria-hidden="true">/</span>
+                <span aria-current="page">Layout compare</span>
+            </nav>
+            <div class="toggles">
+                <label class="select" title="SVG sanitisation level">
+                    <span class="lbl">Security</span>
+                    <select id="securitySelector" aria-label="Security">
+                        <option value="strict">Strict</option>
+                        <option value="permissive">Permissive</option>
+                        <option value="off">Off (trusted)</option>
+                    </select>
+                </label>
+                <label class="swatch" title="Accent colour">
+                    <span class="vh">Accent colour</span>
+                    <input type="color" id="accentPicker" value="#ea580c">
+                </label>
+                <button class="icon-btn theme-btn" type="button" onclick="toggleTheme()" title="Switch light and dark"
+                    aria-label="Switch light and dark theme"></button>
             </div>
         </div>
+    </header>
 
-        <!-- ── HEADER ── -->
-        <div class="layout-card">
-            <div class="card-header">
-                <h3>Header</h3>
-                <span class="badge header">header</span>
+    <main>
+        <section class="page-hero">
+            <div class="wrap">
+                <h1>Per-diagram layout control</h1>
+                <p>Three layout modes on one page, each set with a single HTML attribute. Turn DiagView off in the
+                    top bar to see the bare diagrams, then turn it back on.</p>
+                <nav class="modes-nav" aria-label="Layout modes">
+                    <a href="layout-header.html">Header bar</a>
+                    <a href="layout-floating.html">Floating</a>
+                    <a href="layout-off.html">Off</a>
+                    <a href="layout-compare.html">Compare</a>
+                </nav>
             </div>
-            <div class="diagram" data-diagview-layout="header"
-                data-title="Microservices Architecture (Header)" id="diag-header">
+        </section>
+
+        <!-- Comparison grid -->
+        <div class="wrap grid compare" style="--fig-chapter: '1'">
+
+            <!-- Floating -->
+            <div class="card third floating">
+                <div class="card-header">
+                    <h3>Floating</h3>
+                    <span class="tag"><span class="dot"></span>floating</span>
+                </div>
+                <div class="diagram" data-diagview-layout="floating"
+                    data-title="Microservices Architecture (Floating)" id="diag-floating">
+                    <!-- SVG injected by JS -->
+                </div>
+                <p class="card-note attr-snippet"><span class="a">data-diagview-layout</span>=<span
+                        class="v">"floating"</span></p>
             </div>
-            <div class="attr-snippet"><span class="attr-key">data-diagview-layout</span>=<span
-                    class="attr-val">"header"</span>
+
+            <!-- Header -->
+            <div class="card third header">
+                <div class="card-header">
+                    <h3>Header</h3>
+                    <span class="tag"><span class="dot"></span>header</span>
+                </div>
+                <div class="diagram" data-diagview-layout="header"
+                    data-title="Microservices Architecture (Header)" id="diag-header">
+                </div>
+                <p class="card-note attr-snippet"><span class="a">data-diagview-layout</span>=<span
+                        class="v">"header"</span></p>
             </div>
+
+            <!-- Off -->
+            <div class="card third off">
+                <div class="card-header">
+                    <h3>Off</h3>
+                    <span class="tag"><span class="dot"></span>off</span>
+                </div>
+                <div class="diagram" data-diagview-layout="off"
+                    data-title="Microservices Architecture (Off)" id="diag-off">
+                </div>
+                <p class="card-note attr-snippet"><span class="a">data-diagview-layout</span>=<span
+                        class="v">"off"</span><span class="hint">Click the diagram to open it fullscreen.</span></p>
+            </div>
+
         </div>
 
-        <!-- ── OFF ── -->
-        <div class="layout-card">
-            <div class="card-header">
-                <h3>Off</h3>
-                <span class="badge off">off</span>
+        <!-- What each layout does -->
+        <section class="section">
+            <div class="wrap">
+                <div class="section-head">
+                    <h2>Three ways to show the controls</h2>
+                    <p>Pick one for the whole page, or set it per diagram.</p>
+                </div>
+                <div class="cols">
+                    <div class="floating">
+                        <h4 class="mode-name">Floating buttons</h4>
+                        <p>Copy, download and fullscreen buttons appear under the diagram on hover. They stay out of
+                            the way, which suits diagrams embedded in running text.</p>
+                    </div>
+                    <div class="header">
+                        <h4 class="mode-name">Header bar</h4>
+                        <p>A full-width toolbar with the title and the copy, download and fullscreen buttons. With a
+                            mouse it appears on hover or when you Tab into the diagram. On touch screens it is always
+                            shown.</p>
+                    </div>
+                    <div class="off">
+                        <h4 class="mode-name">Off (click only)</h4>
+                        <p>No toolbar at all. The diagram opens fullscreen when clicked. Good for tight layouts or
+                            when you want a completely clean embed.</p>
+                    </div>
+                </div>
             </div>
-            <div class="diagram" data-diagview-layout="off"
-                data-title="Microservices Architecture (Off)" id="diag-off">
+        </section>
+
+        <!-- Keyboard shortcuts -->
+        <section class="section">
+            <div class="wrap">
+                <div class="section-head">
+                    <h2>Keyboard reference</h2>
+                    <p>With the header and floating layouts, Tab reaches the toolbar buttons. With off, a click
+                        opens the viewer. These keys work while it is open.</p>
+                </div>
+                <div class="cols shortcuts">
+                    <div>
+                        <h3 class="grp">Zoom</h3>
+                        <dl>
+                            <dt><kbd>+</kbd></dt>
+                            <dd>Zoom in</dd>
+                            <dt><kbd>-</kbd></dt>
+                            <dd>Zoom out</dd>
+                            <dt><kbd>Space / 0</kbd></dt>
+                            <dd>Reset &amp; center</dd>
+                        </dl>
+                    </div>
+                    <div>
+                        <h3 class="grp">Pan</h3>
+                        <dl>
+                            <dt><kbd>↑ ↓ ← →</kbd></dt>
+                            <dd>Pan diagram</dd>
+                            <dt><kbd>Shift + ↑ ↓ ← →</kbd></dt>
+                            <dd>Fast pan</dd>
+                            <dt><kbd>Drag</kbd></dt>
+                            <dd>Free pan</dd>
+                        </dl>
+                    </div>
+                    <div>
+                        <h3 class="grp">Search</h3>
+                        <dl>
+                            <dt><kbd>F</kbd></dt>
+                            <dd>Open search</dd>
+                            <dt><kbd>Esc</kbd></dt>
+                            <dd>Clear / close</dd>
+                        </dl>
+                    </div>
+                    <div>
+                        <h3 class="grp">Tools</h3>
+                        <dl>
+                            <dt><kbd>M</kbd></dt>
+                            <dd>Meeting mode</dd>
+                            <dt><kbd>R</kbd></dt>
+                            <dd>Rotate 90°</dd>
+                            <dt><kbd>L</kbd></dt>
+                            <dd>Share link</dd>
+                            <dt><kbd>T</kbd></dt>
+                            <dd>Text select</dd>
+                            <dt><kbd>?</kbd></dt>
+                            <dd>Show shortcuts</dd>
+                        </dl>
+                    </div>
+                </div>
             </div>
-            <div class="attr-snippet"><span class="attr-key">data-diagview-layout</span>=<span
-                    class="attr-val">"off"</span>
-<span class="cmt">// Click diagram to open fullscreen</span></div>
-        </div>
+        </section>
 
-    </div>
+        <!-- Code example -->
+        <section class="section">
+            <div class="wrap">
+                <div class="section-head">
+                    <h2>How it works</h2>
+                    <p>One global init handles every diagram, and a data attribute on an element overrides the
+                        layout for that diagram only.</p>
+                </div>
+                <div class="code">
+                    <div class="code-bar">
+                        <span class="file">index.html</span>
+                        <button class="copy-btn" type="button" data-copy>Copy</button>
+                    </div>
+<pre><code>&lt;<span class="t">script</span>&gt;
+  <span class="c">// One global init, no layout given</span>
+  <span class="kw">DiagView</span>.init({ showBranding: <span class="b">true</span> });
+&lt;/<span class="t">script</span>&gt;
 
-    <!-- Info cards -->
-    <div class="info-section">
-        <div class="info-card">
-            <div class="icon">⊙</div>
-            <h4>Floating Buttons</h4>
-            <p>Copy, download and fullscreen buttons appear under the diagram on hover. Minimally intrusive, ideal for embedded
-                diagrams where you want controls available but out of the way.</p>
-        </div>
-        <div class="info-card">
-            <div class="icon">▬</div>
-            <h4>Header Bar</h4>
-            <p>A full-width toolbar with the title and the copy, download and fullscreen buttons. With a mouse it
-                appears on hover. On touch screens it is always shown.</p>
-        </div>
-        <div class="info-card">
-            <div class="icon">✕</div>
-            <h4>Off (Click-only)</h4>
-            <p>No toolbar rendered at all. The diagram is clickable and opens fullscreen. Perfect for tight layouts or
-                when you want a completely clean embed.</p>
-        </div>
-    </div>
+<span class="c">&lt;!-- Each element sets its own layout with a data attribute --&gt;</span>
+&lt;<span class="t">div</span> <span class="a">class</span>=<span class="v">"diagram"</span>
+     <span class="a">data-diagview-layout</span>=<span class="v">"floating"</span>&gt;
+  &lt;<span class="t">svg</span>&gt;...&lt;/<span class="t">svg</span>&gt;
+&lt;/<span class="t">div</span>&gt;
 
-    <!-- ── Keyboard shortcuts ── -->
-    <div class="shortcuts-section">
-        <div class="section-header">
-            <h2 class="section-title">Keyboard Reference</h2>
-            <p class="section-subtitle">Every action is keyboard-accessible. No mouse required.</p>
-        </div>
-        <div class="shortcuts-grid">
-            <div class="shortcut-card">
-                <div class="shortcut-group">Zoom</div>
-                <div class="shortcut-row"><kbd>+</kbd><span>Zoom in</span></div>
-                <div class="shortcut-row"><kbd>-</kbd><span>Zoom out</span></div>
-                <div class="shortcut-row"><kbd>Space / 0</kbd><span>Reset &amp; center</span></div>
+&lt;<span class="t">div</span> <span class="a">class</span>=<span class="v">"diagram"</span>
+     <span class="a">data-diagview-layout</span>=<span class="v">"header"</span>&gt;
+  &lt;<span class="t">svg</span>&gt;...&lt;/<span class="t">svg</span>&gt;
+&lt;/<span class="t">div</span>&gt;
+
+&lt;<span class="t">div</span> <span class="a">class</span>=<span class="v">"diagram"</span>
+     <span class="a">data-diagview-layout</span>=<span class="v">"off"</span>&gt;
+  &lt;<span class="t">svg</span>&gt;...&lt;/<span class="t">svg</span>&gt;
+&lt;/<span class="t">div</span>&gt;</code></pre>
+                </div>
             </div>
-            <div class="shortcut-card">
-                <div class="shortcut-group">Pan</div>
-                <div class="shortcut-row"><kbd>↑ ↓ ← →</kbd><span>Pan diagram</span></div>
-                <div class="shortcut-row"><kbd>Shift + ↑ ↓ ← →</kbd><span>Fast pan</span></div>
-                <div class="shortcut-row"><kbd>Drag</kbd><span>Free pan</span></div>
-            </div>
-            <div class="shortcut-card">
-                <div class="shortcut-group">Search</div>
-                <div class="shortcut-row"><kbd>F</kbd><span>Open search</span></div>
-                <div class="shortcut-row"><kbd>Esc</kbd><span>Clear / close</span></div>
-            </div>
-            <div class="shortcut-card">
-                <div class="shortcut-group">Tools</div>
-                <div class="shortcut-row"><kbd>M</kbd><span>Meeting mode</span></div>
-                <div class="shortcut-row"><kbd>R</kbd><span>Rotate 90°</span></div>
-                <div class="shortcut-row"><kbd>L</kbd><span>Share link</span></div>
-                <div class="shortcut-row"><kbd>T</kbd><span>Text select</span></div>
-                <div class="shortcut-row"><kbd>?</kbd><span>Show shortcuts</span></div>
-            </div>
-        </div>
-    </div>
+        </section>
+    </main>
 
-
-    <!-- Code example -->
-    <div class="code-section">
-        <div class="section-header">
-            <h2 class="section-title">How it works</h2>
-            <p class="section-subtitle">A single global initialization handles all diagrams, with optional per-element attribute overrides.</p>
-        </div>
-        <div class="code-block">
-            <pre><code>&lt;<span class="tag">script</span>&gt;
-  <span class="cmt">// One global init — no layout specified</span>
-  <span class="kw">DiagView</span>.init({ showBranding: <span class="kw">true</span> });
-&lt;/<span class="tag">script</span>&gt;
-
-<span class="cmt">&lt;!-- Each element specifies its own layout via data attributes --&gt;</span>
-&lt;<span class="tag">div</span> <span class="atn">class</span>=<span class="atv">"diagram"</span>
-     <span class="atn">data-diagview-layout</span>=<span class="atv">"floating"</span>&gt;
-  &lt;<span class="tag">svg</span>&gt;...&lt;/<span class="tag">svg</span>&gt;
-&lt;/<span class="tag">div</span>&gt;
-
-&lt;<span class="tag">div</span> <span class="atn">class</span>=<span class="atv">"diagram"</span>
-     <span class="atn">data-diagview-layout</span>=<span class="atv">"header"</span>&gt;
-  &lt;<span class="tag">svg</span>&gt;...&lt;/<span class="tag">svg</span>&gt;
-&lt;/<span class="tag">div</span>&gt;
-
-&lt;<span class="tag">div</span> <span class="atn">class</span>=<span class="atv">"diagram"</span>
-     <span class="atn">data-diagview-layout</span>=<span class="atv">"off"</span>&gt;
-  &lt;<span class="tag">svg</span>&gt;...&lt;/<span class="tag">svg</span>&gt;
-&lt;/<span class="tag">div</span>&gt;</code></pre>
-        </div>
-    </div>
-
-    <footer>
-        <div class="container">
-            <div class="footer-links">
-                <a href="index.html">← Back to Hub</a>
+    <footer class="footer">
+        <div class="wrap">
+            <nav aria-label="Project links">
+                <a href="index.html">Demo hub</a>
                 <a href="https://github.com/khadirullah/diagview" target="_blank" rel="noopener">GitHub</a>
-                <a href="https://www.npmjs.com/package/diagview" target="_blank" rel="noopener">NPM</a>
-            </div>
-            <p class="copyright">DiagView &bull; <span data-version></span> &bull; Built with ❤️</p>
+                <a href="https://www.npmjs.com/package/diagview" target="_blank" rel="noopener">npm</a>
+            </nav>
+            <span>DiagView <span data-version></span></span>
         </div>
     </footer>
 
     <script>
+        // Colours for each layout's diagram, one set per page theme. They are
+        // written into the SVG as attributes, so the fullscreen viewer shows
+        // the same colours as the card.
+        const PALETTES = {
+            floating: {
+                light: { line: '#d97706', text: '#92400e' },
+                dark: { line: '#fbbf24', text: '#fde68a' }
+            },
+            header: {
+                light: { line: '#6366f1', text: '#3730a3' },
+                dark: { line: '#a5b4fc', text: '#e0e7ff' }
+            },
+            off: {
+                light: { line: '#059669', text: '#065f46' },
+                dark: { line: '#6ee7b7', text: '#d1fae5' }
+            }
+        };
+
+        const isDark = () => document.documentElement.classList.contains('dark');
+
+        // Paint one architecture SVG in its layout colours for the current theme
+        function paintArchSvg(svg) {
+            const colours = PALETTES[svg.dataset.palette][isDark() ? 'dark' : 'light'];
+            svg.querySelectorAll('[data-part="edge"]').forEach((el) => el.setAttribute('stroke', colours.line));
+            svg.querySelectorAll('[data-part="arrow"]').forEach((el) => el.setAttribute('fill', colours.line));
+            svg.querySelectorAll('[data-part="box"]').forEach((el) => {
+                el.setAttribute('fill', colours.line);
+                el.setAttribute('stroke', colours.line);
+            });
+            svg.querySelectorAll('[data-part="label"]').forEach((el) => el.setAttribute('fill', colours.text));
+        }
+
         // Build the architecture SVG (DOM-safe, no innerHTML)
-        function buildArchSvg(accentColor) {
+        function buildArchSvg(palette) {
             const NS = 'http://www.w3.org/2000/svg';
             // Fit the viewBox to the nodes with equal padding on every side,
             // so the diagram sits centred and no node touches the edge
@@ -430,12 +407,10 @@
             svg.setAttribute('xmlns', NS);
             svg.setAttribute('width', '100%');
             svg.setAttribute('style', 'display:block;');
+            svg.dataset.palette = palette;
 
-            const accent = accentColor || '#6366f1';
-            const fill = accent + '18';
-            const stroke = accent;
             // Each diagram needs its own marker id, or all three use the first one's colour
-            const markerId = 'arrow-' + accent.slice(1);
+            const markerId = 'arrow-' + palette;
 
             // Node definitions: [id, label, x, y, w, h]
             const nodes = [
@@ -451,13 +426,13 @@
 
             // Edge definitions: [x1, y1, x2, y2]
             const edges = [
-                [290, 56, 105, 120],  // API GW → Auth
-                [290, 56, 290, 120],  // API GW → Product
-                [290, 56, 475, 120],  // API GW → Order
-                [105, 158, 105, 240],  // Auth → User DB
-                [290, 158, 290, 240],  // Product → Product DB
-                [475, 158, 425, 240],  // Order → Cache
-                [475, 158, 532, 240],  // Order → Order DB
+                [290, 56, 105, 120],  // API GW to Auth
+                [290, 56, 290, 120],  // API GW to Product
+                [290, 56, 475, 120],  // API GW to Order
+                [105, 158, 105, 240],  // Auth to User DB
+                [290, 158, 290, 240],  // Product to Product DB
+                [475, 158, 425, 240],  // Order to Cache
+                [475, 158, 532, 240],  // Order to Order DB
             ];
 
             // Draw edges first (behind nodes)
@@ -468,10 +443,10 @@
                 const my = (y1 + y2) / 2;
                 path.setAttribute('d', `M ${x1} ${y1} C ${x1} ${my} ${x2} ${my} ${x2} ${y2}`);
                 path.setAttribute('fill', 'none');
-                path.setAttribute('stroke', stroke);
                 path.setAttribute('stroke-width', '1.5');
-                path.setAttribute('stroke-opacity', '0.5');
+                path.setAttribute('stroke-opacity', '0.55');
                 path.setAttribute('marker-end', `url(#${markerId})`);
+                path.dataset.part = 'edge';
                 g.appendChild(path);
                 svg.appendChild(g);
             });
@@ -487,8 +462,8 @@
             marker.setAttribute('orient', 'auto');
             const arrowPath = document.createElementNS(NS, 'path');
             arrowPath.setAttribute('d', 'M0,0 L0,6 L8,3 z');
-            arrowPath.setAttribute('fill', stroke);
-            arrowPath.setAttribute('opacity', '0.6');
+            arrowPath.setAttribute('opacity', '0.7');
+            arrowPath.dataset.part = 'arrow';
             marker.appendChild(arrowPath);
             defs.appendChild(marker);
             svg.insertBefore(defs, svg.firstChild);
@@ -503,18 +478,18 @@
                 rect.setAttribute('x', x); rect.setAttribute('y', y);
                 rect.setAttribute('width', w); rect.setAttribute('height', h);
                 rect.setAttribute('rx', '8');
-                rect.setAttribute('fill', fill);
-                rect.setAttribute('stroke', stroke);
+                rect.setAttribute('fill-opacity', '0.12');
                 rect.setAttribute('stroke-width', '1.5');
+                rect.dataset.part = 'box';
 
                 const text = document.createElementNS(NS, 'text');
                 text.setAttribute('x', x + w / 2);
-                text.setAttribute('y', y + h / 2 + 5);
+                text.setAttribute('y', y + h / 2 + 4);
                 text.setAttribute('text-anchor', 'middle');
                 text.setAttribute('font-size', '11');
-                text.setAttribute('font-family', 'Outfit, system-ui, sans-serif');
+                text.setAttribute('font-family', '"Schibsted Grotesk", system-ui, sans-serif');
                 text.setAttribute('font-weight', '600');
-                text.setAttribute('fill', stroke);
+                text.dataset.part = 'label';
                 text.textContent = label;
 
                 g.appendChild(rect);
@@ -522,21 +497,27 @@
                 svg.appendChild(g);
             });
 
+            paintArchSvg(svg);
             return svg;
         }
 
         // Inject SVGs into each container
         const diagrams = [
-            { id: 'diag-floating', accent: '#f59e0b' },
-            { id: 'diag-header', accent: '#6366f1' },
-            { id: 'diag-off', accent: '#10b981' },
+            { id: 'diag-floating', palette: 'floating' },
+            { id: 'diag-header', palette: 'header' },
+            { id: 'diag-off', palette: 'off' },
         ];
-        diagrams.forEach(({ id, accent }) => {
+        diagrams.forEach(({ id, palette }) => {
             const container = document.getElementById(id);
-            if (container) container.appendChild(buildArchSvg(accent));
+            if (container) container.appendChild(buildArchSvg(palette));
         });
 
-        // Init DiagView — no global layout: each element's data-diagview-layout takes over
+        // Repaint when the theme flips, so a later fullscreen copy matches too
+        new MutationObserver(() => {
+            document.querySelectorAll('svg[data-palette]').forEach(paintArchSvg);
+        }).observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+
+        // Init DiagView. No global layout: each element's data-diagview-layout takes over
         document.addEventListener('DOMContentLoaded', () => {
             const dvInit = () => DiagView.init({
                 diagramSelector: '.diagram',
