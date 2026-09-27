@@ -29,7 +29,8 @@ declare const el: HTMLElement;
 declare const svg: SVGSVGElement;
 declare const shadow: ShadowRoot;
 
-type Equal<A, B> = (<T>() => T extends A ? 1 : 2) extends <T>() => T extends B ? 1 : 2 ? true : false;
+type Equal<A, B> =
+  (<T>() => T extends A ? 1 : 2) extends <T>() => T extends B ? 1 : 2 ? true : false;
 function expectType<T extends true>(): T | void {}
 
 // Every documented option, with its documented type
@@ -238,6 +239,9 @@ function utilities(): void {
     allowRemoteResources: true,
     allowedImageTypes: ["png"],
   });
+  const removed = { scripts: 0, handlers: [] as string[], urls: 0 };
+  DiagView.utils.sanitizeSVG("<svg></svg>", "strict", { removed });
+  expectType<Equal<typeof removed.handlers, string[]>>();
   // @ts-expect-error maxChars is a number
   DiagView.utils.sanitizeSVG("<svg></svg>", "strict", { maxChars: "big" });
   // @ts-expect-error unknown sanitize options are a mistake

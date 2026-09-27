@@ -359,3 +359,94 @@ describe("cloneSVG copies outside the page", () => {
     }
   });
 });
+
+describe("warning when code is removed from a diagram", () => {
+  let warnSpy;
+
+  const diagram = (index, inner) => {
+    const container = document.createElement("div");
+    container.className = "diagram";
+    container.dataset.diagviewIndex = String(index);
+    container.innerHTML = `<svg viewBox="0 0 10 10">${inner}</svg>`;
+    document.body.appendChild(container);
+    return container.querySelector("svg");
+  };
+  const codeWarnings = () =>
+    warnSpy.mock.calls.map((c) => c[0]).filter((m) => m.includes("Removed code"));
+
+  beforeEach(() => {
+    warnSpy = jest.spyOn(console, "warn").mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    warnSpy.mockRestore();
+    resetConfig();
+    document.body.innerHTML = "";
+  });
+
+  test("warns once with the counts and mode, passing the diagram element", () => {
+    const svg = diagram(
+      2,
+      '<script>alert(1)</script><image href="x.png" onerror="a()"/>' +
+        '<rect onclick="b()" onmouseover="c()"/><rect onclick="d()"/>' +
+        '<a href="javascript:e()"><text>link</text></a>',
+    );
+    cloneSVG(svg, { securityMode: "strict" });
+    expect(codeWarnings()).toEqual([
+      'DiagView: Removed code from this diagram in strict mode: 1 script, 4 event handlers (onerror, onclick, onmouseover), 1 javascript: link. Use security.mode "off" only for diagrams you trust.',
+    ]);
+    expect(warnSpy.mock.calls.find((c) => c[0].includes("Removed code"))[1]).toBe(
+      svg.parentElement,
+    );
+  });
+
+  test("warns only once for the same diagram", () => {
+    const svg = diagram(0, '<image href="x.png" onerror="a()"/>');
+    cloneSVGForModal(svg);
+    cloneSVG(svg, { securityMode: "permissive" });
+    expect(codeWarnings()).toEqual([
+      'DiagView: Removed code from this diagram in strict mode: 1 event handler (onerror). Use security.mode "off" only for diagrams you trust.',
+    ]);
+  });
+
+  test("counts code written by an animation", () => {
+    const svg = diagram(
+      3,
+      '<a><animate attributeName="href" values="javascript:a()"/><text>x</text></a>' +
+        '<rect><set attributeName="onclick" to="b()"/></rect>',
+    );
+    cloneSVG(svg, { securityMode: "permissive" });
+    expect(codeWarnings()).toEqual([
+      'DiagView: Removed code from this diagram in permissive mode: 1 event handler (onclick), 1 javascript: link. Use security.mode "off" only for diagrams you trust.',
+    ]);
+  });
+
+  test("stays quiet for a clean Mermaid-like diagram", () => {
+    const svg = diagram(
+      1,
+      '<style>#m .node rect { fill: #ececff; }</style><g class="node"><rect/>' +
+        '<foreignObject width="10" height="10"><div xmlns="http://www.w3.org/1999/xhtml">' +
+        '<span class="nodeLabel">A</span></div></foreignObject></g><a href="#top"><text>t</text></a>',
+    );
+    cloneSVG(svg, { securityMode: "strict" });
+    expect(codeWarnings()).toEqual([]);
+  });
+
+  test("stays quiet when strict removes only animations, CSS and remote resources", () => {
+    const svg = diagram(
+      4,
+      "<style>@import url(https://example.com/a.css);</style>" +
+        '<rect><animateTransform attributeName="transform" type="rotate" values="0;360"/></rect>' +
+        '<use href="https://example.com/a.svg#x"/>',
+    );
+    const clone = cloneSVG(svg, { securityMode: "strict" });
+    expect(clone.querySelector("animateTransform")).toBeNull();
+    expect(codeWarnings()).toEqual([]);
+  });
+
+  test('never warns in "off" mode', () => {
+    const svg = diagram(5, '<script>alert(1)</script><rect onclick="b()"/>');
+    cloneSVG(svg, { securityMode: "off" });
+    expect(codeWarnings()).toEqual([]);
+  });
+});

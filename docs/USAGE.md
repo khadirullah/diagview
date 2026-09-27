@@ -604,6 +604,16 @@ This matches the legacy v0.x behavior, apart from the animation rule above.
 
 No sanitization. **Use only for SVGs from a fully trusted, developer-controlled source.**
 
+### Console warning for removed code
+
+When `strict` or `permissive` removes code from a diagram, DiagView logs one warning for that diagram per page load. Code means `<script>` elements, `on*` event handlers and `javascript:` links, including ones an animation would write. The warning appears the first time DiagView copies the diagram for fullscreen, an export or a clipboard copy. For example:
+
+```text
+DiagView: Removed code from this diagram in strict mode: 1 event handler (onerror). Use security.mode "off" only for diagrams you trust.
+```
+
+The warning passes the diagram's element along, so the browser console shows it next to the message. Hover or click it there to find the diagram on the page. Animations, CSS and remote resources that `strict` removes do not trigger the warning, and `off` never warns.
+
 ### Setting the mode
 
 ```javascript

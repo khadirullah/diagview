@@ -205,6 +205,32 @@ function copyStyleElements(originalSvg, clonedSvg) {
   });
 }
 
+/** Diagrams already warned about, so each one warns once per page load */
+const warnedCode = new WeakSet();
+
+/**
+ * Tell the page author once when the sanitizer removed code from a diagram.
+ * @param {Element} svg - The page SVG
+ * @param {string} mode - Security mode used
+ * @param {import("./utils.js").RemovedCode} removed - What the sanitizer removed
+ * @private
+ */
+function warnRemovedCode(svg, mode, { scripts, handlers, urls }) {
+  const list = [];
+  const add = (n, what, names = "") => n && list.push(`${n} ${what}${n > 1 ? "s" : ""}${names}`);
+  add(scripts, "script");
+  add(handlers.length, "event handler", ` (${[...new Set(handlers)].join(", ")})`);
+  add(urls, "javascript: link");
+  const diagram = svg.closest("[data-diagview-index]") || svg;
+  if (!list.length || warnedCode.has(diagram)) return;
+  warnedCode.add(diagram);
+  // The element goes along so the console can point at it on the page
+  console.warn(
+    `DiagView: Removed code from this diagram in ${mode} mode: ${list.join(", ")}. Use security.mode "off" only for diagrams you trust.`,
+    diagram,
+  );
+}
+
 /**
  * Rewrite IDs in a cloned SVG to prevent collisions on multi-diagram pages.
  * @private
@@ -288,11 +314,14 @@ export function cloneSVG(svg, options = {}) {
   // Sanitize to prevent XSS — always the FINAL content transformation.
   // securityMode is passed from the diagram's elementConfig so that
   // per-element data-diagview-sanitize overrides reach the sanitizer.
+  const removed = { scripts: 0, handlers: [], urls: 0 };
   const clone = sanitizeSVG(rawClone, securityMode, {
     maxChars,
     allowRemoteResources: allowRemoteResources,
     allowedImageTypes: state.config.allowedImageTypes,
+    removed,
   });
+  warnRemovedCode(svg, securityMode, removed);
 
   if (!clone) {
     showErrorToast("Diagram blocked", "File size exceeds security limits");

@@ -1,7 +1,8 @@
 // An onerror handler on a diagram image runs once when the page loads. The
 // fullscreen copy and the export copy must not run it again in strict and
 // permissive mode, which remove the handler before the copy loads anything.
-// In "off" mode the copy keeps the handler, so it may run again.
+// In "off" mode the copy keeps the handler, so it may run again. Strict and
+// permissive also log one warning naming the removed handler.
 //
 // Runs offline: the page is file:// and the image is missing on purpose.
 // DV_DIST=/path/to/diagview.umd.js tests another build.
@@ -10,6 +11,8 @@ import { DIST, newPage, fixtureFile } from "./helpers.mjs";
 
 async function load(browser, mode) {
   const page = await newPage(browser, { acceptDownloads: true });
+  page.warnings = [];
+  page.on("console", (m) => m.type() === "warning" && page.warnings.push(m.text()));
   await page.goto(fixtureFile("image-handler.html"));
   await page.evaluate(() => localStorage.setItem("diagview-canvas-hint-shown", "true"));
   await page.addScriptTag({ path: DIST });
@@ -49,6 +52,12 @@ for (const mode of ["strict", "permissive"]) {
     const counts = await openAndExport(page);
     expect(counts.load).toBe(1);
     expect(counts).toEqual({ load: 1, open: 1, export: 1 });
+    // The browser adds the diagram element, passed as a second argument, to the text
+    const removed = page.warnings.filter((w) => w.includes("Removed code"));
+    expect(removed).toHaveLength(1);
+    expect(removed[0]).toContain(
+      `DiagView: Removed code from this diagram in ${mode} mode: 1 event handler (onerror). Use security.mode "off" only for diagrams you trust.`,
+    );
   });
 }
 
@@ -57,4 +66,5 @@ test("off: the fullscreen copy keeps the handler", async ({ browser }) => {
   const counts = await openAndExport(page);
   expect(counts.load).toBe(1);
   expect(counts.open).toBeGreaterThan(1);
+  expect(page.warnings.filter((w) => w.includes("Removed code"))).toEqual([]);
 });

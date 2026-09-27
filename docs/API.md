@@ -273,6 +273,13 @@ interface SanitizeOptions {
   maxChars?: number; // Block input longer than this (Nodes are measured by their serialized length)
   allowRemoteResources?: boolean; // Allow external CSS/fonts
   allowedImageTypes?: string[]; // Allowed data: URI image types
+  removed?: RemovedCode; // Filled in with the code the sanitizer removed
+}
+
+interface RemovedCode {
+  scripts: number; // <script> elements
+  handlers: string[]; // on* attribute names, one entry per removal
+  urls: number; // javascript: links, including ones an animation would write
 }
 ```
 
@@ -285,6 +292,10 @@ const clean = DiagView.utils.sanitizeSVG(rawSvg, "strict", { maxChars: 500000 })
 
 // Sanitize a DOM node (returns a new node — original is not mutated)
 const cleanNode = DiagView.utils.sanitizeSVG(svgElement, "permissive");
+
+// Find out what code it removed
+const removed = { scripts: 0, handlers: [], urls: 0 };
+DiagView.utils.sanitizeSVG(rawSvg, "strict", { removed });
 ```
 
 Input over `maxChars` is blocked with a console error: a string returns `""`, a Node returns `null`. `options` may be omitted or `null`.

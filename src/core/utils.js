@@ -324,15 +324,34 @@ const ANIMATION_TAGS = new Set([
 ]);
 
 /**
+ * The attribute an animation element writes, lower case with any prefix
+ * removed, so "HREF" and "xl:href" both read as "href".
+ * @private
+ */
+function animationTarget(el) {
+  const target = (el.getAttribute("attributeName") || "").trim().toLowerCase();
+  return target.slice(target.lastIndexOf(":") + 1);
+}
+
+/**
  * True when an animation element targets href/xlink:href (any prefix) or
- * an on* event handler attribute. attributeName is compared case- and
- * prefix-insensitively so "HREF" and "xl:href" are caught too.
+ * an on* event handler attribute.
  * @private
  */
 function animatesDangerousAttribute(el) {
-  const target = (el.getAttribute("attributeName") || "").trim().toLowerCase();
-  const local = target.slice(target.lastIndexOf(":") + 1);
+  const local = animationTarget(el);
   return local === "href" || local.startsWith("on");
+}
+
+/**
+ * Count the code an animation would write: an event handler, or a
+ * javascript: link in href. Its markup holds every value it can write.
+ * @private
+ */
+function noteAnimatedCode(el, removed) {
+  const local = animationTarget(el);
+  if (local.startsWith("on")) removed.handlers.push(local);
+  else if (local === "href" && /javascript:/i.test(normalizeURLValue(el.outerHTML))) removed.urls++;
 }
 
 /**
@@ -439,6 +458,17 @@ export function inertDocument() {
  * @property {number} [maxChars] - Block input longer than this. A Node is measured by its serialized length
  * @property {boolean} [allowRemoteResources] - Keep external fonts and stylesheets
  * @property {string[]} [allowedImageTypes] - Image types allowed in data URLs
+ * @property {RemovedCode} [removed] - Counts the code the sanitizer removes
+ */
+
+/**
+ * Code that sanitizeSVG() removed: <script> elements, on* event handler
+ * names, and javascript: links, including ones an animation would write.
+ * Start with { scripts: 0, handlers: [], urls: 0 }.
+ * @typedef {object} RemovedCode
+ * @property {number} scripts - <script> elements
+ * @property {string[]} handlers - Event handler attribute names, one per removal
+ * @property {number} urls - javascript: links
  */
 
 /**
@@ -470,6 +500,7 @@ export function sanitizeSVG(input, mode = "strict", options = 0) {
   }
   const maxChars = options.maxChars || 0;
   const allowRemote = options.allowRemoteResources;
+  const removed = options.removed;
   if (!input) return typeof input === "string" ? "" : input;
 
   // Hard Block for massive input (Security/Stability). Node input is
@@ -525,6 +556,10 @@ export function sanitizeSVG(input, mode = "strict", options = 0) {
 
     // Remove blocked tags entirely — no further processing needed
     if (blockedTags.has(tagName)) {
+      if (removed) {
+        if (tagName === "script") removed.scripts++;
+        else if (ANIMATION_TAGS.has(tagName)) noteAnimatedCode(el, removed);
+      }
       el.remove();
       return;
     }
@@ -532,6 +567,7 @@ export function sanitizeSVG(input, mode = "strict", options = 0) {
     // Permissive keeps SMIL animations, but never ones that write href or
     // an on* attribute — those are script execution by another route.
     if (!isStrict && ANIMATION_TAGS.has(tagName) && animatesDangerousAttribute(el)) {
+      if (removed) noteAnimatedCode(el, removed);
       el.remove();
       return;
     }
@@ -557,6 +593,7 @@ export function sanitizeSVG(input, mode = "strict", options = 0) {
 
       // Remove all event handler attributes (onclick, onload, onerror, etc.)
       if (name.startsWith("on")) {
+        removed?.handlers.push(name);
         el.removeAttribute(attr.name);
         continue;
       }
@@ -572,6 +609,7 @@ export function sanitizeSVG(input, mode = "strict", options = 0) {
           const safeRasterRe = new RegExp(`^data:image\\/(?:${typePattern});base64,`, "i");
 
           if (!safeRasterRe.test(normalizedValue)) {
+            if (removed && /^javascript:/i.test(normalizedValue)) removed.urls++;
             el.removeAttribute(attr.name);
             continue;
           }

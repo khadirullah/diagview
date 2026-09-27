@@ -377,3 +377,22 @@ describe("sanitizeSVG Node input", () => {
     expect(sanitizeSVG(svg, "off")).toBe(svg);
   });
 });
+
+describe("sanitizeSVG removed option", () => {
+  const svg =
+    '<svg xmlns="http://www.w3.org/2000/svg"><script>a()</script><rect onclick="b()"/>' +
+    '<a href="java&#9;script:c()"><text>x</text></a><animate attributeName="x" values="0;1"/>' +
+    '<a href="data:text/html,x"><text>y</text></a></svg>';
+
+  test("counts scripts, handlers and javascript: links, not other removals", () => {
+    const removed = { scripts: 0, handlers: [], urls: 0 };
+    sanitizeSVG(svg, "strict", { removed });
+    expect(removed).toEqual({ scripts: 1, handlers: ["onclick"], urls: 1 });
+  });
+
+  test('leaves the counts alone in "off" mode', () => {
+    const removed = { scripts: 0, handlers: [], urls: 0 };
+    sanitizeSVG(svg, "off", { removed });
+    expect(removed).toEqual({ scripts: 0, handlers: [], urls: 0 });
+  });
+});
