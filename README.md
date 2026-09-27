@@ -20,11 +20,11 @@
 - [Installation](#-installation)
 - [Quick Start](#-quick-start)
 - [Layout Modes](#-layout-modes)
-- [Per-Diagram Overrides](#-per-diagram-overrides)
-- [Keyboard Shortcuts](#-keyboard-shortcuts)
+- [Per-Diagram Overrides](#%EF%B8%8F-per-diagram-overrides)
+- [Keyboard Shortcuts](#%EF%B8%8F-keyboard-shortcuts)
 - [Export Formats](#-export-formats)
 - [Framework Integration](#-framework-integration)
-- [Configuration](#-configuration)
+- [Configuration](#%EF%B8%8F-configuration)
 - [Live Demo](#-live-demo)
 - [Screenshots](#-screenshots)
 - [Documentation](#-documentation)
@@ -247,14 +247,15 @@ All shortcuts are active when the fullscreen modal is open.
 
 ## 📤 Export Formats
 
-| Format | Transparent | Notes                                                                         |
-| ------ | ----------- | ----------------------------------------------------------------------------- |
-| PNG    | ✅          | High-res raster. Default scale is 4, or 2 on touch devices and narrow screens |
-| SVG    | ✅          | Fully scalable vector                                                         |
-| JPEG   | ❌          | Smallest file size                                                            |
-| WebP   | ✅          | Modern format; good compression                                               |
-| PDF    | ❌          | Requires jsPDF (lazy-loaded from CDN)                                         |
-| Copy   | ❌          | Copies PNG to system clipboard                                                |
+| Format   | Transparent | Notes                                                                         |
+| -------- | ----------- | ----------------------------------------------------------------------------- |
+| PNG      | ✅          | High-res raster. Default scale is 4, or 2 on touch devices and narrow screens |
+| SVG      | ✅          | Fully scalable vector                                                         |
+| JPEG     | ❌          | Smallest file size                                                            |
+| WebP     | ✅          | Modern format; good compression                                               |
+| PDF      | ❌          | Requires jsPDF (lazy-loaded from CDN)                                         |
+| Copy     | ❌          | Copies PNG to system clipboard                                                |
+| Copy SVG | ❌          | Copies the SVG markup to the clipboard as text                                |
 
 ### Programmatic export
 
@@ -385,7 +386,7 @@ DiagView.init({
   diagramSelector: ".diagram, .chart, [data-diagram]",
 
   // ── Theme ────────────────────────────────────────
-  accentColor: null, // null = page CSS variables, then the built-in blue
+  accentColor: null, // null = --diagram-accent, then the built-in blue
   warningColor: "#f59e0b", // warning notices
   backgroundColor: null, // null = auto-detect
   textColor: null, // null = auto-detect
@@ -411,7 +412,7 @@ DiagView.init({
   animateOpen: true, // CSS scale animation when opening fullscreen
 
   // ── Interaction ──────────────────────────────────
-  naturalPanning: false, // true = scroll-like pan direction
+  naturalPanning: false, // true = arrow keys move the diagram in the arrow's direction
   rotateKeepsView: false, // true = rotating keeps the view (same size on screen, same centre)
   rememberZoom: false, // true = restore zoom/pan across modal opens (session)
   showMinimap: true, // Show minimap when diagram overflows viewport
@@ -443,7 +444,7 @@ DiagView.init({
   },
 
   // ── Notifications ────────────────────────────────
-  toastDuration: 2500, // Success toast duration (ms)
+  toastDuration: 2500, // Success and info toast duration (ms)
   errorToastDuration: 5000, // Error toast duration (ms)
 
   // ── PDF ──────────────────────────────────────────
