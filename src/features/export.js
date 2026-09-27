@@ -355,7 +355,7 @@ async function prepareSvgForExport(svg, modalClone) {
   }
 
   // Embed fonts so text metrics match the original browser render
-  await embedDocumentFonts(exportSvg);
+  await embedDocumentFonts(exportSvg, state.config.exportFonts);
 
   // Set explicit dimensions as ATTRIBUTES (not CSS — CSS "100%" breaks img intrinsic size)
   exportSvg.setAttribute("viewBox", `${vx} ${vy} ${vw} ${vh}`);

@@ -135,6 +135,20 @@ describe("Core Config: validateConfig gaps", () => {
     expect(state.config.highResScale).toBe(3);
   });
 
+  test("exportFonts accepts used, all and none and keeps the previous value otherwise", () => {
+    expect(state.config.exportFonts).toBe("used");
+    updateConfig({ exportFonts: "all" });
+    updateConfig({ exportFonts: "none" });
+    expect(warn).not.toHaveBeenCalled();
+    expect(state.config.exportFonts).toBe("none");
+
+    updateConfig({ exportFonts: "subset" });
+    expect(warn).toHaveBeenCalledWith(
+      'DiagView: exportFonts must be "used", "all" or "none", keeping "none"',
+    );
+    expect(state.config.exportFonts).toBe("none");
+  });
+
   test("timing keys reject non-numbers", () => {
     updateConfig({ toastDuration: "fast" });
     expect(warn).toHaveBeenCalledWith(expect.stringContaining("toastDuration"));

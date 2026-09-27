@@ -80,3 +80,32 @@ test("a default export embeds only the faces the labels use", async () => {
   ]);
   expectSameWidths(widths, pageWidths);
 });
+
+test('exportFonts "all" embeds every face on the page', async () => {
+  const pageWidths = await page.evaluate(labelWidths);
+  await page.evaluate(() => DiagView.default.configure({ exportFonts: "all" }));
+  const { faces, widths } = await renderExport(await exportSvg());
+  expect(faces.map((f) => f.replace(/ U\+.*/, ""))).toEqual([
+    "DV Sans 400 normal",
+    "DV Sans 400 normal",
+    "DV Sans 700 normal",
+    "DV Sans 300 normal",
+    "DV Sans 400 italic",
+    "DV Mono 400 normal",
+    "DV Unused 100 900 normal",
+  ]);
+  expectSameWidths(widths, pageWidths);
+});
+
+test('exportFonts "none" embeds no fonts, so the labels fall back', async () => {
+  const pageWidths = await page.evaluate(labelWidths);
+  await page.evaluate(() => DiagView.default.configure({ exportFonts: "none" }));
+  const markup = await exportSvg();
+  expect(markup).not.toContain("dv-font-embed");
+  const { faces, widths } = await renderExport(markup);
+  expect(faces).toEqual([]);
+  // The fallback serif font has other widths, which is what the embedded
+  // fonts prevent
+  expect(widths.some((w, i) => Math.abs(w - pageWidths[i]) > 2)).toBe(true);
+  await page.evaluate(() => DiagView.default.configure({ exportFonts: "used" }));
+});

@@ -73,6 +73,7 @@ import { deepMerge, deepFreeze } from "./state-utils.js";
  * @property {number} mobileScale - Export scale on mobile, 1 to 5
  * @property {number} maxPixels - Largest export canvas in pixels
  * @property {boolean} exportSearchHighlight - Exports made during a fullscreen search keep its dimming and outline
+ * @property {"used"|"all"|"none"} exportFonts - Page fonts to embed in exports. "used" embeds the ones the labels use, "all" every font rule on the page, "none" no fonts
  * @property {DiagViewUIConfig} ui - Button look and icons
  * @property {boolean} showKeyboardHelp - Allow the ? shortcuts panel
  * @property {number} helpTimeout - Milliseconds before the shortcuts panel closes, 0 keeps it open
@@ -135,6 +136,7 @@ export const INITIAL_CONFIG = {
   mobileScale: EXPORT.MOBILE_SCALE_DEFAULT,
   maxPixels: EXPORT.MAX_PIXELS_DEFAULT,
   exportSearchHighlight: true,
+  exportFonts: "used",
 
   // UI Customization
   ui: {

@@ -429,6 +429,7 @@ DiagView.init({
   mobileScale: 2, // Mobile export multiplier (1–5)
   maxPixels: 16777216, // Safety cap (default 16MP = 4096×4096)
   exportSearchHighlight: true, // false = exports during a search skip its dimming and outline
+  exportFonts: "used", // 'used' | 'all' | 'none' (page fonts embedded in exports)
 
   // ── Security ─────────────────────────────────────
   security: {

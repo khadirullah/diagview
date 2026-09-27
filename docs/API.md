@@ -78,7 +78,7 @@ DiagView.configure({
 });
 ```
 
-DiagView checks some options on `init()` and `configure()`. An invalid value logs a warning and keeps the value that was in effect before. The exception is `layout`, which falls back to `'floating'`. `highResScale`, `mobileScale`, `maxZoomScale`, `minZoomScale` and `maxPixels` must be finite numbers in their documented range, and `minZoomScale` may not exceed `maxZoomScale`. Timing options such as `toastDuration` must be 0 or more. `canvasGrid` must be `'none'` or `'dots'`. `diagramSelector` must be a selector the browser accepts, and `allowedImageTypes` must be an array of strings. The `security`, `watermark`, `ui` and `performance` groups must be objects, and DiagView merges them into the current settings. DiagView does not check the values inside those groups, booleans, callbacks or the PDF options. The one exception is export. An unknown `watermark.style` or `watermark.position` logs a warning and uses the default, `'corner'` or `'bottom-right'`. An `opacity` below 0 or above 1 logs a warning and uses 0 or 1. An `opacity` that is not a number logs a warning and uses 0.2. A missing or empty value uses the default without a warning. An unknown `security.mode` works as `'strict'`. An `accentColor`, `backgroundColor` or `textColor` the browser cannot parse logs a warning, and DiagView detects that colour from the page instead. A `warningColor` the browser cannot parse logs a warning, and warning notices use the default amber. DiagView ignores unknown top-level keys and logs a warning.
+DiagView checks some options on `init()` and `configure()`. An invalid value logs a warning and keeps the value that was in effect before. The exception is `layout`, which falls back to `'floating'`. `highResScale`, `mobileScale`, `maxZoomScale`, `minZoomScale` and `maxPixels` must be finite numbers in their documented range, and `minZoomScale` may not exceed `maxZoomScale`. Timing options such as `toastDuration` must be 0 or more. `canvasGrid` must be `'none'` or `'dots'`, and `exportFonts` must be `'used'`, `'all'` or `'none'`. `diagramSelector` must be a selector the browser accepts, and `allowedImageTypes` must be an array of strings. The `security`, `watermark`, `ui` and `performance` groups must be objects, and DiagView merges them into the current settings. DiagView does not check the values inside those groups, booleans, callbacks or the PDF options. The one exception is export. An unknown `watermark.style` or `watermark.position` logs a warning and uses the default, `'corner'` or `'bottom-right'`. An `opacity` below 0 or above 1 logs a warning and uses 0 or 1. An `opacity` that is not a number logs a warning and uses 0.2. A missing or empty value uses the default without a warning. An unknown `security.mode` works as `'strict'`. An `accentColor`, `backgroundColor` or `textColor` the browser cannot parse logs a warning, and DiagView detects that colour from the page instead. A `warningColor` the browser cannot parse logs a warning, and warning notices use the default amber. DiagView ignores unknown top-level keys and logs a warning.
 
 ---
 
@@ -188,6 +188,8 @@ await DiagView.copyToClipboard(el);
 ```
 
 All export methods resolve without throwing when `element` contains no `<svg>`; they show a "No diagram found" toast instead. Per-diagram `data-diagview-scale` and `data-diagview-watermark-*` attributes on the element are honoured by every export path, inline or fullscreen. On touch devices and narrow screens, `mobileScale` applies instead.
+
+SVG exports and the images drawn from them embed the page fonts their labels use. Set `exportFonts` to `'all'` to embed every `@font-face` rule on the page, or to `'none'` to embed no fonts.
 
 ### Export Options
 
@@ -386,6 +388,7 @@ interface DiagViewConfig {
   mobileScale: number; // default: 2 (range: 1–5)
   maxPixels: number; // default: 16777216 (16MP), range: 1000000 to 268435456
   exportSearchHighlight: boolean; // default: true; false = exports made during a search leave out its dimming and outline
+  exportFonts: "used" | "all" | "none"; // default: 'used'; page fonts to embed in exports
 
   // Security
   security: {

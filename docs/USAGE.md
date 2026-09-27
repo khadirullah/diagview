@@ -343,6 +343,18 @@ Exports embed the `@font-face` sources used by the diagram, including self-hoste
 
 The browser hides the rules of a stylesheet from another origin, such as Google Fonts, unless its `<link>` has `crossorigin="anonymous"`. Without it DiagView cannot embed those fonts and logs a console warning once per stylesheet. The exported file then shows the labels in another font, which can be wider and cut off the end of a label.
 
+`exportFonts` sets which page fonts go into exports:
+
+```javascript
+DiagView.init({
+  exportFonts: "used", // default, the fonts the labels use
+  // exportFonts: "all", // every @font-face rule on the page, a much larger file
+  // exportFonts: "none", // no fonts, for fonts whose licence forbids embedding
+});
+```
+
+With `"none"` DiagView fetches no font files and logs no warning. The exported file names the fonts, and a computer without them shows the labels in a fallback font.
+
 ### PDF
 
 PDF export lazy-loads jsPDF from CDN on first use. To use a custom CDN or a locally hosted file:

@@ -53,7 +53,7 @@ build. Set `E2E_PORT` to use a port other than 9340.
 | `verify-share-page-zoom.spec.mjs`  | 6      | share link restore at 0 and 90 degrees, minimap indicator, rotateKeepsView and search outline behind a matched label, all on a zoomed-out phone page                                                                                                                                      |
 | `verify-theme-hint.spec.mjs`       | 3      | first-time theme hint sits above the menu button on desktop and on phone pages with and without a viewport meta tag                                                                                                                                                                       |
 | `verify-search-export.spec.mjs`    | 5      | SVG and PNG exports during a search with exportSearchHighlight on and off, and the viewer keeps its search after each export                                                                                                                                                              |
-| `verify-export-fonts.spec.mjs`     | 1      | SVG export embeds only the @font-face rules its labels use (family, nearest weight and style, unicode-range), labels keep their width                                                                                                                                                     |
+| `verify-export-fonts.spec.mjs`     | 3      | SVG export embeds only the @font-face rules its labels use (family, nearest weight and style, unicode-range), labels keep their width, `exportFonts` "all" and "none"                                                                                                                     |
 
 That is 162 checks per browser.
 

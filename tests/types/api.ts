@@ -63,6 +63,7 @@ const full: DiagViewOptions = {
   mobileScale: 2,
   maxPixels: 16777216,
   exportSearchHighlight: true,
+  exportFonts: "used",
   security: { mode: "strict", allowOverrides: true, allowRemoteResources: false },
   allowedImageTypes: ["png", "jpeg", "webp", "gif"],
   performance: { largeFileThreshold: 1000000, criticalFileLimit: 50000000 },
@@ -120,6 +121,8 @@ const badMinimap: DiagViewOptions = { showMinimap: "yes" };
 const badSearchExport: DiagViewOptions = { exportSearchHighlight: "no" };
 // @ts-expect-error canvasGrid is a fixed set of strings
 const badGrid: DiagViewOptions = { canvasGrid: "lines" };
+// @ts-expect-error exportFonts is a fixed set of strings
+const badFonts: DiagViewOptions = { exportFonts: "some" };
 // @ts-expect-error security.mode is a fixed set of strings
 const badMode: DiagViewOptions = { security: { mode: "loose" } };
 // @ts-expect-error button style is a fixed set of strings
@@ -133,6 +136,7 @@ const badZoom: DiagViewOptions = { maxZoomScale: "25" };
 
 void [full, empty, partialNested, caseInsensitive, cleared, unknownKey];
 void [badLayout, badMinimap, badGrid, badMode, badStyle, badWatermark, badZoomCb, badZoom];
+void badFonts;
 
 async function lifecycle(): Promise<void> {
   expectType<Equal<ReturnType<typeof init>, Promise<void>>>();

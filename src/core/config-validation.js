@@ -86,6 +86,13 @@ export function validateConfig(config, previous = DEFAULT_CONFIG) {
     config["canvasGrid"] = fallback("canvasGrid");
   }
 
+  if (!["used", "all", "none"].includes(/** @type {string} */ (config["exportFonts"]))) {
+    console.warn(
+      `DiagView: exportFonts must be "used", "all" or "none", keeping "${fallback("exportFonts")}"`,
+    );
+    config["exportFonts"] = fallback("exportFonts");
+  }
+
   if (!isValidSelector(config["diagramSelector"])) {
     console.warn(
       `DiagView: diagramSelector "${config["diagramSelector"]}" is not a valid selector, keeping "${fallback("diagramSelector")}"`,

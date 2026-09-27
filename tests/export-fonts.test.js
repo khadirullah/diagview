@@ -176,6 +176,26 @@ describe("embedDocumentFonts", () => {
     expect(css).toMatch(/url\('data:font\/woff2;base64,/);
   });
 
+  test('"all" embeds every face and "none" fetches nothing', async () => {
+    const all = svgWith(["Hello"]);
+    await embedDocumentFonts(all, "all");
+    expect(fetched()).toEqual([
+      "sans-400.woff2",
+      "sans-400-cyr.woff2",
+      "sans-700.woff2",
+      "mono.woff2",
+    ]);
+    expect(all.querySelector("style.dv-font-embed").textContent.match(/@font-face/g)).toHaveLength(
+      4,
+    );
+
+    fetchMock.mockClear();
+    const none = svgWith(["Hello"]);
+    await embedDocumentFonts(none, "none");
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(none.querySelector("style")).toBeNull();
+  });
+
   test("adds nothing when the text uses no page font", async () => {
     const svg = svgWith(["Hello", { family: "Arial, sans-serif" }]);
     await embedDocumentFonts(svg);
@@ -199,6 +219,9 @@ describe("embedDocumentFonts", () => {
     Object.defineProperty(document, "styleSheets", { get: () => sheets, configurable: true });
     const warn = jest.spyOn(console, "warn").mockImplementation(() => {});
     try {
+      // "none" reads no stylesheet, so it has nothing to warn about
+      await embedDocumentFonts(svgWith(["Hello"]), "none");
+      expect(warn).not.toHaveBeenCalled();
       await embedDocumentFonts(svgWith(["Hello"]));
       await embedDocumentFonts(svgWith(["Hello"]));
       expect(warn.mock.calls.map((c) => c[0])).toEqual([

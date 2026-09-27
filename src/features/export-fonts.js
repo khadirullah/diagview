@@ -109,9 +109,10 @@ export function pickFontFaces(faces, svgEl) {
  * and embed referenced font files as base64 data URIs.
  * Mutates the SVG element's first/new <style> block.
  * @param {SVGSVGElement} svgEl - Export clone
+ * @param {"used"|"all"|"none"} [mode] - exportFonts, "used" when missing
  */
-export async function embedDocumentFonts(svgEl) {
-  if (!document.fonts) return;
+export async function embedDocumentFonts(svgEl, mode) {
+  if (mode == "none" || !document.fonts) return;
 
   // Wait for all fonts to be loaded before reading metrics / before export
   await document.fonts.ready;
@@ -148,8 +149,10 @@ export async function embedDocumentFonts(svgEl) {
   }
 
   // Only embed the faces the text uses, so the file stays small
-  const used = pickFontFaces(fontFaceRules, svgEl);
-  fontFaceRules = fontFaceRules.filter((f) => used.has(f));
+  if (mode != "all") {
+    const used = pickFontFaces(fontFaceRules, svgEl);
+    fontFaceRules = fontFaceRules.filter((f) => used.has(f));
+  }
   if (!fontFaceRules.length) return;
 
   // Fetch and inline font files referenced by url(...)
