@@ -209,6 +209,20 @@ describe("Theme Module", () => {
       });
     });
 
+    test("--dv-muted-text fades the text on roomy canvases and keeps 4.5:1 on all of them", () => {
+      const muted = () => document.documentElement.style.getPropertyValue("--dv-muted-text");
+      for (const bg of ["#ffffff", "#0f172a", "#b3b3b3", "#6b7280", "#ff0000"]) {
+        updateConfig({ backgroundColor: bg });
+        withPage("rgb(255, 255, 255)", () => {
+          const theme = syncTheme();
+          expect(getContrastRatio(muted(), bg)).toBeGreaterThanOrEqual(4.5);
+          if (bg === "#ffffff") expect(muted()).not.toBe(theme.text);
+          // White only reaches 4.83:1 here, so it fades by just 5%
+          if (bg === "#6b7280") expect(muted()).toBe("rgb(248, 248, 249)");
+        });
+      }
+    });
+
     test("an opaque canvas colour is the panel colour as it is", () => {
       updateConfig({ backgroundColor: "#1e293b" });
       withPage("rgb(255, 255, 255)", () => {

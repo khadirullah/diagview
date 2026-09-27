@@ -215,6 +215,7 @@ describe("destroy() restores every touched element", () => {
 
     expect(root.style.getPropertyValue("--dv-bg")).toBe("");
     expect(root.style.getPropertyValue("--dv-text-color")).toBe("");
+    expect(root.style.getPropertyValue("--dv-muted-text")).toBe("");
     expect(root.style.getPropertyValue("--dv-accent")).toBe("");
     expect(root.style.getPropertyValue("--dv-search-ring")).toBe("");
     expect(root.style.getPropertyValue("--dv-toggle-track")).toBe("");

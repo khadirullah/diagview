@@ -19,6 +19,14 @@ function ruleBody(selector, from = 0) {
   return css.slice(open + 1, close);
 }
 
+describe("styles.css: menu headings", () => {
+  test("use the muted text colour instead of opacity, so they keep 4.5:1", () => {
+    const body = ruleBody(".dv-menu-lbl {");
+    expect(body).toContain("var(--dv-muted-text");
+    expect(body).not.toMatch(/opacity\s*:/);
+  });
+});
+
 describe("styles.css: desktop tooltip", () => {
   test("is placed below the element so the topbar button's tooltip is not clipped", () => {
     const body = ruleBody("[data-tooltip]::after");

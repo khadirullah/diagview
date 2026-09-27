@@ -519,6 +519,25 @@ export function syncReadable(bg) {
 }
 
 /**
+ * The text colour faded toward the canvas, as far as 30%, while it still
+ * reaches 4.5:1. For secondary text such as the menu headings. On a canvas
+ * where the text only just passes it stays at full strength.
+ * @param {string} text - Text colour
+ * @param {string} bg - Opaque canvas colour
+ * @returns {string} The muted colour
+ */
+function mutedText(text, bg) {
+  const t = parseColor(text);
+  const b = parseColor(bg);
+  if (!t || !b) return text;
+  for (let step = 6; step > 0; step--) {
+    const mix = `rgb(${t.map((c, i) => Math.round(c + (b[i] - c) * step * 0.05)).join(", ")})`;
+    if (getContrastRatio(mix, bg) >= 4.5) return mix;
+  }
+  return text;
+}
+
+/**
  * Apply theme to CSS variables
  */
 export function syncTheme() {
@@ -531,6 +550,7 @@ export function syncTheme() {
   // contrast when the canvas lets the page show through
   root.style.setProperty("--dv-panel-bg", theme.seenBg);
   root.style.setProperty("--dv-text-color", theme.text);
+  root.style.setProperty("--dv-muted-text", mutedText(theme.text, theme.seenBg));
   root.style.setProperty("--dv-accent", theme.accent);
   root.style.setProperty("--dv-on-accent", theme.onAccent);
 
@@ -649,6 +669,7 @@ export function teardownThemeWatchers() {
   root.style.removeProperty("--dv-bg");
   root.style.removeProperty("--dv-panel-bg");
   root.style.removeProperty("--dv-text-color");
+  root.style.removeProperty("--dv-muted-text");
   root.style.removeProperty("--dv-accent");
   root.style.removeProperty("--dv-on-accent");
   root.style.removeProperty("--dv-search-ring");

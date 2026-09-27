@@ -1095,8 +1095,7 @@
   margin-bottom: 0.625rem;
   font-size: 0.625rem;
   font-weight: 800;
-  color: var(--dv-text-color);
-  opacity: 0.7;
+  color: var(--dv-muted-text, var(--dv-text-color));
   text-transform: uppercase;
   letter-spacing: 0.15em;
   padding-left: 4px;
