@@ -170,6 +170,14 @@
             }
         };
 
+        // Hand the Security select's current value to DiagView. init() starts
+        // from the default mode, and a reload can restore the select to
+        // another value, so this runs after every init.
+        function applySelectedSecurity() {
+            var sel = document.getElementById('securitySelector');
+            if (sel && window.DiagView) window.updateSecurity(sel.value);
+        }
+
         // Auto-wire accent color picker if present on page
         var picker = document.getElementById('accentPicker');
         if (picker) {
@@ -228,11 +236,12 @@
                     if (window.DiagView) window.DiagView.destroy();
                     active = false;
                 } else {
-                    initFn();
+                    Promise.resolve(initFn()).then(applySelectedSecurity);
                     active = true;
                 }
                 show(active);
             });
+            applySelectedSecurity();
 
             // Insert as the first toggle button
             toggles.insertBefore(btn, toggles.firstChild);
