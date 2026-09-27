@@ -109,6 +109,10 @@ const cleared: DiagViewOptions = {
   onError: null,
 };
 
+// Every exportFonts value, and exports without the search look
+const fontsAll: DiagViewOptions = { exportFonts: "all" };
+const fontsNone: DiagViewOptions = { exportFonts: "none", exportSearchHighlight: false };
+
 // Unknown keys compile, DiagView warns about them at runtime
 const unknownKey: DiagViewOptions = { someOldOption: true };
 
@@ -134,9 +138,9 @@ const badZoomCb: DiagViewOptions = { onZoomChange: (scale: string) => void scale
 // @ts-expect-error maxZoomScale is a number
 const badZoom: DiagViewOptions = { maxZoomScale: "25" };
 
-void [full, empty, partialNested, caseInsensitive, cleared, unknownKey];
+void [full, empty, partialNested, caseInsensitive, cleared, unknownKey, fontsAll, fontsNone];
 void [badLayout, badMinimap, badGrid, badMode, badStyle, badWatermark, badZoomCb, badZoom];
-void badFonts;
+void [badSearchExport, badFonts];
 
 async function lifecycle(): Promise<void> {
   expectType<Equal<ReturnType<typeof init>, Promise<void>>>();
