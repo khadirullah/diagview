@@ -131,6 +131,19 @@ A: When `transparent: true` is passed to JPEG export, DiagView automatically swi
 **Q: Clipboard copy fails on my site. Why?**  
 A: Copying an image needs the Clipboard API, which browsers only offer on HTTPS or `localhost`. Without it, or if the browser denies the write (Safari does once the click that started the export is over), DiagView downloads the PNG instead and the toast says so. "Copy SVG" in the fullscreen menu copies text, and on plain HTTP it falls back to `document.execCommand('copy')`. If the browser refuses that copy or denies the write, DiagView downloads the .svg file instead.
 
+**Q: Why does an exported label look cut off or use another font?**  
+A: DiagView could not embed the page font, so the exported file falls back to a font installed on the viewer's computer. That font can be wider than the label's box, and "Mermaid" turns into "Mermaic". The usual cause is a font stylesheet on another origin, such as Google Fonts. The browser hides its rules from scripts unless the `<link>` has `crossorigin="anonymous"`, and DiagView logs a console warning that names the stylesheet. Add the attribute:
+
+```html
+<link
+  href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap"
+  rel="stylesheet"
+  crossorigin="anonymous"
+/>
+```
+
+`exportFonts` sets which fonts go into the file. `"used"` (the default) embeds only the font files the labels use. `"all"` embeds every `@font-face` rule on the page, which can make an SVG ten times larger. `"none"` embeds no fonts. Use it when a font's licence does not allow embedding, which is common with paid fonts. The file then names the font, and viewers without it see a fallback.
+
 **Q: I'm hitting the export size limit. How do I increase it?**
 
 ```javascript
