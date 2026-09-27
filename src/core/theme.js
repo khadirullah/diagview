@@ -567,6 +567,10 @@ export function syncTheme() {
   if (modal) {
     modal.style.backgroundColor = theme.bg;
     modal.style.color = theme.text;
+    // The minimap image baked in the old text colour for currentColor parts
+    if (state.minimapSvg) {
+      import("../features/lazy/minimap.js").then((m) => m.refreshMinimapColour()).catch(() => {});
+    }
   }
 
   // Update help box

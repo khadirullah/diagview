@@ -12,6 +12,10 @@ import { getClientCTM } from "../../core/utils.js";
 // they can be removed on modal close without duplicating handlers across frames
 let _minimapListenerCleanup = null;
 
+// The snapshot image and the SVGs it was built from, kept only when the
+// snapshot baked in the viewer's currentColor, so a theme change can redraw it
+let _colourSnapshot = null;
+
 // Trailing timer that re-positions the viewport indicator after an animated
 // pan's CSS transition settles (a CTM read mid-transition is stale)
 let _indicatorSettleTimer = null;
@@ -38,6 +42,101 @@ export function withPageVariables(markup, svg) {
   if (!rule) return markup;
   const css = `:root{${rule}}`.replace(/&/g, "&amp;").replace(/</g, "&lt;");
   return `${markup.slice(0, -6)}<style>${css}</style></svg>`;
+}
+
+// Most elements the currentColor walk reads before it stops. Past this only
+// the root colour is carried, which is what nearly every SVG needs.
+const MAX_COLOUR_WALK = 5000;
+
+/**
+ * Carry the viewer's text colour into a serialised SVG. The minimap image
+ * has no page to inherit `color` from, so currentColor would paint black.
+ * The colour the fullscreen view gives its SVG goes on the snapshot root.
+ * Elements that the viewer draws in a different colour from their parent,
+ * without setting it in their own attributes, get a rule of their own.
+ * Colours set inside the SVG travel with the markup anyway.
+ * @param {string} markup - Serialised SVG
+ * @param {Element} source - The page SVG the markup came from
+ * @param {Element} shown - The SVG the fullscreen view draws
+ * @returns {string} The markup, with a <style> added when it uses currentColor
+ */
+export function withCurrentColor(markup, source, shown) {
+  if (!markup.endsWith("</svg>") || !/currentcolor/i.test(markup)) return markup;
+  const colourOf = (el) => getComputedStyle(el).color;
+  const rootColour = colourOf(shown);
+  if (!rootColour) return markup;
+  let css = `:root{color:${rootColour}!important}`;
+
+  // Walk the shown SVG next to the source. Rotation wraps the shown content
+  // in .dv-rot-g, and a level whose children do not line up is skipped.
+  const stack = [[source, shown.querySelector(":scope > .dv-rot-g") || shown, rootColour, ":root"]];
+  let budget = MAX_COLOUR_WALK;
+  while (stack.length && budget > 0) {
+    const [src, view, parentColour, path] = stack.pop();
+    const srcKids = src.children;
+    const viewKids = view.children;
+    if (srcKids.length !== viewKids.length) continue;
+    for (let i = 0; i < srcKids.length && budget > 0; i++, budget--) {
+      const el = srcKids[i];
+      if (el.tagName !== viewKids[i].tagName) continue;
+      const colour = colourOf(viewKids[i]);
+      const childPath = `${path}>:nth-child(${i + 1})`;
+      if (colour !== parentColour && !el.style?.color && !el.hasAttribute("color")) {
+        css += `${childPath}{color:${colour}!important}`;
+      }
+      if (el.children.length) stack.push([el, viewKids[i], colour, childPath]);
+    }
+  }
+  css = css.replace(/&/g, "&amp;").replace(/</g, "&lt;");
+  return `${markup.slice(0, -6)}<style>${css}</style></svg>`;
+}
+
+/**
+ * Serialise the page SVG for the minimap image with the page variables and
+ * the viewer's currentColor resolved.
+ * @param {Element} source - The page SVG
+ * @param {Element} shown - The SVG the fullscreen view draws
+ * @returns {{ markup: string, usesColour: boolean }} The markup, and whether
+ *   it baked in currentColor
+ */
+function buildSnapshot(source, shown) {
+  const base = withPageVariables(new XMLSerializer().serializeToString(source), source);
+  const markup = withCurrentColor(base, source, shown);
+  return { markup, usesColour: markup !== base };
+}
+
+const toDataUrl = (markup) => "data:image/svg+xml;charset=utf-8," + encodeURIComponent(markup);
+
+/**
+ * Redraw the minimap image after the viewer's text colour changed, so parts
+ * drawn in currentColor follow the canvas theme. Snapshots that did not use
+ * currentColor are left alone.
+ */
+export function refreshMinimapColour() {
+  const snap = _colourSnapshot;
+  if (!snap || !snap.img.isConnected) return;
+  // A page that eases colour changes reports a colour part way between old
+  // and new until its transitions end, so draw once they have. A later call
+  // takes over from this one.
+  const call = (snap.call = {});
+  const modal = document.getElementById("diagview-modal");
+  const giveUp = Date.now() + 3000;
+  const draw = () => {
+    if (_colourSnapshot !== snap || snap.call !== call || !snap.img.isConnected) return;
+    const easing =
+      modal?.getAnimations && Date.now() < giveUp
+        ? modal.getAnimations({ subtree: true }).filter((t) => t.transitionProperty === "color")
+        : [];
+    if (easing.length) {
+      Promise.all(easing.map((t) => t.finished)).then(draw, draw);
+      return;
+    }
+    const { markup } = buildSnapshot(snap.source, snap.shown);
+    if (markup === snap.markup) return;
+    snap.markup = markup;
+    snap.img.setAttribute("href", toDataUrl(markup));
+  };
+  draw();
 }
 
 /**
@@ -182,14 +281,11 @@ export function updateMinimap(clone, viewport, panzoom) {
 
     // BUG-16 Fix: Use a Data URL snapshot to avoid mutating the original SVG's ID.
     // This ensures isolation and prevents breaking host-page CSS/JS.
-    const snapshot = withPageVariables(
-      new XMLSerializer().serializeToString(originalSvg),
-      originalSvg,
-    );
-    const dataUrl = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(snapshot);
+    const { markup, usesColour } = buildSnapshot(originalSvg, clone);
 
     const imgEl = document.createElementNS("http://www.w3.org/2000/svg", "image");
-    imgEl.setAttribute("href", dataUrl);
+    imgEl.setAttribute("href", toDataUrl(markup));
+    _colourSnapshot = usesColour ? { source: originalSvg, shown: clone, img: imgEl, markup } : null;
     imgEl.setAttribute("x", "0");
     imgEl.setAttribute("y", "0");
     imgEl.setAttribute("width", "100%");
@@ -334,6 +430,7 @@ export function updateMinimap(clone, viewport, panzoom) {
  */
 export function hideMinimap() {
   const minimap = document.getElementById("diagview-minimap");
+  _colourSnapshot = null;
   if (minimap) {
     minimap.classList.remove("show");
     // Clear minimap SVG reference

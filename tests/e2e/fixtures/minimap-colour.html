@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>DiagView minimap colours</title>
+<style>body{font-family:sans-serif;margin:24px;background:#fff;color:#1e293b} .diagram{width:640px;height:320px;margin:12px 0}
+/* Like many sites, ease colour changes on everything, the viewer included */
+body *{transition:color 0.2s ease}</style>
+</head>
+<body>
+<!-- Labels and lines drawn in currentColor, so they follow the viewer text colour -->
+<div class="diagram" id="cc">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 220">
+  <rect x="20" y="70" width="160" height="80" rx="8" fill="#dbeafe" stroke="currentColor"/>
+  <rect x="460" y="70" width="160" height="80" rx="8" fill="#dbeafe" stroke="currentColor"/>
+  <line x1="180" y1="110" x2="460" y2="110" stroke="currentColor" stroke-width="3"/>
+  <text x="320" y="40" text-anchor="middle" font-size="24" fill="currentColor">Request flow</text>
+  <text x="320" y="200" text-anchor="middle" font-size="18" fill="currentColor">over HTTPS</text>
+</svg>
+</div>
+
+<!-- Fixed colours only -->
+<div class="diagram" id="plain">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 220">
+  <rect x="20" y="70" width="160" height="80" rx="8" fill="#dbeafe" stroke="#333"/>
+  <rect x="460" y="70" width="160" height="80" rx="8" fill="#dbeafe" stroke="#333"/>
+  <line x1="180" y1="110" x2="460" y2="110" stroke="#333" stroke-width="3"/>
+  <text x="320" y="40" text-anchor="middle" font-size="24" fill="#333">Request flow</text>
+</svg>
+</div>
+
+<script src="../../../node_modules/@panzoom/panzoom/dist/panzoom.min.js"></script>
+<script src="../../../dist/diagview.umd.js"></script>
+<script>
+  DiagView.default.configure({ showMinimap: true, rememberZoom: false, animateOpen: false });
+  DiagView.default.init();
+</script>
+</body>
+</html>

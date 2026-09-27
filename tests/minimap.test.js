@@ -6,7 +6,13 @@
 
 import { jest } from "@jest/globals";
 import { state, resetConfig } from "../src/core/config.js";
-import { updateMinimap, cleanupMinimap, withPageVariables } from "../src/features/lazy/minimap.js";
+import {
+  updateMinimap,
+  cleanupMinimap,
+  withPageVariables,
+  withCurrentColor,
+  refreshMinimapColour,
+} from "../src/features/lazy/minimap.js";
 
 // Helper: create element with mocked getBoundingClientRect
 function mockElement(rect, viewBox) {
@@ -517,5 +523,265 @@ describe("Minimap snapshot keeps page CSS variables", () => {
     minimap.remove();
     source.remove();
     state.activeSourceElement = null;
+  });
+});
+
+describe("Minimap snapshot keeps the currentColor the viewer draws", () => {
+  const originalGetComputedStyle = window.getComputedStyle;
+  const NS = "http://www.w3.org/2000/svg";
+  let host;
+
+  // Build a live SVG and give each element the colour named in data-c,
+  // or its parent's colour when it has none (plain inheritance).
+  const build = (html) => {
+    const div = document.createElement("div");
+    div.innerHTML = html;
+    host.appendChild(div);
+    return div.firstElementChild;
+  };
+  const colourOf = (el) => {
+    for (let n = el; n; n = n.parentElement) if (n.dataset?.c) return n.dataset.c;
+    return "rgb(0, 0, 0)";
+  };
+
+  beforeEach(() => {
+    host = document.createElement("div");
+    document.body.appendChild(host);
+    window.getComputedStyle = jest.fn((el) => ({ color: colourOf(el) }));
+  });
+
+  afterEach(() => {
+    window.getComputedStyle = originalGetComputedStyle;
+    host.remove();
+  });
+
+  test("leaves SVGs without currentColor untouched and never reads styles for them", () => {
+    const source = build(`<svg xmlns="${NS}"><text fill="#123">a</text></svg>`);
+    const markup = new XMLSerializer().serializeToString(source);
+    expect(withCurrentColor(markup, source, source)).toBe(markup);
+    expect(window.getComputedStyle).not.toHaveBeenCalled();
+  });
+
+  test("gives the snapshot root the colour of the shown SVG, in any letter case", () => {
+    const source = build(
+      `<svg xmlns="${NS}" data-c="rgb(1, 1, 1)"><text fill="CURRENTCOLOR">a</text></svg>`,
+    );
+    const shown = build(`<svg xmlns="${NS}" data-c="rgb(241, 245, 249)"><text>a</text></svg>`);
+    const markup = new XMLSerializer().serializeToString(source);
+    const out = withCurrentColor(markup, source, shown);
+    expect(out).toBe(
+      `${markup.slice(0, -6)}<style>:root{color:rgb(241, 245, 249)!important}</style></svg>`,
+    );
+    expect(
+      new DOMParser().parseFromString(out, "image/svg+xml").querySelector("parsererror"),
+    ).toBeNull();
+  });
+
+  test("adds a rule only where page CSS gives an element its own colour", () => {
+    const tree = (rootC, pageC) =>
+      `<svg xmlns="${NS}" data-c="${rootC}">` +
+      `<g style="color:red" data-c="rgb(255, 0, 0)"><text fill="currentColor">a</text></g>` +
+      `<g><g data-c="${pageC}"><rect stroke="currentColor"/></g></g>` +
+      `<text fill="currentColor">b</text></svg>`;
+    const source = build(tree("rgb(0, 0, 0)", "rgb(0, 0, 0)"));
+    const shown = build(tree("rgb(9, 9, 9)", "rgb(0, 200, 0)"));
+    const out = withCurrentColor(new XMLSerializer().serializeToString(source), source, shown);
+    const css = out.slice(out.indexOf("<style>") + 7, out.indexOf("</style>"));
+    // The inline red travels with the markup, so only the page CSS green is added
+    expect(css).toBe(
+      ":root{color:rgb(9, 9, 9)!important}" +
+        ":root>:nth-child(2)>:nth-child(1){color:rgb(0, 200, 0)!important}",
+    );
+  });
+
+  test("maps a rotated view back to the source layout and skips parts that do not line up", () => {
+    const source = build(
+      `<svg xmlns="${NS}"><g><rect fill="currentColor"/></g><g><text/><text/></g></svg>`,
+    );
+    const shown = build(
+      `<svg xmlns="${NS}" data-c="rgb(9, 9, 9)"><g class="dv-rot-g">` +
+        `<g data-c="rgb(1, 2, 3)"><rect/></g><g data-c="rgb(4, 5, 6)"><text data-c="rgb(7, 7, 7)"/></g>` +
+        `</g></svg>`,
+    );
+    const out = withCurrentColor(new XMLSerializer().serializeToString(source), source, shown);
+    expect(out).toContain(":root>:nth-child(1){color:rgb(1, 2, 3)!important}");
+    expect(out).toContain(":root>:nth-child(2){color:rgb(4, 5, 6)!important}");
+    // The second group has a different child count, so its children are left alone
+    expect(out).not.toContain("rgb(7, 7, 7)");
+  });
+
+  test("the minimap image carries the viewer colour and the live SVG is unchanged", () => {
+    resetConfig();
+    state.minimapSvg = null;
+    const minimap = document.createElement("div");
+    minimap.id = "diagview-minimap";
+    const indicator = document.createElement("div");
+    indicator.className = "dv-mm-v";
+    minimap.appendChild(indicator);
+    document.body.appendChild(minimap);
+
+    const source = document.createElement("div");
+    source.innerHTML = `<svg xmlns="${NS}" viewBox="0 0 100 100"><text fill="currentColor">a</text></svg>`;
+    host.appendChild(source);
+    const live = source.querySelector("svg");
+    const before = live.outerHTML;
+    state.activeSourceElement = source;
+
+    const rect = { x: 0, y: 0, top: 0, left: 0, width: 400, height: 400, right: 400, bottom: 400 };
+    const clone = build(`<svg xmlns="${NS}" data-c="rgb(241, 245, 249)"><text>a</text></svg>`);
+    clone.getBoundingClientRect = () => ({ ...rect, width: 800, height: 800 });
+    const viewport = document.createElement("div");
+    viewport.getBoundingClientRect = () => rect;
+    minimap.getBoundingClientRect = () => ({ ...rect, width: 160, height: 100 });
+    const proto = window.SVGSVGElement.prototype;
+    proto.getScreenCTM = () => null;
+    try {
+      updateMinimap(clone, viewport, mockPanzoom(2));
+    } finally {
+      delete proto.getScreenCTM;
+    }
+
+    const href = decodeURIComponent(state.minimapSvg.querySelector("image").getAttribute("href"));
+    expect(href).toContain("<style>:root{color:rgb(241, 245, 249)!important}</style></svg>");
+    expect(live.outerHTML).toBe(before);
+
+    cleanupMinimap();
+    minimap.remove();
+    state.activeSourceElement = null;
+  });
+
+  describe("after the viewer text colour changes", () => {
+    let minimap, clone, viewport;
+
+    const open = (svg) => {
+      resetConfig();
+      state.minimapSvg = null;
+      minimap = document.createElement("div");
+      minimap.id = "diagview-minimap";
+      const indicator = document.createElement("div");
+      indicator.className = "dv-mm-v";
+      minimap.appendChild(indicator);
+      document.body.appendChild(minimap);
+
+      const source = document.createElement("div");
+      source.innerHTML = svg;
+      host.appendChild(source);
+      state.activeSourceElement = source;
+
+      const rect = {
+        x: 0,
+        y: 0,
+        top: 0,
+        left: 0,
+        width: 400,
+        height: 400,
+        right: 400,
+        bottom: 400,
+      };
+      clone = build(`<svg xmlns="${NS}" data-c="rgb(30, 41, 59)"><text>a</text></svg>`);
+      clone.getBoundingClientRect = () => ({ ...rect, width: 800, height: 800 });
+      viewport = document.createElement("div");
+      viewport.getBoundingClientRect = () => rect;
+      minimap.getBoundingClientRect = () => ({ ...rect, width: 160, height: 100 });
+      const proto = window.SVGSVGElement.prototype;
+      proto.getScreenCTM = () => null;
+      try {
+        updateMinimap(clone, viewport, mockPanzoom(2));
+      } finally {
+        delete proto.getScreenCTM;
+      }
+      return state.minimapSvg.querySelector("image");
+    };
+    const hrefOf = (img) => decodeURIComponent(img.getAttribute("href"));
+
+    afterEach(() => {
+      cleanupMinimap();
+      minimap.remove();
+      state.activeSourceElement = null;
+    });
+
+    test("redraws the same image in the new colour", () => {
+      const img = open(
+        `<svg xmlns="${NS}" viewBox="0 0 100 100"><text fill="currentColor">a</text></svg>`,
+      );
+      const thumb = state.minimapSvg;
+      const layout = [thumb.getAttribute("viewBox"), thumb.style.cssText];
+      expect(hrefOf(img)).toContain(":root{color:rgb(30, 41, 59)!important}");
+
+      clone.dataset.c = "rgb(241, 245, 249)";
+      refreshMinimapColour();
+
+      expect(hrefOf(img)).toContain(":root{color:rgb(241, 245, 249)!important}");
+      expect(hrefOf(img)).not.toContain("rgb(30, 41, 59)");
+      // Only the image source changes, the thumbnail and its layout stay
+      expect(state.minimapSvg).toBe(thumb);
+      expect(thumb.querySelector("image")).toBe(img);
+      expect([thumb.getAttribute("viewBox"), thumb.style.cssText]).toEqual(layout);
+      expect(minimap.querySelector(".dv-mm-v")).not.toBeNull();
+    });
+
+    test("leaves the image alone when the colour did not change", () => {
+      const img = open(
+        `<svg xmlns="${NS}" viewBox="0 0 100 100"><text fill="currentColor">a</text></svg>`,
+      );
+      const setAttribute = jest.spyOn(img, "setAttribute");
+      refreshMinimapColour();
+      expect(setAttribute).not.toHaveBeenCalled();
+    });
+
+    test("never rebuilds a snapshot that does not use currentColor", () => {
+      const img = open(`<svg xmlns="${NS}" viewBox="0 0 100 100"><text fill="#123">a</text></svg>`);
+      const before = img.getAttribute("href");
+      const setAttribute = jest.spyOn(img, "setAttribute");
+      window.getComputedStyle.mockClear();
+
+      clone.dataset.c = "rgb(241, 245, 249)";
+      refreshMinimapColour();
+
+      expect(setAttribute).not.toHaveBeenCalled();
+      expect(window.getComputedStyle).not.toHaveBeenCalled();
+      expect(img.getAttribute("href")).toBe(before);
+    });
+
+    test("waits for colour transitions on the viewer to end before drawing", async () => {
+      const img = open(
+        `<svg xmlns="${NS}" viewBox="0 0 100 100"><text fill="currentColor">a</text></svg>`,
+      );
+      const modal = document.createElement("div");
+      modal.id = "diagview-modal";
+      document.body.appendChild(modal);
+      let finish;
+      let running = [
+        { transitionProperty: "color", finished: new Promise((r) => (finish = r)) },
+        { transitionProperty: "opacity", finished: new Promise(() => {}) },
+      ];
+      modal.getAnimations = jest.fn(() => running);
+      try {
+        clone.dataset.c = "rgb(100, 100, 100)";
+        refreshMinimapColour();
+        await Promise.resolve();
+        expect(hrefOf(img)).toContain("rgb(30, 41, 59)");
+
+        // Settled on the final colour, only the opacity fade is left
+        clone.dataset.c = "rgb(241, 245, 249)";
+        running = running.slice(1);
+        finish();
+        await new Promise((r) => setTimeout(r, 0));
+        expect(hrefOf(img)).toContain(":root{color:rgb(241, 245, 249)!important}");
+      } finally {
+        modal.remove();
+      }
+    });
+
+    test("does nothing once the minimap is cleaned up", () => {
+      const img = open(
+        `<svg xmlns="${NS}" viewBox="0 0 100 100"><text fill="currentColor">a</text></svg>`,
+      );
+      cleanupMinimap();
+      const setAttribute = jest.spyOn(img, "setAttribute");
+      clone.dataset.c = "rgb(241, 245, 249)";
+      expect(() => refreshMinimapColour()).not.toThrow();
+      expect(setAttribute).not.toHaveBeenCalled();
+    });
   });
 });
