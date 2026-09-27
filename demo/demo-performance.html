@@ -33,6 +33,13 @@
             --stage-h: clamp(380px, calc(100vh - 340px), 680px);
         }
 
+        /* The title grows with the node count, so let it wrap on a phone
+           instead of cutting it off */
+        .stress .card-header h3 {
+            white-space: normal;
+            overflow: visible;
+        }
+
         .stress .stress-test svg {
             max-height: none;
             height: 100%;
