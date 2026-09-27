@@ -37,7 +37,7 @@ Calling `init()` more than once without an intervening `destroy()` is a no-op (l
 
 ### `DiagView.destroy()`
 
-Fully tear down DiagView. Removes all DOM elements, stops observers, destroys Panzoom, clears sessionStorage zoom states, and resets all internal state. The configuration goes back to the defaults, the Canvas Theme to Auto and Text Colours to Original.
+Fully tear down DiagView. Removes all DOM elements, stops observers, destroys Panzoom, forgets remembered zoom states, and resets all internal state. The configuration goes back to the defaults, the Canvas Theme to Auto and Text Colours to Original.
 
 **Signature:** `destroy(): Promise<void>`
 

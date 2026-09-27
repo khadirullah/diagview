@@ -9,6 +9,7 @@ import { rotateDiagram, resetRotation } from "../src/features/lazy/rotate.js";
 import {
   saveZoomState,
   restoreZoomState,
+  clearAllZoomStates,
   initializePanzoom,
 } from "../src/features/panzoom-integration.js";
 
@@ -40,7 +41,7 @@ describe("Rotation Logic", () => {
     state.rotationAngle = 0;
     state.activePanzoom = mockPanzoom;
     jest.clearAllMocks();
-    sessionStorage.clear();
+    clearAllZoomStates();
   });
 
   test("rotateDiagram increments angle by 90 and triggers Panzoom update", () => {
@@ -58,28 +59,15 @@ describe("Rotation Logic", () => {
     expect(mockPanzoom.reset).toHaveBeenCalled();
   });
 
-  test("saveZoomState includes rotation in sessionStorage", () => {
-    updateConfig({ rememberZoom: true });
-    state.rotationAngle = 270;
-    saveZoomState("diag1", mockPanzoom);
-
-    const stored = JSON.parse(sessionStorage.getItem("diagview-zoom-states:diag1"));
-    expect(stored.rotation).toBe(270);
-  });
-
-  test("restoreZoomState restores rotation from sessionStorage", async () => {
+  test("restoreZoomState restores the rotation saveZoomState remembered", async () => {
     updateConfig({ rememberZoom: true });
     state.isModalOpen = true;
     state.activePanzoom = mockPanzoom;
-    const zoomState = {
-      scale: 1.5,
-      pan: { x: 10, y: 20 },
-      rotation: 180,
-      timestamp: Date.now(),
-    };
-    sessionStorage.setItem("diagview-zoom-states:diag1", JSON.stringify(zoomState));
+    state.rotationAngle = 180;
+    saveZoomState("diag1", { ...mockPanzoom, getScale: () => 1.5 });
+    state.rotationAngle = 0;
 
-    restoreZoomState("diag1", mockPanzoom);
+    expect(restoreZoomState("diag1", mockPanzoom)).toBe(true);
 
     // Rotation is now APPLIED via a dynamic import of rotate.js before
     // zoom/pan run — flush the async chain.

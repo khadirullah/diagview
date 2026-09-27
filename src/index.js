@@ -236,7 +236,7 @@ async function _teardown() {
     // Remove styles
     removeStyles();
 
-    // Clean up all saved zoom states from sessionStorage
+    // Forget remembered zoom, pan and rotation
     clearAllZoomStates();
 
     // Clear event bus and caches

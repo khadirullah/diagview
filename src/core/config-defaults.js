@@ -82,7 +82,7 @@ import { deepMerge, deepFreeze } from "./state-utils.js";
  * @property {boolean} rotateKeepsView - Rotating keeps the view, the same size on screen and the same centre, instead of fitting the diagram. The zoom % adjusts.
  * @property {boolean} showMinimap - Show the minimap in the viewer
  * @property {"none"|"dots"} canvasGrid - Dot grid behind the diagram in the viewer
- * @property {boolean} rememberZoom - Keep each diagram's zoom and pan in session storage
+ * @property {boolean} rememberZoom - Remember each diagram's zoom, pan and rotation between opens until the page reloads
  * @property {boolean} animateOpen - Animate the viewer opening
  * @property {boolean} showBranding - Show the DiagView link in the viewer
  * @property {boolean} showFirstTimeThemeHint - Point to the canvas theme menu the first time the viewer opens

@@ -7,6 +7,7 @@ import { jest } from "@jest/globals";
 import { state, resetConfig, updateConfig } from "../src/core/config.js";
 import { createModal, openFullscreen } from "../src/ui/modal.js";
 import { closeModal } from "../src/ui/modal-controls.js";
+import { clearAllZoomStates, restoreZoomState } from "../src/features/panzoom-integration.js";
 
 // ---------------------------------------------------------------------------
 // Shared harness: drive the REAL modal with a fake Panzoom implementation
@@ -74,7 +75,7 @@ describe("rememberZoom saves on panzoomchange and on close", () => {
   beforeEach(() => {
     resetConfig();
     document.body.innerHTML = "";
-    sessionStorage.clear();
+    clearAllZoomStates();
     instances = installFakePanzoom();
     updateConfig({ rememberZoom: true, showFirstTimeThemeHint: false, animateOpen: false });
     createModal();
@@ -86,24 +87,33 @@ describe("rememberZoom saves on panzoomchange and on close", () => {
     delete window.Panzoom;
   });
 
-  const key = (id) => `diagview-zoom-states:${id}`;
+  // restoreZoomState on a Panzoom that is not the active one reports whether
+  // a view is remembered without applying it
+  const probe = { zoom: jest.fn(), pan: jest.fn() };
+  const remembered = (id) => restoreZoomState(id, probe);
 
   test("a debounced panzoomchange (wheel/keyboard/button zoom) writes the state", async () => {
     const el = makeDiagram("d-remember");
     await openFullscreen(el);
     await settle();
     expect(state.isModalOpen).toBe(true);
-    expect(sessionStorage.getItem(key("d-remember"))).toBeNull();
+    expect(remembered("d-remember")).toBe(false);
 
     const pz = instances[0];
     pz.zoom(2.5);
     pz.el.dispatchEvent(new CustomEvent("panzoomchange", { detail: { scale: 2.5, x: 0, y: 0 } }));
     // Not yet (debounced)…
-    expect(sessionStorage.getItem(key("d-remember"))).toBeNull();
+    expect(remembered("d-remember")).toBe(false);
     await wait(250);
     // …but shortly after, without any panzoomend
-    const saved = JSON.parse(sessionStorage.getItem(key("d-remember")));
-    expect(saved.scale).toBe(2.5);
+    expect(remembered("d-remember")).toBe(true);
+    expect(probe.zoom).not.toHaveBeenCalled();
+
+    await closeModal();
+    await settle();
+    await openFullscreen(el);
+    await settle();
+    expect(instances[1].zoom).toHaveBeenCalledWith(2.5, expect.anything());
   });
 
   test("closing the modal saves synchronously and reopening restores the scale", async () => {
@@ -116,14 +126,78 @@ describe("rememberZoom saves on panzoomchange and on close", () => {
     pz.el.dispatchEvent(new CustomEvent("panzoomchange", { detail: { scale: 1.75, x: 0, y: 0 } }));
     // Close before the debounce fires
     await closeModal();
-    const saved = JSON.parse(sessionStorage.getItem(key("d-remember-close")));
-    expect(saved.scale).toBe(1.75);
+    expect(remembered("d-remember-close")).toBe(true);
 
     await settle();
     await openFullscreen(el);
     await settle();
     const pz2 = instances[1];
     expect(pz2.zoom).toHaveBeenCalledWith(1.75, expect.anything());
+  });
+
+  async function zoomAndClose(el, scale, x, y) {
+    await openFullscreen(el);
+    await settle();
+    const pz = instances[instances.length - 1];
+    pz.zoom(scale);
+    pz.pan(x, y);
+    await closeModal();
+    await settle();
+  }
+
+  test("the view is remembered even when sessionStorage throws", async () => {
+    const blocked = () => {
+      throw new DOMException("The operation is insecure.", "SecurityError");
+    };
+    const spies = ["getItem", "setItem", "removeItem", "key", "clear"].map((m) =>
+      jest.spyOn(Storage.prototype, m).mockImplementation(blocked),
+    );
+    const wasAvailable = state.isStorageAvailable;
+    state.isStorageAvailable = false;
+    try {
+      const el = makeDiagram("d-blocked");
+      await zoomAndClose(el, 1.6, 30, 40);
+      await openFullscreen(el);
+      await settle();
+      const pz = instances[instances.length - 1];
+      expect(pz.zoom).toHaveBeenCalledWith(1.6, expect.anything());
+      expect(pz.pan).toHaveBeenCalledWith(30, 40, expect.anything());
+    } finally {
+      state.isStorageAvailable = wasAvailable;
+      spies.forEach((s) => s.mockRestore());
+    }
+  });
+
+  test("nothing is written to sessionStorage", async () => {
+    const setItem = jest.spyOn(Storage.prototype, "setItem");
+    try {
+      await zoomAndClose(makeDiagram("d-no-storage"), 2, 10, 10);
+      expect(setItem).not.toHaveBeenCalled();
+      expect(sessionStorage.length).toBe(0);
+    } finally {
+      setItem.mockRestore();
+    }
+  });
+
+  test("rememberZoom false stores nothing", async () => {
+    updateConfig({ rememberZoom: false });
+    const el = makeDiagram("d-off");
+    await zoomAndClose(el, 2, 10, 10);
+
+    updateConfig({ rememberZoom: true });
+    expect(remembered("d-off")).toBe(false);
+  });
+
+  test("each diagram keeps its own view", async () => {
+    const first = makeDiagram("d-first", 0);
+    const second = makeDiagram("d-second", 1);
+    await zoomAndClose(first, 3, 50, 60);
+
+    await openFullscreen(second);
+    await settle();
+    const pz = instances[instances.length - 1];
+    expect(pz.zoom).not.toHaveBeenCalledWith(3, expect.anything());
+    expect(pz.zoom).toHaveBeenCalledWith(1, expect.anything());
   });
 });
 
@@ -137,7 +211,7 @@ describe("close during openFullscreen's awaits leaves no stale session", () => {
   beforeEach(() => {
     resetConfig();
     document.body.innerHTML = "";
-    sessionStorage.clear();
+    clearAllZoomStates();
     instances = installFakePanzoom();
     updateConfig({ showFirstTimeThemeHint: false, animateOpen: false });
     createModal();
@@ -196,7 +270,7 @@ describe("openFullscreen is a no-op while the modal is already open", () => {
     document.body.innerHTML = "";
     document.documentElement.style.scrollBehavior = "";
     delete document.documentElement.dataset.dvPrevScrollBehavior;
-    sessionStorage.clear();
+    clearAllZoomStates();
     instances = installFakePanzoom();
     updateConfig({ showFirstTimeThemeHint: false, animateOpen: false });
     createModal();
@@ -297,7 +371,7 @@ describe("initial-focus rAF is cancelled on close", () => {
   beforeEach(() => {
     resetConfig();
     document.body.innerHTML = "";
-    sessionStorage.clear();
+    clearAllZoomStates();
     instances = installFakePanzoom();
     updateConfig({ showFirstTimeThemeHint: false, animateOpen: false });
     createModal();

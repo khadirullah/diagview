@@ -215,55 +215,39 @@ export function resetTouchState() {
 // Remember Zoom State
 // ==========================================
 
-const ZOOM_STATE_PREFIX = "diagview-zoom-states";
-
-/**
- * Get storage key for diagram
- */
-function getZoomKey(diagramId) {
-  return `${ZOOM_STATE_PREFIX}:${diagramId}`;
-}
+// Kept in memory only. Diagram ids are new on every page load, so a saved
+// view could never be matched after a reload anyway.
+const zoomStates = new Map();
 
 /**
  * Save zoom state for a diagram
  */
 export function saveZoomState(diagramId, panzoom) {
-  if (!state.config.rememberZoom || !panzoom || !diagramId || !state.isStorageAvailable) return;
+  if (!state.config.rememberZoom || !panzoom || !diagramId) return;
 
-  try {
-    const zoomState = {
-      scale: panzoom.getScale(),
-      pan: panzoom.getPan(),
-      rotation: state.rotationAngle,
-      timestamp: Date.now(),
-    };
-    sessionStorage.setItem(getZoomKey(diagramId), JSON.stringify(zoomState));
-  } catch (e) {
-    // Silently fail if storage is full or restricted
-  }
+  const pan = panzoom.getPan();
+  zoomStates.set(diagramId, {
+    scale: panzoom.getScale(),
+    pan: { x: pan.x, y: pan.y },
+    rotation: state.rotationAngle,
+  });
 }
 
 /**
  * Restore zoom state for a diagram
  */
 export function restoreZoomState(diagramId, panzoom) {
-  if (!state.config.rememberZoom || !panzoom || !diagramId || !state.isStorageAvailable)
-    return false;
+  if (!state.config.rememberZoom || !panzoom || !diagramId) return false;
 
   try {
-    const stored = sessionStorage.getItem(getZoomKey(diagramId));
-    if (!stored) return false;
-
-    const zoomState = JSON.parse(stored);
-    if (typeof zoomState?.scale !== "number" || typeof zoomState?.pan?.x !== "number") {
-      return false;
-    }
+    const zoomState = zoomStates.get(diagramId);
+    if (!zoomState) return false;
 
     // Apply saved state. The saved pan/scale were captured with the rotation
     // applied (rotate.js rewrites the viewBox), so the rotation must be
     // re-APPLIED to the DOM first — writing state.rotationAngle alone rotates
     // nothing and leaves the minimap rotated over an unrotated diagram.
-    const rotation = zoomState.rotation !== undefined ? zoomState.rotation : 0;
+    const { rotation } = zoomState;
     const applyZoomAndPan = () => {
       if (!state.isModalOpen || state.activePanzoom !== panzoom) return;
       panzoom.zoom(zoomState.scale, { animate: false });
@@ -299,16 +283,5 @@ export function restoreZoomState(diagramId, panzoom) {
  * Clear all zoom states
  */
 export function clearAllZoomStates() {
-  if (!state.isStorageAvailable) return;
-  try {
-    const storage = sessionStorage;
-    const keys = Object.keys(storage);
-    keys.forEach((key) => {
-      if (key.startsWith(ZOOM_STATE_PREFIX)) {
-        storage.removeItem(key);
-      }
-    });
-  } catch (e) {
-    // Ignore errors
-  }
+  zoomStates.clear();
 }

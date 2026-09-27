@@ -433,7 +433,7 @@ DiagView.init({
   // ── Interaction ──────────────────────────────────
   naturalPanning: false, // true = arrow keys move the diagram in the arrow's direction
   rotateKeepsView: false, // true = rotating keeps the view (same size on screen, same centre)
-  rememberZoom: false, // true = restore zoom/pan across modal opens (session)
+  rememberZoom: false, // true = restore zoom/pan/rotation on reopen (in memory, until reload)
   showMinimap: true, // Show minimap when diagram overflows viewport
   canvasGrid: "none", // 'none' | 'dots' (dot grid behind the fullscreen diagram)
 

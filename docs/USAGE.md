@@ -446,7 +446,7 @@ DiagView.init({ rotateKeepsView: true });
 - **Keyboard:** Press `R` in fullscreen
 - **UI:** Open FAB menu → click "Rotate 90°"
 
-Rotation state is included in share links (`dv-r=90`) and saved in session storage when `rememberZoom: true`.
+Rotation state is included in share links (`dv-r=90`) and remembered between opens when `rememberZoom: true`.
 
 ---
 
@@ -664,16 +664,15 @@ Diagrams inside shadow roots are numbered after the ones in the document, in the
 
 ## 16. Remember Zoom
 
-When enabled, DiagView saves each diagram's zoom level, pan position, and rotation to `sessionStorage` after every change, whether it comes from dragging, the mouse wheel, the keyboard or the toolbar buttons. On the next open, the saved state is restored automatically.
+When enabled, DiagView remembers each diagram's zoom level, pan position, and rotation after every change, whether it comes from dragging, the mouse wheel, the keyboard or the toolbar buttons. On the next open, the saved state is restored automatically.
 
 ```javascript
 DiagView.init({ rememberZoom: true });
 ```
 
 - State is keyed per `data-diagview-id` (a unique ID generated at init time)
-- Storage is cleared when `DiagView.destroy()` is called
-- The ID is new on every page load, so saved state carries over between opens on the same page but not across a reload
-- Gracefully degrades if sessionStorage is unavailable (private browsing)
+- State is kept in memory until the page reloads or `DiagView.destroy()` runs. Nothing is written to `sessionStorage` or `localStorage`
+- It also works in private windows, where browser storage can be blocked
 
 ---
 

@@ -2,6 +2,7 @@ import { jest } from "@jest/globals";
 import DiagView, { init, destroy } from "../src/index.js";
 import { state, resetConfig, DEFAULT_CONFIG } from "../src/core/config.js";
 import { detectTheme } from "../src/core/theme.js";
+import { saveZoomState, restoreZoomState } from "../src/features/panzoom-integration.js";
 
 jest.useFakeTimers();
 
@@ -133,6 +134,22 @@ describe("DiagView Lifecycle", () => {
     elementsToCheck.forEach((id) => {
       expect(document.getElementById(id)).toBeNull();
     });
+  });
+
+  test("destroy() forgets remembered zoom states", async () => {
+    init({ rememberZoom: true });
+    const pz = {
+      getScale: () => 2,
+      getPan: () => ({ x: 5, y: 6 }),
+      zoom: jest.fn(),
+      pan: jest.fn(),
+    };
+    saveZoomState("d-destroy", pz);
+    expect(restoreZoomState("d-destroy", pz)).toBe(true);
+
+    await destroy();
+    init({ rememberZoom: true });
+    expect(restoreZoomState("d-destroy", pz)).toBe(false);
   });
 
   test("double init() warns and returns early", () => {
