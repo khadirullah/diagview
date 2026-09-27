@@ -62,7 +62,7 @@
   box-shadow:
     0 0 0 2px var(--dv-bg),
     0 0 0 4px var(--dv-accent) !important;
-  border-radius: inherit !important;
+  /* The ring follows each control's own border-radius */
   transition: box-shadow 0.2s ease;
 }
 
@@ -730,6 +730,7 @@
 
 .diagview-search-clear {
   all: unset;
+  border-radius: 50%;
   cursor: pointer;
   font-size: 14px;
   opacity: 0;

@@ -124,3 +124,11 @@ describe("styles.css: menu buttons", () => {
     expect(body).not.toMatch(/rgba\(255, 255, 255/);
   });
 });
+
+describe("styles.css: keyboard focus ring", () => {
+  test("keeps each control's own corners instead of its parent's", () => {
+    const body = ruleBody(".diagview-menu *:focus-visible {");
+    expect(body).toMatch(/box-shadow:/);
+    expect(body).not.toMatch(/border-radius:/);
+  });
+});

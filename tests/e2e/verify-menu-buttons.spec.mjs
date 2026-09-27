@@ -1,5 +1,6 @@
 // Look of the fullscreen menu buttons: hover on the Canvas Theme and Text
-// Colours buttons on light, dark and custom canvases.
+// Colours buttons on light, dark and custom canvases, and the corners of
+// the menu button and swatches while they have keyboard focus.
 import { test, expect } from "@playwright/test";
 import { REPRO, newPage } from "./helpers.mjs";
 
@@ -95,4 +96,36 @@ test("hovering the selected button keeps it looking selected", async () => {
   await page.hover(sel);
   await page.waitForTimeout(300);
   expect(await look(sel)).toEqual(before);
+});
+
+const corner = (sel) =>
+  page.evaluate((s) => {
+    const el = document.querySelector(s);
+    const cs = getComputedStyle(el);
+    return {
+      radius: cs.borderTopLeftRadius,
+      ring: cs.boxShadow,
+      focused: document.activeElement === el,
+      visible: el.matches(":focus-visible"),
+    };
+  }, sel);
+
+test("a swatch stays round while it has keyboard focus", async () => {
+  await page.focus('.dv-swatch-btn[data-canvas="#ffffff"]');
+  await page.keyboard.press("Tab");
+  await page.keyboard.press("Shift+Tab");
+  const swatch = await corner('.dv-swatch-btn[data-canvas="#ffffff"]');
+  expect(swatch.focused).toBe(true);
+  expect(swatch.radius).toBe("50%");
+});
+
+test("the menu button keeps its round corners after Escape closes the menu", async () => {
+  expect(await corner("#dv-toggle")).toMatchObject({ radius: "50%" }); // open
+  await page.keyboard.press("Escape");
+  await page.waitForTimeout(500);
+  const fab = await corner("#dv-toggle");
+  expect(fab.focused).toBe(true);
+  expect(fab.radius).toBe("16px");
+  // Chrome and Safari show the focus ring here, and it must still be drawn
+  if (fab.visible) expect(fab.ring).not.toBe("none");
 });
