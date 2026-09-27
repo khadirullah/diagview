@@ -70,7 +70,8 @@ let pendingDestroy = null;
  * Initialize DiagView
  *
  * Runs synchronously when nothing is pending. If a destroy() is still in
- * flight, the initialization is queued behind it. Either way the returned
+ * flight, the initialization is queued behind it. Called before the page has
+ * a <body>, it waits for DOMContentLoaded. Either way the returned
  * promise resolves once DiagView is initialized.
  * @param {DiagViewOptions} [options] - Configuration options
  * @returns {Promise<void>} Resolves when initialization has completed
@@ -83,6 +84,14 @@ function init(options = {}) {
 
   if (pendingDestroy) {
     return pendingDestroy.then(() => init(options));
+  }
+
+  // A script in <head> runs before there is a body to hold the viewer or the
+  // diagrams, so start once the page has been parsed.
+  if (!document.body) {
+    return new Promise((resolve) => {
+      document.addEventListener("DOMContentLoaded", () => resolve(init(options)), { once: true });
+    });
   }
 
   // Cancel any pending auto-init if manual init is called

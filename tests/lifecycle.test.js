@@ -56,6 +56,26 @@ describe("DiagView Lifecycle", () => {
     expect(state.isInitialized).toBe(true);
   });
 
+  test("init() called before the page has a <body> waits for DOMContentLoaded", async () => {
+    // A script in <head> runs before the parser has created <body>
+    const body = document.body;
+    body.remove();
+    expect(document.body).toBeNull();
+
+    let result;
+    expect(() => (result = init({ layout: "header" }))).not.toThrow();
+    expect(state.isInitialized).toBe(false);
+
+    document.documentElement.appendChild(body);
+    document.body.innerHTML = `<div class="diagram">${SVG}</div>`;
+    document.dispatchEvent(new Event("DOMContentLoaded"));
+    await result;
+
+    expect(state.isInitialized).toBe(true);
+    expect(DiagView.getConfiguration().layout).toBe("header");
+    expect(document.getElementById("diagview-modal")).not.toBeNull();
+  });
+
   test("init() issued while destroy() is in flight waits for it, then initializes", async () => {
     // React StrictMode / HMR sequence: cleanup starts destroy(), effect re-runs init()
     init();
