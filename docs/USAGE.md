@@ -709,7 +709,7 @@ DiagView.init({
 });
 ```
 
-`onExport` fires for the toolbar and menu buttons and for `exportDiagram()`, and only after the export succeeds. It does not fire when the export fails or is blocked, such as by the size limit. Copy Image counts as a success when it downloads the PNG instead. A PDF export that falls back to PNG because jsPDF did not load does not fire it. `format` is the normalised mode, such as `png`, `copy` or `copy-svg`. `png-transparent` and `download` arrive as `png`, and `webp-transparent` arrives as `webp`. The per-format `exportTo*` functions and `copyToClipboard()` do not call it. `onError` fires when a diagram fails validation and shows the error placeholder.
+`onExport` fires for the toolbar and menu buttons and for `exportDiagram()`, and only after the export succeeds. It does not fire when the export fails or is blocked, such as by the size limit. Copy Image counts as a success when it downloads the PNG instead. A PDF export that falls back to PNG because jsPDF did not load does not fire it. `format` is the normalised mode, such as `png`, `copy` or `copy-svg`. For image downloads it is the format of the file that was made. `png-transparent` and `download` arrive as `png`, and `webp-transparent` arrives as `webp`. A transparent JPEG is saved as a PNG and arrives as `png`, and so does an unknown mode. The per-format `exportTo*` functions and `copyToClipboard()` do not call it. `onError` fires when a diagram fails validation and shows the error placeholder.
 
 ---
 

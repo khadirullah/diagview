@@ -918,6 +918,18 @@ describe("onExport fires only after a successful export", () => {
     expect(onExport).toHaveBeenCalledWith(mode, "ok");
   });
 
+  test.each([
+    ["jpeg", { transparent: true }, "png"],
+    ["png-transparent", {}, "png"],
+    ["webp-transparent", {}, "webp"],
+    ["download", {}, "png"],
+    ["gif", {}, "png"],
+  ])("%s reports the format of the file it made", async (mode, extra, format) => {
+    await exportDiagram(container, mode, { filename: "ok", silent: true, ...extra });
+    expect(clickSpy.mock.contexts[0].download).toBe(`ok.${format}`);
+    expect(onExport).toHaveBeenCalledWith(format, "ok");
+  });
+
   test("Copy Image that downloads the PNG instead still fires it", async () => {
     Object.defineProperty(navigator, "clipboard", { value: undefined, configurable: true });
     await exportDiagram(container, "copy", { filename: "ok" });

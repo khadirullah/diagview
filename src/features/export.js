@@ -675,8 +675,9 @@ export async function copySVGCode(sourceElement, options = {}) {
 }
 
 /**
- * Internal Image Export Processor. Resolves to true once the image is saved,
- * copied, or downloaded because the clipboard was unavailable.
+ * Internal Image Export Processor. Resolves to the extension of the file
+ * made ("png", "jpeg" or "webp") once the image is saved, copied, or
+ * downloaded because the clipboard was unavailable.
  */
 async function processImageExport(
   sourceElement,
@@ -766,7 +767,7 @@ async function processImageExport(
         setTimeout(() => URL.revokeObjectURL(downloadUrl), TIMING.BUTTON_SUCCESS_DURATION);
         showSuccessToast(`${scale.toFixed(1)}x ${label} saved`);
       }
-      return true;
+      return ext;
     } finally {
       // DOM-4: Release canvas memory immediately
       if (canvasRef) {
@@ -962,6 +963,8 @@ export async function exportDiagram(sourceElement, mode, options = {}) {
 
   const opts = { transparent: isTransparent, modalClone };
   let ok;
+  // What onExport reports. Image exports replace it with the format of the file made.
+  let format = mode;
   switch (mode) {
     case "svg":
       ok = await saveSVG(svg, filename, opts);
@@ -978,7 +981,7 @@ export async function exportDiagram(sourceElement, mode, options = {}) {
     default: {
       // Unknown modes export an opaque PNG
       const known = /^(png|jpeg|webp)$/.test(mode);
-      ok = await processImageExport(
+      format = await processImageExport(
         sourceElement,
         filename,
         known ? mode : "png",
@@ -987,13 +990,14 @@ export async function exportDiagram(sourceElement, mode, options = {}) {
         modalClone,
         silent,
       );
+      ok = !!format;
     }
   }
 
   // Fire onExport only when the user got the file (matches onOpen/onClose pattern)
   if (ok && state.config.onExport) {
     try {
-      state.config.onExport(mode, filename);
+      state.config.onExport(format, filename);
     } catch (e) {
       console.error("DiagView: onExport callback error:", e);
     }
