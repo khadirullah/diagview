@@ -523,13 +523,16 @@
 
 <span class="c">// 2. Init with floating buttons</span>
 <span class="kw">DiagView</span>.init({
-  diagramSelector: <span class="v">'.diagram'</span>,
-  layout:          <span class="v">'floating'</span>,
-  accentColor:     <span class="v">'#f59e0b'</span>,
-  showBranding:    <span class="b">true</span>
+  diagramSelector:  <span class="v">'.diagram'</span>,
+  layout:           <span class="v">'floating'</span>,
+  showKeyboardHelp: <span class="b">true</span>,
+  showBranding:     <span class="b">true</span>
 });
 
-<span class="c">// 3. Or set layout per-element via HTML</span>
+<span class="c">/* 3. Blue controls, from a CSS variable */</span>
+:root { --diagram-accent: <span class="v">#3b82f6</span>; }
+
+<span class="c">// 4. Or set layout per-element via HTML</span>
 &lt;<span class="t">div</span> <span class="a">class</span>=<span class="v">"diagram"</span>
      <span class="a">data-diagview-layout</span>=<span class="v">"floating"</span>&gt;
   &lt;<span class="t">svg</span>&gt;...&lt;/<span class="t">svg</span>&gt;
