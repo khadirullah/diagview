@@ -9,12 +9,12 @@
     <title>DiagView - Header Layout</title>
     <meta property="og:image" content="https://khadirullah.github.io/diagview/images/hero.jpg">
     <meta name="description"
-        content="DiagView header layout demo — classic top-bar controls with Mermaid and SVG diagrams.">
+        content="DiagView header layout demo, classic top-bar controls with Mermaid and SVG diagrams.">
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono&display=swap"
+    <link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
         rel="stylesheet">
 
     <!-- Dependencies -->
@@ -32,13 +32,49 @@
     <!-- <script src="../dist/diagview.umd.js" data-diagview-no-auto-init></script> -->
 
     <style>
-        :root {
-            --diagram-accent: #3b82f6;
+        /* Figure sizes. The two wide charts get a full row each, the rest share
+           rows of two. The first chart fills the first screen, so the next card
+           starts below the fold instead of being cut under its title. */
+        .grid > .card {
+            --stage-h: 300px;
         }
 
-        .mermaid {
+        .grid > .card.infra {
+            --stage-h: clamp(380px, calc(100vh - 320px), 600px);
+        }
+
+        .grid > .card.sequence {
+            --stage-h: 440px;
+        }
+
+        /* The state chart draws its arrows with a grey picked for a white page */
+        .dark .diagram .transition {
+            stroke: var(--muted);
+        }
+
+        .next {
             display: flex;
-            justify-content: center;
+            flex-wrap: wrap;
+            gap: 8px 24px;
+            margin-top: 20px;
+        }
+
+        @media (max-width: 600px) {
+            .crumbs {
+                display: none;
+            }
+
+            .grid > .card {
+                --stage-h: 260px;
+            }
+
+            .grid > .card.infra {
+                --stage-h: 480px;
+            }
+
+            .grid > .card.sequence {
+                --stage-h: 220px;
+            }
         }
     </style>
 
@@ -47,298 +83,337 @@
 
 <body>
 
-    <div class="controls">
-        <div class="brand">
-            <a href="index.html">
-                <img src="images/logo.jpg" alt="DiagView"
-                    style="width:32px;height:32px;border-radius:8px;object-fit:cover;flex-shrink:0">
-                <div class="brand-meta">
-                    <span class="brand-label">DiagView</span>
-                    <span class="brand-name">Header Layout</span>
-                </div>
+    <header class="nav">
+        <div class="wrap">
+            <a class="brand" href="index.html" aria-label="DiagView demo hub">
+                <svg class="brand-mark" viewBox="0 0 24 24" aria-hidden="true">
+                    <path class="e" d="M12 4.5 4.5 18.5h15Z M12 4.5v7.5 M4.5 18.5 12 12l7.5 6.5" fill="none" />
+                    <circle class="n" cx="12" cy="4.5" r="2.6" />
+                    <circle class="n" cx="12" cy="12" r="2.2" />
+                    <circle class="n" cx="4.5" cy="18.5" r="2.6" />
+                    <circle class="n" cx="19.5" cy="18.5" r="2.6" />
+                </svg>
             </a>
-        </div>
-        <div class="toggles">
-            <label class="accent-label">
-                <span>Security</span>
-                <select id="securitySelector" title="Toggle SVG Sanitization Level">
-                    <option value="strict">Strict (High)</option>
-                    <option value="permissive">Permissive</option>
-                    <option value="off">Off (Trusted)</option>
-                </select>
-            </label>
-            <label class="accent-label">
-                <span>Accent</span>
-                <input type="color" id="accentPicker" value="#3b82f6">
-            </label>
-            <button class="toggle-btn" onclick="toggleTheme()" title="Toggle Dark/Light Mode" aria-label="Toggle dark mode">🌓</button>
-            <a href="index.html" class="toggle-btn" style="background:var(--accent);color:#fff;border:none;">← Hub</a>
-        </div>
-    </div>
-
-    <section class="page-hero">
-        <h1>Mermaid &amp; SVG Integration</h1>
-        <p>Combining dynamic Mermaid.js rendering with static SVG diagrams. DiagView handles both seamlessly.</p>
-        <div class="badge-row"><span class="badge">▬ Header Bar Mode</span></div>
-    </section>
-
-    <div class="grid">
-        <!-- Infrastructure (Mermaid) -->
-        <div class="card">
-            <div class="card-header">
-                <h3>Core Infrastructure</h3>
-                <span class="card-badge mermaid-badge">Mermaid</span>
-            </div>
-            <div class="mermaid" data-title="System Architecture">
-                graph TD
-                subgraph "Core System"
-                LB[Load Balancer] --> Web1[Web Server 01]
-                LB --> Web2[Web Server 02]
-                LB --> Web3[Web Server 03]
-                end
-
-                subgraph "Data Layer"
-                Web1 --> Cache[Redis Cluster]
-                Web2 --> Cache
-                Web3 --> Cache
-                Cache --> DB_Master[(Postgres Master)]
-                DB_Master --> DB_Slave1[(Postgres Replica 1)]
-                DB_Master --> DB_Slave2[(Postgres Replica 2)]
-                end
-
-                style LB fill:#f9f,stroke:#333,stroke-width:2px
-                style DB_Master fill:#bbf,stroke:#333,stroke-width:2px
-                style Cache fill:#ff9,stroke:#333,stroke-width:2px
+            <nav class="crumbs" aria-label="Breadcrumb">
+                <a href="index.html">Demo hub</a>
+                <span class="sep" aria-hidden="true">/</span>
+                <span aria-current="page">Header layout</span>
+            </nav>
+            <div class="toggles">
+                <label class="select" title="SVG sanitisation level">
+                    <span class="lbl">Security</span>
+                    <select id="securitySelector" aria-label="Security">
+                        <option value="strict">Strict</option>
+                        <option value="permissive">Permissive</option>
+                        <option value="off">Off (trusted)</option>
+                    </select>
+                </label>
+                <label class="swatch" title="Accent colour">
+                    <span class="vh">Accent colour</span>
+                    <input type="color" id="accentPicker" value="#ea580c">
+                </label>
+                <button class="icon-btn theme-btn" type="button" onclick="toggleTheme()" title="Switch light and dark"
+                    aria-label="Switch light and dark theme"></button>
             </div>
         </div>
+    </header>
 
-        <!-- Sequence (Mermaid) -->
-        <div class="card">
-            <div class="card-header">
-                <h3>API Report Flow</h3>
-                <span class="card-badge mermaid-badge">Mermaid</span>
+    <main>
+        <section class="page-hero">
+            <div class="wrap">
+                <h1>Mermaid &amp; SVG integration</h1>
+                <p>Combining dynamic Mermaid.js rendering with static SVG diagrams. DiagView handles both seamlessly.</p>
+                <nav class="modes-nav" aria-label="Layout modes">
+                    <a href="layout-header.html">Header bar</a>
+                    <a href="layout-floating.html">Floating</a>
+                    <a href="layout-off.html">Off</a>
+                    <a href="layout-compare.html">Compare</a>
+                </nav>
             </div>
-            <div class="mermaid" data-title="Sequence Diagram">
-                sequenceDiagram
-                participant User
-                participant UI as Client Application
-                participant API as Backend Service
+        </section>
 
-                User->>UI: Clicks "Generate Report"
-                UI->>API: POST /api/v1/reports/pdf
-                Note right of API: API processes data...
-                API-->>UI: Returns 200 OK (Report ID: 12345)
-                UI-->>User: Shows "Download Ready" Notification
+        <div class="wrap grid" style="--fig-chapter: '1'">
+            <!-- Infrastructure (Mermaid) -->
+            <div class="card wide infra">
+                <div class="card-header">
+                    <h3>Core infrastructure</h3>
+                    <span class="tag">Mermaid</span>
+                </div>
+                <div class="mermaid" id="infraDiagram" data-title="System Architecture">
+                    graph LR
+                    subgraph "Core System"
+                    LB[Load Balancer] --> Web1[Web Server 01]
+                    LB --> Web2[Web Server 02]
+                    LB --> Web3[Web Server 03]
+                    end
+
+                    subgraph "Data Layer"
+                    Web1 --> Cache[Redis Cluster]
+                    Web2 --> Cache
+                    Web3 --> Cache
+                    Cache --> DB_Master[(Postgres Master)]
+                    DB_Master --> DB_Slave1[(Postgres Replica 1)]
+                    DB_Master --> DB_Slave2[(Postgres Replica 2)]
+                    end
+
+                    style LB fill:#fbcfe8,stroke:#db2777,stroke-width:1.5px
+                    style DB_Master fill:#c7d2fe,stroke:#4f46e5,stroke-width:1.5px
+                    style Cache fill:#fde68a,stroke:#d97706,stroke-width:1.5px
+                </div>
+            </div>
+
+            <!-- Sequence (Mermaid) -->
+            <div class="card wide sequence">
+                <div class="card-header">
+                    <h3>API report flow</h3>
+                    <span class="tag">Mermaid</span>
+                </div>
+                <div class="mermaid" data-title="Sequence Diagram">
+                    sequenceDiagram
+                    participant User
+                    participant UI as Client Application
+                    participant API as Backend Service
+
+                    User->>UI: Clicks "Generate Report"
+                    UI->>API: POST /api/v1/reports/pdf
+                    Note right of API: API processes data...
+                    API-->>UI: Returns 200 OK (Report ID: 12345)
+                    UI-->>User: Shows "Download Ready" Notification
+                </div>
+            </div>
+
+            <!-- State Machine (SVG) -->
+            <div class="card">
+                <div class="card-header">
+                    <h3>State transition</h3>
+                    <span class="tag">Inline SVG</span>
+                </div>
+                <div class="diagram" data-title="Auth Flowchart">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 550 300">
+                        <defs>
+                            <style>
+                                .state {
+                                    fill: #805ad5;
+                                    stroke: #6b46c1;
+                                    stroke-width: 2;
+                                }
+    
+                                .start {
+                                    fill: #38b2ac;
+                                }
+    
+                                .end {
+                                    fill: #f56565;
+                                }
+    
+                                .label {
+                                    fill: white;
+                                    font-family: sans-serif;
+                                    font-size: 12px;
+                                    text-anchor: middle;
+                                }
+    
+                                .transition {
+                                    stroke: #4a5568;
+                                    stroke-width: 2;
+                                    fill: none;
+                                    marker-end: url(#arrow);
+                                }
+    
+                                .transition-label {
+                                    fill: #4a5568;
+                                    font-family: sans-serif;
+                                    font-size: 10px;
+                                    text-anchor: middle;
+                                }
+                            </style>
+                            <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+                                <polygon points="0 0, 10 3, 0 6" fill="#4a5568" />
+                            </marker>
+                        </defs>
+                        <circle class="state start" cx="50" cy="150" r="30" />
+                        <text class="label" x="50" y="155">Start</text>
+                        <rect class="state" x="120" y="120" width="80" height="60" rx="8" />
+                        <text class="label" x="160" y="145">Pending</text>
+                        <rect class="state" x="250" y="50" width="80" height="60" rx="8" />
+                        <text class="label" x="290" y="85">Processing</text>
+                        <rect class="state" x="380" y="120" width="80" height="60" rx="8" />
+                        <text class="label" x="420" y="155">Shipped</text>
+                        <circle class="state end" cx="500" cy="150" r="30" />
+                        <text class="label" x="500" y="155">Done</text>
+                        <path class="transition" d="M 80 150 L 120 150" />
+                        <path class="transition" d="M 200 140 L 250 90" />
+                        <path class="transition" d="M 330 80 L 380 140" />
+                        <path class="transition" d="M 460 150 L 470 150" />
+                    </svg>
+                </div>
+            </div>
+
+            <!-- Width/height-only SVG (no viewBox attribute) -->
+            <div class="card">
+                <div class="card-header">
+                    <h3>No viewBox attribute</h3>
+                    <span class="tag">Inline SVG</span>
+                </div>
+                <div class="diagram" data-title="Width/Height Only SVG">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="260" height="180">
+                        <defs>
+                            <marker id="nvb-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6"
+                                markerHeight="6" orient="auto-start-reverse">
+                                <path d="M 0 0 L 10 5 L 0 10 z" fill="#64748b" />
+                            </marker>
+                        </defs>
+                        <rect x="10" y="70" width="70" height="40" rx="6" fill="#38b2ac" />
+                        <text x="45" y="94" text-anchor="middle" font-family="sans-serif" font-size="11"
+                            fill="white">Inkscape</text>
+                        <rect x="95" y="70" width="70" height="40" rx="6" fill="#805ad5" />
+                        <text x="130" y="94" text-anchor="middle" font-family="sans-serif" font-size="10"
+                            fill="white">Hand-written</text>
+                        <rect x="180" y="70" width="70" height="40" rx="6" fill="#f56565" />
+                        <text x="215" y="94" text-anchor="middle" font-family="sans-serif" font-size="11"
+                            fill="white">Exported</text>
+                        <path d="M 80 90 L 93 90" stroke="#64748b" stroke-width="2" marker-end="url(#nvb-arrow)" />
+                        <path d="M 165 90 L 178 90" stroke="#64748b" stroke-width="2" marker-end="url(#nvb-arrow)" />
+                        <text x="130" y="30" text-anchor="middle" font-family="sans-serif" font-size="11"
+                            fill="#64748b">width="260" height="180"</text>
+                        <text x="130" y="46" text-anchor="middle" font-family="sans-serif" font-size="11"
+                            fill="#64748b">and no viewBox</text>
+                        <text x="130" y="142" text-anchor="middle" font-family="sans-serif" font-size="11"
+                            fill="#64748b">Shows inline and opens</text>
+                        <text x="130" y="158" text-anchor="middle" font-family="sans-serif" font-size="11"
+                            fill="#64748b">fullscreen like any other SVG</text>
+                    </svg>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h3>Analytics</h3>
+                    <span class="tag">Mermaid</span>
+                </div>
+                <div class="mermaid">
+                    pie title Language Usage
+                    "JavaScript" : 70
+                    "CSS" : 20
+                    "HTML" : 10
+                </div>
+            </div>
+
+            <!-- Performance Stress Test (SVG) -->
+            <div class="card">
+                <div class="card-header">
+                    <h3>Performance stress test</h3>
+                    <span class="tag">2,500 nodes</span>
+                </div>
+                <div class="stress-test" data-title="2,500 Nodes Test">
+                    <svg id="stress-svg" width="3000" height="3000" viewBox="0 0 3000 3000"
+                        xmlns="http://www.w3.org/2000/svg">
+                        <rect width="100%" height="100%" fill="transparent" />
+                        <g id="stress-node-layer"></g>
+                    </svg>
+                </div>
+                <p class="card-note">Click to open the 2,500 node grid.</p>
             </div>
         </div>
 
-        <!-- State Machine (SVG) -->
-        <div class="card">
-            <div class="card-header">
-                <h3>State Transition</h3>
-                <span class="card-badge svg-badge">SVG</span>
+        <!-- Feature highlights -->
+        <section class="section">
+            <div class="wrap">
+                <div class="section-head">
+                    <h2>Why choose this layout?</h2>
+                    <p>Designed for real-world use cases where control placement matters.</p>
+                </div>
+                <div class="cols">
+                    <div>
+                        <h4>A toolbar above each diagram</h4>
+                        <p>A bar above each diagram holds the title and the copy, download and fullscreen buttons.
+                            With a mouse it appears on hover or keyboard focus. On touch screens it is always shown.</p>
+                    </div>
+                    <div>
+                        <h4>WCAG 2.1 compliant</h4>
+                        <p>Header toolbar meets AA contrast ratios with full focus management, aria-labels, and
+                            keyboard operability out of the box.</p>
+                    </div>
+                    <div>
+                        <h4>Ideal for docs and dashboards</h4>
+                        <p>The classic toolbar pattern matches what users already know from Google Docs, Figma, and
+                            GitHub. Zero learning curve.</p>
+                    </div>
+                </div>
             </div>
-            <div class="diagram" data-title="Auth Flowchart">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 550 300">
-                    <defs>
-                        <style>
-                            .state {
-                                fill: #805ad5;
-                                stroke: #6b46c1;
-                                stroke-width: 2;
-                            }
+        </section>
 
-                            .start {
-                                fill: #38b2ac;
-                            }
+        <!-- Keyboard shortcuts -->
+        <section class="section">
+            <div class="wrap">
+                <div class="section-head">
+                    <h2>Keyboard reference</h2>
+                    <p>Tab reaches the toolbar buttons, and these keys work while the viewer is open.</p>
+                </div>
+                <div class="cols shortcuts">
+                    <div>
+                        <h3 class="grp">Zoom</h3>
+                        <dl>
+                            <dt><kbd>+</kbd></dt>
+                            <dd>Zoom in</dd>
+                            <dt><kbd>-</kbd></dt>
+                            <dd>Zoom out</dd>
+                            <dt><kbd>Space / 0</kbd></dt>
+                            <dd>Reset &amp; center</dd>
+                        </dl>
+                    </div>
+                    <div>
+                        <h3 class="grp">Pan</h3>
+                        <dl>
+                            <dt><kbd>↑ ↓ ← →</kbd></dt>
+                            <dd>Pan diagram</dd>
+                            <dt><kbd>Shift + ↑ ↓ ← →</kbd></dt>
+                            <dd>Fast pan</dd>
+                            <dt><kbd>Drag</kbd></dt>
+                            <dd>Free pan</dd>
+                        </dl>
+                    </div>
+                    <div>
+                        <h3 class="grp">Search</h3>
+                        <dl>
+                            <dt><kbd>F</kbd></dt>
+                            <dd>Open search</dd>
+                            <dt><kbd>Esc</kbd></dt>
+                            <dd>Clear / close</dd>
+                        </dl>
+                    </div>
+                    <div>
+                        <h3 class="grp">Tools</h3>
+                        <dl>
+                            <dt><kbd>M</kbd></dt>
+                            <dd>Meeting mode</dd>
+                            <dt><kbd>R</kbd></dt>
+                            <dd>Rotate 90°</dd>
+                            <dt><kbd>L</kbd></dt>
+                            <dd>Share link</dd>
+                            <dt><kbd>T</kbd></dt>
+                            <dd>Text select</dd>
+                            <dt><kbd>?</kbd></dt>
+                            <dd>Show shortcuts</dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </section>
 
-                            .end {
-                                fill: #f56565;
-                            }
-
-                            .label {
-                                fill: white;
-                                font-family: sans-serif;
-                                font-size: 12px;
-                                text-anchor: middle;
-                            }
-
-                            .transition {
-                                stroke: #4a5568;
-                                stroke-width: 2;
-                                fill: none;
-                                marker-end: url(#arrow);
-                            }
-
-                            .transition-label {
-                                fill: #4a5568;
-                                font-family: sans-serif;
-                                font-size: 10px;
-                                text-anchor: middle;
-                            }
-                        </style>
-                        <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
-                            <polygon points="0 0, 10 3, 0 6" fill="#4a5568" />
-                        </marker>
-                    </defs>
-                    <circle class="state start" cx="50" cy="150" r="30" />
-                    <text class="label" x="50" y="155">Start</text>
-                    <rect class="state" x="120" y="120" width="80" height="60" rx="8" />
-                    <text class="label" x="160" y="145">Pending</text>
-                    <rect class="state" x="250" y="50" width="80" height="60" rx="8" />
-                    <text class="label" x="290" y="85">Processing</text>
-                    <rect class="state" x="380" y="120" width="80" height="60" rx="8" />
-                    <text class="label" x="420" y="155">Shipped</text>
-                    <circle class="state end" cx="500" cy="150" r="30" />
-                    <text class="label" x="500" y="155">Done</text>
-                    <path class="transition" d="M 80 150 L 120 150" />
-                    <path class="transition" d="M 200 140 L 250 90" />
-                    <path class="transition" d="M 330 80 L 380 140" />
-                    <path class="transition" d="M 460 150 L 470 150" />
-                </svg>
-            </div>
-        </div>
-
-        <!-- Width/height-only SVG (no viewBox attribute) -->
-        <div class="card">
-            <div class="card-header">
-                <h3>No viewBox Attribute</h3>
-                <span class="card-badge svg-badge">SVG</span>
-            </div>
-            <div class="diagram" data-title="Width/Height Only SVG">
-                <svg xmlns="http://www.w3.org/2000/svg" width="260" height="180">
-                    <defs>
-                        <marker id="nvb-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6"
-                            markerHeight="6" orient="auto-start-reverse">
-                            <path d="M 0 0 L 10 5 L 0 10 z" fill="#64748b" />
-                        </marker>
-                    </defs>
-                    <rect x="10" y="70" width="70" height="40" rx="6" fill="#38b2ac" />
-                    <text x="45" y="94" text-anchor="middle" font-family="sans-serif" font-size="11"
-                        fill="white">Inkscape</text>
-                    <rect x="95" y="70" width="70" height="40" rx="6" fill="#805ad5" />
-                    <text x="130" y="94" text-anchor="middle" font-family="sans-serif" font-size="10"
-                        fill="white">Hand-written</text>
-                    <rect x="180" y="70" width="70" height="40" rx="6" fill="#f56565" />
-                    <text x="215" y="94" text-anchor="middle" font-family="sans-serif" font-size="11"
-                        fill="white">Exported</text>
-                    <path d="M 80 90 L 93 90" stroke="#64748b" stroke-width="2" marker-end="url(#nvb-arrow)" />
-                    <path d="M 165 90 L 178 90" stroke="#64748b" stroke-width="2" marker-end="url(#nvb-arrow)" />
-                    <text x="130" y="30" text-anchor="middle" font-family="sans-serif" font-size="11"
-                        fill="#64748b">width="260" height="180"</text>
-                    <text x="130" y="46" text-anchor="middle" font-family="sans-serif" font-size="11"
-                        fill="#64748b">and no viewBox</text>
-                    <text x="130" y="142" text-anchor="middle" font-family="sans-serif" font-size="11"
-                        fill="#64748b">Shows inline and opens</text>
-                    <text x="130" y="158" text-anchor="middle" font-family="sans-serif" font-size="11"
-                        fill="#64748b">fullscreen like any other SVG</text>
-                </svg>
-            </div>
-        </div>
-
-        <div class="card">
-            <div class="card-header">
-                <h3>Analytics</h3>
-                <span class="card-badge mermaid-badge">Mermaid</span>
-            </div>
-            <div class="mermaid">
-                pie title Language Usage
-                "JavaScript" : 70
-                "CSS" : 20
-                "HTML" : 10
-            </div>
-        </div>
-
-        <!-- Performance Stress Test (SVG) -->
-        <div class="card">
-            <div class="card-header">
-                <h3>Performance Stress Test</h3>
-                <span class="card-badge stress-badge">2.5k Nodes</span>
-            </div>
-            <div class="stress-test" data-title="2,500 Nodes Test">
-                <svg id="stress-svg" width="3000" height="3000" viewBox="0 0 3000 3000"
-                    xmlns="http://www.w3.org/2000/svg">
-                    <rect width="100%" height="100%" fill="transparent" />
-                    <g id="stress-node-layer"></g>
-                </svg>
-            </div>
-            <p style="text-align: center; margin-top: 10px; color: var(--muted); font-size: 0.8rem;">Click to open the
-                2,500 node grid</p>
-        </div>
-    </div>
-
-
-    <!-- ── Feature highlights ── -->
-    <div class="page-section">
-        <div class="section-header">
-            <h2 class="section-title">Why choose this layout?</h2>
-            <p class="section-subtitle">Designed for real-world use cases where control placement matters.</p>
-        </div>
-        <div class="info-grid">
-            <div class="info-card">
-                <div class="info-icon">▬</div>
-                <h4>A Toolbar Above Each Diagram</h4>
-                <p>A bar above each diagram holds the title and the copy, download and fullscreen buttons. With a mouse
-                    it appears on hover or keyboard focus. On touch screens it is always shown.</p>
-            </div>
-            <div class="info-card">
-                <div class="info-icon">♿</div>
-                <h4>WCAG 2.1 Compliant</h4>
-                <p>Header toolbar meets AA contrast ratios with full focus management, aria-labels, and keyboard
-                    operability out of the box.</p>
-            </div>
-            <div class="info-card">
-                <div class="info-icon">📄</div>
-                <h4>Ideal for Docs & Dashboards</h4>
-                <p>The classic toolbar pattern matches what users already know from Google Docs, Figma, and GitHub. Zero
-                    learning curve.</p>
-            </div>
-        </div>
-    </div>
-
-
-    <!-- ── Keyboard shortcuts ── -->
-    <div class="shortcuts-section">
-        <div class="section-header">
-            <h2 class="section-title">Keyboard Reference</h2>
-            <p class="section-subtitle">Every action is keyboard-accessible. No mouse required.</p>
-        </div>
-        <div class="shortcuts-grid">
-            <div class="shortcut-card">
-                <div class="shortcut-group">Zoom</div>
-                <div class="shortcut-row"><kbd>+</kbd><span>Zoom in</span></div>
-                <div class="shortcut-row"><kbd>-</kbd><span>Zoom out</span></div>
-                <div class="shortcut-row"><kbd>Space / 0</kbd><span>Reset &amp; center</span></div>
-            </div>
-            <div class="shortcut-card">
-                <div class="shortcut-group">Pan</div>
-                <div class="shortcut-row"><kbd>↑ ↓ ← →</kbd><span>Pan diagram</span></div>
-                <div class="shortcut-row"><kbd>Shift + ↑ ↓ ← →</kbd><span>Fast pan</span></div>
-                <div class="shortcut-row"><kbd>Drag</kbd><span>Free pan</span></div>
-            </div>
-            <div class="shortcut-card">
-                <div class="shortcut-group">Search</div>
-                <div class="shortcut-row"><kbd>F</kbd><span>Open search</span></div>
-                <div class="shortcut-row"><kbd>Esc</kbd><span>Clear / close</span></div>
-            </div>
-            <div class="shortcut-card">
-                <div class="shortcut-group">Tools</div>
-                <div class="shortcut-row"><kbd>M</kbd><span>Meeting mode</span></div>
-                <div class="shortcut-row"><kbd>R</kbd><span>Rotate 90°</span></div>
-                <div class="shortcut-row"><kbd>L</kbd><span>Share link</span></div>
-                <div class="shortcut-row"><kbd>T</kbd><span>Text select</span></div>
-                <div class="shortcut-row"><kbd>?</kbd><span>Show shortcuts</span></div>
-            </div>
-        </div>
-    </div>
-
-    <!-- ── Integration code ── -->
-    <div class="code-section">
-        <div class="section-header" style="margin-bottom:20px">
-            <h2 class="section-title" style="font-size:1.3rem">Integration</h2>
-        </div>
-        <div class="code-block">
-            <pre><code><span class="c">// Works with Mermaid.js — render first, then init</span>
+        <!-- Integration code -->
+        <section class="section">
+            <div class="wrap">
+                <div class="section-head">
+                    <h2>Integration</h2>
+                    <p>Render Mermaid first, then start DiagView.</p>
+                </div>
+                <div class="code">
+                    <div class="code-bar">
+                        <span class="file">app.js</span>
+                        <button class="copy-btn" type="button" data-copy>Copy</button>
+                    </div>
+<pre><code><span class="c">// Works with Mermaid.js. Render first, then init</span>
 <span class="kw">await</span> mermaid.run();
 
 <span class="kw">DiagView</span>.init({
@@ -353,33 +428,30 @@
      <span class="a">data-diagview-layout</span>=<span class="v">"header"</span>&gt;
   graph TD; A--&gt;B;
 &lt;/<span class="t">div</span>&gt;</code></pre>
-        </div>
-        <div class="code-nav">
-            <a href="layout-compare.html" class="code-nav-link">Compare all layouts →</a>
-            <a href="layout-off.html" class="code-nav-link">Try Off Layout →</a>
-        </div>
-    </div>
-
-    <footer>
-        <div class="container">
-            <div class="footer-links">
-                <a href="index.html">← Back to Hub</a>
-                <a href="https://github.com/khadirullah/diagview" target="_blank" rel="noopener">GitHub</a>
-                <a href="https://www.npmjs.com/package/diagview" target="_blank" rel="noopener">NPM</a>
+                </div>
+                <div class="next">
+                    <a href="layout-compare.html" class="link">Compare all layouts</a>
+                    <a href="layout-off.html" class="link">Try the off layout</a>
+                </div>
             </div>
-            <p class="copyright">DiagView &bull; <span data-version></span> &bull; Built with ❤️</p>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <div class="wrap">
+            <nav aria-label="Project links">
+                <a href="index.html">Demo hub</a>
+                <a href="https://github.com/khadirullah/diagview" target="_blank" rel="noopener">GitHub</a>
+                <a href="https://www.npmjs.com/package/diagview" target="_blank" rel="noopener">npm</a>
+            </nav>
+            <span>DiagView <span data-version></span></span>
         </div>
     </footer>
 
     <script>
-        // Mermaid init
-        mermaid.initialize({
-            startOnLoad: true,
-            theme: 'default',
-            securityLevel: 'loose'
-        });
+        mermaid.initialize(demoMermaidConfig());
 
-        // Page-specific: Generate stress nodes + init DiagView
+        // Page-specific: generate stress nodes, render Mermaid, init DiagView
         document.addEventListener('DOMContentLoaded', async () => {
             const stressLayer = document.getElementById('stress-node-layer');
             if (stressLayer) {
@@ -401,6 +473,13 @@
                 }
             }
 
+            // Left to right is unreadable on a phone, so the flowchart draws top-down there
+            if (matchMedia('(max-width: 600px)').matches) {
+                const infra = document.getElementById('infraDiagram');
+                infra.textContent = infra.textContent.replace('graph LR', 'graph TD');
+            }
+
+            try { await document.fonts.ready; } catch (e) { }
             await mermaid.run();
 
             const dvInit = () => DiagView.init({
