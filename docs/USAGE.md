@@ -887,6 +887,8 @@ mermaid.initialize({
 });
 ```
 
+Mermaid fixes the theme when it draws, so a later theme switch leaves the diagrams as they were. To follow the switch, draw them again as shown in the [FAQ](FAQ.md#theming).
+
 ---
 
 ## 22. Advanced Configuration

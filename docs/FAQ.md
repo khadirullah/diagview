@@ -225,7 +225,52 @@ A: Ensure your HTML signals dark mode via one of:
 Or override manually: `DiagView.init({ backgroundColor: '#0f172a', textColor: '#e2e8f0' })`.
 
 **Q: My brand color doesn't apply inside the diagram itself.**  
-A: DiagView applies the accent color to the UI chrome (buttons and minimap), not to the SVG content itself. To style SVG internals, use your own CSS.
+A: DiagView applies the accent color to the UI chrome (buttons and minimap), not to the SVG content itself. To style SVG internals, use your own CSS. For Mermaid, draw the diagrams again with your colors, as the [next answer](#theming) shows.
+
+**Q: How do I make Mermaid diagrams follow my site's theme or accent color?**  
+A: Draw them again. Mermaid writes its colors into the SVG when it draws, and DiagView shows that SVG as it is. The Canvas Theme in the viewer only changes the background behind the diagram, and `accentColor` only colors DiagView's own controls. Neither redraws the diagram. When the site changes theme or accent, take DiagView down, put back each diagram's Mermaid source, draw it with the new settings and start DiagView again.
+
+This example assumes the toggle sets a `dark` class and an `--accent` variable on `<html>`. Load DiagView with `data-diagview-no-auto-init` and run the script after the diagrams in the page.
+
+```javascript
+const blocks = [...document.querySelectorAll(".mermaid")];
+const sources = blocks.map((el) => el.textContent);
+const options = { diagramSelector: ".mermaid" };
+let drawn = "";
+
+async function drawDiagrams() {
+  const root = document.documentElement;
+  const dark = root.classList.contains("dark");
+  const accent = getComputedStyle(root).getPropertyValue("--accent").trim() || "#2563eb";
+  drawn = `${dark} ${accent}`;
+  blocks.forEach((el, i) => {
+    el.removeAttribute("data-processed");
+    el.textContent = sources[i];
+  });
+  mermaid.initialize({
+    startOnLoad: false,
+    theme: dark ? "dark" : "default",
+    themeCSS: `.node rect, .node polygon { stroke: ${accent}; stroke-width: 2px; }`,
+  });
+  await mermaid.run({ nodes: blocks });
+}
+
+let queue = drawDiagrams().then(() => DiagView.init(options));
+
+new MutationObserver(() => {
+  queue = queue.then(async () => {
+    // Skip changes that leave the theme and accent as they were
+    const root = document.documentElement;
+    const accent = getComputedStyle(root).getPropertyValue("--accent").trim() || "#2563eb";
+    if (`${root.classList.contains("dark")} ${accent}` === drawn) return;
+    await DiagView.destroy();
+    await drawDiagrams();
+    await DiagView.init(options);
+  });
+}).observe(document.documentElement, { attributes: true, attributeFilter: ["class", "style"] });
+```
+
+The minimap and exports show the redrawn colors.
 
 **Q: How do I change the accent color?**  
 A: Pass `accentColor` to `init()`, or call `DiagView.configure({ accentColor: "#f59e0b" })` to change it later. Without `accentColor`, DiagView uses `--diagram-accent` if it holds a colour, then its built-in blue. It does not read the site's `--primary` or `--accent-color`. It reads the page variables again when the `class`, `data-theme` or `style` attribute of `<html>` or `<body>` changes, so a theme or accent switcher that sets them applies at once. An `accentColor` in the config always wins over the page variables.
