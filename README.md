@@ -85,7 +85,7 @@ To disable auto-initialization and configure manually:
 </script>
 ```
 
-Auto-init is deferred by one task, so an `init()` call issued synchronously from a module, `defer` or bundler entry script always wins over it; the attribute is only needed when your `init()` runs later (after an `await`, in a framework effect).
+Auto-init is deferred by one task, so an `init()` call issued synchronously from a module, `defer` or bundler entry script always wins over it; the attribute is only needed when your `init()` runs later (after an `await`, in a framework effect). It works on any `<script>` tag or on `<html>`.
 
 ### NPM
 
@@ -110,6 +110,17 @@ import Panzoom from "@panzoom/panzoom";
 import DiagView from "diagview"; // resolves dist/esm/index.js
 
 window.Panzoom = Panzoom;
+```
+
+If your app renders diagrams before it calls `init()`, for example after `await mermaid.run()`, auto-init starts first with default options. Put `data-diagview-no-auto-init` on `<html>` or on your app's script tag to stop it:
+
+```html
+<html data-diagview-no-auto-init></html>
+```
+
+```javascript
+await mermaid.run();
+DiagView.init({ layout: "header" }); // your options apply
 ```
 
 Styles are injected automatically at runtime — no CSS import is required. The raw stylesheet is also exported for advanced setups (inspecting the rules, building theme overrides, or processing it through your build pipeline):

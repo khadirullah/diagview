@@ -32,7 +32,7 @@ A: Yes. Styles are injected once into a `<style id="diagview-styles">` tag when 
 ---
 
 **Q: I call `init({...})` from a `type="module"` script and get "Already initialized"; my options are ignored.**  
-A: Auto-init is deferred one task after the library loads, so an `init()` that runs synchronously in your module wins. The warning means your call ran later, after an `await` or inside a framework effect. Add `data-diagview-no-auto-init` to the library script tag in that case. Do not use `data-diagview-auto-init`, which forces auto-init whatever its value.
+A: Auto-init is deferred one task after the library loads, so an `init()` that runs synchronously in your module wins. The warning means your call ran later, after an `await` or inside a framework effect. Add `data-diagview-no-auto-init` in that case, on the library script tag, your own script tag or `<html>`. A bundled app has no library script tag, so use `<html>`. Do not use `data-diagview-auto-init`, which forces auto-init whatever its value.
 
 ---
 

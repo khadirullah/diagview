@@ -57,6 +57,8 @@ import { clearAllZoomStates } from "./features/panzoom-integration.js";
 
 // Global auto-init handle
 let autoInitTimeout = null;
+// Whether the running instance was started by auto-init, for a clearer warning
+let autoStarted = false;
 
 // In-flight destroy() promise. destroy() is async (it awaits modal close and
 // lazy-module resets before resetting state), so a synchronous init() issued
@@ -101,7 +103,11 @@ function init(options = {}) {
   }
 
   if (state.isInitialized) {
-    console.warn("DiagView: Already initialized. Call destroy() first.");
+    console.warn(
+      autoStarted
+        ? "DiagView: Already initialized by auto-init, so these options were ignored. Add data-diagview-no-auto-init to <html> or to your script tag, or call destroy() first."
+        : "DiagView: Already initialized. Call destroy() first.",
+    );
     return Promise.resolve();
   }
 
@@ -240,6 +246,7 @@ async function _teardown() {
     // Now reset all state — cleanup functions have already run
     resetViewportState();
     resetConfig();
+    autoStarted = false;
   }
 }
 
@@ -366,25 +373,21 @@ if (typeof window !== "undefined") {
     // 1. Check if already initialized
     if (state.isInitialized) return;
 
-    // 2. Check for explicit opt-out. Look at ANY diagview script tag, not just
-    // the first one — a "diagview-setup.js" placed before the library tag must
-    // not hide the opt-out on the library tag itself.
+    // 2. Check for explicit opt-out. It can sit on any element, not only a
+    // script whose name contains "diagview". A bundled app's script is called
+    // something like index-4f2a9c.js, so it goes on <html> or that script.
     const isOptedOut =
       (loaderScript && loaderScript.hasAttribute("data-diagview-no-auto-init")) ||
-      !!document.querySelector('script[src*="diagview"][data-diagview-no-auto-init]');
+      !!document.querySelector("[data-diagview-no-auto-init]");
 
     // 3. Determine if we should initialize
     const isForced = document.querySelector("[data-diagview-auto-init]");
     const hasDiagrams = document.querySelector(DEFAULT_CONFIG.diagramSelector);
 
     // Forced init via attribute always wins (useful for selective init on specific pages)
-    if (isForced) {
-      DiagView.init();
-      return;
-    }
-
     // Otherwise, auto-initialize if diagrams are found and user hasn't opted out globally
-    if (!isOptedOut && hasDiagrams) {
+    if (isForced || (!isOptedOut && hasDiagrams)) {
+      autoStarted = true;
       DiagView.init();
     }
   };

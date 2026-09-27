@@ -84,7 +84,7 @@ Without `window.Panzoom`, the viewer still opens but zoom and pan are off. The c
 
 ## 2. Auto-Initialization
 
-When DiagView's script tag does **not** have `data-diagview-no-auto-init`, it automatically scans for diagrams and initializes itself after `DOMContentLoaded`. The default selector is:
+When the page has no `data-diagview-no-auto-init` attribute, DiagView automatically scans for diagrams and initializes itself after `DOMContentLoaded`. The default selector is:
 
 ```
 .diagram, .chart, [data-diagram]
@@ -119,7 +119,11 @@ Auto-init never runs synchronously. It is scheduled one task after `DOMContentLo
 
 `init()` also works from a script in `<head>`. The page has no `<body>` at that point, so DiagView waits for `DOMContentLoaded` and starts then. The promise `init()` returns resolves once it has started.
 
-The opt-out attribute is honoured on any `<script>` whose `src` contains `diagview`, so a helper script named `diagview-setup.js` placed before the library tag does not hide it.
+The opt-out attribute works on any element. Put it on the library's `<script>` tag, on your own script tag, or on `<html>`. A bundled app has no script named `diagview`, so use `<html>` or the app's own tag:
+
+```html
+<html data-diagview-no-auto-init></html>
+```
 
 ---
 
@@ -1056,7 +1060,7 @@ Fix the SVG in place and call `DiagView.refresh()`; the placeholder is removed a
 
 ### "Already initialized" warning and my options are ignored
 
-Auto-init ran before your `DiagView.init({...})`. This happens when your call comes after an `await` or from a framework effect. Add `data-diagview-no-auto-init` to the script tag, or call `init()` synchronously after the library loads (see [Timing](#timing)).
+Auto-init ran before your `DiagView.init({...})`. This happens when your call comes after an `await` or from a framework effect. The warning then reads "Already initialized by auto-init, so these options were ignored". Add `data-diagview-no-auto-init` to the script tag or to `<html>`, or call `init()` synchronously after the library loads (see [Timing](#timing)).
 
 ### `diagramSelector` change has no effect
 
