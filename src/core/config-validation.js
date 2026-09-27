@@ -79,6 +79,13 @@ export function validateConfig(config, previous = DEFAULT_CONFIG) {
     config["layout"] = defaults["layout"];
   }
 
+  if (!["none", "dots"].includes(/** @type {string} */ (config["canvasGrid"]))) {
+    console.warn(
+      `DiagView: canvasGrid must be "none" or "dots", keeping "${fallback("canvasGrid")}"`,
+    );
+    config["canvasGrid"] = fallback("canvasGrid");
+  }
+
   if (!isValidSelector(config["diagramSelector"])) {
     console.warn(
       `DiagView: diagramSelector "${config["diagramSelector"]}" is not a valid selector, keeping "${fallback("diagramSelector")}"`,

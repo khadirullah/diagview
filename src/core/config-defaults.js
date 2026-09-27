@@ -78,6 +78,7 @@ import { deepMerge, deepFreeze } from "./state-utils.js";
  * @property {boolean} naturalPanning - Arrow keys move the diagram in the arrow's direction
  * @property {boolean} rotateKeepsView - Rotating keeps the view, the same size on screen and the same centre, instead of fitting the diagram. The zoom % adjusts.
  * @property {boolean} showMinimap - Show the minimap in the viewer
+ * @property {"none"|"dots"} canvasGrid - Dot grid behind the diagram in the viewer
  * @property {boolean} rememberZoom - Keep each diagram's zoom and pan in session storage
  * @property {boolean} animateOpen - Animate the viewer opening
  * @property {boolean} showBranding - Show the DiagView link in the viewer
@@ -154,6 +155,7 @@ export const INITIAL_CONFIG = {
 
   // Feature toggles
   showMinimap: true,
+  canvasGrid: "none",
   rememberZoom: false,
   animateOpen: true,
   showBranding: true,

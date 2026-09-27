@@ -503,6 +503,16 @@ The "Canvas Theme" section of the fullscreen menu sets the background behind the
 
 Light, Dark and the swatches override `backgroundColor`. The viewer's own text and controls, including the "?" key badge in the topbar, take their colour from the canvas. DiagView does not save the choice; it lasts until the page reloads or `destroy()` runs. Share links carry it in `dv-t` and `dv-c` (see [Share Links](#8-share-links)). The first time someone opens the viewer, a toast points to this menu. Set `showFirstTimeThemeHint: false` to turn it off.
 
+### Canvas grid
+
+Set `canvasGrid: "dots"` to draw a faint dot grid behind the diagram in the fullscreen viewer. The default is `"none"`.
+
+```javascript
+DiagView.init({ canvasGrid: "dots" });
+```
+
+The dots move with the diagram as you pan and zoom. Their spacing doubles or halves to stay between 16 and 32 pixels, so they neither blur into grey when zoomed out nor thin out when zoomed in. They take the viewer's text colour at low opacity, so they follow the canvas theme. The grid is a CSS background on the viewer, so exports, clipboard copies and the diagram on the page never show it. `configure({ canvasGrid })` turns it on or off while the viewer is open. There is no per-diagram attribute for it.
+
 ### Text Colours
 
 The Canvas Theme section of the fullscreen menu changes only the background behind the diagram. The diagram keeps its author's colours, so dark text drawn for a light page can be hard to read on a dark canvas. The "Text Colours" row under the swatches has two buttons:

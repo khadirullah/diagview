@@ -30,6 +30,7 @@ import {
 import { injectStyles, removeStyles, injectStylesInto, removeStylesFrom } from "./ui/styles.js";
 import { createModal, openFullscreen } from "./ui/modal.js";
 import { closeModal, syncBrandingVisibility } from "./ui/modal-controls.js";
+import { syncCanvasGrid } from "./ui/canvas-grid.js";
 import { resetViewportState } from "./ui/viewport.js";
 import { setupKeyboardShortcuts, teardownKeyboardShortcuts } from "./features/keyboard.js";
 import {
@@ -282,6 +283,7 @@ function configure(options = {}) {
   clearThemeCache(); // colour overrides must not wait for the cache to expire
   syncReadable(syncTheme().bg);
   syncBrandingVisibility();
+  syncCanvasGrid();
 }
 
 /**

@@ -909,6 +909,17 @@
   cursor: grabbing;
 }
 
+/* canvasGrid: "dots". canvas-grid.js keeps the variables in step with pan and zoom */
+.diagview-modal-viewport.dv-grid-dots {
+  background-image: radial-gradient(
+    circle,
+    color-mix(in srgb, var(--dv-text-color) 22%, transparent) 1px,
+    transparent 1.5px
+  );
+  background-size: var(--dv-grid-size, 24px) var(--dv-grid-size, 24px);
+  background-position: calc(50% + var(--dv-grid-x, 0px)) calc(50% + var(--dv-grid-y, 0px));
+}
+
 /* Text-select mode: overrides user-select:none so SVG labels are copyable */
 .diagview-modal-viewport.dv-text-select {
   user-select: text;

@@ -28,6 +28,7 @@ import { closeModal, lockBodyScroll } from "./modal-controls.js";
 import { createFloatingMenu } from "./floating-menu.js";
 import { pushModalHistoryState, startVisualViewportSync } from "./viewport.js";
 import { showInfoToast } from "./toast.js";
+import { syncCanvasGrid, updateCanvasGrid } from "./canvas-grid.js";
 
 /** Debounce for persisting zoom state on high-frequency panzoomchange (ms) */
 const ZOOM_SAVE_DEBOUNCE = 150;
@@ -330,6 +331,12 @@ function _attachModalLifecycle(element, clone, viewport, panzoom, diagramId) {
         saveState();
       });
     }
+  }
+
+  // Dot grid. Not throttled, so the dots move in the same frame as the diagram.
+  syncCanvasGrid();
+  if (panzoom) {
+    addModalListener(clone, "panzoomchange", (e) => updateCanvasGrid(viewport, e.detail));
   }
 
   // Create floating menu

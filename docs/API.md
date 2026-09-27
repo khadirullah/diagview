@@ -372,6 +372,7 @@ interface DiagViewConfig {
   rotateKeepsView: boolean; // default: false; true = rotate keeps the view (size on screen and centre), zoom % adjusts
   rememberZoom: boolean; // default: false
   showMinimap: boolean; // default: true
+  canvasGrid: "none" | "dots"; // default: 'none'; dot grid behind the fullscreen diagram
 
   // Zoom / Pan
   maxZoomScale: number; // default: 25 (range: 1–50)
