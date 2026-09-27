@@ -418,13 +418,32 @@ async function prepareSvgForExport(svg, modalClone) {
   // Readable text only changes the view; exports keep the author's colours.
   // The clone reads styles and copies the DOM before its first await, so
   // the original colours are in place for both.
+  // With exportSearchHighlight off, the search class comes off while the
+  // clone reads styles, so the file has no dimming or outline. The on-screen
+  // search is put back before anything can repaint.
+  let hideSearch = false;
+  const cloneSource = () => {
+    hideSearch =
+      !state.config.exportSearchHighlight && sourceSvg.classList?.contains("dv-searching");
+    if (hideSearch) sourceSvg.classList.remove("dv-searching");
+    try {
+      return cloneSVGForExportAsync(sourceSvg);
+    } finally {
+      if (hideSearch) sourceSvg.classList.add("dv-searching");
+    }
+  };
   const exportSvg = await (sourceSvg.querySelector?.("[data-dv-text-orig]")
-    ? import("./lazy/readable-text.js").then((m) =>
-        m.withOriginalText(sourceSvg, () => cloneSVGForExportAsync(sourceSvg)),
-      )
-    : cloneSVGForExportAsync(sourceSvg));
+    ? import("./lazy/readable-text.js").then((m) => m.withOriginalText(sourceSvg, cloneSource))
+    : cloneSource());
 
   if (!exportSvg) return null;
+
+  if (hideSearch) {
+    for (const el of exportSvg.querySelectorAll(".dv-search-match")) {
+      el.classList.remove("dv-search-match");
+      if (!el.classList.length) el.removeAttribute("class");
+    }
+  }
 
   // Embed fonts so text metrics match the original browser render
   await embedDocumentFonts(exportSvg);

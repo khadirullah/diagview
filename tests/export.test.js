@@ -517,6 +517,75 @@ describe("Export keeps the author's text colours", () => {
   });
 });
 
+describe("exportSearchHighlight", () => {
+  let container, modalClone, match, other, css;
+
+  beforeEach(() => {
+    container = document.createElement("div");
+    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    svg.setAttribute("viewBox", "0 0 100 100");
+    container.appendChild(svg);
+    document.body.appendChild(container);
+
+    // The modal clone during a search, one shape matched and one dimmed
+    modalClone = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    modalClone.setAttribute("viewBox", "0 0 100 100");
+    modalClone.setAttribute("class", "dv-searching");
+    match = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+    match.setAttribute("class", "dv-search-match");
+    other = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+    other.setAttribute("class", "node");
+    modalClone.append(match, other);
+    document.body.appendChild(modalClone);
+
+    css = document.createElement("style");
+    css.textContent =
+      ".dv-searching rect:not(.dv-search-match) { opacity: 0.15; }" +
+      ".dv-searching rect.dv-search-match { stroke: rgb(37, 99, 235); }";
+    document.head.appendChild(css);
+
+    Object.defineProperty(navigator, "clipboard", {
+      value: { writeText: jest.fn(() => Promise.resolve()) },
+      configurable: true,
+    });
+    Object.defineProperty(window, "isSecureContext", { value: true, configurable: true });
+    updateConfig({ security: { mode: "strict" } });
+  });
+
+  afterEach(() => {
+    container.remove();
+    modalClone.remove();
+    css.remove();
+    updateConfig({ exportSearchHighlight: true });
+    jest.clearAllMocks();
+  });
+
+  test("is on by default and keeps the search look in the export", async () => {
+    expect(state.config.exportSearchHighlight).toBe(true);
+    await copySVGCode(container, { modalClone });
+
+    const copied = navigator.clipboard.writeText.mock.calls[0][0];
+    expect(copied).toContain("dv-search-match");
+    expect(copied).toContain("opacity: 0.15");
+    expect(copied).toContain("rgb(37, 99, 235)");
+  });
+
+  test("false leaves the search look out and keeps the on-screen search", async () => {
+    updateConfig({ exportSearchHighlight: false });
+    await copySVGCode(container, { modalClone });
+
+    const copied = navigator.clipboard.writeText.mock.calls[0][0];
+    expect(copied).not.toContain("dv-search");
+    expect(copied).not.toContain("0.15");
+    expect(copied).not.toContain("rgb(37, 99, 235)");
+    expect(copied).toContain('class="node"');
+
+    expect(modalClone.getAttribute("class")).toBe("dv-searching");
+    expect(match.getAttribute("class")).toBe("dv-search-match");
+    expect(getComputedStyle(other).opacity).toBe("0.15");
+  });
+});
+
 describe("Export embeds self-hosted fonts referenced by relative urls", () => {
   let container, styleEl, fetchMock;
 

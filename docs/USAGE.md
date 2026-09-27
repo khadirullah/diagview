@@ -272,6 +272,10 @@ DiagView picks the outline colour from the canvas background. It uses `#2563eb` 
 DiagView.openFullscreen(element, { searchQuery: "auth service" });
 ```
 
+### Search and export
+
+An export made during a search keeps the dimming and the outline, unless `exportSearchHighlight` is `false`. See [Search highlight](#search-highlight).
+
 ### Search performance
 
 The search module pre-warms its candidate cache during browser idle time, so the first keystroke is never slow even on 2,500-node diagrams.
@@ -283,6 +287,14 @@ The search module pre-warms its candidate cache during browser idle time, so the
 ### From the UI
 
 In fullscreen, open the FAB menu (bottom-right) and click any export button. The "Transparent" checkbox applies to PNG, WebP, and SVG only.
+
+### Search highlight
+
+An export from the fullscreen viewer shows what the viewer shows, so during a search the file has the dimmed nodes and the outlined match. Set `exportSearchHighlight: false` to export the plain diagram instead. The search in the viewer stays as it was.
+
+```javascript
+DiagView.configure({ exportSearchHighlight: false });
+```
 
 ### Programmatic export
 

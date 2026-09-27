@@ -385,6 +385,7 @@ interface DiagViewConfig {
   highResScale: number; // default: 4 (range: 1–10)
   mobileScale: number; // default: 2 (range: 1–5)
   maxPixels: number; // default: 16777216 (16MP), range: 1000000 to 268435456
+  exportSearchHighlight: boolean; // default: true; false = exports made during a search leave out its dimming and outline
 
   // Security
   security: {

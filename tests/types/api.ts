@@ -62,6 +62,7 @@ const full: DiagViewOptions = {
   highResScale: 4,
   mobileScale: 2,
   maxPixels: 16777216,
+  exportSearchHighlight: true,
   security: { mode: "strict", allowOverrides: true, allowRemoteResources: false },
   allowedImageTypes: ["png", "jpeg", "webp", "gif"],
   performance: { largeFileThreshold: 1000000, criticalFileLimit: 50000000 },
@@ -115,6 +116,8 @@ const unknownKey: DiagViewOptions = { someOldOption: true };
 const badLayout: DiagViewOptions = { layout: "sidebar" };
 // @ts-expect-error showMinimap is a boolean
 const badMinimap: DiagViewOptions = { showMinimap: "yes" };
+// @ts-expect-error exportSearchHighlight is a boolean
+const badSearchExport: DiagViewOptions = { exportSearchHighlight: "no" };
 // @ts-expect-error canvasGrid is a fixed set of strings
 const badGrid: DiagViewOptions = { canvasGrid: "lines" };
 // @ts-expect-error security.mode is a fixed set of strings

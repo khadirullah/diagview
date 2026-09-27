@@ -52,16 +52,17 @@ build. Set `E2E_PORT` to use a port other than 9340.
 | `verify-minimap-colour.spec.mjs`   | 4      | minimap redraws `currentColor` parts after a canvas swatch or an Auto mode page theme change, indicator and click still work, other diagrams keep their image                                                                                                                             |
 | `verify-share-page-zoom.spec.mjs`  | 6      | share link restore at 0 and 90 degrees, minimap indicator, rotateKeepsView and search outline behind a matched label, all on a zoomed-out phone page                                                                                                                                      |
 | `verify-theme-hint.spec.mjs`       | 3      | first-time theme hint sits above the menu button on desktop and on phone pages with and without a viewport meta tag                                                                                                                                                                       |
+| `verify-search-export.spec.mjs`    | 5      | SVG and PNG exports during a search with exportSearchHighlight on and off, and the viewer keeps its search after each export                                                                                                                                                              |
 
-That is 157 checks per browser.
+That is 162 checks per browser.
 
 `verify-react-strictmode` loads React from unpkg and `verify-fixes` loads
 Mermaid from jsdelivr, so both need network access. Set
 `DV_CDN=<version>` (e.g. `DV_CDN=1.0.11`) to run those two against a
 published build instead of the local one. The other suites run offline.
-`verify-export-search` and `verify-readable-text` inject the build
-themselves. Set `DV_DIST=/path/to/diagview.umd.js` to test another build
-with those two.
+`verify-export-search`, `verify-search-export` and `verify-readable-text`
+inject the build themselves. Set `DV_DIST=/path/to/diagview.umd.js` to test
+another build with those three.
 
 `repro.html` is the shared test page: a 2000x1200 labelled grid SVG (cells
 A1 to J6, 200 units each) so any viewport centre measurement maps to a

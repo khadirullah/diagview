@@ -72,6 +72,7 @@ import { deepMerge, deepFreeze } from "./state-utils.js";
  * @property {number} highResScale - Export scale on desktop, 1 to 10
  * @property {number} mobileScale - Export scale on mobile, 1 to 5
  * @property {number} maxPixels - Largest export canvas in pixels
+ * @property {boolean} exportSearchHighlight - Exports made during a fullscreen search keep its dimming and outline
  * @property {DiagViewUIConfig} ui - Button look and icons
  * @property {boolean} showKeyboardHelp - Allow the ? shortcuts panel
  * @property {number} helpTimeout - Milliseconds before the shortcuts panel closes, 0 keeps it open
@@ -133,6 +134,7 @@ export const INITIAL_CONFIG = {
   highResScale: EXPORT.HIGH_RES_SCALE_DEFAULT,
   mobileScale: EXPORT.MOBILE_SCALE_DEFAULT,
   maxPixels: EXPORT.MAX_PIXELS_DEFAULT,
+  exportSearchHighlight: true,
 
   // UI Customization
   ui: {
