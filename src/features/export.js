@@ -6,7 +6,7 @@
 
 import { state } from "../core/config.js";
 import { EXPORT, COLORS, TIMING } from "../core/constants.js";
-import { detectTheme } from "../core/theme.js";
+import { detectTheme, getContrastRatio } from "../core/theme.js";
 import {
   downloadFile,
   sanitizeFilename,
@@ -36,7 +36,8 @@ import {
  * Options for the export functions. Each function documents which fields it reads.
  * @typedef {object} ExportOptions
  * @property {string} [filename] - File name without extension, generated from the diagram title if empty
- * @property {boolean} [silent] - Skip the processing toast and the JPEG transparency warning
+ * @property {boolean} [silent] - Skip the processing toast, the JPEG transparency warning and
+ *   the warning about labels that are hard to read on the background
  * @property {boolean} [transparent] - Skip the background fill
  * @property {SVGSVGElement|null} [modalClone] - Fullscreen clone to export instead of the original SVG
  */
@@ -293,6 +294,29 @@ function injectWatermark(svg, d, sourceSvg = null) {
   }
 }
 
+/** Sources whose export already warned about hard-to-read labels */
+const warnedFaint = new WeakSet();
+
+/**
+ * Warn that some labels will be hard to read in the file. Once per viewer
+ * open, as each open has a new modal clone, and once per page diagram
+ * for toolbar exports.
+ * @private
+ * @param {SVGSVGElement|null} source - SVG the export came from, null when the labels read fine
+ * @param {boolean} [silent] - Skip the warning
+ */
+function warnFaint(source, silent) {
+  if (!source || silent || warnedFaint.has(source)) return;
+  warnedFaint.add(source);
+  // Light helps only on a background where white text reads better than black
+  const { bg } = detectTheme();
+  const light =
+    getContrastRatio(bg, "#fff") >= getContrastRatio(bg, "#000") ? ", or pick Light," : "";
+  showWarningToast(
+    `Some labels are hard to read on this background. Turn on Readable${light} and export again.`,
+  );
+}
+
 /**
  * Prepare SVG for export.
  *  1. Clone from the modal clone when one is given (the floating menu always
@@ -337,7 +361,10 @@ async function prepareSvgForExport(svg, modalClone, transparent) {
   // With exportSearchHighlight off, the search class comes off while the
   // clone reads styles, so the file has no dimming or outline. The on-screen
   // search is put back before anything can repaint.
+  // With Readable off, the same check finds labels straight on the
+  // background that will be hard to read in the file.
   let hideSearch = false;
+  let faint = false;
   const cloneSource = (paint) => {
     hideSearch =
       !state.config.exportSearchHighlight && sourceSvg.classList?.contains("dv-searching");
@@ -348,9 +375,13 @@ async function prepareSvgForExport(svg, modalClone, transparent) {
       if (hideSearch) sourceSvg.classList.add("dv-searching");
     }
   };
-  const textWork = (bg && state.readableText) || sourceSvg.querySelector?.("[data-dv-text-orig]");
+  const textWork = bg || sourceSvg.querySelector?.("[data-dv-text-orig]");
   const exportSvg = await (textWork
-    ? import("./lazy/readable-text.js").then((m) => m.exportText(sourceSvg, bg, cloneSource).clone)
+    ? import("./lazy/readable-text.js").then((m) => {
+        const made = m.exportText(sourceSvg, bg, cloneSource);
+        faint = made.faint;
+        return made.clone;
+      })
     : cloneSource(null));
 
   if (!exportSvg) return null;
@@ -387,7 +418,7 @@ async function prepareSvgForExport(svg, modalClone, transparent) {
   // Inject watermark if enabled (Silent Branding)
   injectWatermark(exportSvg, d, svg);
 
-  return { width, height, bg: theme.bg, svg: exportSvg };
+  return { width, height, bg: theme.bg, svg: exportSvg, faint: faint ? sourceSvg : null };
 }
 
 /**
@@ -447,7 +478,7 @@ export async function renderToCanvas(sourceElement, modalClone, transparent = fa
     throw err;
   }
 
-  const { width, height, bg, svg: finalSvg } = result;
+  const { width, height, bg, svg: finalSvg, faint } = result;
 
   const isMobile = isMobileDevice();
 
@@ -516,13 +547,13 @@ export async function renderToCanvas(sourceElement, modalClone, transparent = fa
   ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
   if (blobUrl) URL.revokeObjectURL(blobUrl);
 
-  return { canvas, scale, width, height };
+  return { canvas, scale, width, height, faint };
 }
 
 /**
  * Export as SVG
  * @param {HTMLElement} sourceElement - Element containing SVG
- * @param {ExportOptions} [options={}] - Reads filename, transparent and modalClone
+ * @param {ExportOptions} [options={}] - Reads filename, transparent, silent and modalClone
  * @returns {Promise<void>} Resolves when the download has started
  */
 export async function exportToSVG(sourceElement, options = {}) {
@@ -535,7 +566,7 @@ export async function exportToSVG(sourceElement, options = {}) {
  * to undefined after a failure, so exportDiagram() knows to fire onExport.
  * @private
  */
-async function saveSVG(originalSvg, filename, { transparent: isTransparent, modalClone }) {
+async function saveSVG(originalSvg, filename, { transparent: isTransparent, modalClone, silent }) {
   try {
     const prepared = await prepareSvgForExport(originalSvg, modalClone, isTransparent);
     // Over the size limit. cloneSVG has already shown "Diagram blocked".
@@ -557,6 +588,7 @@ async function saveSVG(originalSvg, filename, { transparent: isTransparent, moda
 
     downloadSVG(await serializeSVGAsync(svg), filename);
     showSuccessToast("SVG saved");
+    warnFaint(prepared.faint, silent);
     return true;
   } catch (e) {
     showErrorToast("SVG Failed", e.message);
@@ -678,7 +710,7 @@ async function processImageExport(
 
     let canvasRef = null;
     try {
-      const { canvas, scale } = await renderToCanvas(sourceElement, modalClone, transparent);
+      const { canvas, scale, faint } = await renderToCanvas(sourceElement, modalClone, transparent);
       canvasRef = canvas;
 
       const quality = isWebP ? 0.95 : undefined;
@@ -722,6 +754,7 @@ async function processImageExport(
         setTimeout(() => URL.revokeObjectURL(downloadUrl), TIMING.BUTTON_SUCCESS_DURATION);
         showSuccessToast(`${scale.toFixed(1)}x ${label} saved`);
       }
+      warnFaint(faint, silent);
       return ext;
     } finally {
       // DOM-4: Release canvas memory immediately
@@ -827,7 +860,7 @@ export async function copyToClipboard(sourceElement, options = {}) {
 /**
  * Export as PDF
  * @param {HTMLElement} sourceElement - Element containing SVG
- * @param {ExportOptions} [options={}] - Reads filename, transparent and modalClone.
+ * @param {ExportOptions} [options={}] - Reads filename, transparent, silent and modalClone.
  *   PDF has no transparency, so transparent only shows a warning.
  * @returns {Promise<void>} Resolves when the download has started
  */
@@ -841,7 +874,7 @@ export async function exportToPDF(sourceElement, options = {}) {
  * undefined because no PDF was made.
  * @private
  */
-async function savePDF(sourceElement, filename, { transparent, modalClone }) {
+async function savePDF(sourceElement, filename, { transparent, modalClone, silent }) {
   try {
     showProgressToast("Generating PDF...");
     const pdfUrl = state.config.pdfLibraryUrl;
@@ -862,7 +895,7 @@ async function savePDF(sourceElement, filename, { transparent, modalClone }) {
       showWarningToast("PDF format does not support transparency. Using background color.");
     }
 
-    const { canvas, width, height } = await renderToCanvas(sourceElement, modalClone, false);
+    const { canvas, width, height, faint } = await renderToCanvas(sourceElement, modalClone, false);
     const imgData = canvas.toDataURL("image/png");
 
     const { jsPDF } = window.jspdf;
@@ -870,6 +903,7 @@ async function savePDF(sourceElement, filename, { transparent, modalClone }) {
     pdf.addImage(imgData, "PNG", 0, 0, width, height, undefined, "FAST");
     pdf.save(`${filename}.pdf`);
     showSuccessToast("PDF saved");
+    warnFaint(faint, silent);
     return true;
   } catch (e) {
     if (!e?.dvReported) showErrorToast("PDF Failed", e.message);
@@ -881,8 +915,9 @@ async function savePDF(sourceElement, filename, { transparent, modalClone }) {
  * @param {HTMLElement} sourceElement - Element containing SVG
  * @param {ExportMode} mode - Export format. An unknown mode exports PNG.
  * @param {ExportOptions|SVGSVGElement|null} [options={}] - Reads filename, transparent,
- *   silent and modalClone. silent applies to png, jpeg and webp. An SVG element here
- *   is the old third argument and works as modalClone.
+ *   silent and modalClone. silent hides the progress and JPEG notices for png, jpeg and
+ *   webp, and the hard-to-read labels warning for every mode. An SVG element here is
+ *   the old third argument and works as modalClone.
  * @returns {Promise<void>} Resolves after the export and, when it succeeded, the onExport callback
  */
 export async function exportDiagram(sourceElement, mode, options = {}) {
@@ -916,7 +951,7 @@ export async function exportDiagram(sourceElement, mode, options = {}) {
     mode = "png";
   }
 
-  const opts = { transparent: isTransparent, modalClone };
+  const opts = { transparent: isTransparent, modalClone, silent };
   let ok;
   // What onExport reports. Image exports replace it with the format of the file made.
   let format = mode;

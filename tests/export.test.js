@@ -644,6 +644,145 @@ describe("Exports follow the Readable text colours", () => {
   });
 });
 
+describe("Warning about labels that are hard to read in the file", () => {
+  const NS = "http://www.w3.org/2000/svg";
+  const WARNING = "Some labels are hard to read on this background.";
+  let container, svg, label, clickSpy;
+
+  const place = (el, x, y, w, h) => {
+    el.getBoundingClientRect = () => ({
+      left: x,
+      top: y,
+      width: w,
+      height: h,
+      right: x + w,
+      bottom: y + h,
+    });
+  };
+  const warnings = async (run) => {
+    const stop = recordToasts();
+    await run();
+    return stop().some((t) => t.includes(WARNING));
+  };
+
+  beforeEach(() => {
+    container = document.createElement("div");
+    svg = document.createElementNS(NS, "svg");
+    svg.setAttribute("viewBox", "0 0 100 100");
+    // Dark text straight on the canvas, like a sequence message
+    label = document.createElementNS(NS, "text");
+    label.setAttribute("style", "fill: #333333");
+    label.textContent = "Label";
+    place(label, 10, 10, 60, 12);
+    svg.appendChild(label);
+    container.appendChild(svg);
+    document.body.appendChild(container);
+    updateConfig({ highResScale: 1, maxPixels: 16000000, security: { mode: "strict" } });
+
+    clickSpy = jest.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => {});
+    global.URL.createObjectURL = jest.fn().mockReturnValue("blob:mock-url");
+    global.URL.revokeObjectURL = jest.fn();
+    global.Image = jest.fn(() => {
+      const img = document.createElement("img");
+      Object.defineProperty(img, "src", {
+        set() {
+          setTimeout(() => this.onload && this.onload(), 5);
+        },
+      });
+      return img;
+    });
+    HTMLCanvasElement.prototype.toBlob = function (cb, type) {
+      cb(new Blob(["img"], { type: type || "image/png" }));
+    };
+
+    state.activeCanvasThemeMode = "dark";
+    state.themeCache = null;
+  });
+
+  afterEach(() => {
+    container.remove();
+    clickSpy.mockRestore();
+    state.activeCanvasThemeMode = "auto";
+    state.readableText = false;
+    state.themeCache = null;
+    hideToast();
+  });
+
+  test("a PNG export on a dark canvas warns after the file is saved", async () => {
+    const stop = recordToasts();
+    await exportDiagram(container, "png");
+    const seen = stop();
+
+    const at = seen.findIndex((t) => t.includes(WARNING));
+    expect(at).toBeGreaterThan(seen.findIndex((t) => t.includes("PNG saved")));
+    expect(seen[at]).toBe(
+      "Some labels are hard to read on this background. Turn on Readable, or pick Light, and export again.",
+    );
+  });
+
+  test.each([
+    ["#6b7280", "#333333", "Turn on Readable, or pick Light, and export again."],
+    ["#b3b3b3", "#999999", "Turn on Readable and export again."],
+  ])(
+    "a %s canvas warns too, and suggests Light only where it helps",
+    async (canvas, fill, advice) => {
+      state.activeCanvasThemeMode = "custom";
+      state.customCanvasColor = canvas;
+      label.setAttribute("style", `fill: ${fill}`);
+      const stop = recordToasts();
+      await exportToSVG(container);
+      const seen = stop();
+      state.customCanvasColor = null;
+
+      expect(seen).toContain(`Some labels are hard to read on this background. ${advice}`);
+    },
+  );
+
+  test("warns once per viewer open, not on every export", async () => {
+    const modalClone = svg.cloneNode(true);
+    place(modalClone.querySelector("text"), 10, 10, 60, 12);
+    document.body.appendChild(modalClone);
+
+    expect(await warnings(() => exportDiagram(container, "svg", { modalClone }))).toBe(true);
+    expect(await warnings(() => exportDiagram(container, "png", { modalClone }))).toBe(false);
+    expect(await warnings(() => exportDiagram(container, "webp", { modalClone }))).toBe(false);
+
+    // The next open has a new clone
+    const nextOpen = svg.cloneNode(true);
+    place(nextOpen.querySelector("text"), 10, 10, 60, 12);
+    document.body.appendChild(nextOpen);
+    expect(await warnings(() => exportDiagram(container, "png", { modalClone: nextOpen }))).toBe(
+      true,
+    );
+    modalClone.remove();
+    nextOpen.remove();
+  });
+
+  test.each([
+    ["Readable is on", () => (state.readableText = true), () => exportToSVG(container)],
+    ["the export is transparent", () => {}, () => exportDiagram(container, "png-transparent")],
+    ["the export is silent", () => {}, () => exportDiagram(container, "svg", { silent: true })],
+    [
+      "the canvas is light",
+      () => (state.activeCanvasThemeMode = "light"),
+      () => exportToSVG(container),
+    ],
+    [
+      "the label sits in a light node",
+      () => {
+        const node = document.createElementNS(NS, "rect");
+        node.setAttribute("style", "fill: #ececff");
+        place(node, 0, 0, 100, 40);
+        svg.insertBefore(node, label);
+      },
+      () => exportToSVG(container),
+    ],
+  ])("no warning when %s", async (_name, setup, run) => {
+    setup();
+    expect(await warnings(run)).toBe(false);
+  });
+});
+
 describe("exportSearchHighlight", () => {
   let container, modalClone, match, other, css;
 

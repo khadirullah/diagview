@@ -333,12 +333,12 @@ Every export function resolves without throwing when the element contains no `<s
 
 ### Options
 
-| Option        | Type       | Default        | Description                                                                                                                                               |
-| ------------- | ---------- | -------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `transparent` | boolean    | `false`        | Transparent background (PNG/SVG/WebP). JPEG switches to a transparent PNG; PDF keeps the background                                                       |
-| `filename`    | string     | auto-generated | Output filename without extension                                                                                                                         |
-| `modalClone`  | SVGElement | `null`         | Internal, clone from the open modal                                                                                                                       |
-| `silent`      | boolean    | `false`        | PNG, JPEG and WebP only. Skips the "Processing" toast and the warning shown when a transparent JPEG is saved as PNG. Success and error toasts still show. |
+| Option        | Type       | Default        | Description                                                                                                                                                                                               |
+| ------------- | ---------- | -------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `transparent` | boolean    | `false`        | Transparent background (PNG/SVG/WebP). JPEG switches to a transparent PNG; PDF keeps the background                                                                                                       |
+| `filename`    | string     | auto-generated | Output filename without extension                                                                                                                                                                         |
+| `modalClone`  | SVGElement | `null`         | Internal, clone from the open modal                                                                                                                                                                       |
+| `silent`      | boolean    | `false`        | Skips the "Processing" toast and the warning shown when a transparent JPEG is saved as PNG (PNG, JPEG and WebP), and the hard-to-read labels warning (every format). Success and error toasts still show. |
 
 ### Resolution
 
@@ -572,6 +572,8 @@ Readable works on any SVG, including HTML labels inside `<foreignObject>` (Merma
 Readable follows canvas changes, including page theme changes in Auto mode, and stays on when you reopen the viewer. A page reload or `destroy()` resets it to Original, and DiagView does not save it to `localStorage`. There is no `init()` option for it. The diagram on the page always keeps the author's colours.
 
 Exports follow what you see. With Readable on, an export with a background gets the same recoloured labels, worked out against the export background. This covers PNG, JPEG, WebP, PDF, SVG and Copy Image, from the fullscreen menu, the page toolbar and the export functions. A toolbar export uses the canvas colour you last picked as its background, so it gets Readable colours too while Readable is on. Transparent PNG, WebP and SVG files keep the author's colours, since light text would vanish on a white page. Copy SVG has no background, so it keeps them as well.
+
+With Readable off, DiagView checks the labels before a PNG, JPEG, WebP, PDF, SVG or Copy Image export. If a label drawn straight on the background is under 4.5:1, a warning follows the saved notice: "Some labels are hard to read on this background. Turn on Readable, or pick Light, and export again." On a background where black text reads better than white, the warning leaves out "or pick Light", since Light would not help. Labels inside a filled shape do not count, since the shape stays behind them in the file. The warning shows at most once each time you open the viewer. Toolbar exports use the canvas colour too, so they warn the same way, once per diagram until the page reloads. Transparent exports and exports with `silent: true` never warn. A diagram drawn for a white page does not warn on the Light canvas.
 
 ---
 

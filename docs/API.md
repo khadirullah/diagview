@@ -140,7 +140,7 @@ await DiagView.exportDiagram(el, "pdf");
 await DiagView.exportDiagram(el, "copy");
 ```
 
-`"copy"` puts a PNG on the clipboard and `"copy-svg"` copies the SVG markup as text. When the browser cannot copy, they download the PNG or the .svg file instead. `"png-transparent"` and `"webp-transparent"` export with a transparent background. `"download"` exports a PNG. An unknown mode exports a PNG. You may omit `options` or pass `null`. `exportDiagram()` uses `filename` when you pass one and otherwise names the file from the diagram's title. That is `data-title` first, then a `<title>` directly inside the `<svg>`, then a chart title Mermaid draws, and `diagram_export` when there is none. It passes `silent` on to PNG, JPEG and WebP exports. It is the call the toolbar and the fullscreen menu use, and the only export call that fires the `onExport` callback. It fires only after the export succeeds, so a failed or blocked export does not fire it. The `exportTo*()` methods and `copyToClipboard()` do not fire it.
+`"copy"` puts a PNG on the clipboard and `"copy-svg"` copies the SVG markup as text. When the browser cannot copy, they download the PNG or the .svg file instead. `"png-transparent"` and `"webp-transparent"` export with a transparent background. `"download"` exports a PNG. An unknown mode exports a PNG. You may omit `options` or pass `null`. `exportDiagram()` uses `filename` when you pass one and otherwise names the file from the diagram's title. That is `data-title` first, then a `<title>` directly inside the `<svg>`, then a chart title Mermaid draws, and `diagram_export` when there is none. It passes `silent` on to PNG, JPEG and WebP exports, and `silent` hides the hard-to-read labels warning in every mode (see [Text Colours](USAGE.md#text-colours)). It is the call the toolbar and the fullscreen menu use, and the only export call that fires the `onExport` callback. It fires only after the export succeeds, so a failed or blocked export does not fire it. The `exportTo*()` methods and `copyToClipboard()` do not fire it.
 
 ### `DiagView.exportToPNG(element, options?)`
 
@@ -199,7 +199,7 @@ An export of the diagram open in fullscreen during a search keeps the dimming an
 interface ExportOptions {
   transparent?: boolean; // Transparent background (default: false)
   filename?: string; // Base filename without extension (default: auto)
-  silent?: boolean; // Skip the progress and JPEG transparency toasts (PNG, JPEG and WebP only, default: false)
+  silent?: boolean; // Skip the progress and JPEG transparency toasts (PNG, JPEG and WebP), and the hard-to-read labels warning (default: false)
 }
 ```
 
