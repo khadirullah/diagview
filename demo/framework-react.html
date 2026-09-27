@@ -9,12 +9,12 @@
     <title>DiagView - React StrictMode</title>
     <meta property="og:image" content="https://khadirullah.github.io/diagview/images/hero.jpg">
     <meta name="description"
-        content="DiagView inside a React 18 StrictMode tree — mount, unmount, remount and replace diagrams without DOM errors.">
+        content="DiagView inside a React 18 StrictMode tree. Mount, unmount, remount and replace diagrams without DOM errors.">
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono&display=swap"
+    <link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
         rel="stylesheet">
 
     <!-- Dependencies -->
@@ -35,172 +35,307 @@
 
     <style>
         :root {
-            --diagram-accent: #3b82f6;
+            --ok: #15803d;
+            --bad: #dc2626;
         }
 
-        .rx-toolbar {
+        .dark {
+            --ok: #4ade80;
+            --bad: #f87171;
+        }
+
+        .hero-tags {
             display: flex;
             flex-wrap: wrap;
-            gap: 10px;
-            align-items: center;
-            margin: 0 0 18px;
+            gap: 8px;
+            grid-column: 1 / -1;
         }
 
-        .rx-toolbar label {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            font-size: 0.9rem;
-            opacity: 0.85;
-        }
-
+        /* Live status: four mono readouts in one framed row */
         .rx-status {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-            gap: 10px;
-            margin: 0 0 24px;
-            font-family: "JetBrains Mono", monospace;
-            font-size: 0.85rem;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            margin-bottom: 20px;
+            border: 1px solid var(--line);
+            border-radius: var(--r);
+            background: var(--surface);
+            overflow: hidden;
         }
 
-        .rx-status div {
-            padding: 10px 12px;
-            border: 1px solid var(--border, rgba(128, 128, 128, 0.25));
-            border-radius: 10px;
+        .rx-status > div {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            min-width: 0;
+            padding: 12px 16px;
         }
 
-        .rx-status b {
-            display: block;
-            font-size: 0.7rem;
-            letter-spacing: 0.06em;
-            text-transform: uppercase;
-            opacity: 0.6;
-            margin-bottom: 4px;
+        .rx-status > div + div {
+            border-left: 1px solid var(--line);
         }
 
+        .rx-status span {
+            font-family: var(--mono);
+            font-size: 1.15rem;
+            font-weight: 500;
+            color: var(--ink);
+        }
+
+        .rx-status span.rx-ok,
         .rx-ok {
-            color: #10b981;
+            color: var(--ok);
         }
 
+        .rx-status span.rx-bad,
         .rx-bad {
-            color: #ef4444;
+            color: var(--bad);
         }
 
         .rx-error {
             display: none;
-            margin: 0 0 24px;
+            margin-bottom: 20px;
             padding: 12px 14px;
-            border-radius: 10px;
-            background: rgba(239, 68, 68, 0.12);
-            border: 1px solid #ef4444;
-            color: #ef4444;
-            font-family: "JetBrains Mono", monospace;
+            border: 1px solid var(--bad);
+            border-radius: var(--r);
+            background: color-mix(in srgb, var(--bad) 10%, transparent);
+            color: var(--bad);
+            font-family: var(--mono);
             font-size: 0.8rem;
             white-space: pre-wrap;
+            overflow-wrap: anywhere;
         }
 
         .rx-error.show {
             display: block;
         }
 
-        .rx-boundary {
-            padding: 14px 16px;
-            border-radius: 10px;
-            background: rgba(239, 68, 68, 0.08);
-            border: 1px dashed #ef4444;
+        /* Buttons and the unsafe switch above the cards */
+        .rx-toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 12px;
         }
 
-        .rx-boundary p {
-            margin: 0 0 10px;
+        .rx-toolbar .btn:disabled {
+            opacity: 0.45;
+            cursor: not-allowed;
+        }
+
+        .rx-toolbar label {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            height: 40px;
+            padding: 0 14px;
+            border: 1px solid var(--line);
+            border-radius: var(--r-sm);
+            background: var(--surface);
             font-size: 0.9rem;
+            color: var(--ink-2);
+            cursor: pointer;
         }
 
-        .diagram svg {
-            width: 100%;
-            height: auto;
+        .rx-toolbar input {
+            width: 16px;
+            height: 16px;
+            accent-color: var(--bad);
         }
 
-        /* Three layout cards in one row, stacked on narrow screens */
-        .rx-cards {
-            display: grid;
-            grid-template-columns: repeat(3, minmax(0, 1fr));
-            gap: clamp(14px, 2vw, 22px);
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 clamp(16px, 4vw, 24px);
+        .rx-hint {
+            margin-bottom: 20px;
+            font-size: 0.88rem;
+            color: var(--muted);
         }
 
-        @media (max-width: 960px) {
-            .rx-cards {
-                grid-template-columns: 1fr;
-            }
+        .rx-hint.rx-bad {
+            color: var(--bad);
         }
 
-        /* Let the long card titles wrap instead of cutting them off */
-        .rx-cards .card-header h3 {
+        /* The three viewer cards */
+        .rx-cards > .card {
+            --stage-h: 220px;
+        }
+
+        /* Long titles wrap instead of being cut off */
+        .card-header h3 {
             white-space: normal;
+            overflow: visible;
+            text-overflow: clip;
+            text-wrap: balance;
         }
 
-        .rx-cards .card .diagram-host {
+        .rx-cards .tag.mounted {
+            color: var(--ok);
+            border-color: color-mix(in srgb, var(--ok) 40%, var(--line));
+        }
+
+        .rx-cards .diagram-host {
             display: flex;
             flex-direction: column;
             flex: 1;
+            min-width: 0;
         }
 
-        /* DiagView's own wrapper carries page-level margins and borders; inside a card
-           the card already provides those, so flatten them. */
-        .rx-cards .card .diagview-wrapper {
-            margin: 0;
-            border: none;
-            border-radius: 0;
-            flex: 1;
-        }
-
-        .rx-cards .card .diagview-viewport {
-            padding: 12px 14px;
-            min-height: 0;
-            border-radius: 0;
-        }
-
-        .rx-cards .card .diagram {
-            min-height: 240px;
-            flex: 1;
-        }
-
+        .rx-cards .diagram-host > .diagram,
         .rx-cards .card > .diagram {
-            border-top: none !important;
+            flex: 1;
+            min-height: var(--stage-h);
         }
 
-        .rx-cards .card .unmounted-msg,
-        .rx-cards .card .rx-boundary {
-            margin: 16px;
-        }
-
-        .rx-cards .card .unmounted-msg {
+        .rx-cards .unmounted-msg {
+            display: grid;
+            place-items: center;
+            flex: 1;
+            min-height: var(--stage-h);
+            padding: 24px;
+            text-align: center;
             font-size: 0.9rem;
+            color: var(--muted);
+            background-color: var(--canvas);
         }
 
-        /* Explanations below the demo: two per row so each card stays compact */
-        .rx-info {
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-            max-width: 1200px;
-            margin-left: auto;
-            margin-right: auto;
-            padding: 0 clamp(16px, 4vw, 24px);
+        .rx-boundary {
+            flex: 1;
+            margin: 16px;
+            padding: 14px 16px;
+            border: 1px dashed var(--bad);
+            border-radius: var(--r-sm);
+            background: color-mix(in srgb, var(--bad) 7%, transparent);
+            font-size: 0.88rem;
+            color: var(--ink-2);
         }
 
-        @media (max-width: 720px) {
-            .rx-info {
-                grid-template-columns: 1fr;
-            }
+        .rx-boundary p + p {
+            margin-top: 8px;
         }
-        /* Before/after pairs sit side by side only when both columns fit,
+
+        /* Error messages are sentences, so they wrap at their spaces */
+        .rx-boundary code,
+        code.sentence {
+            white-space: normal;
+            overflow-wrap: anywhere;
+        }
+
+        /* Explanations: two per row, hairlines between them */
+        .rx-info > :nth-child(odd) {
+            padding-left: 0;
+            border-left: 0;
+        }
+
+        .rx-info > :nth-child(n + 3) {
+            border-top: 1px solid var(--line);
+        }
+
+        .rx-info > * {
+            padding-bottom: 24px;
+        }
+
+        .rx-info .tag {
+            margin-bottom: 10px;
+        }
+
+        .rx-info .tag.warn {
+            color: var(--bad);
+            border-color: color-mix(in srgb, var(--bad) 40%, var(--line));
+        }
+
+        /* Before and after trees sit side by side only when both columns fit,
            otherwise they stack so no line gets cut off. */
+        /* Two rows of two, safe pair above unsafe pair, one column on narrow screens */
         .code-compare {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(min(100%, 36ch), 1fr));
-            gap: 1.8em 2em;
-            margin-bottom: 1.8em;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+
+        @media (max-width: 760px) {
+            .code-compare {
+                grid-template-columns: minmax(0, 1fr);
+            }
+        }
+
+        .code-compare .code {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .code-compare pre {
+            flex: 1;
+        }
+
+        .code-bar .state {
+            font-family: var(--mono);
+            font-size: 0.68rem;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+        }
+
+        .code-bar .state.safe {
+            color: var(--ok);
+        }
+
+        .code-bar .state.unsafe {
+            color: var(--bad);
+        }
+
+        .sub-head {
+            margin: 40px 0 16px;
+            font-size: 1.25rem;
+        }
+
+        .next {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px 24px;
+            margin-top: 20px;
+        }
+
+        @media (max-width: 900px) {
+            .rx-status {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+            .rx-status > div:nth-child(3) {
+                border-left: 0;
+            }
+
+            .rx-status > div:nth-child(n + 3) {
+                border-top: 1px solid var(--line);
+            }
+        }
+
+        @media (max-width: 600px) {
+            .crumbs {
+                display: none;
+            }
+
+            .rx-toolbar .btn,
+            .rx-toolbar label {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .rx-cards > .card {
+                --stage-h: 200px;
+            }
+
+            /* Last resort on very narrow screens: wrap long code lines
+               instead of hiding them behind a sideways scroll */
+            .code pre {
+                white-space: pre-wrap;
+                overflow-wrap: anywhere;
+            }
+
+            .rx-info > * {
+                border-top: 0;
+            }
+
+            .rx-info > * + * {
+                border-top: 1px solid var(--line);
+            }
         }
     </style>
 
@@ -209,168 +344,219 @@
 
 <body>
 
-    <div class="controls">
-        <div class="brand">
-            <a href="index.html">
-                <img src="images/logo.jpg" alt="DiagView"
-                    style="width:32px;height:32px;border-radius:8px;object-fit:cover;flex-shrink:0">
-                <div class="brand-meta">
-                    <span class="brand-label">DiagView</span>
-                    <span class="brand-name">React StrictMode</span>
-                </div>
+    <header class="nav">
+        <div class="wrap">
+            <a class="brand" href="index.html" aria-label="DiagView demo hub">
+                <svg class="brand-mark" viewBox="0 0 24 24" aria-hidden="true">
+                    <path class="e" d="M12 4.5 4.5 18.5h15Z M12 4.5v7.5 M4.5 18.5 12 12l7.5 6.5" fill="none" />
+                    <circle class="n" cx="12" cy="4.5" r="2.6" />
+                    <circle class="n" cx="12" cy="12" r="2.2" />
+                    <circle class="n" cx="4.5" cy="18.5" r="2.6" />
+                    <circle class="n" cx="19.5" cy="18.5" r="2.6" />
+                </svg>
             </a>
-        </div>
-        <div class="toggles">
-            <label class="accent-label">
-                <span>Accent</span>
-                <input type="color" id="accentPicker" value="#3b82f6">
-            </label>
-            <button class="toggle-btn" onclick="toggleTheme()" title="Toggle Dark/Light Mode" aria-label="Toggle dark mode">🌓</button>
-            <a href="index.html" class="toggle-btn" style="background:var(--accent);color:#fff;border:none;">← Hub</a>
-        </div>
-    </div>
-
-    <section class="page-hero">
-        <h1>React 18 + StrictMode</h1>
-        <p>A real React tree (development build, StrictMode on) mounting, unmounting, remounting and replacing
-            DiagView diagrams. Any unexpected error would show up in a red box below; the deliberate
-            "unsafe pattern" crash stays inside the viewer card.</p>
-        <div class="badge-row">
-            <span class="badge">⚛ React 18.3 dev build</span>
-            <span class="badge">StrictMode double-effects</span>
-            <span class="badge">floating + header + off layouts</span>
-        </div>
-    </section>
-
-    <div class="container" style="max-width: 1100px; margin: 0 auto; padding: 0 20px;">
-        <div class="rx-status" id="rx-status">
-            <div><b>effect runs (init calls)</b><span id="st-init">0</span></div>
-            <div><b>DiagView initialized</b><span id="st-ready">…</span></div>
-            <div><b>toolbar wrappers in DOM</b><span id="st-wrappers">0</span></div>
-            <div><b>unexpected errors</b><span id="st-errors" class="rx-ok">0</span></div>
-        </div>
-        <pre class="rx-error" id="rx-error"></pre>
-
-        <div id="react-root"></div>
-
-        <div class="info-grid rx-info" style="margin-top: 32px;">
-            <div class="info-card">
-                <span class="info-icon">⚛</span>
-                <h4>What StrictMode does here</h4>
-                <p class="muted">In development, React StrictMode runs every effect twice: mount, cleanup, mount
-                    again. For DiagView that means <code>init()</code> → <code>destroy()</code> → <code>init()</code>
-                    in a row. The "effect runs" counter above shows 2 after load. Older builds bailed on the second
-                    init and ended up with nothing initialized; now init waits for the pending destroy. Diagrams
-                    initialise lazily as they scroll near the viewport, so "wrappers" reads 2 (floating + header)
-                    once the viewer cards below are in view.</p>
-            </div>
-            <div class="info-card">
-                <span class="info-icon">🔁</span>
-                <h4>Unmount / Mount / Replace</h4>
-                <p class="muted"><b>Unmount</b> removes the floating and header viewer components; the lifecycle
-                    cleanup calls <code>destroy()</code>, so "initialized" flips to <span class="rx-bad">NO</span> on
-                    purpose, the wrapper count drops to 0 and the off-layout diagram loses its click handler too.
-                    <b>Mount</b> brings them back and DiagView re-initializes everything. <b>Replace</b> swaps Diagram A
-                    for B by re-keying the <em>container</em>, never the diagram element itself. All three must run
-                    with zero errors.</p>
-            </div>
-            <div class="info-card">
-                <span class="info-icon">🧩</span>
-                <h4>Why Unmount removes the diagram itself</h4>
-                <p class="muted">Unmounting is <em>React</em> deleting the component and every DOM node it rendered,
-                    the diagram included. That is what unmount means in any framework, in every layout: the off-layout
-                    card only survives here because it is never unmounted. DiagView does not delete anything; its
-                    toolbar simply leaves together with the diagram it was attached to. There is nothing to fix.
-                    If you want the diagrams to stay and only DiagView to go, do not unmount: call
-                    <code>destroy()</code> instead. <b>Detach DiagView</b> does exactly that: the toolbars vanish,
-                    the diagrams remain plain SVG, and <b>Attach</b> calls <code>init()</code> to enhance them
-                    again.</p>
-            </div>
-            <div class="info-card" style="border-color: #ef4444;">
-                <span class="info-icon">⚠️</span>
-                <h4>The "unsafe pattern" checkbox</h4>
-                <p class="muted">Ticking it re-renders the floating and header viewers with the <code>.diagram</code>
-                    element as the component root, with no container around it. Both layouts move that element into a
-                    wrapper, so when you then click <b>Unmount</b>, React asks the parent it remembers to remove a node
-                    that is no longer there. Expect a red
-                    <code>NotFoundError: The node to be removed is not a child of this node</code> inside each of those
-                    two cards. The off-layout card never re-parents, so it is unaffected. Each card has its own React
-                    error boundary, so the crash stays in the card: click <b>Mount viewers</b> and DiagView
-                    re-initialises (untick first for the safe pattern). Without a boundary React 18 would unmount the
-                    <em>entire</em> root and only a page refresh would bring it back.</p>
+            <nav class="crumbs" aria-label="Breadcrumb">
+                <a href="index.html">Demo hub</a>
+                <span class="sep" aria-hidden="true">/</span>
+                <span aria-current="page">React StrictMode</span>
+            </nav>
+            <div class="toggles">
+                <label class="swatch" title="Accent colour">
+                    <span class="vh">Accent colour</span>
+                    <input type="color" id="accentPicker" value="#ea580c">
+                </label>
+                <button class="icon-btn theme-btn" type="button" onclick="toggleTheme()" title="Switch light and dark"
+                    aria-label="Switch light and dark theme"></button>
             </div>
         </div>
+    </header>
 
-
-        <div class="code-section" style="margin-top: 40px;">
-            <div class="section-header">
-                <h2 class="section-title" style="font-size:1.3rem">Why the container matters</h2>
+    <main>
+        <section class="page-hero">
+            <div class="wrap">
+                <h1>React 18 in StrictMode</h1>
+                <p>A real React tree (development build, StrictMode on) mounting, unmounting, remounting and replacing
+                    DiagView diagrams. Any unexpected error shows up in a red box below. The deliberate "unsafe
+                    pattern" crash stays inside its viewer card.</p>
+                <div class="hero-tags">
+                    <span class="tag"><span class="dot"></span>React 18.3 dev build</span>
+                    <span class="tag">StrictMode double effects</span>
+                    <span class="tag">Floating, header and off layouts</span>
+                </div>
             </div>
-            <div class="code-block">
+        </section>
+
+        <div class="wrap">
+            <div class="rx-status" id="rx-status">
+                <div><b class="fig">Effect runs (init calls)</b><span id="st-init">0</span></div>
+                <div><b class="fig">DiagView initialized</b><span id="st-ready">...</span></div>
+                <div><b class="fig">Toolbar wrappers in DOM</b><span id="st-wrappers">0</span></div>
+                <div><b class="fig">Unexpected errors</b><span id="st-errors" class="rx-ok">0</span></div>
+            </div>
+            <pre class="rx-error" id="rx-error"></pre>
+
+            <div id="react-root"></div>
+        </div>
+
+        <!-- What the buttons do -->
+        <section class="section">
+            <div class="wrap">
+                <div class="section-head">
+                    <h2>What this page tests</h2>
+                    <p>Four things a component framework does to a diagram, and what DiagView does in each case.</p>
+                </div>
+                <div class="cols rx-info" style="--n: 2">
+                    <div>
+                        <span class="tag">StrictMode</span>
+                        <h3>What StrictMode does here</h3>
+                        <p>In development, React StrictMode runs every effect twice: mount, cleanup, mount again. For
+                            DiagView that means <code>init()</code>, <code>destroy()</code>, <code>init()</code> in a
+                            row. The "effect runs" counter above shows 2 after load. Older builds bailed on the second
+                            init and ended up with nothing initialized. Now init waits for the pending destroy.
+                            Diagrams initialise lazily as they scroll near the viewport, so "wrappers" reads 2
+                            (floating and header) once the viewer cards are in view.</p>
+                    </div>
+                    <div>
+                        <span class="tag">Lifecycle</span>
+                        <h3>Unmount, mount and replace</h3>
+                        <p><b>Unmount</b> removes the floating and header viewer components. The lifecycle cleanup
+                            calls <code>destroy()</code>, so "initialized" flips to <span class="rx-bad">NO</span> on
+                            purpose, the wrapper count drops to 0 and the off layout diagram loses its click handler
+                            too. <b>Mount</b> brings them back and DiagView re-initializes everything. <b>Replace</b>
+                            swaps diagram A for B by re-keying the <em>container</em>, never the diagram element
+                            itself. All three must run with zero errors.</p>
+                    </div>
+                    <div>
+                        <span class="tag">Detach</span>
+                        <h3>Why unmount removes the diagram itself</h3>
+                        <p>Unmounting is <em>React</em> deleting the component and every DOM node it rendered, the
+                            diagram included. That is what unmount means in any framework, in every layout. The off
+                            layout card only survives here because it is never unmounted. DiagView does not delete
+                            anything. Its toolbar leaves together with the diagram it was attached to. If you want the
+                            diagrams to stay and only DiagView to go, do not unmount, call <code>destroy()</code>
+                            instead. <b>Detach DiagView</b> does exactly that. The toolbars vanish, the diagrams remain
+                            plain SVG, and <b>Attach</b> calls <code>init()</code> to enhance them again.</p>
+                    </div>
+                    <div>
+                        <span class="tag warn">Anti-pattern</span>
+                        <h3>The "unsafe pattern" checkbox</h3>
+                        <p>Ticking it re-renders the floating and header viewers with the <code>.diagram</code> element
+                            as the component root, with no container around it. Both layouts move that element into a
+                            wrapper, so when you then click <b>Unmount</b>, React asks the parent it remembers to remove
+                            a node that is no longer there. Expect a red <code class="sentence">NotFoundError: The node to be removed is
+                            not a child of this node</code> inside each of those two cards. The off layout card never
+                            re-parents, so it is unaffected. Each card has its own React error boundary, so the crash
+                            stays in the card. Click <b>Mount viewers</b> and DiagView re-initialises (untick first for
+                            the safe pattern). Without a boundary React 18 would unmount the <em>entire</em> root and
+                            only a page refresh would bring it back.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- The container rule -->
+        <section class="section">
+            <div class="wrap">
+                <div class="section-head">
+                    <h2>Why the container matters</h2>
+                    <p>Floating and header layouts move the diagram into a wrapper. React must only ever remove an
+                        element it still owns.</p>
+                </div>
                 <div class="code-compare">
-                    <pre><code><span class="c">// SAFE — what React rendered</span>
-&lt;<span class="t">div</span> <span class="a">class</span>=<span class="v">"diagram-host"</span>&gt;
-  &lt;<span class="t">div</span> <span class="a">class</span>=<span class="v">"diagram"</span>&gt;…&lt;/<span class="t">div</span>&gt;
+                    <div class="code">
+                        <div class="code-bar"><span>What React rendered</span><span class="state safe">Safe</span></div>
+<pre><code>&lt;<span class="t">div</span> <span class="a">class</span>=<span class="v">"diagram-host"</span>&gt;
+  &lt;<span class="t">div</span> <span class="a">class</span>=<span class="v">"diagram"</span>&gt;...&lt;/<span class="t">div</span>&gt;
 &lt;/<span class="t">div</span>&gt;</code></pre>
-                    <pre><code><span class="c">// after DiagView init</span>
-&lt;<span class="t">div</span> <span class="a">class</span>=<span class="v">"diagram-host"</span>&gt;
+                    </div>
+                    <div class="code">
+                        <div class="code-bar"><span>After DiagView init</span><span class="state safe">Safe</span></div>
+<pre><code>&lt;<span class="t">div</span> <span class="a">class</span>=<span class="v">"diagram-host"</span>&gt;
   &lt;<span class="t">div</span> <span class="a">class</span>=<span class="v">"diagview-wrapper"</span>&gt;
     &lt;<span class="t">div</span> <span class="a">class</span>=<span class="v">"diagview-viewport"</span>&gt;
-      &lt;<span class="t">div</span> <span class="a">class</span>=<span class="v">"diagram"</span>&gt;…&lt;/<span class="t">div</span>&gt;
-  …
+      &lt;<span class="t">div</span> <span class="a">class</span>=<span class="v">"diagram"</span>&gt;...&lt;/<span class="t">div</span>&gt;
+  ...
 <span class="c">// React removes .diagram-host,</span>
 <span class="c">// and .diagram goes away with it</span></code></pre>
-                    <pre><code><span class="c">// UNSAFE — what React rendered</span>
-&lt;<span class="t">div</span> <span class="a">class</span>=<span class="v">"diagram"</span>&gt;…&lt;/<span class="t">div</span>&gt;</code></pre>
-                    <pre><code><span class="c">// after DiagView init</span>
-&lt;<span class="t">div</span> <span class="a">class</span>=<span class="v">"diagview-wrapper"</span>&gt;
+                    </div>
+                    <div class="code">
+                        <div class="code-bar"><span>What React rendered</span><span class="state unsafe">Unsafe</span></div>
+<pre><code>&lt;<span class="t">div</span> <span class="a">class</span>=<span class="v">"diagram"</span>&gt;...&lt;/<span class="t">div</span>&gt;</code></pre>
+                    </div>
+                    <div class="code">
+                        <div class="code-bar"><span>After DiagView init</span><span class="state unsafe">Unsafe</span></div>
+<pre><code>&lt;<span class="t">div</span> <span class="a">class</span>=<span class="v">"diagview-wrapper"</span>&gt;
   &lt;<span class="t">div</span> <span class="a">class</span>=<span class="v">"diagview-viewport"</span>&gt;
-    &lt;<span class="t">div</span> <span class="a">class</span>=<span class="v">"diagram"</span>&gt;…&lt;/<span class="t">div</span>&gt;
+    &lt;<span class="t">div</span> <span class="a">class</span>=<span class="v">"diagram"</span>&gt;...&lt;/<span class="t">div</span>&gt;
 <span class="c">// React still thinks .diagram is</span>
 <span class="c">// a child of the original parent</span></code></pre>
+                    </div>
                 </div>
-                <pre><code><span class="c">// On unmount React calls</span>
+                <div class="code">
+                    <div class="code-bar"><span>On unmount</span><span class="state unsafe">Unsafe</span></div>
+<pre><code><span class="c">// React calls</span>
 originalParent.removeChild(diagram)
-<span class="c">// → NotFoundError</span></code></pre>
-            </div>
-            <div class="section-header" style="margin-top: 24px;">
-                <h2 class="section-title" style="font-size:1.3rem">The one rule</h2>
-            </div>
-            <div class="code-block">
-                <pre><code><span class="c">// Keep the diagram element inside a container the framework owns.</span>
-<span class="c">// floating/header layouts move .diagram into a toolbar wrapper; React must</span>
-<span class="c">// never remove that exact element itself — removing the container is safe.</span>
+<span class="c">// and gets a NotFoundError</span></code></pre>
+                </div>
+
+                <h3 class="sub-head">The one rule</h3>
+                <div class="code">
+                    <div class="code-bar">
+                        <span class="file">Viewer.jsx</span>
+                        <button class="copy-btn" type="button" data-copy>Copy</button>
+                    </div>
+<pre><code><span class="c">// Keep .diagram inside a container</span>
+<span class="c">// the framework owns. Floating and</span>
+<span class="c">// header layouts move .diagram into</span>
+<span class="c">// a toolbar wrapper, so React must</span>
+<span class="c">// never remove that element itself.</span>
+<span class="c">// Removing the container is safe.</span>
 <span class="kw">function</span> Viewer({ svg }) {
   useEffect(() =&gt; {
     DiagView.init({ layout: <span class="v">"floating"</span> });
-    <span class="kw">return</span> () =&gt; DiagView.destroy();   <span class="c">// StrictMode: init() queues behind this</span>
+    <span class="c">// StrictMode: init() waits</span>
+    <span class="c">// for this destroy()</span>
+    <span class="kw">return</span> () =&gt; DiagView.destroy();
   }, []);
 
   <span class="kw">return</span> (
-    &lt;<span class="t">div</span> <span class="a">className</span>=<span class="v">"diagram-host"</span>&gt;                      <span class="c">// React owns this</span>
-      &lt;<span class="t">div</span> <span class="a">className</span>=<span class="v">"diagram"</span> <span class="a">dangerouslySetInnerHTML</span>={{ __html: svg }} /&gt;
+    <span class="c">// React owns this container</span>
+    &lt;<span class="t">div</span> <span class="a">className</span>=<span class="v">"diagram-host"</span>&gt;
+      &lt;<span class="t">div</span>
+        <span class="a">className</span>=<span class="v">"diagram"</span>
+        <span class="a">dangerouslySetInnerHTML</span>={{
+          __html: svg
+        }}
+      /&gt;
     &lt;/<span class="t">div</span>&gt;
   );
 }
 
-<span class="c">// layout "off" never touches the surrounding DOM, so .diagram may be the root.</span>
-&lt;<span class="t">div</span> <span class="a">className</span>=<span class="v">"diagram"</span> <span class="a">data-diagview-layout</span>=<span class="v">"off"</span>&gt;…&lt;/<span class="t">div</span>&gt;</code></pre>
+<span class="c">// Layout "off" never touches the</span>
+<span class="c">// surrounding DOM, so .diagram may</span>
+<span class="c">// be the component root.</span>
+&lt;<span class="t">div</span>
+  <span class="a">className</span>=<span class="v">"diagram"</span>
+  <span class="a">data-diagview-layout</span>=<span class="v">"off"</span>
+&gt;...&lt;/<span class="t">div</span>&gt;</code></pre>
+                </div>
+                <div class="next">
+                    <a href="https://github.com/khadirullah/diagview/blob/main/docs/USAGE.md#20-framework-integration"
+                        class="link" target="_blank" rel="noopener">Framework integration docs</a>
+                    <a href="layout-off.html" class="link">Try the off layout</a>
+                </div>
             </div>
-            <div class="code-nav">
-                <a href="https://github.com/khadirullah/diagview/blob/main/docs/USAGE.md#20-framework-integration"
-                    class="code-nav-link" target="_blank" rel="noopener">Framework integration docs →</a>
-            </div>
-        </div>
-    </div>
+        </section>
+    </main>
 
-    <footer>
-        <div class="container">
-            <div class="footer-links">
-                <a href="index.html">← Back to Hub</a>
+    <footer class="footer">
+        <div class="wrap">
+            <nav aria-label="Project links">
+                <a href="index.html">Demo hub</a>
                 <a href="https://github.com/khadirullah/diagview" target="_blank" rel="noopener">GitHub</a>
-                <a href="https://www.npmjs.com/package/diagview" target="_blank" rel="noopener">NPM</a>
-            </div>
-            <p class="copyright">DiagView &bull; <span data-version></span> &bull; Built with ❤️</p>
+                <a href="https://www.npmjs.com/package/diagview" target="_blank" rel="noopener">npm</a>
+            </nav>
+            <span>DiagView <span data-version></span></span>
         </div>
     </footer>
 
@@ -408,25 +594,28 @@ originalParent.removeChild(diagram)
             }
             setInterval(refreshStatus, 250);
 
-            /* ── Two diagrams so "Replace" is visibly different ── */
-            function flow(title, a, b, c) {
+            /* ── Two diagrams so "Replace" is visibly different ──
+               Boxes are a light tint of one colour. Text uses currentColor, so it
+               follows the page theme inline and the viewer theme in fullscreen. */
+            function flow(title, c) {
+                var id = 'ar-' + title.replace(/\W/g, '');
                 return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 220" role="img" aria-label="' + title + '">'
-                    + '<defs><marker id="ar-' + title.replace(/\W/g, '') + '" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="' + c + '"/></marker></defs>'
-                    + '<text x="320" y="30" text-anchor="middle" font-family="sans-serif" font-size="16" font-weight="700" fill="' + c + '">' + title + '</text>'
+                    + '<defs><marker id="' + id + '" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="' + c + '"/></marker></defs>'
+                    + '<text x="320" y="36" text-anchor="middle" font-family="sans-serif" font-size="16" font-weight="700" fill="currentColor">' + title + '</text>'
                     + ['Request', 'Validate', 'Render', 'Deliver'].map(function (label, i) {
                         var x = 20 + i * 160;
-                        return '<rect x="' + x + '" y="90" width="120" height="50" rx="10" fill="' + a + '" stroke="' + c + '" stroke-width="2"/>'
-                            + '<text x="' + (x + 60) + '" y="120" text-anchor="middle" font-family="sans-serif" font-size="14" fill="' + b + '">' + label + '</text>'
-                            + (i < 3 ? '<line x1="' + (x + 120) + '" y1="115" x2="' + (x + 160) + '" y2="115" stroke="' + c + '" stroke-width="2" marker-end="url(#ar-' + title.replace(/\W/g, '') + ')"/>' : '');
+                        return '<rect x="' + x + '" y="90" width="120" height="50" rx="10" fill="' + c + '" fill-opacity="0.16" stroke="' + c + '" stroke-width="2"/>'
+                            + '<text x="' + (x + 60) + '" y="120" text-anchor="middle" font-family="sans-serif" font-size="14" font-weight="600" fill="currentColor">' + label + '</text>'
+                            + (i < 3 ? '<line x1="' + (x + 120) + '" y1="115" x2="' + (x + 158) + '" y2="115" stroke="' + c + '" stroke-width="2" marker-end="url(#' + id + ')"/>' : '');
                     }).join('')
-                    + '<text x="320" y="190" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#94a3b8">click a toolbar button or press the diagram to open fullscreen</text>'
+                    + '<text x="320" y="190" text-anchor="middle" font-family="sans-serif" font-size="12" fill="currentColor" fill-opacity="0.6">click a toolbar button or press the diagram to open fullscreen</text>'
                     + '</svg>';
             }
             var DIAGRAMS = {
-                A: flow('Diagram A — Pipeline', '#dbeafe', '#1e3a8a', '#3b82f6'),
-                B: flow('Diagram B — Release', '#dcfce7', '#14532d', '#10b981')
+                A: flow('Diagram A, pipeline', '#4f7fc4'),
+                B: flow('Diagram B, release', '#3f9a78')
             };
-            var STEALTH = flow('Stealth (layout off) — click me', '#fef3c7', '#78350f', '#f59e0b');
+            var STEALTH = flow('Stealth (layout off), click me', '#c08a3e');
 
             /* ── Components ── */
             // One place owns init()/destroy() for the whole tree, exactly like an app
@@ -514,10 +703,10 @@ originalParent.removeChild(diagram)
                 Boundary.prototype.render = function () {
                     if (!this.state.error) return this.props.children;
                     return h('div', { className: 'rx-boundary' },
-                        h('p', null, h('b', null, 'Crashed on unmount: '), String(this.state.error.name || 'Error'),
-                            ' \u2014 ', String(this.state.error.message || '')),
-                        h('p', { className: 'muted' }, 'React tried to remove the .diagram node from this card, but DiagView had moved it into its ' + this.props.layout + ' wrapper. The error boundary around this card caught it; the off-layout diagram and the buttons are untouched.'),
-                        h('p', { className: 'muted' }, h('b', null, 'To recover:'), ' untick "unsafe pattern" and click "Mount viewers" for the safe pattern, or click "Mount viewers" with the box still ticked to arm the crash again. Either way DiagView re-initialises and the off-layout diagram is clickable again.')
+                        h('p', null, h('b', { className: 'rx-bad' }, 'Crashed on unmount. '),
+                            h('code', null, String(this.state.error.name || 'Error') + ': ' + String(this.state.error.message || ''))),
+                        h('p', null, 'React tried to remove the .diagram node from this card, but DiagView had moved it into its ' + this.props.layout + ' wrapper. The error boundary around this card caught it. The off layout diagram and the buttons are untouched.'),
+                        h('p', null, h('b', null, 'To recover, '), 'untick "unsafe pattern" and click "Mount viewers" for the safe pattern, or click "Mount viewers" with the box still ticked to arm the crash again. Either way DiagView re-initialises and the off layout diagram is clickable again.')
                     );
                 };
                 return Boundary;
@@ -535,25 +724,26 @@ originalParent.removeChild(diagram)
                 function viewerCard(layout, id) {
                     var title = layout.charAt(0).toUpperCase() + layout.slice(1) + ' layout, '
                         + (unsafe[0] ? 'diagram as root (unsafe)' : 'nested container (safe)');
-                    return h('div', { className: 'card', id: id },
-                        h('div', { className: 'card-header' }, h('h3', null, title), h('span', { className: 'card-badge chart-badge' }, mounted[0] ? 'mounted' : 'unmounted')),
+                    return h('div', { className: 'card third', id: id },
+                        h('div', { className: 'card-header' }, h('h3', null, title),
+                            h('span', { className: 'tag' + (mounted[0] ? ' mounted' : '') }, mounted[0] ? 'mounted' : 'unmounted')),
                         h(Boundary, { unsafe: unsafe[0], mounted: mounted[0], cardId: id, layout: layout },
                             mounted[0]
                                 ? h(Viewer, { layout: layout, which: which[0], unsafe: unsafe[0], key: unsafe[0] ? 'u' : 's' })
-                                : h('p', { className: 'muted unmounted-msg' }, 'Viewer unmounted. The DiagView wrapper went away with the container.')
+                                : h('p', { className: 'unmounted-msg' }, 'Viewer unmounted. The DiagView wrapper went away with the container.')
                         )
                     );
                 }
 
                 return h(React.Fragment, null,
                     h('div', { className: 'rx-toolbar' },
-                        h('button', { id: 'btn-toggle', className: 'btn btn-primary', onClick: function () { setMounted(!mounted[0]); } },
+                        h('button', { id: 'btn-toggle', type: 'button', className: 'btn btn-primary', onClick: function () { setMounted(!mounted[0]); } },
                             mounted[0] ? 'Unmount viewers' : 'Mount viewers'),
-                        h('button', { id: 'btn-replace', className: 'btn btn-secondary', disabled: !mounted[0], onClick: function () { setWhich(which[0] === 'A' ? 'B' : 'A'); } },
-                            'Replace diagram (' + which[0] + ' \u2192 ' + (which[0] === 'A' ? 'B' : 'A') + ')'),
+                        h('button', { id: 'btn-replace', type: 'button', className: 'btn', disabled: !mounted[0], onClick: function () { setWhich(which[0] === 'A' ? 'B' : 'A'); } },
+                            'Replace diagram (' + which[0] + ' → ' + (which[0] === 'A' ? 'B' : 'A') + ')'),
                         h('button', {
-                            id: 'btn-detach', className: 'btn btn-secondary', disabled: !mounted[0],
-                            title: 'Calls DiagView.destroy() / DiagView.init() while every React component stays mounted',
+                            id: 'btn-detach', type: 'button', className: 'btn', disabled: !mounted[0],
+                            title: 'Calls DiagView.destroy() or DiagView.init() while every React component stays mounted',
                             onClick: function () {
                                 if (attached[0]) { window.__dv.destroyCalls++; DV.destroy(); setAttached(false); }
                                 else { window.__dv.initCalls++; DV.init(initOptions()); setAttached(true); }
@@ -561,18 +751,18 @@ originalParent.removeChild(diagram)
                         }, attached[0] ? 'Detach DiagView (keep diagrams)' : 'Attach DiagView again'),
                         h('label', { title: 'Render .diagram as the component root (documented anti-pattern). Unmounting will throw.' },
                             h('input', { id: 'chk-unsafe', type: 'checkbox', checked: unsafe[0], onChange: function (e) { setUnsafe(e.target.checked); } }),
-                            ' unsafe pattern (diagram as root)'),
-                        unsafe[0]
-                            ? h('span', { className: 'rx-bad', style: { fontSize: '0.85rem' } },
-                                '\u26A0 Anti-pattern active in the floating and header cards. Click "Unmount viewers" to see the crash in those cards; "Mount viewers" recovers (untick first for the safe pattern).')
-                            : h('span', { className: 'muted', style: { fontSize: '0.85rem' } },
-                                'Safe pattern active: .diagram sits inside a React-owned container.')
+                            'Unsafe pattern (diagram as root)')
                     ),
-                    h('div', { className: 'rx-cards' },
+                    unsafe[0]
+                        ? h('p', { className: 'rx-hint rx-bad' },
+                            'Anti-pattern active in the floating and header cards. Click "Unmount viewers" to see the crash in those cards. "Mount viewers" recovers (untick first for the safe pattern).')
+                        : h('p', { className: 'rx-hint' },
+                            'Safe pattern active. Each .diagram sits inside a React-owned container.'),
+                    h('div', { className: 'grid rx-cards', style: { '--fig-chapter': "'1'" } },
                         viewerCard('floating', 'viewer-card'),
                         viewerCard('header', 'header-card'),
-                        h('div', { className: 'card', id: 'off-card' },
-                            h('div', { className: 'card-header' }, h('h3', null, 'Off layout, diagram as root'), h('span', { className: 'card-badge chart-badge' }, 'always mounted')),
+                        h('div', { className: 'card third', id: 'off-card' },
+                            h('div', { className: 'card-header' }, h('h3', null, 'Off layout, diagram as root'), h('span', { className: 'tag' }, 'always mounted')),
                             h(Stealth)
                         )
                     ),
