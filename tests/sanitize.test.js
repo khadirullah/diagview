@@ -359,3 +359,21 @@ describe("sanitizeSVG size guard and options handling", () => {
     expect(sanitizeSVG(svg, "strict", null)).toContain("data:image/png");
   });
 });
+
+describe("sanitizeSVG Node input", () => {
+  test("cleans a copy made outside the page, so images in it never load", () => {
+    const host = document.createElement("div");
+    host.innerHTML = '<svg><image href="missing.png" onerror="window.runs++"/></svg>';
+    const svg = host.firstChild;
+    const clean = sanitizeSVG(svg, "strict");
+    expect(clean.ownerDocument).not.toBe(document);
+    expect(clean.querySelector("image").hasAttribute("onerror")).toBe(false);
+    // The original keeps its handler
+    expect(svg.querySelector("image").getAttribute("onerror")).toBe("window.runs++");
+  });
+
+  test('"off" returns the input itself', () => {
+    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    expect(sanitizeSVG(svg, "off")).toBe(svg);
+  });
+});

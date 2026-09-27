@@ -422,6 +422,17 @@ function localNameOf(node) {
   return raw.slice(raw.lastIndexOf(":") + 1).toLowerCase();
 }
 
+let inertDoc;
+
+/**
+ * A document with no window. Copies made in it load no images and run no
+ * event handlers, so the sanitizer can clean them before the page gets them.
+ * @returns {Document} The shared inert document
+ */
+export function inertDocument() {
+  return (inertDoc ||= document.implementation.createHTMLDocument(""));
+}
+
 /**
  * Options for sanitizeSVG().
  * @typedef {object} SanitizeOptions
@@ -449,7 +460,8 @@ function localNameOf(node) {
  * @param {'strict'|'permissive'|'off'} [mode='strict'] - Sanitization mode.
  * @param {number|SanitizeOptions|null} [options=0] - Character limit (number) or options object.
  * @returns {string|Node|null} The sanitized string or Node; "" (string input)
- *   or null (Node input) when the input exceeds maxChars.
+ *   or null (Node input) when the input exceeds maxChars. A Node result is a
+ *   new copy that belongs to no page until you insert it.
  */
 export function sanitizeSVG(input, mode = "strict", options = 0) {
   // Accept a number, an options object, or null/undefined (treated as none).
@@ -493,8 +505,9 @@ export function sanitizeSVG(input, mode = "strict", options = 0) {
       return "";
     }
   } else if (input instanceof Node) {
-    // SEC-2: Ensure we never mutate the original input Node
-    root = input.cloneNode(true);
+    // SEC-2: Ensure we never mutate the original input Node. A copy made
+    // in the page would load its images and fire their onerror at once.
+    root = inertDocument().importNode(input, true);
   } else {
     return input;
   }

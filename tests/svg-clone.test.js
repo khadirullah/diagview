@@ -315,3 +315,47 @@ describe("criticalFileLimit size guard in clone presets", () => {
     expect(svg.querySelectorAll("[data-dv-match-id]")).toHaveLength(0);
   });
 });
+
+describe("cloneSVG copies outside the page", () => {
+  let svg;
+
+  beforeEach(() => {
+    const container = document.createElement("div");
+    container.className = "diagram";
+    container.innerHTML =
+      '<svg viewBox="0 0 10 10"><image href="missing.png" onerror="window.runs++"/>' +
+      '<foreignObject width="10" height="10"><div xmlns="http://www.w3.org/1999/xhtml">Label</div></foreignObject>' +
+      '<text x="1" y="5">A</text></svg>';
+    document.body.appendChild(container);
+    svg = container.querySelector("svg");
+  });
+
+  afterEach(() => {
+    resetConfig();
+    document.body.innerHTML = "";
+  });
+
+  test("the copy the sanitizer receives is not owned by the page", () => {
+    // "off" hands back the copy it was given, so its owner shows where cloneSVG made it
+    const off = cloneSVG(svg, { securityMode: "off" });
+    expect(off.ownerDocument).not.toBe(document);
+    expect(off.querySelector("image").getAttribute("onerror")).toBe("window.runs++");
+  });
+
+  test("strict and permissive copies drop the handler and still work in the page", () => {
+    for (const mode of ["strict", "permissive"]) {
+      const clone = cloneSVG(svg, { securityMode: mode });
+      expect(clone.ownerDocument).not.toBe(document);
+      expect(clone).toBeInstanceOf(SVGElement);
+      expect(clone.getAttribute("xmlns")).toBe("http://www.w3.org/2000/svg");
+      expect(clone.querySelector("image").hasAttribute("onerror")).toBe(false);
+      expect(clone.querySelector("foreignObject div").namespaceURI).toBe(
+        "http://www.w3.org/1999/xhtml",
+      );
+      document.body.appendChild(clone);
+      expect(clone.ownerDocument).toBe(document);
+      expect(clone.querySelector("text").textContent).toBe("A");
+      clone.remove();
+    }
+  });
+});

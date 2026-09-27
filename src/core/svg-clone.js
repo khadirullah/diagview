@@ -1,5 +1,5 @@
 import { state } from "./config.js";
-import { sanitizeSVG, fixIds, generateUniqueId } from "./utils.js";
+import { sanitizeSVG, fixIds, generateUniqueId, inertDocument } from "./utils.js";
 import { showErrorToast, showInfoToast } from "../ui/toast.js";
 
 /**
@@ -245,7 +245,10 @@ export function cloneSVG(svg, options = {}) {
     return null;
   }
 
-  const rawClone = svg.cloneNode(true);
+  // Copy into a document with no window. A copy made in the page starts
+  // loading its images at once, so an onerror handler would run before the
+  // sanitizer removes it.
+  const rawClone = inertDocument().importNode(svg, true);
 
   // Performance Bypass: If SVG is very large, skip the expensive computed style loop
   let effectivePreserveStyles = preserveStyles;

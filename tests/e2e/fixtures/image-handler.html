@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>DiagView image handler</title>
+<style>body{font-family:sans-serif;margin:24px;background:#fff} .diagram{border:1px solid #ccc;width:400px;height:200px}</style>
+<script>window.runs = 0;</script>
+</head>
+<body>
+
+<!-- The image is missing, so its onerror runs once for every copy that loads it -->
+<div class="diagram" id="diag" data-title="Image handler">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 100" width="200" height="100">
+  <rect x="10" y="10" width="180" height="80" fill="#dbeafe" stroke="#1e3a8a"/>
+  <image href="missing.png" width="20" height="20" onerror="window.runs++"/>
+  <text x="100" y="55" text-anchor="middle">Image</text>
+</svg>
+</div>
+
+<script src="../../../node_modules/@panzoom/panzoom/dist/panzoom.min.js"></script>
+</body>
+</html>

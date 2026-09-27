@@ -54,16 +54,17 @@ build. Set `E2E_PORT` to use a port other than 9340.
 | `verify-theme-hint.spec.mjs`       | 3      | first-time theme hint sits above the menu button on desktop and on phone pages with and without a viewport meta tag                                                                                                                                                                       |
 | `verify-search-export.spec.mjs`    | 5      | SVG and PNG exports during a search with exportSearchHighlight on and off, and the viewer keeps its search after each export                                                                                                                                                              |
 | `verify-export-fonts.spec.mjs`     | 3      | SVG export embeds only the @font-face rules its labels use (family, nearest weight and style, unicode-range), labels keep their width, `exportFonts` "all" and "none"                                                                                                                     |
+| `verify-image-handler.spec.mjs`    | 3      | an image `onerror` in the diagram runs once on page load and not again for fullscreen or PNG export in strict and permissive mode, and does run again in "off" mode                                                                                                                       |
 
-That is 169 checks per browser.
+That is 172 checks per browser.
 
 `verify-react-strictmode` loads React from unpkg and `verify-fixes` loads
 Mermaid from jsdelivr, so both need network access. Set
 `DV_CDN=<version>` (e.g. `DV_CDN=1.0.11`) to run those two against a
 published build instead of the local one. The other suites run offline.
-`verify-export-search`, `verify-search-export` and `verify-readable-text`
-inject the build themselves. Set `DV_DIST=/path/to/diagview.umd.js` to test
-another build with those three.
+`verify-export-search`, `verify-search-export`, `verify-readable-text` and
+`verify-image-handler` inject the build themselves. Set
+`DV_DIST=/path/to/diagview.umd.js` to test another build with those four.
 
 `repro.html` is the shared test page: a 2000x1200 labelled grid SVG (cells
 A1 to J6, 200 units each) so any viewport centre measurement maps to a
