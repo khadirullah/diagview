@@ -406,6 +406,14 @@ function localNameOf(node) {
 }
 
 /**
+ * Options for sanitizeSVG().
+ * @typedef {object} SanitizeOptions
+ * @property {number} [maxChars] - Block input longer than this. A Node is measured by its serialized length
+ * @property {boolean} [allowRemoteResources] - Keep external fonts and stylesheets
+ * @property {string[]} [allowedImageTypes] - Image types allowed in data URLs
+ */
+
+/**
  * Sanitize an SVG string or DOM Node to prevent XSS.
  *
  * Uses a secure DOM-walking approach (DOMParser + attribute walker) rather
@@ -422,7 +430,7 @@ function localNameOf(node) {
  *
  * @param {string|Node} input - The SVG string or DOM Node to sanitize.
  * @param {'strict'|'permissive'|'off'} [mode='strict'] - Sanitization mode.
- * @param {number|object|null} [options=0] - Character limit (number) or options object.
+ * @param {number|SanitizeOptions|null} [options=0] - Character limit (number) or options object.
  * @returns {string|Node|null} The sanitized string or Node; "" (string input)
  *   or null (Node input) when the input exceeds maxChars.
  */

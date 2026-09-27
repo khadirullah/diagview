@@ -220,6 +220,15 @@ function utilities(): void {
   DiagView.utils.sanitizeSVG("<svg></svg>", "strict", { maxChars: 500000 });
   DiagView.utils.sanitizeSVG("<svg></svg>", "off", 500000);
   DiagView.utils.sanitizeSVG("<svg></svg>", "strict", null);
+  DiagView.utils.sanitizeSVG("<svg></svg>", "strict", {
+    maxChars: 1000,
+    allowRemoteResources: true,
+    allowedImageTypes: ["png"],
+  });
+  // @ts-expect-error maxChars is a number
+  DiagView.utils.sanitizeSVG("<svg></svg>", "strict", { maxChars: "big" });
+  // @ts-expect-error unknown sanitize options are a mistake
+  DiagView.utils.sanitizeSVG("<svg></svg>", "strict", { maxchars: 1000 });
   // @ts-expect-error mode is a fixed set of strings
   DiagView.utils.sanitizeSVG("<svg></svg>", "loose");
 
