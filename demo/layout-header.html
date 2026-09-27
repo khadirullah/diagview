@@ -47,6 +47,19 @@
             --stage-h: 440px;
         }
 
+        .grid > .card.security {
+            --stage-h: 220px;
+        }
+
+        .card-note p + p {
+            margin-top: 6px;
+        }
+
+        .card-note b {
+            color: var(--ink);
+            font-weight: 600;
+        }
+
         .next {
             display: flex;
             flex-wrap: wrap;
@@ -316,6 +329,57 @@
                     </svg>
                 </div>
                 <p class="card-note">Click to open the 2,500 node grid.</p>
+            </div>
+
+            <!-- Security: an SVG with an inline event handler -->
+            <div class="card wide security">
+                <div class="card-header">
+                    <h3>Security: an inline handler</h3>
+                    <span class="tag">Inline SVG</span>
+                </div>
+                <div class="diagram" data-title="Inline Handler Test">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 150">
+                        <style>
+                            .sec-node rect {
+                                fill: var(--surface, #ffffff);
+                                stroke: var(--accent, #ea580c);
+                                stroke-width: 2;
+                                cursor: pointer;
+                            }
+
+                            .sec-node text {
+                                fill: var(--ink, #15181d);
+                                font: 600 15px sans-serif;
+                                text-anchor: middle;
+                                pointer-events: none;
+                            }
+
+                            .sec-status {
+                                fill: var(--muted, #5b6472);
+                                font: 13px sans-serif;
+                                text-anchor: middle;
+                            }
+                        </style>
+                        <!-- The handler only acts inside the fullscreen viewer, so the page copy stays as it is -->
+                        <g class="sec-node"
+                            onclick="if (!this.closest('#diagview-modal')) return; this.querySelector('rect').style.fill = 'var(--accent, #ea580c)'; this.querySelector('text').style.fill = '#ffffff'; this.ownerSVGElement.querySelector('.sec-status').textContent = 'Handler ran';">
+                            <rect x="130" y="24" width="160" height="52" rx="10" />
+                            <text x="210" y="55">Click me</text>
+                        </g>
+                        <text class="sec-status" x="210" y="118">Handler has not run</text>
+                    </svg>
+                </div>
+                <div class="card-note">
+                    <p>The node carries an <code>onclick</code> handler. Open the diagram fullscreen and click the
+                        node. DiagView cleans the copy it shows in fullscreen, not the diagram on this page.
+                        <b>Strict</b> and <b>Permissive</b> both remove every <code>on*</code> attribute from that
+                        copy, so the click does nothing. <b>Off</b> keeps the SVG as written, so the handler runs.
+                        The node fills with the accent colour and the label reads "Handler ran".</p>
+                    <p>DiagView makes a fresh copy each time fullscreen opens, so a new Security choice applies
+                        from the next open. Strict also drops SMIL animation and CSS that could run script or load
+                        remote files. Permissive keeps both, apart from animations that rewrite links or
+                        handlers.</p>
+                </div>
             </div>
         </div>
 
