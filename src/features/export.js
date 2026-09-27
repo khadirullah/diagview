@@ -454,16 +454,28 @@ async function prepareSvgForExport(svg, modalClone) {
  * @private
  */
 async function serializeSVGAsync(svgEl) {
-  return new Promise((resolve) => {
+  return new Promise((resolve, reject) => {
+    // A throw inside the callback would never reach the promise, so reject
+    // here or the export waits forever
+    const serialize = () => {
+      try {
+        resolve(new XMLSerializer().serializeToString(svgEl));
+      } catch (e) {
+        reject(e);
+      }
+    };
     // Use MessageChannel to yield to the event loop before heavy serialization
     // This ensures UI updates (like toasts) are rendered before the CPU spike
     if (typeof MessageChannel !== "undefined") {
       const { port1, port2 } = new MessageChannel();
-      port1.onmessage = () => resolve(new XMLSerializer().serializeToString(svgEl));
+      port1.onmessage = () => {
+        port1.close();
+        serialize();
+      };
       port2.postMessage(null);
     } else {
       // Fallback for environments without MessageChannel (like Node/JSDOM tests)
-      setTimeout(() => resolve(new XMLSerializer().serializeToString(svgEl)), 0);
+      setTimeout(serialize, 0);
     }
   });
 }

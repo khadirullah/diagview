@@ -962,6 +962,28 @@ describe("onExport fires only after a successful export", () => {
     expect(onExport).not.toHaveBeenCalled();
   });
 
+  test.each([
+    ["svg", "SVG Failed"],
+    ["copy-svg", "Copy SVG Failed"],
+    ["png", "Export Failed"],
+  ])("%s fails with a notice when the SVG cannot be serialized", async (mode, notice) => {
+    const Original = global.XMLSerializer;
+    global.XMLSerializer = class {
+      serializeToString() {
+        throw new Error("serialize broke");
+      }
+    };
+    try {
+      await exportDiagram(container, mode, { silent: true });
+    } finally {
+      global.XMLSerializer = Original;
+    }
+    expect(toastTexts().some((t) => t.includes(notice) && t.includes("serialize broke"))).toBe(
+      true,
+    );
+    expect(onExport).not.toHaveBeenCalled();
+  });
+
   test("an image that fails to load does not fire it", async () => {
     mockImage(true);
     await exportDiagram(container, "png");
