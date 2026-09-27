@@ -48,8 +48,9 @@ build. Set `E2E_PORT` to use a port other than 9340.
 | `verify-react-strictmode.spec.mjs` | 21     | real React 18 dev tree with StrictMode: init survives the double effect, unmount/remount/replace are error-free, anti-pattern throws                                                                                                                                                      |
 | `verify-export-search.spec.mjs`    | 12     | PNG export of a 1 MB+ foreignObject diagram, search dimming, ring colour per canvas, plain SVG shape marking, rotation                                                                                                                                                                    |
 | `verify-readable-text.spec.mjs`    | 38     | Text Colours menu row on Mermaid, Graphviz, PlantUML, draw.io and hand-drawn SVGs: which labels change, 4.5:1 contrast, hue kept, exact restore, canvas switch, reopen, SVG export keeps author colours                                                                                   |
+| `verify-menu-buttons.spec.mjs`     | 4      | hover on the Canvas Theme and Text Colours buttons on light, dark and custom canvases                                                                                                                                                                                                     |
 
-That is 138 checks per browser.
+That is 142 checks per browser.
 
 `verify-react-strictmode` loads React from unpkg and `verify-fixes` loads
 Mermaid from jsdelivr, so both need network access. Set

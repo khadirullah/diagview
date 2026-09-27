@@ -116,3 +116,11 @@ describe("styles.css: dead and contradicting rules", () => {
     expect(selector).toMatch(/\.diagview-modal \*::after/);
   });
 });
+
+describe("styles.css: menu buttons", () => {
+  test("canvas and text colour buttons tint with the accent on hover", () => {
+    const body = ruleBody(".dv-theme-btn:hover {");
+    expect(body).toMatch(/background:\s*color-mix\(in srgb, var\(--dv-primary/);
+    expect(body).not.toMatch(/rgba\(255, 255, 255/);
+  });
+});
