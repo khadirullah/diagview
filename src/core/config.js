@@ -348,7 +348,7 @@ export { DEFAULT_CONFIG, INITIAL_CONFIG };
  * @property {number} themeCacheTimestamp - Timestamp of last theme detection
  * @property {'auto'|'light'|'dark'|'custom'} activeCanvasThemeMode - Active canvas theme mode
  * @property {string|null} customCanvasColor - Custom backdrop color hex
- * @property {boolean} readableText - Recolour diagram text that is hard to read on the canvas (modal view only)
+ * @property {boolean} readableText - Recolour diagram text that is hard to read on the canvas, in the modal and in exports with a background
  * @property {MutationObserver|null} themeObserver - Observer for theme changes
  * @property {Function|null} themeChangeHandler - Handler for media query changes
  * @property {MediaQueryList|null} mediaQueryList - Media query list for theme detection

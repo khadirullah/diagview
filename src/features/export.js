@@ -303,9 +303,11 @@ function injectWatermark(svg, d, sourceSvg = null) {
  * @private
  * @param {SVGSVGElement} svg - Original page SVG
  * @param {SVGSVGElement|null} modalClone - Modal clone, preferred as the source when present
+ * @param {boolean} [transparent] - The file has no background
  */
-async function prepareSvgForExport(svg, modalClone) {
+async function prepareSvgForExport(svg, modalClone, transparent) {
   const theme = detectTheme();
+  const bg = transparent ? null : theme.bg;
 
   // Wait for fonts to load so BBox / computed styles are stable
   if (document.fonts?.ready) {
@@ -327,26 +329,29 @@ async function prepareSvgForExport(svg, modalClone) {
   const height = vh;
 
   // CRITICAL FIX: Use sourceSvg (modalClone if in fullscreen)
-  // Readable text only changes the view; exports keep the author's colours.
-  // The clone reads styles and copies the DOM before its first await, so
-  // the original colours are in place for both.
+  // With Readable on, a file with a background gets the colours Readable
+  // picks for that background. A transparent file keeps the author's
+  // colours, as light text would vanish on a white page. The clone reads
+  // styles and copies the DOM before its first await, so the view's own
+  // recolours are off for both.
   // With exportSearchHighlight off, the search class comes off while the
   // clone reads styles, so the file has no dimming or outline. The on-screen
   // search is put back before anything can repaint.
   let hideSearch = false;
-  const cloneSource = () => {
+  const cloneSource = (paint) => {
     hideSearch =
       !state.config.exportSearchHighlight && sourceSvg.classList?.contains("dv-searching");
     if (hideSearch) sourceSvg.classList.remove("dv-searching");
     try {
-      return cloneSVGForExportAsync(sourceSvg);
+      return cloneSVGForExportAsync(sourceSvg, paint);
     } finally {
       if (hideSearch) sourceSvg.classList.add("dv-searching");
     }
   };
-  const exportSvg = await (sourceSvg.querySelector?.("[data-dv-text-orig]")
-    ? import("./lazy/readable-text.js").then((m) => m.withOriginalText(sourceSvg, cloneSource))
-    : cloneSource());
+  const textWork = (bg && state.readableText) || sourceSvg.querySelector?.("[data-dv-text-orig]");
+  const exportSvg = await (textWork
+    ? import("./lazy/readable-text.js").then((m) => m.exportText(sourceSvg, bg, cloneSource).clone)
+    : cloneSource(null));
 
   if (!exportSvg) return null;
 
@@ -434,7 +439,7 @@ export async function renderToCanvas(sourceElement, modalClone, transparent = fa
   }
 
   // Use modalClone if available to ensure export matches browser rendering
-  const result = await prepareSvgForExport(originalSvg, modalClone);
+  const result = await prepareSvgForExport(originalSvg, modalClone, transparent);
   if (!result) {
     // Only the size limit gets here, and cloneSVG has already said so
     const err = new Error("SVG preparation failed");
@@ -532,7 +537,7 @@ export async function exportToSVG(sourceElement, options = {}) {
  */
 async function saveSVG(originalSvg, filename, { transparent: isTransparent, modalClone }) {
   try {
-    const prepared = await prepareSvgForExport(originalSvg, modalClone);
+    const prepared = await prepareSvgForExport(originalSvg, modalClone, isTransparent);
     // Over the size limit. cloneSVG has already shown "Diagram blocked".
     if (!prepared) return;
     const { bg, svg } = prepared;
@@ -585,7 +590,9 @@ export async function copySVGCode(sourceElement, options = {}) {
   if (!originalSvg) return showErrorToast("No SVG found");
 
   try {
-    const prepared = await prepareSvgForExport(originalSvg, options.modalClone);
+    // The markup has no background, so it keeps the author's colours like
+    // a transparent file
+    const prepared = await prepareSvgForExport(originalSvg, options.modalClone, true);
     // Over the size limit. cloneSVG has already shown "Diagram blocked".
     if (!prepared) return;
     const data = await serializeSVGAsync(prepared.svg);

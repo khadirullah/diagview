@@ -1,8 +1,9 @@
 /**
  * DiagView Readable Text
  * Recolours diagram labels that are hard to read against what sits behind
- * them on the current canvas. Only the modal clone changes; the page diagram
- * and every export keep the colours the author chose.
+ * them on the current canvas. Only the modal clone changes on screen. An
+ * export with a background gets the same colours, worked out against that
+ * background. The page diagram always keeps the colours the author chose.
  * @module features/lazy/readable-text
  */
 
@@ -217,7 +218,8 @@ function measureShapes(svg) {
  * @param {DOMRect} box - Label box
  * @param {number[]} canvas - Opaque canvas colour
  * @param {() => Array<*>} getShapes - Shapes of the diagram, measured on first use
- * @returns {number[]|null} Opaque [r, g, b], or null when it cannot be known
+ * @returns {number[]|null} Opaque [r, g, b], the canvas array itself when
+ *   nothing else is behind the label, or null when it cannot be known
  */
 function backgroundOf(el, prop, box, canvas, getShapes) {
   // HTML labels can carry their own background (Mermaid edge labels do)
@@ -272,19 +274,17 @@ export function restoreText(svg) {
 }
 
 /**
- * Recolour the labels that are hard to read against what sits behind them.
- * Starts from the author's colours, so calling it again never stacks.
- * @param {SVGElement} svg - Diagram SVG in the modal
- * @param {string} canvasBg - Opaque canvas colour as seen. A see-through
- *   value is laid over white, so pass the theme's seenBg instead.
- * @returns {number} Number of labels recoloured
+ * Work out the new colour of each label that is hard to read against what
+ * sits behind it. Reads the diagram and changes nothing.
+ * @param {SVGElement} svg - Diagram SVG, laid out on the page
+ * @param {string} canvasBg - Canvas colour. A see-through value is laid over white.
+ * @returns {Array<{el: Element, prop: string, value: string, onCanvas: boolean}>}
+ *   One entry per label, onCanvas when nothing but the canvas is behind it
  */
-export function applyReadableText(svg, canvasBg) {
-  if (!svg) return 0;
-  restoreText(svg);
-
+function planText(svg, canvasBg) {
+  const changes = [];
   const canvasRgba = toRgba(canvasBg);
-  if (!canvasRgba) return 0;
+  if (!canvasRgba) return changes;
   const canvas = blend(canvasRgba, WHITE);
 
   let shapes = null;
@@ -292,7 +292,6 @@ export function applyReadableText(svg, canvasBg) {
 
   // Read everything first and write afterwards, so the loop never forces a
   // fresh layout per label
-  const changes = [];
   for (const el of collectLabels(svg)) {
     // Not drawn, like a label with display: none
     const box = el.getBoundingClientRect();
@@ -305,17 +304,30 @@ export function applyReadableText(svg, canvasBg) {
     const bg = backgroundOf(el, prop, box, canvas, getShapes);
     if (!bg || contrast(blend(fg, bg), bg) >= MIN_CONTRAST) continue;
 
-    changes.push({ el, prop, value: toCss(readableShade(fg, bg)) });
+    changes.push({ el, prop, value: toCss(readableShade(fg, bg)), onCanvas: bg === canvas });
   }
+  return changes;
+}
 
+/**
+ * Recolour the labels that are hard to read against what sits behind them.
+ * Starts from the author's colours, so calling it again never stacks.
+ * @param {SVGElement} svg - Diagram SVG in the modal
+ * @param {string} canvasBg - Opaque canvas colour as seen. A see-through
+ *   value is laid over white, so pass the theme's seenBg instead.
+ * @returns {number} Number of labels recoloured
+ */
+export function applyReadableText(svg, canvasBg) {
+  if (!svg) return 0;
+  restoreText(svg);
+  const changes = planText(svg, canvasBg);
   for (const { el, prop, value } of changes) recolour(el, prop, value);
   return changes.length;
 }
 
 /**
  * Run fn with the author's colours back in place, then recolour again.
- * Exports read computed styles synchronously, so fn sees the original
- * diagram and the reader sees no change.
+ * fn must finish synchronously, so the reader sees no change.
  * @template T
  * @param {SVGElement} svg - Diagram SVG
  * @param {() => T} fn - Synchronous work that must see the original colours
@@ -332,6 +344,27 @@ export function withOriginalText(svg, fn) {
   } finally {
     for (const { el, prop, value } of changed) recolour(el, prop, value);
   }
+}
+
+/**
+ * Clone a diagram for export with the label colours the file should have.
+ * With a background and Readable on, the clone gets the colours Readable
+ * picks against that background. Otherwise it keeps the author's colours.
+ * The SVG passed in keeps its colours either way.
+ * @template T
+ * @param {SVGElement} svg - Diagram SVG to export, laid out on the page
+ * @param {string|null} bg - Export background, null for a transparent file
+ * @param {(paint: Map<Element, string[]>|null) => T} clone - Synchronous
+ *   clone that paints each mapped label with [property, colour]
+ * @returns {{clone: T, faint: boolean}} faint when Readable is off and a
+ *   label straight on the background is under 4.5:1
+ */
+export function exportText(svg, bg, clone) {
+  return withOriginalText(svg, () => {
+    const changes = bg ? planText(svg, bg) : [];
+    const paint = state.readableText && new Map(changes.map((c) => [c.el, [c.prop, c.value]]));
+    return { clone: clone(paint || null), faint: !paint && changes.some((c) => c.onCanvas) };
+  });
 }
 
 /**

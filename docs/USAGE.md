@@ -303,7 +303,7 @@ In fullscreen, open the FAB menu (bottom-right) and click any export button. The
 
 ### Search highlight
 
-An export from the fullscreen viewer shows what the viewer shows, so during a search the file has the dimmed nodes and the outlined match. Set `exportSearchHighlight: false` to export the plain diagram instead. The search in the viewer stays as it was.
+An export from the fullscreen viewer shows what the viewer shows, so during a search the file has the dimmed nodes and the outlined match. With Readable on, labels have the same recoloured text as in the viewer, unless the file is transparent (see [Text Colours](#text-colours)). Set `exportSearchHighlight: false` to export the plain diagram instead. The search in the viewer stays as it was.
 
 ```javascript
 DiagView.configure({ exportSearchHighlight: false });
@@ -569,7 +569,9 @@ DiagView checks a label against its own background first, as with Mermaid edge l
 
 Readable works on any SVG, including HTML labels inside `<foreignObject>` (Mermaid, draw.io). It skips text painted with a gradient and text over a gradient-filled shape. Lines, arrows and shape outlines keep their colours.
 
-Readable follows canvas changes, including page theme changes in Auto mode, and stays on when you reopen the viewer. A page reload or `destroy()` resets it to Original, and DiagView does not save it to `localStorage`. There is no `init()` option for it. It changes only the fullscreen view. Exports, clipboard copies and the diagram on the page keep the author's colours.
+Readable follows canvas changes, including page theme changes in Auto mode, and stays on when you reopen the viewer. A page reload or `destroy()` resets it to Original, and DiagView does not save it to `localStorage`. There is no `init()` option for it. The diagram on the page always keeps the author's colours.
+
+Exports follow what you see. With Readable on, an export with a background gets the same recoloured labels, worked out against the export background. This covers PNG, JPEG, WebP, PDF, SVG and Copy Image, from the fullscreen menu, the page toolbar and the export functions. A toolbar export uses the canvas colour you last picked as its background, so it gets Readable colours too while Readable is on. Transparent PNG, WebP and SVG files keep the author's colours, since light text would vanish on a white page. Copy SVG has no background, so it keeps them as well.
 
 ---
 

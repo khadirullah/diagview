@@ -518,6 +518,132 @@ describe("Export keeps the author's text colours", () => {
   });
 });
 
+describe("Exports follow the Readable text colours", () => {
+  const NS = "http://www.w3.org/2000/svg";
+  let container, label, downloads, clickSpy, imageSrcs;
+
+  const place = (el, x, y, w, h) => {
+    el.getBoundingClientRect = () => ({
+      left: x,
+      top: y,
+      width: w,
+      height: h,
+      right: x + w,
+      bottom: y + h,
+    });
+  };
+  const svgMarkup = () =>
+    decodeURIComponent(downloads[0].href.replace(/^data:image\/svg\+xml;charset=utf-8,/, ""));
+  const imageMarkup = () =>
+    decodeURIComponent(imageSrcs[0].replace(/^data:image\/svg\+xml;charset=utf-8,/, ""));
+  // The fill the exported label ends up with
+  const labelFill = (markup) => markup.match(/<text[^>]*style="[^"]*fill: ([^;"]+)/)?.[1];
+
+  beforeEach(() => {
+    container = document.createElement("div");
+    const svg = document.createElementNS(NS, "svg");
+    svg.setAttribute("viewBox", "0 0 100 100");
+    // Dark text straight on the canvas, like a sequence message
+    label = document.createElementNS(NS, "text");
+    label.setAttribute("style", "fill: #333333");
+    label.textContent = "Label";
+    place(label, 10, 10, 60, 12);
+    svg.appendChild(label);
+    container.appendChild(svg);
+    document.body.appendChild(container);
+    updateConfig({ highResScale: 1, maxPixels: 16000000, security: { mode: "strict" } });
+
+    downloads = [];
+    clickSpy = jest.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(function () {
+      downloads.push({ name: this.download, href: this.href });
+    });
+    imageSrcs = [];
+    global.URL.createObjectURL = jest.fn().mockReturnValue("blob:mock-url");
+    global.URL.revokeObjectURL = jest.fn();
+    global.Image = jest.fn(() => {
+      const img = document.createElement("img");
+      Object.defineProperty(img, "src", {
+        set(val) {
+          imageSrcs.push(val);
+          setTimeout(() => this.onload && this.onload(), 5);
+        },
+      });
+      return img;
+    });
+    HTMLCanvasElement.prototype.toBlob = function (cb, type) {
+      cb(new Blob(["img"], { type: type || "image/png" }));
+    };
+
+    state.activeCanvasThemeMode = "dark";
+    state.readableText = true;
+    state.themeCache = null;
+  });
+
+  afterEach(() => {
+    container.remove();
+    clickSpy.mockRestore();
+    state.activeCanvasThemeMode = "auto";
+    state.readableText = false;
+    state.themeCache = null;
+    hideToast();
+  });
+
+  test("an SVG export on a dark canvas gets the light label, the page keeps its own", async () => {
+    await exportToSVG(container, { filename: "d" });
+
+    const fill = labelFill(svgMarkup());
+    expect(fill).toMatch(/^rgb.*!important$/);
+    // Light enough to read on the dark background
+    expect(Math.min(...fill.match(/\d+/g).map(Number))).toBeGreaterThan(150);
+
+    expect(label.getAttribute("style")).toBe("fill: #333333");
+    expect(label.hasAttribute("data-dv-text-orig")).toBe(false);
+  });
+
+  test("a fullscreen export repaints from the author's colour and keeps the view as it is", async () => {
+    // The modal clone, its label already recoloured for the viewer's canvas
+    const modalClone = container.querySelector("svg").cloneNode(true);
+    const shown = modalClone.querySelector("text");
+    place(shown, 10, 10, 60, 12);
+    shown.setAttribute("data-dv-text-orig", "#333333");
+    shown.setAttribute("data-dv-text-prio", "");
+    shown.style.setProperty("fill", "rgb(1, 2, 3)", "important");
+    document.body.appendChild(modalClone);
+
+    await exportToSVG(container, { filename: "d", modalClone });
+
+    const markup = svgMarkup();
+    expect(markup).not.toContain("data-dv-text");
+    expect(markup).not.toContain("rgb(1, 2, 3)");
+    expect(labelFill(markup)).toMatch(/^rgb.*!important$/);
+    expect(shown.style.getPropertyValue("fill")).toBe("rgb(1, 2, 3)");
+    modalClone.remove();
+  });
+
+  test("a PNG export draws the same light label", async () => {
+    await exportDiagram(container, "png", { filename: "d" });
+
+    expect(labelFill(imageMarkup())).toMatch(/^rgb.*!important$/);
+  });
+
+  test.each([
+    ["transparent SVG", () => exportToSVG(container, { transparent: true })],
+    ["png-transparent", () => exportDiagram(container, "png-transparent")],
+  ])("a %s export keeps the author's colours", async (_name, run) => {
+    await run();
+
+    const markup = imageSrcs.length ? imageMarkup() : svgMarkup();
+    expect(labelFill(markup)).toBe("#333333");
+  });
+
+  test("with Readable off the export keeps the author's colours", async () => {
+    state.readableText = false;
+    await exportToSVG(container, { filename: "d" });
+
+    expect(labelFill(svgMarkup())).toBe("#333333");
+  });
+});
+
 describe("exportSearchHighlight", () => {
   let container, modalClone, match, other, css;
 

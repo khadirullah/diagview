@@ -1,7 +1,7 @@
 // Text Colours row in the fullscreen menu. Readable recolours only the
 // labels that are hard to read against what sits behind them, keeps the hue,
-// follows canvas changes, survives a reopen, restores exactly on Original
-// and never leaks into exports.
+// follows canvas changes, survives a reopen, restores exactly on Original,
+// carries into exports with a background and stays out of transparent ones.
 //
 // Runs offline: the page is file:// and every diagram is static markup
 // shaped like Mermaid, Graphviz, PlantUML and draw.io output, so no Mermaid
@@ -254,9 +254,10 @@ const readableOn = () => page.evaluate(() => DiagView.default.state.readableText
 const canvasNow = () =>
   page.evaluate(() => getComputedStyle(document.getElementById("diagview-modal")).backgroundColor);
 
-// ── Exports keep the author's colours ────────────────────────────────────────
-async function downloadSvgFromMenu() {
+// ── Exports follow the view, transparent ones keep the author's colours ──────
+async function downloadSvgFromMenu(transparent) {
   await openMenu();
+  await page.locator(".diagview-menu.active #dv-exp-trans").setChecked(transparent);
   const download = page.waitForEvent("download", { timeout: 15000 });
   await page.locator(".diagview-menu.active [data-action=svg]").click({ timeout: 3000 });
   const dl = await download;
@@ -278,18 +279,20 @@ const exportedFill = (text, id) =>
   );
 const hexOf = (c) => page.evaluate((c) => window.__dv.hex(window.__dv.rgba(c)), c);
 
-async function exportCheck(key, id) {
+async function exportCheck(key, id, transparent = false) {
   await openModal(key);
   await clickSwatch(CHARCOAL);
   if (!(await readableOn())) await clickTextMode("readable");
   const author = await hexOf((await sourceColours(key, [id]))[id]);
   const live = (await measure([{ id, bg: "canvas", change: true }], MARK)).rows[0];
-  const svg = await downloadSvgFromMenu();
+  const svg = await downloadSvgFromMenu(transparent);
   if (!svg) throw new Error("the SVG export did not download");
   const got = await exportedFill(svg, id);
   const marks = (svg.match(/data-dv-text-orig/g) || []).length;
+  // The canvas is opaque, so the file's background is the one the view measured against
+  const want = transparent ? author : live.fgHex;
   expect(
-    !!(live.changed && live.fgHex !== author && marks === 0 && got && got.hex === author),
+    !!(live.changed && live.fgHex !== author && marks === 0 && got && got.hex === want),
     `author ${author}, modal ${live.fgHex} (marked=${live.changed}), export ${got ? `${got.hex} from "${got.raw}"` : "has no such element"}, ` +
       `${marks} ${MARK} attributes`,
   ).toBe(true);
@@ -629,10 +632,14 @@ test("reopening the modal with Readable on recolours again", async () => {
   ).toBe(true);
 });
 
-// Exports keep the author's colours
+// Exports with a background follow the view, transparent ones keep the author's colours
 test.describe("exports", () => {
-  test("PlantUML SVG export: message text keeps its own #000000 fill", async () => {
+  test("PlantUML SVG export: message text gets the view's readable fill", async () => {
     await exportCheck("puml", "pu-msg");
+  });
+
+  test("PlantUML transparent SVG export: message text keeps its own #000000 fill", async () => {
+    await exportCheck("puml", "pu-msg", true);
   });
 
   test("the modal keeps the recolour after the export", async () => {
@@ -643,8 +650,12 @@ test.describe("exports", () => {
     ).toBe(true);
   });
 
-  test("Mermaid SVG export: class-styled message text keeps its own #333333 fill", async () => {
+  test("Mermaid SVG export: class-styled message text gets the view's readable fill", async () => {
     await exportCheck("seq", "sq-msg1");
+  });
+
+  test("Mermaid transparent SVG export: class-styled message text keeps its own #333333 fill", async () => {
+    await exportCheck("seq", "sq-msg1", true);
   });
 
   test("PNG export still downloads with Readable on", async () => {

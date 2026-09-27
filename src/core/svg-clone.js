@@ -450,9 +450,11 @@ export function cloneSVGForModal(svg) {
  *     which is safe to defer as the data is already captured.
  *
  * @param {SVGElement} svg - ORIGINAL page SVG (not modal clone)
+ * @param {Map<Element, string[]>|null} [paint] - Labels to paint in the clone
+ *   with [property, colour], such as Readable text colours
  * @returns {Promise<SVGElement>} The cloned SVG element
  */
-export function cloneSVGForExportAsync(svg) {
+export function cloneSVGForExportAsync(svg, paint = null) {
   return new Promise((resolve) => {
     const originalNodes = Array.from(svg.querySelectorAll("*"));
     // Safety cap on the number of nodes whose computed styles are read.
@@ -502,6 +504,9 @@ export function cloneSVGForExportAsync(svg) {
       } catch {
         // SVG not in layout — skip
       }
+      // !important like Readable on screen, over the diagram's own rules
+      const own = paint?.get(node);
+      if (own) styles[own[0]] = [own[1], "important"];
       capturedStyles[i] = Object.keys(styles).length ? styles : null;
     }
 
@@ -544,7 +549,10 @@ export function cloneSVGForExportAsync(svg) {
         const styles = idx >= 0 && idx < capturedStyles.length ? capturedStyles[idx] : null;
         if (styles) {
           for (const prop in styles) {
-            cloned.style[prop] = styles[prop];
+            // [colour, priority] for a painted label
+            const value = styles[prop];
+            if (Array.isArray(value)) cloned.style.setProperty(prop, ...value);
+            else cloned.style[prop] = value;
           }
         }
         cloned.removeAttribute("data-dv-match-id");

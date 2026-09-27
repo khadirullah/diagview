@@ -205,6 +205,8 @@ interface ExportOptions {
 
 `copyToClipboard()` ignores `transparent`. `exportToPDF()` keeps the background and shows a warning when `transparent` is set.
 
+While Readable is on under Text Colours, every export with a background recolours hard-to-read labels against that background, as the viewer does. Transparent exports and `"copy-svg"` keep the author's colours. See [Text Colours](USAGE.md#text-colours).
+
 ---
 
 ## Modal Methods
