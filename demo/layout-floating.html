@@ -511,14 +511,15 @@
             <div class="wrap">
                 <div class="section-head">
                     <h2>Integration</h2>
-                    <p>One script tag, then pick the floating layout.</p>
+                    <p>Two script tags, Panzoom first and then DiagView. Then pick the floating layout.</p>
                 </div>
                 <div class="code">
                     <div class="code-bar">
                         <span class="file">index.html</span>
                         <button class="copy-btn" type="button" data-copy>Copy</button>
                     </div>
-<pre><code><span class="c">// 1. CDN, drop into any HTML page</span>
+<pre><code><span class="c">// 1. CDN, drop into any HTML page. Panzoom does the zoom and pan, so load it first.</span>
+&lt;<span class="t">script</span> <span class="a">src</span>=<span class="v">"https://cdn.jsdelivr.net/npm/@panzoom/panzoom@4.5.1/dist/panzoom.min.js"</span>&gt;&lt;/<span class="t">script</span>&gt;
 &lt;<span class="t">script</span> <span class="a">src</span>=<span class="v">"https://unpkg.com/diagview@1.0.12/dist/diagview.umd.js"</span>&gt;&lt;/<span class="t">script</span>&gt;
 
 <span class="c">// 2. Init with floating buttons</span>
