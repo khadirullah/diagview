@@ -16,6 +16,30 @@ let _minimapListenerCleanup = null;
 let _indicatorSettleTimer = null;
 
 /**
+ * Carry the page's CSS custom properties into a serialised SVG. The minimap
+ * draws the SVG as an image, which is its own document, so var(--x) in its
+ * styles or attributes would find nothing and paint black. The values the
+ * page computes for the SVG are added as a :root rule. Elements inside the
+ * SVG that set the same variable keep their own value.
+ * @param {string} markup - Serialised SVG
+ * @param {Element} svg - The live SVG the markup came from
+ * @returns {string} The markup, with a <style> added when it uses var()
+ */
+export function withPageVariables(markup, svg) {
+  if (!markup.includes("var(") || !markup.endsWith("</svg>")) return markup;
+  const names = new Set(Array.from(markup.matchAll(/var\(\s*(--[\w-]+)/g), (m) => m[1]));
+  const computed = getComputedStyle(svg);
+  let rule = "";
+  for (const name of names) {
+    const value = computed.getPropertyValue(name).trim();
+    if (value) rule += `${name}:${value};`;
+  }
+  if (!rule) return markup;
+  const css = `:root{${rule}}`.replace(/&/g, "&amp;").replace(/</g, "&lt;");
+  return `${markup.slice(0, -6)}<style>${css}</style></svg>`;
+}
+
+/**
  * Update minimap viewport indicator
  */
 export function updateMinimap(clone, viewport, panzoom) {
@@ -157,7 +181,10 @@ export function updateMinimap(clone, viewport, panzoom) {
 
     // BUG-16 Fix: Use a Data URL snapshot to avoid mutating the original SVG's ID.
     // This ensures isolation and prevents breaking host-page CSS/JS.
-    const snapshot = new XMLSerializer().serializeToString(originalSvg);
+    const snapshot = withPageVariables(
+      new XMLSerializer().serializeToString(originalSvg),
+      originalSvg,
+    );
     const dataUrl = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(snapshot);
 
     const imgEl = document.createElementNS("http://www.w3.org/2000/svg", "image");

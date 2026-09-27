@@ -6,7 +6,7 @@
 
 import { jest } from "@jest/globals";
 import { state, resetConfig } from "../src/core/config.js";
-import { updateMinimap, cleanupMinimap } from "../src/features/lazy/minimap.js";
+import { updateMinimap, cleanupMinimap, withPageVariables } from "../src/features/lazy/minimap.js";
 
 // Helper: create element with mocked getBoundingClientRect
 function mockElement(rect, viewBox) {
@@ -422,5 +422,100 @@ describe("Minimap geometry (viewBox origin, rotation fit, resize)", () => {
     } finally {
       jest.useRealTimers();
     }
+  });
+});
+
+describe("Minimap snapshot keeps page CSS variables", () => {
+  const originalGetComputedStyle = window.getComputedStyle;
+  const pageVars = { "--box": "#dbeafe", "--line": "rgb(37, 99, 235)", "--label": '"a<b&c"' };
+  let svg;
+
+  beforeEach(() => {
+    svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    document.body.appendChild(svg);
+    window.getComputedStyle = jest.fn(() => ({ getPropertyValue: (n) => pageVars[n] || "" }));
+  });
+
+  afterEach(() => {
+    window.getComputedStyle = originalGetComputedStyle;
+    svg.remove();
+  });
+
+  test("adds the page values of the variables the SVG uses", () => {
+    const markup =
+      '<svg xmlns="http://www.w3.org/2000/svg"><style>.b{fill:var(--box);stroke:var( --line, red)}</style>' +
+      '<rect style="fill: var(--line)"/><path fill="var(--unset, blue)"/></svg>';
+    const out = withPageVariables(markup, svg);
+    expect(out.startsWith(markup.slice(0, -6))).toBe(true);
+    expect(out.endsWith("<style>:root{--box:#dbeafe;--line:rgb(37, 99, 235);}</style></svg>")).toBe(
+      true,
+    );
+    // The result still parses and the variables resolve inside it
+    const doc = new DOMParser().parseFromString(out, "image/svg+xml");
+    expect(doc.querySelector("parsererror")).toBeNull();
+  });
+
+  test("escapes values so the markup stays well formed", () => {
+    const out = withPageVariables(
+      '<svg xmlns="http://www.w3.org/2000/svg"><text style="content:var(--label)"/></svg>',
+      svg,
+    );
+    expect(out).toContain('--label:"a&lt;b&amp;c";');
+    const doc = new DOMParser().parseFromString(out, "image/svg+xml");
+    expect(doc.querySelector("parsererror")).toBeNull();
+  });
+
+  test("leaves SVGs without var() untouched and never reads styles for them", () => {
+    const markup = '<svg xmlns="http://www.w3.org/2000/svg"><rect fill="#fff"/></svg>';
+    expect(withPageVariables(markup, svg)).toBe(markup);
+    expect(window.getComputedStyle).not.toHaveBeenCalled();
+  });
+
+  test("leaves the markup alone when the page defines none of the variables", () => {
+    const markup = '<svg xmlns="http://www.w3.org/2000/svg"><rect fill="var(--nope)"/></svg>';
+    expect(withPageVariables(markup, svg)).toBe(markup);
+  });
+
+  test("the minimap image uses the resolved snapshot and the live SVG is unchanged", () => {
+    resetConfig();
+    state.minimapSvg = null;
+    const minimap = document.createElement("div");
+    minimap.id = "diagview-minimap";
+    const indicator = document.createElement("div");
+    indicator.className = "dv-mm-v";
+    minimap.appendChild(indicator);
+    document.body.appendChild(minimap);
+
+    const source = document.createElement("div");
+    source.innerHTML =
+      '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect style="fill:var(--box)"/></svg>';
+    document.body.appendChild(source);
+    const live = source.querySelector("svg");
+    const before = live.outerHTML;
+    state.activeSourceElement = source;
+
+    const rect = { x: 0, y: 0, top: 0, left: 0, width: 400, height: 400, right: 400, bottom: 400 };
+    const clone = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    clone.getBoundingClientRect = () => ({ ...rect, width: 800, height: 800 });
+    const viewport = document.createElement("div");
+    viewport.getBoundingClientRect = () => rect;
+    minimap.getBoundingClientRect = () => ({ ...rect, width: 160, height: 100 });
+    // jsdom has no SVG geometry; the indicator skips positioning without it
+    const proto = window.SVGSVGElement.prototype;
+    proto.getScreenCTM = () => null;
+    try {
+      updateMinimap(clone, viewport, mockPanzoom(2));
+    } finally {
+      delete proto.getScreenCTM;
+    }
+
+    const href = decodeURIComponent(state.minimapSvg.querySelector("image").getAttribute("href"));
+    expect(href).toContain("<style>:root{--box:#dbeafe;}</style></svg>");
+    expect(live.outerHTML).toBe(before);
+
+    cleanupMinimap();
+    minimap.remove();
+    source.remove();
+    state.activeSourceElement = null;
   });
 });
