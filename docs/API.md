@@ -191,6 +191,8 @@ All export methods resolve without throwing when `element` contains no `<svg>`; 
 
 SVG exports and the images drawn from them embed the page fonts their labels use. Set `exportFonts` to `'all'` to embed every `@font-face` rule on the page, or to `'none'` to embed no fonts.
 
+An export of the diagram open in fullscreen during a search keeps the dimming and the outline. Set `exportSearchHighlight` to `false` to leave them out. The search in the viewer stays as it was.
+
 ### Export Options
 
 ```typescript

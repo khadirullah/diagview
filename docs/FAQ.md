@@ -134,6 +134,13 @@ A: When `transparent: true` is passed to JPEG export, DiagView automatically swi
 **Q: Clipboard copy fails on my site. Why?**  
 A: Copying an image needs the Clipboard API, which browsers only offer on HTTPS or `localhost`. Without it, or if the browser denies the write (Safari does once the click that started the export is over), DiagView downloads the PNG instead and the toast says so. "Copy SVG" in the fullscreen menu copies text, and on plain HTTP it falls back to `document.execCommand('copy')`. If the browser refuses that copy or denies the write, DiagView downloads the .svg file instead.
 
+**Q: Why does my export show dimmed nodes and an outline?**  
+A: You exported during a search, and the export shows what the viewer shows. Set `exportSearchHighlight: false` to export the plain diagram while the viewer keeps its search:
+
+```javascript
+DiagView.configure({ exportSearchHighlight: false });
+```
+
 **Q: Why does an exported label look cut off or use another font?**  
 A: DiagView could not embed the page font, so the exported file falls back to a font installed on the viewer's computer. That font can be wider than the label's box, and "Mermaid" turns into "Mermaic". The usual cause is a font stylesheet on another origin, such as Google Fonts. The browser hides its rules from scripts unless the `<link>` has `crossorigin="anonymous"`, and DiagView logs a console warning that names the stylesheet. Add the attribute:
 

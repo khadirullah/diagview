@@ -257,6 +257,8 @@ All shortcuts are active when the fullscreen modal is open.
 | Copy     | ❌          | Copies PNG to system clipboard                                                |
 | Copy SVG | ❌          | Copies the SVG markup to the clipboard as text                                |
 
+Exports embed the page fonts the labels use. Set `exportFonts` to `"all"` to embed every `@font-face` rule, or to `"none"` to embed no fonts. An export made during a search keeps its dimming and outline unless `exportSearchHighlight` is `false`.
+
 ### Programmatic export
 
 ```javascript
