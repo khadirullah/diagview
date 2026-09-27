@@ -82,6 +82,8 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            width: 100%;
+            height: 100%;
             min-height: 150px;
             font-size: 0.85rem;
             color: var(--muted);
@@ -208,7 +210,7 @@
                     <h3>PlantUML, hybrid protection</h3>
                     <span class="tag">PlantUML</span>
                 </div>
-                <div class="diagram"
+                <div class="diagram" data-title="PlantUML sequence"
                     data-diagview-watermark="true"
                     data-diagview-watermark-text="© DiagView PlantUML"
                     data-diagview-watermark-style="both"
@@ -396,13 +398,41 @@
             }
         }));
 
+        // PlantUML draws black lines and text and relies on a white page. Put a
+        // white sheet inside the SVG itself, so the diagram stays readable on the
+        // navy page, in the fullscreen viewer and in exports.
+        function paperBehind(svg) {
+            if (!svg) return;
+            const vb = svg.viewBox && svg.viewBox.baseVal;
+            const w = vb && vb.width ? vb.width : parseFloat(svg.getAttribute('width')) || 0;
+            const h = vb && vb.height ? vb.height : parseFloat(svg.getAttribute('height')) || 0;
+            if (!w || !h) return;
+            const pad = 8;
+            const sheet = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+            sheet.setAttribute('x', (vb ? vb.x : 0) - pad);
+            sheet.setAttribute('y', (vb ? vb.y : 0) - pad);
+            sheet.setAttribute('width', w + pad * 2);
+            sheet.setAttribute('height', h + pad * 2);
+            sheet.setAttribute('rx', 6);
+            sheet.setAttribute('fill', '#ffffff');
+            sheet.setAttribute('stroke', '#cdd2d9');
+            sheet.setAttribute('stroke-width', 0.6);
+            svg.insertBefore(sheet, svg.firstChild);
+            // PlantUML asks for "none", which stretches the diagram to fill the card
+            svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+            svg.setAttribute('viewBox', [(vb ? vb.x : 0) - pad - 1, (vb ? vb.y : 0) - pad - 1, w + pad * 2 + 2, h + pad * 2 + 2].join(' '));
+        }
+
         document.addEventListener('DOMContentLoaded', async () => {
             // 1. Fetch PlantUML and inline it
             try {
                 const response = await fetch('https://www.plantuml.com/plantuml/svg/SoWkIImgAStDuNBAJrBGjLDmpCbCJbMmKiX8pSd9vt98pKi1IW80');
                 const svgText = await response.text();
                 const container = document.getElementById('plantuml-container');
-                if (container) container.innerHTML = svgText;
+                if (container) {
+                    container.innerHTML = svgText;
+                    paperBehind(container.querySelector('svg'));
+                }
             } catch (e) {
                 console.error("Failed to fetch PlantUML", e);
             }
