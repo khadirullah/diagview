@@ -6,7 +6,7 @@
 
 import { state } from "../../core/config.js";
 import { TIMING, SELECTORS } from "../../core/constants.js";
-import { throttle } from "../../core/utils.js";
+import { throttle, getClientCTM } from "../../core/utils.js";
 import { addModalListener } from "../../core/lifecycle.js";
 
 /**
@@ -83,7 +83,7 @@ function getSearchCandidates(clone) {
 const SHAPE_SELECTOR = "rect, circle, ellipse, polygon, path";
 
 /**
- * Box of an element in the SVG's own units, through its screen matrix m.
+ * Box of an element in the SVG's own units, through its client matrix m.
  * Pan and zoom move the SVG and everything in it together, so these stay
  * valid after the user pans or zooms between two searches.
  */
@@ -141,7 +141,8 @@ function findShapeForText(clone, item) {
     return null;
   }
   // Not laid out yet: measure on a later search instead of caching a miss
-  const m = clone.getScreenCTM();
+  // Client pixels, like getBoundingClientRect (see getClientCTM)
+  const m = getClientCTM(clone);
   const t = m && relativeBox(item.el, m);
   if (!t || !size(t)) return null;
   item.shape = null;

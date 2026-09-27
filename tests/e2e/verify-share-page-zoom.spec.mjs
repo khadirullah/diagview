@@ -1,8 +1,9 @@
 // On a page shown zoomed out (a phone without a viewport meta tag), a share
 // link restores the view on the shared point, the minimap indicator covers
-// the visible part of the diagram and rotateKeepsView keeps the view.
-// WebKit reports getScreenCTM() in zoomed pixels there, while
-// getBoundingClientRect() stays in layout pixels.
+// the visible part of the diagram, rotateKeepsView keeps the view and search
+// outlines the shape behind a matched label. WebKit reports getScreenCTM()
+// in zoomed pixels there, while getBoundingClientRect() stays in layout
+// pixels.
 import { test, expect } from "@playwright/test";
 import { REPRO, newPage } from "./helpers.mjs";
 
@@ -151,3 +152,30 @@ for (const turns of [0, 1]) {
     );
   });
 }
+
+test("search outlines a large shape behind the matched text", async ({ browser }) => {
+  const page = await newPage(browser, PHONE);
+  await page.goto(REPRO);
+  await page.waitForTimeout(300);
+  // A labelled box over a quarter of the diagram, under the backdrop size
+  await page.evaluate(() => {
+    document.querySelector("#diag svg").innerHTML =
+      '<rect id="wide" x="0" y="0" width="1000" height="600" fill="#9cf"/>' +
+      '<text x="500" y="310" font-size="40">Wide</text>' +
+      '<rect x="1600" y="1000" width="400" height="200" fill="#fc9"/>';
+    DiagView.default.openFullscreen(document.getElementById("diag"));
+  });
+  await page.waitForTimeout(800);
+  await page.evaluate(() => {
+    const input = document.getElementById("diagview-search");
+    input.value = "Wide";
+    input.dispatchEvent(new Event("input", { bubbles: true }));
+  });
+  await page.waitForTimeout(500);
+  const marked = await page.evaluate(() =>
+    document
+      .querySelector("#diagview-modal-viewport svg [id$='wide']")
+      .classList.contains("dv-search-match"),
+  );
+  expect(marked).toBe(true);
+});
