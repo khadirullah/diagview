@@ -362,7 +362,7 @@
                         </style>
                         <!-- The handler only acts inside the fullscreen viewer, so the page copy stays as it is -->
                         <g class="sec-node"
-                            onclick="if (!this.closest('#diagview-modal')) return; this.querySelector('rect').style.fill = 'var(--accent, #ea580c)'; this.querySelector('text').style.fill = '#ffffff'; this.ownerSVGElement.querySelector('.sec-status').textContent = 'Handler ran';">
+                            onclick="if (!this.closest('#diagview-modal')) return; this.querySelector('rect').style.fill = demoColour('--accent'); this.querySelector('text').style.fill = '#ffffff'; this.ownerSVGElement.querySelector('.sec-status').textContent = 'Handler ran';">
                             <rect x="130" y="24" width="160" height="52" rx="10" />
                             <text x="210" y="55">Click me</text>
                         </g>
