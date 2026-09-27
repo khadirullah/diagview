@@ -111,6 +111,7 @@
                 darkMode: true, background: '#0d2240', fontSize: '14px',
                 primaryColor: '#0f2746', primaryBorderColor: '#2d4d78', primaryTextColor: '#eaf2ff',
                 lineColor: '#9fb3d1', clusterBkg: 'transparent', clusterBorder: '#2d4d78', titleColor: '#c3d3ea',
+                edgeLabelBackground: '#0d2240',
                 actorBkg: '#0f2746', actorBorder: '#2d4d78', actorTextColor: '#eaf2ff',
                 signalColor: '#9fb3d1', signalTextColor: '#c3d3ea',
                 noteBkgColor: '#2a2b3a', noteTextColor: '#eaf2ff', noteBorderColor: '#8a5a3c',
@@ -121,6 +122,7 @@
                 background: '#fbfbfc', fontSize: '14px',
                 primaryColor: '#ffffff', primaryBorderColor: '#cdd2d9', primaryTextColor: '#15181d',
                 lineColor: '#5b6472', clusterBkg: 'transparent', clusterBorder: '#cdd2d9', titleColor: '#353b45',
+                edgeLabelBackground: '#fbfbfc',
                 noteBkgColor: '#fff4ec', noteTextColor: '#15181d', noteBorderColor: '#f3b58c',
                 pie1: '#ea580c', pie2: '#aab4c3', pie3: '#d7dce4',
                 pieSectionTextColor: '#15181d', pieStrokeColor: '#ffffff', pieOuterStrokeWidth: '1px'
