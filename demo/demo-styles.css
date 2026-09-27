@@ -136,6 +136,12 @@ body.ready * {
   transition-timing-function: ease;
 }
 
+/* The page background swaps at once. DiagView reads it on a theme change,
+   and a colour caught halfway fails its text contrast check. */
+body.ready {
+  transition-property: color;
+}
+
 a {
   color: inherit;
 }
