@@ -106,7 +106,7 @@ describe("DiagView Lifecycle", () => {
     const elementsToCheck = [
       "diagview-toast",
       "diagview-temp-menu",
-      "diagview-help",
+      "diagview-help-modal",
       "diagview-minimap",
       "diagview-laser",
     ];

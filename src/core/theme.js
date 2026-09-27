@@ -573,13 +573,6 @@ export function syncTheme() {
     }
   }
 
-  // Update help box
-  const help = document.getElementById("diagview-help");
-  if (help) {
-    help.style.backgroundColor = theme.bg;
-    help.style.color = theme.text;
-  }
-
   return theme;
 }
 
