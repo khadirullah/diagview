@@ -8,12 +8,12 @@
     <link rel="apple-touch-icon" href="images/logo.jpg">
     <title>DiagView - Performance Stress Test</title>
     <meta property="og:image" content="https://khadirullah.github.io/diagview/images/hero.jpg">
-    <meta name="description" content="DiagView performance stress test — 2,500 interactive nodes with hardware-accelerated zoom and pan.">
+    <meta name="description" content="DiagView performance stress test with up to 3,000 interactive nodes and hardware-accelerated zoom and pan.">
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono&display=swap"
+    <link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
         rel="stylesheet">
 
     <script src="https://cdn.jsdelivr.net/npm/@panzoom/panzoom@4.5.1/dist/panzoom.min.js"></script>
@@ -28,64 +28,76 @@
     <!-- <script src="../dist/diagview.umd.js" data-diagview-no-auto-init></script> -->
 
     <style>
-        :root { --diagram-accent: #f59e0b; }
-        .stress-container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 clamp(16px, 4vw, 24px);
+        /* The grid fills most of the first screen */
+        .grid > .card.stress {
+            --stage-h: clamp(380px, calc(100vh - 340px), 680px);
         }
-        .stress-container .stress-test {
-            flex: 1;
-            border: none;
-            background: var(--card-bg);
+
+        .stress .stress-test svg {
+            max-height: none;
+            height: 100%;
         }
-        .performance-selector {
+
+        /* Scale control, in the right column of the page title */
+        .scale {
             display: flex;
             align-items: center;
-            justify-content: center;
             gap: 12px;
-            margin: 24px auto 0;
-            background: var(--card-bg);
-            padding: 12px 24px;
-            border-radius: 999px;
-            border: 1px solid var(--border);
-            width: fit-content;
-            max-width: 100%;
             flex-wrap: wrap;
-            box-shadow: var(--shadow-sm);
+            padding: 8px 8px 8px 14px;
+            border: 1px solid var(--line);
+            border-radius: var(--r);
+            background: var(--surface);
         }
-        @media (max-width: 480px) {
-            .performance-selector {
-                padding: 12px 16px;
-                border-radius: var(--r-md);
-            }
-            .performance-selector input[type="range"] {
-                flex: 1;
-                min-width: 0;
-            }
-        }
-        .performance-selector label {
-            font-size: 0.85rem;
-            font-weight: 700;
-            color: var(--muted);
+
+        .scale label {
+            font-family: var(--mono);
+            font-size: 0.68rem;
+            font-weight: 500;
+            letter-spacing: 0.12em;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
+            color: var(--muted);
         }
-        .performance-selector select {
-            background: var(--bg-2);
-            border: 1px solid var(--border);
-            padding: 4px 12px;
-            border-radius: 6px;
-            color: var(--text);
-            font-family: inherit;
-            font-weight: 600;
+
+        .scale input[type="range"] {
+            width: 180px;
+            accent-color: var(--accent);
             cursor: pointer;
         }
-        .performance-selector .btn-mini {
-            padding: 5px 15px;
-            font-size: 0.75rem;
-            text-transform: uppercase;
-            letter-spacing: 1px;
+
+        .scale output {
+            min-width: 5ch;
+            font-family: var(--mono);
+            font-size: 0.9rem;
+            font-weight: 500;
+            font-variant-numeric: tabular-nums;
+            color: var(--ink);
+        }
+
+        .scale .btn {
+            height: 32px;
+            padding: 0 14px;
+            font-size: 0.85rem;
+        }
+
+        @media (max-width: 600px) {
+            .crumbs {
+                display: none;
+            }
+
+            .scale {
+                width: 100%;
+            }
+
+            .scale input[type="range"] {
+                flex: 1;
+                width: auto;
+                min-width: 0;
+            }
+
+            .grid > .card.stress {
+                --stage-h: 420px;
+            }
         }
     </style>
 
@@ -94,89 +106,122 @@
 
 <body>
 
-    <div class="controls">
-        <div class="brand">
-            <a href="index.html">
-                <img src="images/logo.jpg" alt="DiagView" style="width:32px;height:32px;border-radius:8px;object-fit:cover;flex-shrink:0">
-                <div class="brand-meta">
-                    <span class="brand-label">DiagView</span>
-                    <span class="brand-name">Performance Test</span>
-                </div>
-            </a>
-        </div>
-        <div class="toggles">
-            <label class="accent-label">
-                <span>Security</span>
-                <select id="securitySelector" title="Toggle SVG Sanitization Level">
-                    <option value="strict">Strict (High)</option>
-                    <option value="permissive">Permissive</option>
-                    <option value="off">Off (Trusted)</option>
-                </select>
-            </label>
-            <label class="accent-label">
-                <span>Accent</span>
-                <input type="color" id="accentPicker" value="#f59e0b">
-            </label>
-            <button class="toggle-btn" onclick="toggleTheme()" title="Toggle Dark/Light Mode" aria-label="Toggle dark mode">🌓</button>
-            <a href="index.html" class="toggle-btn" style="background:var(--accent);color:#fff;border:none;">← Hub</a>
-        </div>
-    </div>
-
-    <section class="page-hero">
-        <h1>Hardware Acceleration Test</h1>
-        <p>Test DiagView's hardware-accelerated performance across different diagram scales. Observe how SVG DOM complexity impacts browser responsiveness.</p>
-        
-        <div class="performance-selector">
-            <label for="node-count">Scale:</label>
-            <input type="range" id="node-count" min="100" max="3000" step="100" value="2500" 
-                   style="cursor: pointer; accent-color: var(--accent);"
-                   oninput="document.getElementById('node-count-val').textContent = parseInt(this.value).toLocaleString()"
-                   onchange="runStressTest()">
-            <span id="node-count-val" style="font-weight: 800; min-width: 60px; color: var(--accent); font-family: 'JetBrains Mono';">2,500</span>
-            <button class="btn btn-primary btn-mini" onclick="runStressTest()">Update</button>
-        </div>
-    </section>
-
-    <div class="stress-container">
-        <div class="card">
-            <div class="card-header">
-                <h3 id="test-title">2,500 Node Performance Grid</h3>
-                <span class="card-badge stress-badge" id="test-badge">2.5k Nodes</span>
-            </div>
-            <div class="stress-test" data-title="Performance Grid">
-                <svg id="stress-svg" width="3000" height="3000" viewBox="0 0 3000 3000"
-                    xmlns="http://www.w3.org/2000/svg">
-                    <rect width="100%" height="100%" fill="transparent" />
-                    <g id="stress-node-layer"></g>
+    <header class="nav">
+        <div class="wrap">
+            <a class="brand" href="index.html" aria-label="DiagView demo hub">
+                <svg class="brand-mark" viewBox="0 0 24 24" aria-hidden="true">
+                    <path class="e" d="M12 4.5 4.5 18.5h15Z M12 4.5v7.5 M4.5 18.5 12 12l7.5 6.5" fill="none" />
+                    <circle class="n" cx="12" cy="4.5" r="2.6" />
+                    <circle class="n" cx="12" cy="12" r="2.2" />
+                    <circle class="n" cx="4.5" cy="18.5" r="2.6" />
+                    <circle class="n" cx="19.5" cy="18.5" r="2.6" />
                 </svg>
+            </a>
+            <nav class="crumbs" aria-label="Breadcrumb">
+                <a href="index.html">Demo hub</a>
+                <span class="sep" aria-hidden="true">/</span>
+                <span aria-current="page">Performance test</span>
+            </nav>
+            <div class="toggles">
+                <label class="select" title="SVG sanitisation level">
+                    <span class="lbl">Security</span>
+                    <select id="securitySelector" aria-label="Security">
+                        <option value="strict">Strict</option>
+                        <option value="permissive">Permissive</option>
+                        <option value="off">Off (trusted)</option>
+                    </select>
+                </label>
+                <label class="swatch" title="Accent colour">
+                    <span class="vh">Accent colour</span>
+                    <input type="color" id="accentPicker" value="#ea580c">
+                </label>
+                <button class="icon-btn theme-btn" type="button" onclick="toggleTheme()" title="Switch light and dark"
+                    aria-label="Switch light and dark theme"></button>
             </div>
         </div>
-        <p class="text-center muted" style="margin-top: 20px;">Click the grid to open it fullscreen, then use the mouse wheel to zoom and drag to pan.</p>
-    </div>
+    </header>
 
-    <footer>
-        <div class="container">
-            <div class="footer-links">
-                <a href="index.html">← Back to Hub</a>
-                <a href="https://github.com/khadirullah/diagview" target="_blank" rel="noopener">GitHub</a>
-                <a href="https://www.npmjs.com/package/diagview" target="_blank" rel="noopener">NPM</a>
+    <main>
+        <section class="page-hero">
+            <div class="wrap">
+                <h1>Hardware acceleration test</h1>
+                <p>Test DiagView across different diagram sizes. Watch how the number of SVG elements changes how
+                    quickly the browser responds.</p>
+                <div class="scale">
+                    <label for="node-count">Nodes</label>
+                    <input type="range" id="node-count" min="100" max="3000" step="100" value="2500"
+                        oninput="document.getElementById('node-count-val').textContent = parseInt(this.value).toLocaleString()"
+                        onchange="runStressTest()">
+                    <output id="node-count-val" for="node-count">2,500</output>
+                    <button class="btn btn-primary" type="button" onclick="runStressTest()">Update</button>
+                </div>
             </div>
-            <p class="copyright">DiagView &bull; <span data-version></span> &bull; Built with ❤️</p>
+        </section>
+
+        <div class="wrap grid" style="--fig-chapter: '1'">
+            <div class="card wide stress">
+                <div class="card-header">
+                    <h3 id="test-title">2,500 Node Performance Grid</h3>
+                    <span class="tag" id="test-badge">2.5k Nodes</span>
+                </div>
+                <div class="stress-test" data-title="Performance Grid">
+                    <svg id="stress-svg" width="3000" height="3000" viewBox="0 0 3000 3000"
+                        xmlns="http://www.w3.org/2000/svg">
+                        <rect width="100%" height="100%" fill="transparent" />
+                        <g id="stress-node-layer"></g>
+                    </svg>
+                </div>
+                <p class="card-note">Click the grid to open it fullscreen, then use the mouse wheel to zoom and drag to
+                    pan.</p>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="wrap">
+            <nav aria-label="Project links">
+                <a href="index.html">Demo hub</a>
+                <a href="https://github.com/khadirullah/diagview" target="_blank" rel="noopener">GitHub</a>
+                <a href="https://www.npmjs.com/package/diagview" target="_blank" rel="noopener">npm</a>
+            </nav>
+            <span>DiagView <span data-version></span></span>
         </div>
     </footer>
 
     <script>
+        // Node colours live in the SVG attributes as plain colours, so the
+        // fullscreen copy, the minimap and exports match the grid on the
+        // page. Boxes follow the accent, labels follow the theme.
+        function nodeColours() {
+            return {
+                fill: demoColour('--stress-fill'),
+                stroke: demoColour('--stress-line'),
+                label: demoColour('--ink-2')
+            };
+        }
+
+        function paintNodes() {
+            const layer = document.getElementById('stress-node-layer');
+            if (!layer) return;
+            const { fill, stroke, label } = nodeColours();
+            layer.querySelectorAll('rect').forEach((r) => {
+                r.setAttribute('fill', fill);
+                r.setAttribute('stroke', stroke);
+            });
+            layer.querySelectorAll('text').forEach((t) => t.setAttribute('fill', label));
+        }
+
         function generateNodes(total) {
             const stressLayer = document.getElementById('stress-node-layer');
             if (!stressLayer) return;
-            
+
             // Clear existing
             stressLayer.innerHTML = '';
-            
+
             // Calculate grid dimensions
             const side = Math.ceil(Math.sqrt(total));
             const spacing = 60;
-            
+
             // Update SVG viewBox to fit
             const svg = document.getElementById('stress-svg');
             const size = side * spacing;
@@ -184,76 +229,82 @@
             svg.setAttribute('width', size);
             svg.setAttribute('height', size);
 
+            const { fill, stroke, label: labelColour } = nodeColours();
             let count = 0;
             for (let r = 0; r < side; r++) {
                 for (let c = 0; c < side; c++) {
                     if (count >= total) break;
-                    
+
                     const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
                     g.setAttribute("class", "node");
                     const x = c * spacing;
                     const y = r * spacing;
-                    
+
                     const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
                     rect.setAttribute("x", x); rect.setAttribute("y", y);
                     rect.setAttribute("width", "40"); rect.setAttribute("height", "30");
-                    rect.setAttribute("rx", "4"); rect.setAttribute("fill", "#f59e0b");
-                    rect.setAttribute("fill-opacity", "0.1"); rect.setAttribute("stroke", "#f59e0b");
-                    rect.setAttribute("stroke-width", "1");
-                    
+                    rect.setAttribute("rx", "4"); rect.setAttribute("fill", fill);
+                    rect.setAttribute("stroke", stroke); rect.setAttribute("stroke-width", "1");
+
                     const label = document.createElementNS("http://www.w3.org/2000/svg", "text");
-                    label.setAttribute("x", x + 20); label.setAttribute("y", y + 20);
+                    label.setAttribute("x", x + 20); label.setAttribute("y", y + 18);
                     label.setAttribute("font-size", "8"); label.setAttribute("text-anchor", "middle");
-                    label.setAttribute("font-family", "sans-serif"); label.setAttribute("fill", "#92400e");
+                    label.setAttribute("font-family", "sans-serif"); label.setAttribute("fill", labelColour);
                     label.textContent = `N-${count}`;
-                    
+
                     g.appendChild(rect);
                     g.appendChild(label);
                     stressLayer.appendChild(g);
                     count++;
                 }
             }
-            
+
             // Update UI
             document.getElementById('test-title').textContent = `${total.toLocaleString()} Node Performance Grid`;
             document.getElementById('test-badge').textContent = total >= 1000 ? `${(total/1000).toFixed(1)}k Nodes` : `${total} Nodes`;
         }
 
+        const dvInit = () => DiagView.init({
+            diagramSelector: '.stress-test',
+            showKeyboardHelp: true,
+            highResScale: 4,
+            layout: 'floating',
+            showBranding: true
+        });
+
+        // DiagView is on unless the top bar button turned it off
+        const dvOn = () => {
+            const btn = document.getElementById('dv-toggle-btn');
+            return !btn || btn.dataset.state !== 'off';
+        };
+
         function runStressTest() {
             const count = parseInt(document.getElementById('node-count').value);
-            
+            const on = dvOn();
+
             // 1. Destroy existing DiagView instance
-            if (window.DiagView && typeof window.DiagView.destroy === 'function') {
+            if (on && window.DiagView && typeof window.DiagView.destroy === 'function') {
                 window.DiagView.destroy();
             }
-            
+
             // 2. Generate new nodes
             generateNodes(count);
-            
+
             // 3. Re-initialize
-            setTimeout(() => {
-                DiagView.init({
-                    diagramSelector: '.stress-test',
-                    showKeyboardHelp: true,
-                    highResScale: 4,
-                    layout: 'floating',
-                    showBranding: true
-                });
-            }, 50);
+            if (on) setTimeout(dvInit, 50);
         }
+
+        // Repaint the nodes when the theme or the accent changes
+        new MutationObserver(paintNodes).observe(document.documentElement,
+            { attributes: true, attributeFilter: ['class', 'style'] });
 
         document.addEventListener('DOMContentLoaded', () => {
             // Initial run with default value
             generateNodes(2500);
-            
+
             setTimeout(() => {
-                DiagView.init({
-                    diagramSelector: '.stress-test',
-                    showKeyboardHelp: true,
-                    highResScale: 4,
-                    layout: 'floating',
-                    showBranding: true
-                });
+                dvInit();
+                if (window.setupDiagViewToggle) setupDiagViewToggle(dvInit);
             }, 100);
         });
     </script>
