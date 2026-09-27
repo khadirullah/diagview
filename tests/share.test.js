@@ -197,7 +197,7 @@ describe("Share System", () => {
 
   test("shareLink falls back to execCommand if clipboard fails", async () => {
     navigator.clipboard.writeText.mockRejectedValue(new Error("Clip error"));
-    document.execCommand = jest.fn();
+    document.execCommand = jest.fn().mockReturnValue(true);
 
     await shareLink(0);
 
@@ -239,6 +239,35 @@ describe("Share System", () => {
 
     await shareLink(0);
     expect(showErrorToast).toHaveBeenCalledWith("Failed to copy share link");
+  });
+
+  test("shareLink says the copy failed when execCommand returns false", async () => {
+    window.isSecureContext = false;
+    document.execCommand = jest.fn().mockReturnValue(false);
+
+    await shareLink(0);
+    expect(showErrorToast).toHaveBeenCalledWith("Failed to copy share link");
+    expect(showSuccessToast).not.toHaveBeenCalled();
+  });
+
+  test.each([
+    ["returns false", () => false],
+    [
+      "throws",
+      () => {
+        throw new Error("Hard fail");
+      },
+    ],
+  ])("shareLink removes the temp input and restores focus when execCommand %s", async (_, impl) => {
+    window.isSecureContext = false;
+    document.execCommand = jest.fn().mockImplementation(impl);
+    const search = document.getElementById("diagview-search");
+    search.focus();
+    const inputsBefore = document.querySelectorAll("input").length;
+
+    await shareLink(0);
+    expect(document.querySelectorAll("input").length).toBe(inputsBefore);
+    expect(document.activeElement).toBe(search);
   });
 
   test("applyRestoredViewState handles internal geometry errors", (done) => {

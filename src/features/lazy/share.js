@@ -203,17 +203,30 @@ export async function shareLink(diagramIndex) {
   }
 
   // Legacy execCommand fallback
+  const previousFocus = document.activeElement;
+  const input = document.createElement("input");
+  let copied = false;
   try {
-    const input = document.createElement("input");
     input.value = link;
     input.style.position = "fixed";
     input.style.opacity = "0";
     document.body.appendChild(input);
     input.select();
-    document.execCommand("copy");
-    document.body.removeChild(input);
-    showSuccessToast("🔗 Share link copied!");
+    // Returns false when the browser refuses to copy
+    copied = document.execCommand("copy");
   } catch (error) {
+    copied = false;
+  } finally {
+    // The input took focus, so hand it back or keyboard shortcuts stop working
+    input.remove();
+    if (previousFocus?.isConnected && previousFocus !== document.body) {
+      previousFocus.focus?.({ preventScroll: true });
+    }
+  }
+
+  if (copied) {
+    showSuccessToast("🔗 Share link copied!");
+  } else {
     showErrorToast("Failed to copy share link");
   }
 }
