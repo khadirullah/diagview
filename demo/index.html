@@ -11,115 +11,439 @@
     <!-- SEO -->
     <meta property="og:image" content="https://khadirullah.github.io/diagview/images/hero.jpg">
     <meta property="og:type" content="website">
-    <meta property="og:title" content="DiagView — Interactive SVG Diagram Viewer">
+    <meta property="og:title" content="DiagView, an interactive SVG diagram viewer">
     <meta name="description"
         content="A lightweight, framework-agnostic viewer for SVG diagrams. Adds interactive Zoom, Pan, Search, Export, and Presentation Mode.">
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono&display=swap"
+    <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@112..125,800..900&family=Schibsted+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
         rel="stylesheet">
+
+    <!-- Dependencies -->
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@panzoom/panzoom@4.5.1/dist/panzoom.min.js"></script>
 
     <!-- Styles -->
     <link rel="stylesheet" href="demo-styles.css">
 
+    <!-- DiagView Core -->
+    <script src="https://unpkg.com/diagview@1.0.12/dist/diagview.umd.js" data-diagview-no-auto-init></script>
+
     <style>
-        /* ── Hub landing page: body has no padding-top (hero is full-bleed) ── */
-        body {
-            padding-top: 0;
+        /* ── Hero ── */
+        .hero {
+            padding-top: clamp(40px, 7vw, 88px);
         }
 
-        .hero {
-            padding: clamp(100px, 18vw, 160px) clamp(16px, 5vw, 40px) clamp(60px, 10vw, 100px);
-            text-align: center;
-            background: radial-gradient(ellipse at top, color-mix(in srgb, var(--accent) 10%, transparent) 0%, var(--bg) 65%);
+        .hero-grid {
+            display: grid;
+            grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+            gap: clamp(32px, 5vw, 64px);
+            align-items: center;
+        }
+
+        .release {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 24px;
+            font-size: .85rem;
+            color: var(--muted);
+            text-decoration: none;
+        }
+
+        .release:hover {
+            color: var(--ink);
+        }
+
+        .release .tag {
+            color: var(--ink);
         }
 
         .hero h1 {
-            font-size: clamp(2.8rem, 10vw, 5.5rem);
-            font-weight: 800;
-            letter-spacing: -2px;
-            line-height: 1;
-            margin-bottom: 20px;
-            animation: fadeInUp 0.7s ease-out 0.08s both;
+            margin-bottom: 22px;
+            font-family: var(--display);
+            font-size: clamp(2.8rem, 5.2vw, 4.5rem);
+            font-weight: 900;
+            font-stretch: 125%;
+            letter-spacing: -.035em;
+            line-height: .95;
         }
 
-        .hero .subtitle {
-            font-size: clamp(1rem, 2.5vw, 1.4rem);
+        .hero h1 span {
+            color: var(--accent);
+        }
+
+        .hero .lede {
+            max-width: 34ch;
+            margin-bottom: 10px;
+            font-size: clamp(1.1rem, 1.6vw, 1.25rem);
+            line-height: 1.55;
+            color: var(--ink-2);
+        }
+
+        .hero .sub {
+            max-width: 42ch;
+            margin-bottom: 28px;
             color: var(--muted);
-            max-width: 700px;
-            margin: 0 auto 36px;
-            line-height: 1.7;
-            animation: fadeInUp 0.7s ease-out 0.15s both;
         }
 
-        .features {
-            display: grid;
-            grid-template-columns: repeat(4, minmax(0, 1fr));
-            justify-content: center;
-            gap: clamp(14px, 3vw, 22px);
-            max-width: 1100px;
-            margin: 0 auto clamp(48px, 8vw, 80px);
-            padding: 0 clamp(12px, 4vw, 24px);
+        .hero .actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 28px;
         }
 
-        .feature-item {
-            padding: clamp(20px, 3vw, 28px);
-            background: var(--card-bg);
-            border: 1px solid var(--border);
-            border-radius: var(--r-lg);
-            box-shadow: var(--shadow-sm);
-            transition: transform 0.25s, box-shadow 0.25s;
+        .hero .stage {
+            --stage-h: clamp(320px, 31vw, 400px);
+            animation: stage-in .7s var(--ease) .1s both;
         }
 
-        .feature-item:hover {
-            transform: translateY(-4px);
-            box-shadow: var(--shadow-md), 0 0 0 1px var(--accent-glow);
+        /* Hero diagram: neutral line work, the DiagView node carries the accent */
+        .hero-dia .cluster rect {
+            fill: transparent !important;
+            stroke: var(--line-strong) !important;
+            stroke-dasharray: 5 4;
         }
 
-        /* Keep the section title below the fixed header when the page jumps here */
-        #layouts {
-            scroll-margin-top: calc(var(--navbar-h) + 16px);
+        .hero-dia .cluster-label .nodeLabel {
+            color: var(--muted) !important;
+            font-family: var(--mono);
+            font-size: 11px;
+            letter-spacing: .12em;
+            text-transform: uppercase;
         }
 
-        .feature-icon {
-            font-size: 2.2rem;
-            margin-bottom: 16px;
-            display: block;
+        .hero-dia [id*="flowchart-DV-"] polygon {
+            fill: color-mix(in srgb, var(--accent) 12%, var(--surface)) !important;
+            stroke: var(--accent) !important;
+            stroke-width: 2px !important;
         }
 
-        @keyframes fadeInUp {
+        .hero-dia [id*="flowchart-DV-"] .nodeLabel {
+            font-weight: 700;
+            color: var(--accent-ink) !important;
+        }
+
+        .hero-dia [id*="flowchart-S-"] .nodeLabel {
+            font-family: var(--mono);
+            font-size: 13px;
+        }
+
+        .stage-caption {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            gap: 4px 12px;
+            margin-top: 12px;
+            font-size: .85rem;
+            color: var(--muted);
+        }
+
+        .stage-caption span {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        @keyframes stage-in {
             from {
                 opacity: 0;
-                transform: translateY(12px);
+                transform: translateY(8px);
             }
 
             to {
                 opacity: 1;
-                transform: translateY(0);
+                transform: none;
+            }
+        }
+
+        .hero .kbd-panel {
+            margin-top: clamp(40px, 6vw, 64px);
+        }
+
+        /* ── Layout modes: one picture each ── */
+        .modes {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 20px;
+        }
+
+        .mode {
+            display: flex;
+            flex-direction: column;
+            border: 1px solid var(--line);
+            border-radius: var(--r);
+            background: var(--surface);
+            overflow: hidden;
+            text-decoration: none;
+        }
+
+        .mode:hover {
+            border-color: var(--line-strong);
+        }
+
+        .mode:hover .thumb .acc {
+            fill: var(--accent);
+        }
+
+        .mode-top {
+            display: flex;
+            justify-content: space-between;
+            gap: 8px;
+            padding: 8px 14px;
+            border-bottom: 1px solid var(--line);
+        }
+
+        .mode .thumb {
+            display: grid;
+            place-items: center;
+            aspect-ratio: 16 / 10;
+            padding: 18px;
+            border-bottom: 1px solid var(--line);
+        }
+
+        .thumb svg {
+            width: 100%;
+            height: 100%;
+            max-width: 300px;
+        }
+
+        .thumb .frame {
+            fill: var(--surface);
+            stroke: var(--line-strong);
+        }
+
+        .thumb .bar {
+            fill: var(--bg);
+            stroke: var(--line-strong);
+        }
+
+        .thumb .node {
+            fill: var(--surface);
+            stroke: var(--ink-2);
+            stroke-width: 1.2;
+        }
+
+        .thumb .edge {
+            fill: none;
+            stroke: var(--muted);
+            stroke-width: 1.2;
+        }
+
+        .thumb .ui {
+            fill: var(--line-strong);
+        }
+
+        .thumb .acc {
+            fill: color-mix(in srgb, var(--accent) 70%, var(--line-strong));
+        }
+
+        .thumb .pill {
+            fill: var(--ink);
+        }
+
+        .thumb .pill-ui {
+            fill: var(--bg);
+        }
+
+        .thumb .cursor {
+            fill: var(--ink);
+            stroke: var(--surface);
+            stroke-width: 1.2;
+        }
+
+        .mode-body {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            gap: 6px;
+            padding: 18px 20px 20px;
+        }
+
+        .mode-body h3 {
+            font-size: 1.1rem;
+        }
+
+        .mode-body p {
+            flex: 1;
+            font-size: .95rem;
+            color: var(--muted);
+        }
+
+        .mode-body .link {
+            align-self: flex-start;
+            margin-top: 10px;
+            font-size: .9rem;
+        }
+
+        /* Other demos: a plain list, they are not the same kind of thing */
+        .more {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            column-gap: 48px;
+            margin-top: 48px;
+        }
+
+        .more-title {
+            grid-column: 1 / -1;
+            margin-bottom: 4px;
+            font-size: 1rem;
+            font-weight: 500;
+            color: var(--muted);
+        }
+
+        .demo-row {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) auto;
+            align-content: start;
+            gap: 4px 24px;
+            padding: 18px 0;
+            border-top: 1px solid var(--line);
+            text-decoration: none;
+        }
+
+        .demo-row h4 {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.02rem;
+        }
+
+        .demo-row p {
+            grid-column: 1;
+            max-width: 52ch;
+            font-size: .93rem;
+            color: var(--muted);
+        }
+
+        .demo-row .go {
+            grid-row: 1 / span 2;
+            grid-column: 2;
+            align-self: center;
+            font-size: .88rem;
+            font-weight: 600;
+            color: var(--accent-ink);
+            white-space: nowrap;
+        }
+
+        .demo-row:hover h4 {
+            text-decoration: underline;
+            text-decoration-color: var(--line-strong);
+            text-underline-offset: 4px;
+        }
+
+        /* ── Quick start ── */
+        .qs {
+            display: grid;
+            grid-template-columns: minmax(0, 4fr) minmax(0, 8fr);
+            gap: clamp(24px, 4vw, 56px);
+            align-items: start;
+        }
+
+        .qs ol {
+            display: grid;
+            gap: 20px;
+            list-style: none;
+            counter-reset: step;
+        }
+
+        .qs li {
+            display: grid;
+            grid-template-columns: 28px 1fr;
+            gap: 12px;
+            counter-increment: step;
+        }
+
+        .qs li::before {
+            content: counter(step);
+            display: grid;
+            place-items: center;
+            width: 24px;
+            height: 24px;
+            margin-top: 1px;
+            border: 1px solid var(--line-strong);
+            border-radius: 50%;
+            font-size: .8rem;
+            font-weight: 600;
+            color: var(--ink-2);
+        }
+
+        .qs li strong {
+            display: block;
+            font-weight: 600;
+        }
+
+        .qs li span {
+            font-size: .93rem;
+            color: var(--muted);
+        }
+
+        @media (max-width: 1000px) {
+            .hero-grid,
+            .qs {
+                grid-template-columns: minmax(0, 1fr);
+            }
+
+            .hero .lede,
+            .hero .sub {
+                max-width: 60ch;
             }
         }
 
         @media (max-width: 900px) {
-            .features {
-                grid-template-columns: repeat(2, minmax(0, 1fr));
+            .modes,
+            .more {
+                grid-template-columns: minmax(0, 1fr);
             }
-        }
 
-        @media (max-width: 639px) {
-            .hero {
-                padding-top: 40px;
+            .mode {
+                display: grid;
+                grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+            }
+
+            .mode-top {
+                grid-column: 1 / -1;
+            }
+
+            .mode .thumb {
+                aspect-ratio: auto;
+                border-bottom: 0;
+                border-right: 1px solid var(--line);
             }
         }
 
         @media (max-width: 600px) {
-            .hero h1 {
-                letter-spacing: -1px;
+            .hero .stage {
+                --stage-h: 460px;
             }
 
-            .features {
-                grid-template-columns: 1fr;
+            .mode {
+                display: flex;
+            }
+
+            .mode .thumb {
+                aspect-ratio: 16 / 9;
+                border-right: 0;
+                border-bottom: 1px solid var(--line);
+            }
+
+            .demo-row {
+                grid-template-columns: minmax(0, 1fr);
+            }
+
+            .demo-row .go {
+                grid-row: auto;
+                grid-column: 1;
+                margin-top: 6px;
+            }
+
+            .stage-caption {
+                flex-direction: column;
             }
         }
     </style>
@@ -128,445 +452,341 @@
 
 <body>
 
-    <header class="controls">
-        <div class="brand">
-            <img src="images/logo.jpg" alt="DiagView"
-                style="width:34px;height:34px;border-radius:9px;object-fit:cover;flex-shrink:0">
-            <div class="brand-meta">
-                <span class="brand-label">Demo Hub</span>
-                <span class="brand-name">DiagView</span>
+    <header class="nav">
+        <div class="wrap">
+            <a class="brand" href="index.html" aria-label="DiagView demo hub">
+                <svg class="brand-mark" viewBox="0 0 24 24" aria-hidden="true">
+                    <path class="e" d="M12 4.5 4.5 18.5h15Z M12 4.5v7.5 M4.5 18.5 12 12l7.5 6.5" fill="none" />
+                    <circle class="n" cx="12" cy="4.5" r="2.6" />
+                    <circle class="n" cx="12" cy="12" r="2.2" />
+                    <circle class="n" cx="4.5" cy="18.5" r="2.6" />
+                    <circle class="n" cx="19.5" cy="18.5" r="2.6" />
+                </svg>
+                <span>DiagView</span>
+            </a>
+            <nav class="nav-links" aria-label="Sections">
+                <a href="#layouts">Layouts</a>
+                <a href="#features">Features</a>
+                <a href="#quick-start">Quick start</a>
+            </nav>
+            <div class="toggles">
+                <label class="swatch" title="Accent colour">
+                    <span class="vh">Accent colour</span>
+                    <input type="color" id="accentPicker" value="#ea580c">
+                </label>
+                <button class="icon-btn theme-btn" type="button" onclick="toggleTheme()" title="Switch light and dark"
+                    aria-label="Switch light and dark theme"></button>
+                <a href="https://github.com/khadirullah/diagview" class="toggle-btn" target="_blank" rel="noopener">
+                    <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+                        <path
+                            d="M8 0a8 8 0 0 0-2.53 15.59c.4.07.55-.17.55-.38v-1.33c-2.23.48-2.7-1.07-2.7-1.07-.36-.92-.89-1.17-.89-1.17-.73-.5.05-.49.05-.49.8.06 1.23.83 1.23.83.72 1.22 1.87.87 2.33.66.07-.52.28-.87.5-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.6 7.6 0 0 1 4 0c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.28.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48v2.2c0 .21.15.46.55.38A8 8 0 0 0 8 0Z" />
+                    </svg>
+                    GitHub
+                </a>
             </div>
-        </div>
-        <div class="toggles">
-            <label class="accent-label">
-                <span>Accent</span>
-                <input type="color" id="accentPicker" value="#3b82f6">
-            </label>
-            <button class="toggle-btn" onclick="toggleTheme()" title="Toggle Dark/Light Mode" aria-label="Toggle dark mode">🌓</button>
-            <a href="https://github.com/khadirullah/diagview" class="toggle-btn" target="_blank" rel="noopener">GitHub
-                ↗</a>
         </div>
     </header>
 
-    <style>
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-            }
+    <main>
+        <section class="hero">
+            <div class="wrap">
+                <div class="hero-grid">
+                    <div>
+                        <a class="release" href="https://github.com/khadirullah/diagview/releases" target="_blank"
+                            rel="noopener">
+                            <span class="tag"><span class="dot"></span><span data-version></span></span>
+                            Now available on npm
+                        </a>
+                        <h1>Diag<span>View</span></h1>
+                        <p class="lede">Transform any static SVG into a fully interactive diagram viewer.</p>
+                        <p class="sub">Zoom, pan, search, export and fullscreen for Mermaid, Graphviz, PlantUML and
+                            draw.io. Framework-agnostic, one script tag.</p>
+                        <div class="actions">
+                            <a href="https://github.com/khadirullah/diagview" class="btn btn-primary" target="_blank"
+                                rel="noopener">
+                                <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"
+                                    stroke-linejoin="round" aria-hidden="true">
+                                    <path d="m8 1.8 1.9 3.9 4.3.6-3.1 3 .7 4.3L8 11.6l-3.8 2 .7-4.3-3.1-3 4.3-.6Z" />
+                                </svg>
+                                Star on GitHub
+                            </a>
+                            <a href="#layouts" class="btn">Explore layouts</a>
+                        </div>
+                        <dl class="spec">
+                            <dt>Input</dt>
+                            <dd>Mermaid, Graphviz, PlantUML, draw.io</dd>
+                            <dt>Layouts</dt>
+                            <dd>Header bar, floating or off</dd>
+                            <dt>Export</dt>
+                            <dd>SVG, PNG, JPEG, WebP, PDF, copy</dd>
+                            <dt>Install</dt>
+                            <dd>One <code>&lt;script&gt;</code> tag</dd>
+                        </dl>
+                    </div>
 
-            to {
-                opacity: 1;
-            }
-        }
+                    <figure>
+                        <div class="stage">
+                            <div class="stage-top"><span class="fig"><b>Fig. 1</b> Live diagram</span><span
+                                    class="fig">layout: header</span></div>
+                            <div class="mermaid hero-dia" id="heroDiagram" data-title="How DiagView works"></div>
+                        </div>
+                        <figcaption class="stage-caption">
+                            <span>This diagram is live. Click it to open fullscreen.</span>
+                            <span>Press <kbd>?</kbd> inside for every shortcut</span>
+                        </figcaption>
+                    </figure>
+                </div>
 
-        .hero-badge {
-            animation: fadeInUp 0.6s ease-out both;
-        }
-
-        .hero .btn-group {
-            animation: fadeInUp 0.7s ease-out 0.22s both;
-        }
-
-        .hero-image-wrap {
-            margin: 48px auto 0;
-            max-width: 860px;
-            border-radius: 20px;
-            overflow: hidden;
-            border: 1px solid var(--border);
-            box-shadow: 0 24px 64px rgba(0, 0, 0, .45), 0 0 0 1px var(--border);
-            position: relative;
-            animation: fadeIn 1s ease-out 0.3s both;
-        }
-
-        .hero-image-wrap img {
-            width: 100%;
-            display: block;
-            height: auto;
-        }
-
-        /* Browser chrome overlay */
-        .hero-image-wrap::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 3px;
-            background: linear-gradient(90deg, #6366f1, #3b82f6, #06b6d4);
-        }
-
-        .hero-shortcuts {
-            margin-top: 32px;
-            display: flex;
-            justify-content: center;
-            gap: 10px 24px;
-            flex-wrap: wrap;
-            font-size: 0.8rem;
-            color: var(--muted);
-            padding-top: 24px;
-            border-top: 1px solid var(--border);
-            animation: fadeInUp 0.7s ease-out 0.35s both;
-        }
-
-        .hero-shortcuts span {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-    </style>
-
-    <section class="hero">
-        <div class="container">
-            <span class="badge hero-badge">⚡ <span data-version></span> Now Available</span>
-            <h1>DiagView</h1>
-            <p class="subtitle">Transform any static SVG into a fully interactive diagram viewer.<br>
-                Zoom · Pan · Search · Export · Fullscreen. Framework-agnostic.</p>
-
-            <div class="btn-group">
-                <a href="https://github.com/khadirullah/diagview" class="btn btn-primary" target="_blank"
-                    rel="noopener">
-                    ⭐ Star on GitHub
-                </a>
-                <a href="#layouts" class="btn btn-secondary"
-                    onclick="document.getElementById('layouts').scrollIntoView({behavior:'smooth'});return false;">
-                    Explore Layouts ↓
-                </a>
+                <!-- Quick keyboard reference -->
+                <div class="kbd-panel">
+                    <span class="fig">Keyboard</span>
+                    <ul aria-label="Keyboard shortcuts">
+                        <li><kbd>+</kbd> Zoom in</li>
+                        <li><kbd>-</kbd> Zoom out</li>
+                        <li><kbd>arrows</kbd> Pan</li>
+                        <li><kbd>Space / 0</kbd> Reset</li>
+                        <li><kbd>F</kbd> Search</li>
+                        <li><kbd>M</kbd> Meeting</li>
+                        <li><kbd>R</kbd> Rotate</li>
+                        <li><kbd>L</kbd> Share</li>
+                        <li><kbd>T</kbd> Text select</li>
+                        <li><kbd>?</kbd> Shortcuts</li>
+                        <li><kbd>Esc</kbd> Close</li>
+                    </ul>
+                </div>
             </div>
+        </section>
 
-            <!-- Hero image -->
-            <div class="hero-image-wrap">
-                <img src="images/hero.jpg" alt="DiagView interactive diagram viewer in action" width="1024" height="1024"
-                    loading="eager">
+        <section class="section" id="layouts">
+            <div class="wrap">
+                <div class="section-head">
+                    <h2>Flexible layouts</h2>
+                    <p>Choose the mode that best fits your user experience.</p>
+                </div>
+
+                <div class="modes">
+                    <a href="./layout-header.html" class="mode">
+                        <div class="mode-top"><span class="fig">Fig. 2.1</span><span class="fig">layout: header</span>
+                        </div>
+                        <div class="thumb canvas" aria-hidden="true">
+                            <svg viewBox="0 0 240 150">
+                                <rect class="frame" x="10.5" y="8.5" width="219" height="133" rx="6" />
+                                <path class="bar" d="M16.5 8.5h207a6 6 0 0 1 6 6v17h-219v-17a6 6 0 0 1 6-6Z" />
+                                <rect class="ui" x="22" y="17" width="54" height="6" rx="3" />
+                                <rect class="ui" x="176" y="15" width="10" height="10" rx="2.5" />
+                                <rect class="ui" x="191" y="15" width="10" height="10" rx="2.5" />
+                                <rect class="acc" x="206" y="15" width="10" height="10" rx="2.5" />
+                                <path class="edge" d="M120 64v14M120 78 82 96M120 78l38 18" />
+                                <rect class="node" x="96" y="46" width="48" height="18" rx="4" />
+                                <rect class="node" x="60" y="96" width="44" height="18" rx="4" />
+                                <rect class="node" x="136" y="96" width="44" height="18" rx="4" />
+                            </svg>
+                        </div>
+                        <div class="mode-body">
+                            <h3>Header layout</h3>
+                            <p>Classic top-bar controls. Best for documentation and dashboards.</p>
+                            <span class="link">View live example</span>
+                        </div>
+                    </a>
+
+                    <a href="./layout-floating.html" class="mode">
+                        <div class="mode-top"><span class="fig">Fig. 2.2</span><span class="fig">layout:
+                                floating</span></div>
+                        <div class="thumb canvas" aria-hidden="true">
+                            <svg viewBox="0 0 240 150">
+                                <rect class="frame" x="10.5" y="8.5" width="219" height="133" rx="6" />
+                                <path class="edge" d="M120 44v14M120 58 82 76M120 58l38 18" />
+                                <rect class="node" x="96" y="26" width="48" height="18" rx="4" />
+                                <rect class="node" x="60" y="76" width="44" height="18" rx="4" />
+                                <rect class="node" x="136" y="76" width="44" height="18" rx="4" />
+                                <rect class="pill" x="150" y="111" width="68" height="20" rx="10" />
+                                <rect class="pill-ui" x="160" y="117" width="8" height="8" rx="2" />
+                                <rect class="pill-ui" x="174" y="117" width="8" height="8" rx="2" />
+                                <rect class="pill-ui" x="188" y="117" width="8" height="8" rx="2" />
+                                <rect class="acc" x="202" y="117" width="8" height="8" rx="2" />
+                            </svg>
+                        </div>
+                        <div class="mode-body">
+                            <h3>Floating layout</h3>
+                            <p>Clean HUD-style buttons that appear on hover. Ideal for minimal UIs.</p>
+                            <span class="link">View live example</span>
+                        </div>
+                    </a>
+
+                    <a href="./layout-off.html" class="mode">
+                        <div class="mode-top"><span class="fig">Fig. 2.3</span><span class="fig">layout: off</span>
+                        </div>
+                        <div class="thumb canvas" aria-hidden="true">
+                            <svg viewBox="0 0 240 150">
+                                <rect class="frame" x="10.5" y="8.5" width="219" height="133" rx="6" />
+                                <path class="edge" d="M120 52v14M120 66 82 84M120 66l38 18" />
+                                <rect class="node" x="96" y="34" width="48" height="18" rx="4" />
+                                <rect class="node" x="60" y="84" width="44" height="18" rx="4" />
+                                <rect class="node" x="136" y="84" width="44" height="18" rx="4" />
+                                <circle class="edge" cx="150" cy="98" r="9" stroke-dasharray="2 2" />
+                                <path class="cursor" d="M150 98v22l5.5-5.2 3.6 8.2 3.4-1.5-3.6-8h7.6Z" />
+                            </svg>
+                        </div>
+                        <div class="mode-body">
+                            <h3>Off layout</h3>
+                            <p>Invisible UI. The diagram itself is a trigger. Best for embedding.</p>
+                            <span class="link">View live example</span>
+                        </div>
+                    </a>
+                </div>
+
+                <div class="more">
+                    <h3 class="more-title">More demos</h3>
+                    <a class="demo-row" href="./layout-compare.html">
+                        <h4>Layout compare</h4>
+                        <p>All 3 layout modes side by side using per-diagram <code>data-diagview-layout</code>
+                            overrides on one page.</p>
+                        <span class="go">Compare layouts</span>
+                    </a>
+                    <a class="demo-row" href="./demo-performance.html">
+                        <h4>Performance test</h4>
+                        <p>2,500 interactive nodes. Testing hardware-accelerated zoom and pan at scale.</p>
+                        <span class="go">Run stress test</span>
+                    </a>
+                    <a class="demo-row" href="./framework-react.html">
+                        <h4>React + StrictMode <span class="tag tag-new">New</span></h4>
+                        <p>A real React 18 tree mounting, unmounting and replacing diagrams. Shows the one
+                            DOM-ownership rule for component frameworks.</p>
+                        <span class="go">Open React demo</span>
+                    </a>
+                    <a class="demo-row" href="./watermark-demo.html">
+                        <h4>Silent watermarks <span class="tag tag-new">New</span></h4>
+                        <p>Add non-intrusive branding to your exported images. Invisible in the UI, present on
+                            download.</p>
+                        <span class="go">Try silent branding</span>
+                    </a>
+                </div>
             </div>
+        </section>
 
-            <!-- Quick keyboard reference -->
-            <div class="hero-shortcuts">
-                <span><kbd>+</kbd> Zoom in</span>
-                <span><kbd>-</kbd> Zoom out</span>
-                <span><kbd>arrows</kbd> Pan</span>
-                <span><kbd>Space / 0</kbd> Reset</span>
-                <span><kbd>F</kbd> Search</span>
-                <span><kbd>M</kbd> Meeting</span>
-                <span><kbd>R</kbd> Rotate</span>
-                <span><kbd>L</kbd> Share</span>
-                <span><kbd>T</kbd> Text select</span>
-                <span><kbd>?</kbd> Shortcuts</span>
-                <span><kbd>Esc</kbd> Close</span>
+        <section class="section" id="features">
+            <div class="wrap">
+                <div class="section-head">
+                    <h2>Built for performance</h2>
+                    <p>Everything you need to handle large-scale documentation infrastructure.</p>
+                </div>
+                <div class="cols" style="--n: 4">
+                    <div>
+                        <h3>Lightning fast</h3>
+                        <p>Hardware-accelerated rendering keeps zooming smooth through thousands of nodes.</p>
+                    </div>
+                    <div>
+                        <h3>Deep search</h3>
+                        <p>Built-in node searching with dirty-checking and throttled background processing.</p>
+                    </div>
+                    <div>
+                        <h3>High-res export</h3>
+                        <p>Save diagrams as sharp SVG, PNG, JPEG, WebP or PDF, or copy them to the clipboard.
+                            Perfect for reports and presentations.</p>
+                    </div>
+                    <div>
+                        <h3>Brand aware</h3>
+                        <p>Automatically syncs with your system's light and dark mode and supports custom accent
+                            colours.</p>
+                    </div>
+                </div>
             </div>
-        </div>
-    </section>
+        </section>
 
-    <div class="container" id="layouts">
-        <div class="section-header">
-            <h2 class="section-title">Flexible Layouts</h2>
-            <p class="section-subtitle">Choose the mode that best fits your user experience.</p>
-        </div>
-
-        <div class="layout-grid">
-            <!-- HEADER LAYOUT -->
-            <a href="./layout-header.html" class="layout-card">
-                <div class="layout-info">
-                    <h3>Header Layout</h3>
-                    <p>Classic top-bar controls. Best for documentation and dashboards.</p>
-                    <span class="layout-link">View Live Example →</span>
+        <section class="section" id="quick-start">
+            <div class="wrap">
+                <div class="section-head">
+                    <h2>Quick start</h2>
+                    <p>Get up and running in seconds.</p>
                 </div>
-                <div class="layout-demo">
-                    <!-- Header Layout: Top bar UI + Diagram -->
-                    <svg width="250" height="180" viewBox="0 0 250 180" xmlns="http://www.w3.org/2000/svg">
-                        <defs>
-                            <linearGradient id="header-grad" x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="0%" stop-color="#1e293b" stop-opacity="0.1" />
-                                <stop offset="100%" stop-color="#1e293b" stop-opacity="0.05" />
-                            </linearGradient>
-                        </defs>
-                        <!-- UI Chrome -->
-                        <rect x="0" y="0" width="250" height="30" fill="#334155" />
-                        <circle cx="15" cy="15" r="3" fill="#64748b" />
-                        <rect x="25" y="10" width="40" height="10" rx="2" fill="#94a3b8" fill-opacity="0.5" />
-                        <rect x="200" y="8" width="14" height="14" rx="3" fill="#3b82f6" />
-                        <rect x="220" y="8" width="14" height="14" rx="3" fill="#64748b" fill-opacity="0.5" />
+                <div class="qs">
+                    <ol>
+                        <li>
+                            <div><strong>Add Panzoom</strong><span>DiagView uses it for smooth zoom and pan.</span>
+                            </div>
+                        </li>
+                        <li>
+                            <div><strong>Add DiagView</strong><span>With no options it finds your diagrams and sets
+                                    itself up.</span></div>
+                        </li>
+                        <li>
+                            <div><strong>Configure if you want</strong><span>Add
+                                    <code>data-diagview-no-auto-init</code> and call <code>DiagView.init()</code>
+                                    yourself.</span></div>
+                        </li>
+                    </ol>
+                    <div class="code">
+                        <div class="code-bar">
+                            <span class="file">index.html</span>
+                            <button class="copy-btn" type="button" data-copy>Copy</button>
+                        </div>
+<pre><code><span class="c">&lt;!-- 1. Required Dependencies --&gt;</span>
+&lt;<span class="t">script</span> <span class="a">src</span>=<span class="v">"https://cdn.jsdelivr.net/npm/@panzoom/panzoom@4.5.1/dist/panzoom.min.js"</span>&gt;&lt;/<span class="t">script</span>&gt;
 
-                        <!-- Diagram Content -->
-                        <g transform="translate(0, 20)">
-                            <text x="125" y="70" text-anchor="middle" font-size="10" fill="#3b82f6" font-weight="bold"
-                                font-family="sans-serif">AUTH SERVICE</text>
-                            <rect x="85" y="80" width="80" height="30" rx="4" fill="#3b82f6" fill-opacity="0.1"
-                                stroke="#3b82f6" stroke-width="1.5" />
-                            <text x="125" y="99" text-anchor="middle" font-size="9" fill="#94a3b8"
-                                font-family="sans-serif">LOGIN</text>
+<span class="c">&lt;!-- Option A: Basic Usage (Auto-initializes) --&gt;</span>
+&lt;<span class="t">script</span> <span class="a">src</span>=<span class="v">"https://unpkg.com/diagview@1.0.12/dist/diagview.umd.min.js"</span>&gt;&lt;/<span class="t">script</span>&gt;
 
-                            <!-- Edges -->
-                            <path d="M 125 110 L 125 130 M 125 130 L 80 150 M 125 130 L 170 150" stroke="#94a3b8"
-                                stroke-width="1.5" fill="none" />
-
-                            <!-- Sub Nodes -->
-                            <rect x="60" y="150" width="40" height="20" rx="3" fill="#1e293b" fill-opacity="0.05"
-                                stroke="#94a3b8" stroke-width="1" />
-                            <rect x="150" y="150" width="40" height="20" rx="3" fill="#1e293b" fill-opacity="0.05"
-                                stroke="#94a3b8" stroke-width="1" />
-                        </g>
-                    </svg>
-                </div>
-            </a>
-
-            <!-- FLOATING LAYOUT -->
-            <a href="./layout-floating.html" class="layout-card">
-                <div class="layout-info">
-                    <h3>Floating Layout</h3>
-                    <p>Clean HUD-style buttons that appear on hover. Ideal for minimal UIs.</p>
-                    <span class="layout-link">View Live Example →</span>
-                </div>
-                <div class="layout-demo">
-                    <!-- Floating Layout: Bottom Centered Pill + Diagram -->
-                    <svg width="250" height="180" viewBox="0 0 250 180" xmlns="http://www.w3.org/2000/svg">
-                        <defs>
-                            <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
-                                <feGaussianBlur in="SourceAlpha" stdDeviation="2" />
-                                <feOffset dx="0" dy="2" result="offsetblur" />
-                                <feComponentTransfer>
-                                    <feFuncA type="linear" slope="0.3" />
-                                </feComponentTransfer>
-                                <feMerge>
-                                    <feMergeNode />
-                                    <feMergeNode in="SourceGraphic" />
-                                </feMerge>
-                            </filter>
-                        </defs>
-
-                        <!-- Diagram -->
-                        <g transform="translate(20, 10)">
-                            <circle cx="105" cy="50" r="15" fill="#10b981" fill-opacity="0.1" stroke="#10b981"
-                                stroke-width="1.5" />
-                            <circle cx="65" cy="110" r="12" fill="#64748b" fill-opacity="0.1" stroke="#94a3b8"
-                                stroke-width="1" />
-                            <circle cx="145" cy="110" r="12" fill="#64748b" fill-opacity="0.1" stroke="#94a3b8"
-                                stroke-width="1" />
-                            <path d="M 100 63 L 70 100 M 110 63 L 140 100" stroke="#94a3b8" stroke-width="1"
-                                stroke-dasharray="3,2" />
-                        </g>
-
-                        <!-- UI Chrome: Floating Pill at Bottom Center -->
-                        <g filter="url(#shadow)">
-                            <rect x="85" y="145" width="80" height="24" rx="12" fill="#1e293b" />
-                            <!-- Icons -->
-                            <circle cx="100" cy="157" r="2" fill="white" />
-                            <rect x="98" y="155" width="4" height="4" fill="none" stroke="white" stroke-width="1" />
-
-                            <text x="125" y="161" text-anchor="middle" font-size="10" fill="white"
-                                font-weight="bold">100%</text>
-
-                            <rect x="148" y="155" width="4" height="4" fill="none" stroke="white" stroke-width="1" />
-                        </g>
-                    </svg>
-                </div>
-            </a>
-
-            <!-- OFF LAYOUT -->
-            <a href="./layout-off.html" class="layout-card">
-                <div class="layout-info">
-                    <h3>Off Layout</h3>
-                    <p>Invisible UI. The diagram itself is a trigger. Best for embedding.</p>
-                    <span class="layout-link">View Live Example →</span>
-                </div>
-                <div class="layout-demo">
-                    <!-- Off Layout: Pure Diagram, No Chrome -->
-                    <svg width="250" height="180" viewBox="0 0 250 180" xmlns="http://www.w3.org/2000/svg">
-                        <rect x="0" y="0" width="250" height="180" fill="transparent" /> <!-- Click target -->
-                        <g transform="translate(0, 10)">
-                            <rect x="100" y="40" width="50" height="30" rx="4" fill="#8b5cf6" fill-opacity="0.15"
-                                stroke="#8b5cf6" stroke-width="1.5" />
-                            <text x="125" y="59" text-anchor="middle" font-size="8" fill="#8b5cf6"
-                                font-weight="bold">ROOT</text>
-
-                            <line x1="125" y1="70" x2="125" y2="90" stroke="#cbd5e1" stroke-width="1.5" />
-                            <line x1="80" y1="90" x2="170" y2="90" stroke="#cbd5e1" stroke-width="1.5" />
-                            <line x1="80" y1="90" x2="80" y2="105" stroke="#cbd5e1" stroke-width="1.5" />
-                            <line x1="170" y1="90" x2="170" y2="105" stroke="#cbd5e1" stroke-width="1.5" />
-
-                            <rect x="60" y="105" width="40" height="25" rx="3" fill="#f1f5f9" stroke="#cbd5e1"
-                                stroke-width="1" />
-                            <rect x="150" y="105" width="40" height="25" rx="3" fill="#f1f5f9" stroke="#cbd5e1"
-                                stroke-width="1" />
-                        </g>
-                        <text x="125" y="160" text-anchor="middle" font-size="9" fill="#94a3b8"
-                            font-style="italic">Click On Image </text>
-                    </svg>
-                </div>
-            </a>
-
-            <!-- LAYOUT COMPARE -->
-            <a href="./layout-compare.html" class="layout-card">
-                <div class="layout-info">
-                    <h3>Layout Compare</h3>
-                    <p>All 3 layout modes side-by-side using per-diagram <code>data-diagview-layout</code> overrides on
-                        one page.</p>
-                    <span class="layout-link">Compare Layouts →</span>
-                </div>
-                <div class="layout-demo">
-                    <svg width="250" height="180" viewBox="0 0 250 180" xmlns="http://www.w3.org/2000/svg">
-                        <!-- Floating buttons indicator -->
-                        <rect x="15" y="20" width="60" height="40" rx="6" fill="#f59e0b" fill-opacity=".12"
-                            stroke="#f59e0b" stroke-width="1.5" />
-                        <circle cx="68" cy="53" r="7" fill="#f59e0b" opacity=".9" />
-                        <text x="38" y="43" text-anchor="middle" font-size="8" font-family="sans-serif" fill="#f59e0b"
-                            font-weight="600">floating</text>
-                        <!-- Header bar indicator -->
-                        <rect x="90" y="20" width="60" height="40" rx="6" fill="#6366f1" fill-opacity=".12"
-                            stroke="#6366f1" stroke-width="1.5" />
-                        <rect x="90" y="20" width="60" height="11" rx="3" fill="#6366f1" opacity=".35" />
-                        <text x="120" y="43" text-anchor="middle" font-size="8" font-family="sans-serif" fill="#6366f1"
-                            font-weight="600">header</text>
-                        <!-- Off indicator -->
-                        <rect x="165" y="20" width="60" height="40" rx="6" fill="#10b981" fill-opacity=".12"
-                            stroke="#10b981" stroke-width="1.5" />
-                        <text x="195" y="43" text-anchor="middle" font-size="8" font-family="sans-serif" fill="#10b981"
-                            font-weight="600">off</text>
-                        <!-- Labels -->
-                        <text x="45" y="85" text-anchor="middle" font-size="7" font-family="sans-serif"
-                            fill="#94a3b8">Buttons</text>
-                        <text x="120" y="85" text-anchor="middle" font-size="7" font-family="sans-serif"
-                            fill="#94a3b8">Toolbar</text>
-                        <text x="195" y="85" text-anchor="middle" font-size="7" font-family="sans-serif"
-                            fill="#94a3b8">Click-only</text>
-                        <text x="125" y="130" text-anchor="middle" font-size="10" font-family="sans-serif"
-                            fill="#94a3b8" font-weight="600">Per-diagram overrides</text>
-                        <text x="125" y="148" text-anchor="middle" font-size="8" font-family="sans-serif"
-                            fill="#64748b">data-diagview-layout=""</text>
-                    </svg>
-                </div>
-            </a>
-
-            <!-- PERFORMANCE STRESS TEST -->
-            <a href="./demo-performance.html" class="layout-card">
-                <div class="layout-info">
-                    <h3>Performance Test</h3>
-                    <p>2,500 interactive nodes. Testing hardware-accelerated zoom/pan scale.</p>
-                    <span class="layout-link">Run Stress Test →</span>
-                </div>
-                <div class="layout-demo">
-                    <svg width="250" height="180" viewBox="0 0 250 180" xmlns="http://www.w3.org/2000/svg">
-                        <g opacity="0.6">
-                            <rect x="40" y="40" width="20" height="15" rx="2" fill="#f59e0b" />
-                            <rect x="70" y="40" width="20" height="15" rx="2" fill="#f59e0b" />
-                            <rect x="100" y="40" width="20" height="15" rx="2" fill="#f59e0b" />
-                            <rect x="40" y="65" width="20" height="15" rx="2" fill="#f59e0b" />
-                            <rect x="70" y="65" width="20" height="15" rx="2" fill="#f59e0b" />
-                            <rect x="100" y="65" width="20" height="15" rx="2" fill="#f59e0b" />
-                        </g>
-                        <text x="125" y="120" text-anchor="middle" font-size="24" font-weight="800"
-                            fill="#f59e0b">2.5k</text>
-                        <text x="125" y="140" text-anchor="middle" font-size="10" font-family="sans-serif"
-                            fill="#94a3b8">NODES</text>
-                    </svg>
-                </div>
-            </a>
-
-            <!-- REACT STRICTMODE -->
-            <a href="./framework-react.html" class="layout-card" style="border-color: #61dafb;">
-                <div class="layout-info">
-                    <h3>React + StrictMode 🆕</h3>
-                    <p>A real React 18 tree mounting, unmounting and replacing diagrams. Shows the one DOM-ownership rule for component frameworks.</p>
-                    <span class="layout-link" style="color: #61dafb;">Open React Demo →</span>
-                </div>
-                <div class="layout-demo">
-                    <svg width="250" height="180" viewBox="0 0 250 180" xmlns="http://www.w3.org/2000/svg">
-                        <g fill="none" stroke="#61dafb" stroke-width="4" transform="translate(125 90)">
-                            <ellipse rx="70" ry="26" />
-                            <ellipse rx="70" ry="26" transform="rotate(60)" />
-                            <ellipse rx="70" ry="26" transform="rotate(120)" />
-                        </g>
-                        <circle cx="125" cy="90" r="9" fill="#61dafb" />
-                        <text x="125" y="160" text-anchor="middle" font-size="10" font-family="sans-serif"
-                            fill="#94a3b8">STRICTMODE</text>
-                    </svg>
-                </div>
-            </a>
-
-            <!-- WATERMARK DEMO -->
-            <a href="./watermark-demo.html" class="layout-card" style="border-color: #f59e0b;">
-                <div class="layout-info">
-                    <h3>Silent Watermarks 🆕</h3>
-                    <p>Add non-intrusive branding to your exported images. Invisible in UI, present on download.</p>
-                    <span class="layout-link" style="color: #f59e0b;">Try Silent Branding →</span>
-                </div>
-                <div class="layout-demo">
-                    <svg width="250" height="180" viewBox="0 0 250 180" xmlns="http://www.w3.org/2000/svg">
-                        <rect x="40" y="40" width="170" height="100" rx="8" fill="#f59e0b" fill-opacity="0.05"
-                            stroke="#f59e0b" stroke-width="1.5" stroke-dasharray="4,2" />
-                        <text x="125" y="95" text-anchor="middle" font-size="14" font-weight="bold"
-                            fill="#f59e0b">BRANDED EXPORT</text>
-                        <path d="M 50 130 L 200 130" stroke="#f59e0b" stroke-width="1" opacity="0.4" />
-                        <text x="125" y="155" text-anchor="middle" font-size="9" fill="#94a3b8"
-                            font-style="italic">Invisible in browser</text>
-                    </svg>
-                </div>
-            </a>
-        </div>
-
-        <div class="section-header">
-            <h2 class="section-title">Built for Performance</h2>
-            <p class="section-subtitle">Everything you need to handle large-scale documentation infrastructure.</p>
-        </div>
-
-        <div class="features">
-            <div class="feature-item">
-                <span class="feature-icon">🚀</span>
-                <h3>Lightning Fast</h3>
-                <p>Hardware-accelerated rendering keeps zooming smooth through thousands of nodes.</p>
-            </div>
-            <div class="feature-item">
-                <span class="feature-icon">🎯</span>
-                <h3>Deep Search</h3>
-                <p>Built-in node searching with dirty-checking and throttled background processing.</p>
-            </div>
-            <div class="feature-item">
-                <span class="feature-icon">📸</span>
-                <h3>High-Res Export</h3>
-                <p>Save diagrams as sharp SVG, PNG, JPEG, WebP or PDF, or copy them to the clipboard. Perfect for reports and presentations.</p>
-            </div>
-            <div class="feature-item">
-                <span class="feature-icon">🎨</span>
-                <h3>Brand Aware</h3>
-                <p>Automatically syncs with your system's light/dark mode and supports custom accent colors.</p>
-            </div>
-        </div>
-
-        <div class="section-header" style="margin-top: 100px;">
-            <h2 class="section-title">Quick Start</h2>
-            <p class="section-subtitle">Get up and running in seconds.</p>
-        </div>
-
-        <div class="code-block"
-            style="background: #1e293b; color: #f8fafc; padding: 30px; border-radius: 20px; border: 1px solid var(--border); position: relative; overflow-x: auto;">
-            <pre style="color: #60a5fa; margin: 0;"><code>&lt;!-- 1. Required Dependencies --&gt;
-&lt;script src="https://cdn.jsdelivr.net/npm/@panzoom/panzoom@4.5.1/dist/panzoom.min.js"&gt;&lt;/script&gt;
-
-&lt;!-- Option A: Basic Usage (Auto-initializes) --&gt;
-&lt;script src="https://unpkg.com/diagview@1.0.12/dist/diagview.umd.min.js"&gt;&lt;/script&gt;
-
-&lt;!-- Option B: Custom Configuration --&gt;
-&lt;script src="https://unpkg.com/diagview@1.0.12/dist/diagview.umd.min.js" data-diagview-no-auto-init&gt;&lt;/script&gt;
-&lt;script&gt;
-  DiagView.init({
-    layout: 'floating',
-    accentColor: '#3b82f6'
+<span class="c">&lt;!-- Option B: Custom Configuration --&gt;</span>
+&lt;<span class="t">script</span> <span class="a">src</span>=<span class="v">"https://unpkg.com/diagview@1.0.12/dist/diagview.umd.min.js"</span> <span class="a">data-diagview-no-auto-init</span>&gt;&lt;/<span class="t">script</span>&gt;
+&lt;<span class="t">script</span>&gt;
+  <span class="kw">DiagView</span>.init({
+    layout: <span class="v">'floating'</span>,
+    accentColor: <span class="v">'#ea580c'</span>
   });
-&lt;/script&gt;</code></pre>
-        </div>
-    </div>
-
-    <footer>
-        <div class="container">
-            <div class="footer-links">
-                <a href="https://github.com/khadirullah/diagview" target="_blank" rel="noopener">GitHub</a>
-                <a href="https://www.npmjs.com/package/diagview" target="_blank" rel="noopener">NPM</a>
-                <a href="https://github.com/khadirullah/diagview/blob/main/LICENSE" target="_blank" rel="noopener">MIT License</a>
+&lt;/<span class="t">script</span>&gt;</code></pre>
+                    </div>
+                </div>
             </div>
-            <p class="copyright">DiagView &bull; <span data-version></span> &bull; Built with ❤️</p>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <div class="wrap">
+            <nav aria-label="Project links">
+                <a href="https://github.com/khadirullah/diagview" target="_blank" rel="noopener">GitHub</a>
+                <a href="https://www.npmjs.com/package/diagview" target="_blank" rel="noopener">npm</a>
+                <a href="https://github.com/khadirullah/diagview/blob/main/LICENSE" target="_blank" rel="noopener">MIT
+                    License</a>
+            </nav>
+            <span>DiagView <span data-version></span></span>
         </div>
     </footer>
 
-    <!-- Theme toggle + sync handled by demo-runtime.js -->
+    <script>
+        mermaid.initialize(demoMermaidConfig({
+            flowchart: { curve: 'basis', padding: 12, nodeSpacing: 26, rankSpacing: 44 }
+        }));
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Left to right is unreadable on a phone, so the hero draws top-down there
+            const narrow = matchMedia('(max-width: 600px)').matches;
+            const host = document.getElementById('heroDiagram');
+            host.textContent = [
+                'flowchart ' + (narrow ? 'TD' : 'LR'),
+                '  subgraph IN["your docs"]',
+                '    A[Mermaid]',
+                '    B[Graphviz]',
+                '    C[PlantUML]',
+                '    D[draw.io]',
+                '  end',
+                '  A & B & C & D --> S[/"inline &lt;svg&gt;"/]',
+                '  S --> DV{{DiagView}}',
+                '  DV --> F["Fullscreen<br/>zoom, pan"]',
+                '  DV --> N["Minimap<br/>search, rotate"]',
+                '  DV --> E["Share link<br/>export, copy"]'
+            ].join('\n');
+
+            try { await document.fonts.ready; } catch (e) { }
+            await mermaid.run({ nodes: [host] });
+
+            DiagView.init({
+                diagramSelector: '.mermaid',
+                layout: 'header',
+                showKeyboardHelp: true,
+                highResScale: 4
+            });
+        });
+    </script>
 </body>
 
 </html>
