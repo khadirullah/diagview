@@ -35,6 +35,7 @@ const TOAST_TYPES = {
 
 /**
  * Show toast notification
+ * @returns {HTMLElement} The toast element
  */
 export function showToast(message, type = "success", duration = null) {
   // 1. Ensure container exists and is on top
@@ -144,6 +145,8 @@ export function showToast(message, type = "success", duration = null) {
     toastTimers.add(timerId);
     state.asyncTasks.timeouts.add(timerId);
   }
+
+  return toast;
 }
 
 /**
@@ -180,9 +183,10 @@ export function showErrorToast(message, details = null) {
 
 /**
  * Show info toast
+ * @returns {HTMLElement} The toast element
  */
 export function showInfoToast(message, duration = null) {
-  showToast(`ℹ ${message}`, "info", duration);
+  return showToast(`ℹ ${message}`, "info", duration);
 }
 
 /**

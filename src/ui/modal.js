@@ -191,10 +191,12 @@ function _activateModalUI(modal) {
     try {
       if (state.isStorageAvailable && !localStorage.getItem("diagview-canvas-hint-shown")) {
         localStorage.setItem("diagview-canvas-hint-shown", "true");
-        showInfoToast(
+        const hint = showInfoToast(
           "💡 Hint: Having visibility issues? Change canvas theme from the menu ☰",
           6000,
         );
+        // Styled as a callout above the menu button so it never covers it
+        hint?.classList.add("diagview-toast-menu-hint");
       }
     } catch (_e) {
       // Ignore storage errors

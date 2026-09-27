@@ -176,5 +176,8 @@ describe("Modal System", () => {
     updateConfig({ showFirstTimeThemeHint: true });
     await openFullscreen(container);
     expect(localStorage.getItem("diagview-canvas-hint-shown")).toBe("true");
+    const hint = document.querySelector(".diagview-toast");
+    expect(hint.textContent).toContain("Change canvas theme");
+    expect(hint.classList.contains("diagview-toast-menu-hint")).toBe(true);
   });
 });
