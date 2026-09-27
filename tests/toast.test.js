@@ -6,6 +6,7 @@ import {
   showSuccessToast,
   showErrorToast,
   showInfoToast,
+  showProgressToast,
   showWarningToast,
 } from "../src/ui/toast.js";
 import { ICONS } from "../src/ui/icons.js";
@@ -111,6 +112,16 @@ describe("Toast Notification System", () => {
     expect(icon()).toEqual({ text: "Careful", paths: paths(ICONS.warning) });
     showErrorToast("Broken");
     expect(icon()).toEqual({ text: "Broken", paths: paths(ICONS.close) });
+  });
+
+  test("a progress notice draws a spinning ring", () => {
+    showProgressToast("Processing PNG...");
+    const t = document.querySelector(".diagview-toast-info");
+    const svg = t.firstElementChild;
+    expect(t.textContent).toBe("Processing PNG...");
+    expect(svg.getAttribute("class")).toBe("diagview-toast-icon diagview-toast-spin");
+    expect(svg.getAttribute("aria-hidden")).toBe("true");
+    expect(svg.querySelector("path").getAttribute("d")).toBe(ICONS.spinner.match(/d="([^"]+)"/)[1]);
   });
 
   test("a plain toast has no icon", () => {

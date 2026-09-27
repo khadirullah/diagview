@@ -20,6 +20,7 @@ describe("ICONS contains only referenced icons", () => {
         "rotate",
         "search",
         "share",
+        "spinner",
         "textSelect",
         "warning",
       ].sort(),

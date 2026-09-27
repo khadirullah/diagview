@@ -17,7 +17,12 @@ import {
   getRobustDimensions,
 } from "../core/utils.js";
 import { cloneSVGForExportAsync } from "../core/svg-clone.js";
-import { showSuccessToast, showErrorToast, showInfoToast, showWarningToast } from "../ui/toast.js";
+import {
+  showSuccessToast,
+  showErrorToast,
+  showProgressToast,
+  showWarningToast,
+} from "../ui/toast.js";
 
 /**
  * Export format for exportDiagram(). "download" is the same as "png", and the
@@ -727,7 +732,7 @@ async function processImageExport(
         showWarningToast("JPEGs don't support transparency. Switched to Transparent PNG for you.");
       }
     } else if (!silent) {
-      showInfoToast(`Processing ${label}...`);
+      showProgressToast(`Processing ${label}...`);
     }
 
     // Small delay to ensure toast renders before heavy canvas work
@@ -900,7 +905,7 @@ export async function exportToPDF(sourceElement, options = {}) {
  */
 async function savePDF(sourceElement, filename, { transparent, modalClone }) {
   try {
-    showInfoToast("Generating PDF...");
+    showProgressToast("Generating PDF...");
     const pdfUrl = state.config.pdfLibraryUrl;
     if (!window.jspdf) {
       await loadScript(pdfUrl, state.config.pdfLibraryIntegrity).catch(() => {

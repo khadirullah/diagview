@@ -44,6 +44,7 @@ const TYPE_ICONS = {
   error: ICONS.close,
   info: ICONS.info,
   warning: ICONS.warning,
+  busy: ICONS.spinner,
 };
 
 /**
@@ -93,7 +94,10 @@ export function showToast(message, type = "success", duration = null, icon = nul
     setSVGContent(toast, TYPE_ICONS[icon], "prepend");
     const svg = toast.firstElementChild;
     if (svg) {
-      svg.setAttribute("class", "diagview-toast-icon");
+      svg.setAttribute(
+        "class",
+        icon === "busy" ? "diagview-toast-icon diagview-toast-spin" : "diagview-toast-icon",
+      );
       svg.setAttribute("aria-hidden", "true");
       svg.setAttribute("focusable", "false");
     }
@@ -214,6 +218,14 @@ export function showErrorToast(message, details = null) {
  */
 export function showInfoToast(message, duration = null) {
   return showToast(message, "info", duration, "info");
+}
+
+/**
+ * Show info toast with a spinning ring, for work the user waits on
+ * @returns {HTMLElement} The toast element
+ */
+export function showProgressToast(message) {
+  return showToast(message, "info", null, "busy");
 }
 
 /**

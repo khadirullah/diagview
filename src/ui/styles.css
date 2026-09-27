@@ -1557,6 +1557,10 @@
   fill: none;
 }
 
+.diagview-toast-spin {
+  animation: dv-spin 0.8s linear infinite;
+}
+
 /* The first-time theme hint sits just above the menu button, flush with
    its right edge, with a tail pointing at it. That keeps it off the button
    and off the middle of the diagram. It uses the button's own offsets and
@@ -1584,11 +1588,11 @@
 }
 
 /* Accessibility */
-/* The spinner is excluded: a loading indicator must keep moving (it is */
-/* slowed down further below instead of frozen).                          */
+/* The spinners are excluded: a loading indicator must keep moving (it is */
+/* slowed down further below instead of frozen).                           */
 @media (prefers-reduced-motion: reduce) {
   .diagview-modal,
-  .diagview-modal *:not(.diagview-spinner),
+  .diagview-modal *:not(.diagview-spinner):not(.diagview-toast-spin),
   .diagview-modal *::before,
   .diagview-modal *::after,
   .diagview-wrapper * {
@@ -1873,7 +1877,8 @@
     animation: none;
   }
 
-  .diagview-spinner {
+  .diagview-spinner,
+  .diagview-toast-spin {
     animation-duration: 1.5s;
   }
 }
