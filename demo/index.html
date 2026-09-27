@@ -306,6 +306,110 @@
             text-underline-offset: 4px;
         }
 
+        /* ── Security modes: one sample diagram, three sanitized copies ── */
+        .sec-modes {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 20px;
+        }
+
+        .sec-mode {
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+            border: 1px solid var(--line);
+            border-radius: var(--r);
+            background: var(--surface);
+            overflow: hidden;
+        }
+
+        .sec-view {
+            display: grid;
+            place-items: center;
+            aspect-ratio: 16 / 10;
+            padding: 14px;
+            border-bottom: 1px solid var(--line);
+        }
+
+        .sec-view svg {
+            width: 100%;
+            height: 100%;
+            max-width: 300px;
+        }
+
+        .sec-view .spin {
+            fill: color-mix(in srgb, var(--accent) 18%, var(--surface));
+            stroke: var(--accent);
+            stroke-width: 2;
+        }
+
+        .sec-view .btn rect {
+            fill: var(--surface);
+            stroke: var(--ink-2);
+            stroke-width: 1.2;
+        }
+
+        .sec-view .btn.on rect {
+            fill: #16a34a;
+            stroke: #15803d;
+        }
+
+        .sec-view text {
+            font-family: var(--font);
+            font-size: 13px;
+            fill: var(--ink);
+        }
+
+        .sec-view .btn.on text {
+            fill: #fff;
+        }
+
+        .sec-view a text {
+            fill: var(--accent-ink);
+            text-decoration: underline;
+        }
+
+        .sec-view a text.dead {
+            fill: var(--muted);
+            text-decoration: none;
+        }
+
+        .sec-body {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            gap: 6px;
+            padding: 18px 20px 20px;
+        }
+
+        .sec-body h3 {
+            font-size: 1.1rem;
+        }
+
+        .sec-body p {
+            font-size: .95rem;
+            color: var(--muted);
+        }
+
+        .sec-body .fig {
+            margin-top: 8px;
+        }
+
+        .sec-body ul {
+            display: grid;
+            gap: 4px;
+            padding-left: 18px;
+            font-size: .93rem;
+            color: var(--ink-2);
+        }
+
+        .sec-note {
+            max-width: 72ch;
+            margin-top: 20px;
+            font-size: .93rem;
+            color: var(--muted);
+        }
+
         /* ── Quick start ── */
         .qs {
             display: grid;
@@ -400,6 +504,7 @@
 
         @media (max-width: 900px) {
             .modes,
+            .sec-modes,
             .more,
             .faq {
                 grid-template-columns: minmax(0, 1fr);
@@ -703,6 +808,55 @@
             </div>
         </section>
 
+        <section class="section" id="security">
+            <div class="wrap">
+                <div class="section-head">
+                    <h2>Security modes</h2>
+                    <p>DiagView never changes the diagram on your page. These three copies show what fullscreen and
+                        exports get in each mode.</p>
+                </div>
+                <div class="sec-modes">
+                    <figure class="sec-mode">
+                        <div class="mode-top"><span class="fig">security: strict</span><span class="fig">default</span>
+                        </div>
+                        <div class="sec-view canvas" data-sanitize="strict"></div>
+                        <figcaption class="sec-body">
+                            <h3>Strict</h3>
+                            <p>For any diagram, and always for ones other people wrote or uploaded.</p>
+                            <span class="fig">Removed</span>
+                            <ul data-removed></ul>
+                        </figcaption>
+                    </figure>
+                    <figure class="sec-mode">
+                        <div class="mode-top"><span class="fig">security: permissive</span></div>
+                        <div class="sec-view canvas" data-sanitize="permissive"></div>
+                        <figcaption class="sec-body">
+                            <h3>Permissive</h3>
+                            <p>For your own diagrams that animate.</p>
+                            <span class="fig">Removed</span>
+                            <ul data-removed></ul>
+                        </figcaption>
+                    </figure>
+                    <figure class="sec-mode">
+                        <div class="mode-top"><span class="fig">security: off</span></div>
+                        <div class="sec-view canvas" data-sanitize="off"></div>
+                        <figcaption class="sec-body">
+                            <h3>Off</h3>
+                            <p>Only for your own diagrams whose click handlers you need in fullscreen.</p>
+                            <span class="fig">Removed</span>
+                            <ul data-removed></ul>
+                        </figcaption>
+                    </figure>
+                </div>
+                <p class="sec-note">Each copy is the same small SVG passed through
+                    <code>DiagView.utils.sanitizeSVG(svg, mode)</code>. Click the button and the link in each one. Only
+                    the <code>off</code> copy runs the diagram's own code.
+                    <a class="link" href="https://github.com/khadirullah/diagview/blob/main/docs/USAGE.md#choosing-a-mode"
+                        target="_blank" rel="noopener">Choosing a mode</a>
+                </p>
+            </div>
+        </section>
+
         <section class="section" id="quick-start">
             <div class="wrap">
                 <div class="section-head">
@@ -810,6 +964,55 @@
         </div>
     </footer>
 
+    <script>
+        // Security modes: one sample SVG run through the real sanitizer in each
+        // mode. The list under each copy compares the copy with the sample.
+        (function () {
+            var SAMPLE =
+                '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 150" role="img" aria-label="Sample diagram">' +
+                '<g transform="translate(58 62)"><rect class="spin" x="-24" y="-24" width="48" height="48" rx="8">' +
+                '<animateTransform attributeName="transform" type="rotate" from="0" to="360" dur="4s" repeatCount="indefinite"/>' +
+                '</rect></g>' +
+                '<g class="btn" style="cursor:pointer" onclick="this.classList.add(\'on\');this.lastChild.textContent=\'Clicked\'">' +
+                '<rect x="118" y="40" width="104" height="44" rx="8"/>' +
+                '<text x="170" y="67" text-anchor="middle">Click me</text></g>' +
+                '<a href="javascript:alert(\'Code from the diagram ran\')">' +
+                '<text x="120" y="126" text-anchor="middle">javascript: link</text></a>' +
+                '</svg>';
+
+            var parse = function (markup) {
+                return new DOMParser().parseFromString(markup, 'image/svg+xml').documentElement;
+            };
+
+            // What the sample has that the copy lost
+            var CHECKS = [
+                ['Spinning animation', function (el) { return /^(animate|animateTransform|animateMotion|set)$/.test(el.localName); }],
+                ['Click handler (onclick)', function (el) { return el.hasAttribute('onclick'); }],
+                ['javascript: link', function (el) { return /^javascript:/i.test(el.getAttribute('href') || ''); }]
+            ];
+            var count = function (root, test) {
+                return Array.prototype.filter.call(root.querySelectorAll('*'), test).length;
+            };
+
+            var sample = parse(SAMPLE);
+            document.querySelectorAll('[data-sanitize]').forEach(function (view) {
+                var svg = document.importNode(parse(DiagView.utils.sanitizeSVG(SAMPLE, view.dataset.sanitize)), true);
+                var lost = CHECKS.filter(function (c) {
+                    return count(svg, c[1]) < count(sample, c[1]);
+                }).map(function (c) { return c[0]; });
+                // A link without its href is plain text now, so draw it that way
+                svg.querySelectorAll('a:not([href]) text').forEach(function (t) { t.classList.add('dead'); });
+                view.appendChild(svg);
+
+                var ul = view.parentNode.querySelector('[data-removed]');
+                (lost.length ? lost : ['Nothing. The copy keeps its code.']).forEach(function (text) {
+                    var li = document.createElement('li');
+                    li.textContent = text;
+                    ul.appendChild(li);
+                });
+            });
+        })();
+    </script>
     <script>
         // Hero diagram: neutral line work, the DiagView node carries the accent.
         // The rules go into the SVG so the fullscreen copy looks the same.

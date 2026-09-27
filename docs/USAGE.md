@@ -575,34 +575,39 @@ Readable follows canvas changes, including page theme changes in Auto mode, and 
 
 ## 14. SVG Sanitization
 
-DiagView never changes the SVG on your page, and the browser renders it as is. DiagView sanitizes its own copies, which are the clone shown in fullscreen and the copy used for exports and clipboard copies. Sanitize untrusted SVG yourself before you put it on the page, for example with `DiagView.utils.sanitizeSVG()`. Three modes are available:
+DiagView never changes the SVG on your page, and the browser renders it as is. The security mode applies only to DiagView's own copies, which are the fullscreen view, exports and clipboard copies. DiagView cleans each copy before the browser loads anything in it, so code the mode removes never runs, not even once. Sanitize untrusted SVG yourself before you put it on the page, for example with `DiagView.utils.sanitizeSVG()`.
 
-### `strict` (default)
+The Security modes panel on the [demo page](https://khadirullah.github.io/diagview/#security) runs one small diagram through all three modes side by side.
 
-Blocks all known SVG XSS vectors:
+### Choosing a mode
 
-- Dangerous tags: `<script>`, `<iframe>`, `<object>`, `<embed>`, `<animate>`, `<set>`, `<feimage>`, and others
-- `<foreignObject>` whose `src` or `data` points to an `http(s)` URL. Other `<foreignObject>` elements stay, since Mermaid and draw.io put their labels in them
-- `on*` event attributes (`onclick`, `onload`, `onerror`, etc.)
-- `javascript:`, `vbscript:`, `data:` URIs (except safe raster images like PNG/JPEG/WebP)
-- External `<use>` references (`https://...`)
-- Inline `style` attributes containing `expression()`, `javascript:`, or remote `url()` references
-- `<style>` block content with the same patterns
+- **`strict` (default).** Use it for any diagram. Keep it for diagrams other people can write, such as wiki or CMS uploads, pasted SVGs and SVGs from an API.
+- **`permissive`.** Use it for your own diagrams that animate with SMIL, such as `<animate>` or `<animateTransform>`.
+- **`off`.** Use it only for your own diagrams whose click handlers or links you need in fullscreen. The copy keeps every script and handler, and they run once the copy is on the page.
 
-### `permissive`
+### What each mode removes
 
-Blocks only the most critical vectors:
+| Removed from the copy                                                                                                                                     | `strict` | `permissive` | `off` |
+| --------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- | ------------ | ----- |
+| `<script>`, `<iframe>`, `<object>`, `<applet>`, `<embed>`, `<form>`, `<link>`, `<base>`, `<meta>`                                                         | Yes      | Yes          | No    |
+| `on*` event handler attributes such as `onclick`, `onload` and `onerror`                                                                                  | Yes      | Yes          | No    |
+| `javascript:`, `vbscript:` and `data:` URLs in `href`, `xlink:href`, `src` and `action`. Base64 `data:` images of the `allowedImageTypes` stay            | Yes      | Yes          | No    |
+| SMIL animations whose `attributeName` is `href`, `xlink:href` or an `on*` handler                                                                         | Yes      | Yes          | No    |
+| All other SMIL animations: `<animate>`, `<animateColor>`, `<animateMotion>`, `<animateTransform>`, `<set>`                                                | Yes      | No           | No    |
+| `<discard>`, `<mpath>`, `<tref>`, `<math>`, `<feImage>`                                                                                                   | Yes      | No           | No    |
+| `<foreignObject>` whose `src` or `data` is an `http(s)` URL. Other `<foreignObject>` elements stay, since Mermaid and draw.io put their labels in them    | Yes      | No           | No    |
+| `href` on a `<use>` that points to another site (`https://`, `http://` or `//`)                                                                           | Yes      | No           | No    |
+| A `style` attribute with `expression()`, `javascript:` or `vbscript:`, also when hidden by CSS escapes or comments, or with a remote `url()` or `@import` | Yes      | No           | No    |
+| A `<style>` block with the same patterns. The whole block goes                                                                                            | Yes      | No           | No    |
 
-- Tags: `<script>`, `<iframe>`, `<object>`, `<applet>`, `<embed>`, `<form>`, `<link>`, `<base>`, `<meta>`
-- All `on*` event attributes
-- `javascript:`/`vbscript:`/`data:` URIs (except safe raster images, as in `strict`)
-- SMIL animations (`<animate>`, `<set>`, `<animateTransform>`, ...) whose `attributeName` is `href`/`xlink:href` or an `on*` handler; all other animations are kept
+With `allowRemoteResources: true`, remote `url()` and `@import` stay in `strict` too. See [Allowing remote resources](#allowing-remote-resources).
 
-This matches the legacy v0.x behavior, apart from the animation rule above.
+### What readers notice
 
-### `off`
-
-No sanitization. **Use only for SVGs from a fully trusted, developer-controlled source.**
+- Under `strict`, SMIL animations stand still in fullscreen and in exports. CSS `@keyframes` animations in a `<style>` block keep running.
+- Under `strict` and `permissive`, a click handler does nothing in fullscreen, and a `javascript:` link no longer opens anything.
+- Under `strict`, a `<style>` block that loads a remote font or stylesheet goes away whole, so the copy loses every rule in it.
+- The diagram on the page keeps everything, so it can behave differently from its fullscreen view.
 
 ### Console warning for removed code
 
@@ -628,6 +633,8 @@ DiagView.init({ security: { mode: "permissive" } });
   <svg><!-- diagram with SMIL animations such as <animate> --></svg>
 </div>
 ```
+
+`data-diagview-sanitize` changes the mode for that one diagram. It works only while `security.allowOverrides` is `true`, which is the default. Set `allowOverrides: false` when page authors should not be able to turn sanitizing off.
 
 A mistyped mode logs a warning. An unknown `security.mode` uses `strict`. An unknown `data-diagview-sanitize` value uses the global mode and warns once per value.
 

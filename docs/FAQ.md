@@ -170,6 +170,16 @@ A: To draw a diagram onto the image, DiagView first loads the SVG as a `data:` U
 
 ## SVG Sanitization
 
+**Q: Why did my animation or click stop working in fullscreen?**  
+A: The fullscreen view and exports show a sanitized copy of your diagram, and the diagram on the page stays as it is. The default `strict` mode removes SMIL animations such as `<animate>` and `<animateTransform>`, and every mode except `off` removes `onclick` and other event handlers and `javascript:` links. When DiagView removes code, the console shows a warning that names the diagram and what went. For your own animated diagram, use `permissive`. For your own diagram whose click handlers you need, use `off`:
+
+```html
+<div class="diagram" data-diagview-sanitize="permissive">...</div>
+<div class="diagram" data-diagview-sanitize="off">...</div>
+```
+
+Keep `strict` for diagrams other people can write. See [Choosing a mode](USAGE.md#choosing-a-mode).
+
 **Q: Can I turn off sanitization for a trusted SVG?**
 
 Globally:

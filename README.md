@@ -237,7 +237,7 @@ Any diagram can override the global configuration using `data-diagview-*` attrib
 | `data-diagview-watermark-opacity` | `0`–`1`                             | Transparency override for this diagram        |
 | `data-title`                      | Any string                          | Title shown in header layout label            |
 
-> **Security note:** `data-diagview-sanitize="off"` and `data-diagview-allow-remote="true"` only work when `security.allowOverrides` is `true` in the global config (the default). Use these only with SVGs from fully trusted sources.
+> **Security note:** `data-diagview-sanitize="off"` and `data-diagview-allow-remote="true"` only work when `security.allowOverrides` is `true` in the global config (the default). Use these only with SVGs from fully trusted sources. [Choosing a mode](docs/USAGE.md#choosing-a-mode) lists what each mode removes and which one to use.
 
 ---
 
