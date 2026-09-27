@@ -15,6 +15,7 @@ import {
   isClipboardAvailable,
   loadScript,
   getRobustDimensions,
+  getDiagramTitle,
 } from "../core/utils.js";
 import { embedDocumentFonts } from "./export-fonts.js";
 import { cloneSVGForExportAsync } from "../core/svg-clone.js";
@@ -41,17 +42,19 @@ import {
  */
 
 /**
- * Generate filename
+ * Build the export file name from the diagram's title and a timestamp
+ * @param {Element} svg - The diagram's SVG on the page
+ * @returns {string} File name without extension
  */
 export function generateFilename(svg) {
-  const titleEl = svg.querySelector("title, text.title, text.titleText, text.diagview-title");
-  let rawTitle = titleEl ? titleEl.textContent : "";
-
-  if (!rawTitle) {
-    const wrapper = svg.closest(".diagview-wrapper");
-    const label = wrapper?.querySelector(".diagview-label");
-    rawTitle = label ? label.textContent : "diagram";
-  }
+  // The data-title or the SVG's own <title> first, then a title drawn on the
+  // diagram. Mermaid draws one as text.titleText, or with the chart type in
+  // front, such as flowchartTitleText.
+  const rawTitle =
+    getDiagramTitle(svg) ||
+    svg.querySelector('text.title, text.titleText, text[class$="TitleText"], text.diagview-title')
+      ?.textContent ||
+    "diagram";
 
   const cleanTitle = sanitizeFilename(rawTitle, "diagram");
   const finalName = cleanTitle === "diagram" ? "diagram_export" : cleanTitle;

@@ -7,7 +7,7 @@
 import { openFullscreen } from "../ui/modal.js";
 import { exportDiagram } from "./export.js";
 import { state } from "../core/config.js";
-import { generateUniqueId, setSVGContent } from "../core/utils.js";
+import { generateUniqueId, setSVGContent, getDiagramTitle } from "../core/utils.js";
 import { resolveElementSecurity } from "../core/svg-clone.js";
 import { ICONS } from "../ui/icons.js";
 import { LAYOUTS, BUTTON_STYLES } from "../core/constants.js";
@@ -164,20 +164,7 @@ function showErrorBoundary(element, svg) {
  * Extract diagram title
  */
 function extractDiagramTitle(element) {
-  // Try to find title in data attribute
-  const dataTitle = element.getAttribute("data-title");
-  if (dataTitle) return dataTitle.toUpperCase();
-
-  // Try to find title in SVG
-  const svg = element.querySelector("svg");
-  if (svg) {
-    const titleEl = svg.querySelector("title");
-    if (titleEl && titleEl.textContent.trim()) {
-      return titleEl.textContent.trim().toUpperCase();
-    }
-  }
-
-  return "DIAGRAM";
+  return getDiagramTitle(element.querySelector("svg"), element).toUpperCase() || "DIAGRAM";
 }
 
 /**

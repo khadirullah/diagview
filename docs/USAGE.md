@@ -178,8 +178,10 @@ DiagView.init({ layout: "header" });
 **Title resolution order:**
 
 1. `data-title` attribute on the container element
-2. `<title>` element inside the SVG
+2. A `<title>` element directly inside the `<svg>`. PlantUML and Graphviz put a `<title>` on every shape as a tooltip, and those do not count.
 3. Fallback: `"DIAGRAM"`
+
+Export file names use the same order, then a chart title Mermaid draws on the diagram, then `diagram_export`. A timestamp follows, as in `checkout_sequence_2026-09-28_011554.png`.
 
 ```html
 <!-- Shows "MY PIPELINE" in the header -->
@@ -320,7 +322,7 @@ await DiagView.copyToClipboard(el);
 await DiagView.exportDiagram(el, "png", { transparent: false });
 ```
 
-`exportDiagram()` takes one of these modes: `png`, `jpeg`, `webp`, `svg`, `pdf`, `copy` (PNG to the clipboard), `copy-svg` (SVG markup to the clipboard), `png-transparent`, `webp-transparent` and `download` (a PNG). It uses `filename` when you pass one, and otherwise builds the name from the diagram title and a timestamp.
+`exportDiagram()` takes one of these modes: `png`, `jpeg`, `webp`, `svg`, `pdf`, `copy` (PNG to the clipboard), `copy-svg` (SVG markup to the clipboard), `png-transparent`, `webp-transparent` and `download` (a PNG). It uses `filename` when you pass one, and otherwise builds the name from the diagram title and a timestamp. The title comes from `data-title`, then the SVG's own `<title>`, then a Mermaid chart title (see [Header](#header)).
 
 Every export function resolves without throwing when the element contains no `<svg>`; a "No diagram found" toast is shown instead. `copyToClipboard()` downloads the PNG when the browser denies the clipboard write (Safari does this once the click that started the export is over). `exportDiagram(el, "copy-svg")` downloads the .svg file in the same case.
 

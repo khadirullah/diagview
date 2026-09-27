@@ -10,6 +10,7 @@ import {
   exportToWebP,
   exportToPDF,
   copyToClipboard,
+  generateFilename,
 } from "../src/features/export.js";
 import { hideToast } from "../src/ui/toast.js";
 import { state, updateConfig } from "../src/core/config.js";
@@ -1178,5 +1179,51 @@ describe("Copy SVG falls back to a download when the clipboard is unavailable", 
     expect(downloads).toHaveLength(0);
     expect(toastTexts().some((t) => t.includes("Copy SVG Failed"))).toBe(true);
     expect(onExport).not.toHaveBeenCalled();
+  });
+});
+
+describe("generateFilename", () => {
+  const name = (html) => {
+    document.body.innerHTML = html;
+    return generateFilename(document.querySelector("svg")).replace(/_\d{4}-\d{2}-\d{2}_\d{6}$/, "");
+  };
+  const NS = 'xmlns="http://www.w3.org/2000/svg"';
+
+  test("data-title wins over the SVG's own title", () => {
+    expect(
+      name(`<div data-diagview-index="0" data-title="Checkout sequence">
+        <svg ${NS}><title>Order pipeline</title></svg></div>`),
+    ).toBe("checkout_sequence");
+  });
+
+  test("a shape's tooltip title does not name the file", () => {
+    // PlantUML and Graphviz put a <title> on every shape
+    expect(
+      name(`<div data-diagview-index="0"><svg ${NS}><g><title>Bob</title></g></svg></div>`),
+    ).toBe("diagram_export");
+    expect(
+      name(`<div data-diagview-index="0" data-title="Checkout sequence">
+        <svg ${NS}><g><title>Bob</title></g></svg></div>`),
+    ).toBe("checkout_sequence");
+  });
+
+  test("the SVG's own title names the file when there is no data-title", () => {
+    expect(
+      name(`<div data-diagview-index="0"><svg ${NS}><title>Order pipeline</title></svg></div>`),
+    ).toBe("order_pipeline");
+  });
+
+  test("a Mermaid chart title names the file", () => {
+    expect(
+      name(
+        `<div data-diagview-index="0"><svg ${NS}><text class="flowchartTitleText">Order flow</text></svg></div>`,
+      ),
+    ).toBe("order_flow");
+  });
+
+  test("with no title at all the file is diagram_export", () => {
+    expect(name(`<div data-diagview-index="0"><svg ${NS}><rect/></svg></div>`)).toBe(
+      "diagram_export",
+    );
   });
 });

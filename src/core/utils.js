@@ -157,6 +157,23 @@ export function sanitizeFilename(text, fallback = "diagram") {
 }
 
 /**
+ * The title a page author gave a diagram. A data-title on the diagram
+ * element wins, since someone typed it for that spot. Then the SVG's own
+ * <title>, but only a direct child: PlantUML and Graphviz put a <title> on
+ * every shape as a tooltip, and the first of those names one shape, such as
+ * "Bob", not the diagram.
+ * @param {Element} svg - The diagram's SVG
+ * @param {Element|null} [element] - The diagram element, when the caller has it
+ * @returns {string} The trimmed title, or "" when there is none
+ */
+export function getDiagramTitle(svg, element = svg?.closest("[data-diagview-index]")) {
+  const dataTitle = element?.getAttribute("data-title")?.trim();
+  if (dataTitle) return dataTitle;
+  const titleEl = svg && Array.from(svg.children).find((el) => el.localName === "title");
+  return titleEl?.textContent.trim() || "";
+}
+
+/**
  * Get timestamp string for filenames
  */
 export function getTimestamp() {

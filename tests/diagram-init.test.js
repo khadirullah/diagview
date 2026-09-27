@@ -126,6 +126,20 @@ describe("Diagram Init: Title Extraction Logic", () => {
     expect(label).not.toBeNull();
     expect(label.textContent).toBe("DIAGRAM");
   });
+
+  test("ignores a shape's tooltip title", () => {
+    // PlantUML and Graphviz put a <title> on every shape
+    const container = document.createElement("div");
+    container.className = "diagram";
+    container.dataset.diagviewLayout = "header";
+    container.innerHTML =
+      '<svg xmlns="http://www.w3.org/2000/svg"><g><title>Bob</title><rect/></g></svg>';
+    document.body.appendChild(container);
+
+    initializeDiagram(container);
+
+    expect(document.querySelector(".diagview-label").textContent).toBe("DIAGRAM");
+  });
 });
 
 describe("Diagram Init: deinitializeDiagram", () => {
