@@ -238,3 +238,64 @@ describe("Two-stage Escape while searching", () => {
     expect(closeModalMock).toHaveBeenCalledTimes(1);
   });
 });
+
+describe("Shortcuts while a control has focus", () => {
+  let mockPanzoom;
+
+  beforeEach(() => {
+    resetConfig();
+    mockPanzoom = { zoomIn: jest.fn(), zoomOut: jest.fn(), reset: jest.fn(), pan: jest.fn() };
+    state.activePanzoom = mockPanzoom;
+    state.isModalOpen = true;
+    document.body.innerHTML = "";
+    setupKeyboardShortcuts();
+  });
+
+  afterEach(() => {
+    teardownKeyboardShortcuts();
+    state.activePanzoom = null;
+  });
+
+  test("letter shortcuts work on the menu button after Escape closes the menu", () => {
+    document.body.innerHTML = `<div class="diagview-topbar"><button id="dv-search-icon-btn"></button></div>`;
+    const searchBtn = document.getElementById("dv-search-icon-btn");
+    const openSearch = jest.fn();
+    searchBtn.onclick = openSearch;
+    const fab = document.createElement("button");
+    fab.id = "dv-toggle";
+    fab.className = "open";
+    fab.onclick = () => fab.classList.remove("open");
+    document.body.appendChild(fab);
+
+    fab.focus();
+    window.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
+    expect(document.activeElement).toBe(fab);
+    fab.dispatchEvent(new KeyboardEvent("keydown", { key: "f", bubbles: true }));
+    expect(openSearch).toHaveBeenCalledTimes(1);
+  });
+
+  test("Space and Enter on a focused button press it instead of running a shortcut", () => {
+    document.body.innerHTML = "<button>Dark</button>";
+    const btn = document.querySelector("button");
+    btn.focus();
+    btn.dispatchEvent(new KeyboardEvent("keydown", { key: " ", bubbles: true }));
+    btn.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true }));
+    expect(mockPanzoom.reset).not.toHaveBeenCalled();
+  });
+
+  test("letter shortcuts work on a focused checkbox but not in a text field", () => {
+    const toggles = jest.fn();
+    state.events.on("dv:toggle-text-select", toggles);
+    document.body.innerHTML = '<input type="checkbox"><input type="text">';
+    const [box, text] = document.querySelectorAll("input");
+
+    box.focus();
+    box.dispatchEvent(new KeyboardEvent("keydown", { key: "t", bubbles: true }));
+    expect(toggles).toHaveBeenCalledTimes(1);
+
+    text.focus();
+    text.dispatchEvent(new KeyboardEvent("keydown", { key: "t", bubbles: true }));
+    expect(toggles).toHaveBeenCalledTimes(1);
+    state.events.off("dv:toggle-text-select", toggles);
+  });
+});

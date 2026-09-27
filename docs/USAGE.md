@@ -688,7 +688,7 @@ DiagView.init({ rememberZoom: true });
 | `?`                     | Show/hide keyboard shortcuts        | Suspended while an input is focused, so `?` can be typed into search                                                                      |
 | `Ctrl/Cmd/Alt`+anything | Ignored                             | Native browser shortcuts are never intercepted                                                                                            |
 
-Shortcuts are disabled when the modal is closed. When an `<input>` or `<textarea>` is focused, all shortcuts except `Esc` are suspended.
+Shortcuts are disabled when the modal is closed. While you type in a text field, such as the search box, all shortcuts except `Esc` are suspended. When a button, link, checkbox or the colour picker has focus, `Space` and `Enter` press it and every other shortcut still works. After `Esc` closes the ☰ menu, focus stays on the menu button, so `F` opens search straight away.
 
 ---
 

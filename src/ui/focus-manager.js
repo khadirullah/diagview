@@ -12,17 +12,16 @@ import { addModalCleanupFunction } from "../core/lifecycle.js";
 let _focusCacheTimestamp = 0;
 const FOCUS_CACHE_TTL = 500; // ms
 
-const LAYOUT_KEYS = new Set([
-  "ArrowUp",
-  "ArrowDown",
-  "ArrowLeft",
-  "ArrowRight",
-  "+",
-  "=",
-  "-",
-  "_",
-  "0",
-  " ",
+// Inputs that are pressed or picked rather than typed into. Letter shortcuts
+// still work while one of them has focus.
+const NON_TEXT_INPUTS = new Set([
+  "checkbox",
+  "radio",
+  "color",
+  "button",
+  "submit",
+  "reset",
+  "file",
 ]);
 
 /**
@@ -50,7 +49,10 @@ export function isInputFocused() {
   const active = document.activeElement;
   return (
     active &&
-    (active.tagName === "INPUT" || active.tagName === "TEXTAREA" || active.isContentEditable)
+    ((active.tagName === "INPUT" && !NON_TEXT_INPUTS.has(active.type)) ||
+      active.tagName === "TEXTAREA" ||
+      active.tagName === "SELECT" ||
+      active.isContentEditable)
   );
 }
 
@@ -157,36 +159,13 @@ export function shouldHandleKeyboardEvent(event) {
     return true;
   }
 
-  const isInteractive =
-    target.tagName === "INPUT" ||
-    target.tagName === "TEXTAREA" ||
-    target.tagName === "BUTTON" ||
-    target.tagName === "A" ||
-    target.isContentEditable;
-
-  if (isInteractive) {
-    // If we are on a button or link, we only allow specific navigation/layout keys
-    if (target.tagName === "BUTTON" || target.tagName === "A") {
-      if (event.key === "Escape") return true; // Always allow Escape to close modal/help
-
-      // Reserved keys for native activation must not be handled by DiagView shortcuts
-      if (target.tagName === "BUTTON" && (event.key === " " || event.key === "Enter")) {
-        return false;
-      }
-      if (target.tagName === "A" && event.key === "Enter") {
-        return false;
-      }
-
-      // Allow navigation and zoom keys to pass through to handleKeyboardShortcut
-      if (LAYOUT_KEYS.has(event.key)) {
-        return true;
-      }
-
-      // Block all other single-character shortcuts (R, M, L, F, T, etc.)
-      // to prevent conflicts with focused UI elements.
-      return false;
-    }
-
+  // Space and Enter press the focused button, link, checkbox or colour
+  // picker. Every other shortcut still works there. A keyboard user never
+  // presses F or R to operate a button, and after Esc closes the menu, focus
+  // stays on the menu button.
+  const isControl =
+    target.tagName === "BUTTON" || target.tagName === "A" || target.tagName === "INPUT";
+  if (isControl && (event.key === "Enter" || event.key === " ")) {
     return false;
   }
 

@@ -237,7 +237,7 @@ Any diagram can override the global configuration using `data-diagview-*` attrib
 
 ## ⌨️ Keyboard Shortcuts
 
-All shortcuts are active when the fullscreen modal is open.
+All shortcuts are active when the fullscreen modal is open. They pause while you type in the search box. When a button has focus, `Space` and `Enter` press it and the letter keys still work.
 
 | Key              | Action                                                               |
 | ---------------- | -------------------------------------------------------------------- |
