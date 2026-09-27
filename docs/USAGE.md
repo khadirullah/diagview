@@ -731,7 +731,7 @@ DiagView.init({
 
 ## 20. Framework Integration
 
-Live example: [React 18 + StrictMode demo](https://khadirullah.github.io/diagview/framework-react.html) — a real React dev-build tree that mounts, unmounts, remounts and replaces diagrams, with an "unsafe pattern" toggle that shows the error the rule below prevents. `demo/framework-react.html` in the repo, verified by `tests/e2e/verify-react-strictmode.mjs`.
+Live example: [React 18 + StrictMode demo](https://khadirullah.github.io/diagview/framework-react.html) — a real React dev-build tree that mounts, unmounts, remounts and replaces diagrams, with an "unsafe pattern" toggle that shows the error the rule below prevents. `demo/framework-react.html` in the repo, verified by `tests/e2e/verify-react-strictmode.spec.mjs`.
 
 > **The one rule:** keep the diagram element (the one matching `diagramSelector`) nested inside a container that your component renders and owns. With the `floating` and `header` layouts DiagView moves the diagram element into a wrapper so it can place the toolbar next to it. Your framework still believes the element sits where it rendered it, so if it later removes that exact element (unmount, conditional render, key change) the browser throws `NotFoundError: The node to be removed is not a child of this node`. Removing the outer container instead is always safe, because the wrapper is inside it and goes away with it.
 >

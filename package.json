@@ -24,6 +24,7 @@
   "scripts": {
     "test": "NODE_OPTIONS=--experimental-vm-modules jest",
     "test:coverage": "NODE_OPTIONS=--experimental-vm-modules jest --coverage",
+    "test:e2e": "playwright test",
     "dev": "rollup -c -w",
     "build": "npm run version:sync && npm run clean && npm run build:lib && npm run build:css && npm run build:types",
     "build:lib": "rollup -c",
@@ -74,6 +75,7 @@
   "devDependencies": {
     "@babel/core": "^7.23.0",
     "@babel/preset-env": "^7.23.0",
+    "@playwright/test": "^1.63.0",
     "@release-it/conventional-changelog": "^11.0.0",
     "@rollup/plugin-babel": "^6.0.4",
     "@rollup/plugin-node-resolve": "^15.2.3",
@@ -124,7 +126,8 @@
       "__DV_VERSION__": "1.0.12"
     },
     "testPathIgnorePatterns": [
-      "/node_modules/"
+      "/node_modules/",
+      "/tests/e2e/"
     ],
     "moduleNameMapper": {
       "\\.css$": "<rootDir>/tests/mocks/styleMock.js"

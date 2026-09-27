@@ -94,17 +94,17 @@ npm test -- --watch
 `npm run typecheck` compiles `tests/types/api.ts` against the built
 declarations. Run it after `npm run build`.
 
-### E2E geometry harness (real Chrome)
+### E2E geometry suites (Chromium, Firefox, WebKit)
 
-Interaction paths JSDOM cannot test — pan/zoom geometry, share-link restore
-accuracy, minimap click precision, rotation, focus trapping — are verified by
-measurement scripts in `tests/e2e/`. They are a manual pre-release gate, not
-part of CI. See `tests/e2e/README.md` for setup and usage:
+Interaction paths JSDOM cannot test, such as pan/zoom geometry, share-link
+restore accuracy, minimap click precision, rotation and focus trapping, are
+checked by Playwright suites in `tests/e2e/`. CI runs them in all three
+browsers. See `tests/e2e/README.md` for details:
 
 ```bash
 npm run build
-npm install --no-save playwright-core
-node tests/e2e/final-verify.mjs
+npx playwright install --with-deps   # once
+npm run test:e2e
 ```
 
 `npm run test:coverage` enforces coverage thresholds and fails if coverage drops below:

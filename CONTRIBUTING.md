@@ -66,7 +66,7 @@ diagview/
 │   └── ui/               # Modal, floating menu, toast, focus manager
 ├── tests/
 │   ├── *.test.js         # Jest unit tests (one file per module)
-│   ├── e2e/              # Real-browser checks (Playwright, run by hand)
+│   ├── e2e/              # Real-browser checks (npm run test:e2e)
 │   ├── types/            # Type check of the published declarations
 │   └── mocks/            # JSDOM mocks (styleMock.js)
 ├── demo/                 # Static demo pages (load diagview from unpkg)
@@ -147,6 +147,16 @@ npm run typecheck
 ```
 
 `tests/types/api.ts` calls the public API through the built `dist/index.d.ts`. It fails when a documented option or call stops compiling, or when a wrong value starts to compile. Add a line there when you add an option.
+
+### Browser tests (Playwright)
+
+```bash
+npx playwright install --with-deps   # once
+npm run build
+npm run test:e2e
+```
+
+The suites in `tests/e2e/` measure pan, zoom, share, minimap, export and search behaviour in Chromium, Firefox and WebKit. CI runs them on every pull request. See `tests/e2e/README.md`.
 
 ---
 
