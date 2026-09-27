@@ -184,7 +184,9 @@ describe("Modal System", () => {
     await openFullscreen(container);
     expect(localStorage.getItem("diagview-canvas-hint-shown")).toBe("true");
     const hint = document.querySelector(".diagview-toast");
-    expect(hint.textContent).toContain("Change canvas theme");
+    expect(hint.textContent).toBe(
+      "ℹ Hint: Having visibility issues? Change canvas theme from the menu ☰",
+    );
     expect(hint.classList.contains("diagview-toast-menu-hint")).toBe(true);
   });
 });

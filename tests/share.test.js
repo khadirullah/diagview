@@ -113,7 +113,7 @@ describe("Share System", () => {
   test("shareLink copies to clipboard", async () => {
     await shareLink(0);
     expect(navigator.clipboard.writeText).toHaveBeenCalled();
-    expect(showSuccessToast).toHaveBeenCalledWith(expect.stringContaining("copied"));
+    expect(showSuccessToast).toHaveBeenCalledWith("Share link copied!");
   });
 
   test("restoreViewFromURL parses params and sets state", () => {

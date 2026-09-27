@@ -675,7 +675,7 @@ export async function copySVGCode(sourceElement, options = {}) {
       input.remove();
     }
     if (copied) {
-      showSuccessToast("📋 SVG Code copied to clipboard!");
+      showSuccessToast("SVG Code copied to clipboard!");
     } else {
       downloadSVG(data, options.filename || generateFilename(originalSvg));
       showSuccessToast("SVG downloaded (Clipboard unavailable)");

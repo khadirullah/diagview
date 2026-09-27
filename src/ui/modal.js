@@ -192,7 +192,7 @@ function _activateModalUI(modal) {
       if (state.isStorageAvailable && !localStorage.getItem("diagview-canvas-hint-shown")) {
         localStorage.setItem("diagview-canvas-hint-shown", "true");
         const hint = showInfoToast(
-          "💡 Hint: Having visibility issues? Change canvas theme from the menu ☰",
+          "Hint: Having visibility issues? Change canvas theme from the menu ☰",
           6000,
         );
         // Styled as a callout above the menu button so it never covers it

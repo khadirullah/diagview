@@ -195,7 +195,7 @@ export async function shareLink(diagramIndex) {
   if (navigator.clipboard && window.isSecureContext) {
     try {
       await navigator.clipboard.writeText(link);
-      showSuccessToast("🔗 Share link copied!");
+      showSuccessToast("Share link copied!");
       return;
     } catch (err) {
       /* Silently fall back */
@@ -225,7 +225,7 @@ export async function shareLink(diagramIndex) {
   }
 
   if (copied) {
-    showSuccessToast("🔗 Share link copied!");
+    showSuccessToast("Share link copied!");
   } else {
     showErrorToast("Failed to copy share link");
   }

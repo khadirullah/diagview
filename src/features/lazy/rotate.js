@@ -69,7 +69,7 @@ export function rotateDiagram() {
   // Recalibrate panzoom so it recalculates bounds
   state.activePanzoom?.reset({ animate: true });
 
-  showSuccessToast(`↻ Rotated ${state.rotationAngle}°`);
+  showSuccessToast(`Rotated ${state.rotationAngle}°`);
 
   // Emit panzoomchange for minimap + zoom display sync
   const panzoomEl = state.activePanzoom?.elem;
