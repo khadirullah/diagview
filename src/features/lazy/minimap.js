@@ -276,8 +276,10 @@ export function updateMinimap(clone, viewport, panzoom) {
     ];
     const xs = corners.map((c) => c.x);
     const ys = corners.map((c) => c.y);
-    const left = Math.min(...xs) - minimapRect.left;
-    const top = Math.min(...ys) - minimapRect.top;
+    // The indicator is absolutely positioned, so its left/top start inside
+    // the minimap's border. clientLeft/clientTop are that border's widths.
+    const left = Math.min(...xs) - minimapRect.left - minimap.clientLeft;
+    const top = Math.min(...ys) - minimapRect.top - minimap.clientTop;
     const width = Math.max(...xs) - Math.min(...xs);
     const height = Math.max(...ys) - Math.min(...ys);
     viewportIndicator.style.cssText = `left:${left}px;top:${top}px;width:${width}px;height:${height}px`;

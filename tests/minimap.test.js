@@ -336,6 +336,20 @@ describe("Minimap geometry (viewBox origin, rotation fit, resize)", () => {
     expect(box.height).toBeCloseTo(50, 6);
   });
 
+  test("indicator offsets by the minimap border", () => {
+    Object.defineProperty(minimap, "clientLeft", { configurable: true, value: 1 });
+    Object.defineProperty(minimap, "clientTop", { configurable: true, value: 1 });
+    const { clone, viewport } = makeScene();
+    updateMinimap(clone, viewport, panzoom);
+
+    // Same visible rect as above, shifted back by the 1px border
+    const box = indicatorBox();
+    expect(box.left).toBeCloseTo(4, 6);
+    expect(box.top).toBeCloseTo(-1, 6);
+    expect(box.width).toBeCloseTo(90, 6);
+    expect(box.height).toBeCloseTo(50, 6);
+  });
+
   test("rotated thumbnail is re-fitted so the indicator stays inside the box", () => {
     state.rotationAngle = 90;
     // Clone at scale 2 rotated 90° about the viewBox centre (325,240): the
