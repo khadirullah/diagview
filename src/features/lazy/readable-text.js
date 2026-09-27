@@ -8,6 +8,7 @@
 
 import { state } from "../../core/config.js";
 import { detectTheme, parseColor, getContrastRatio } from "../../core/theme.js";
+import { undrawnSwitch } from "../../core/utils.js";
 
 /** Original inline value of the recoloured property ("" when there was none) */
 const ORIG_ATTR = "data-dv-text-orig";
@@ -26,9 +27,6 @@ const MIN_LABEL_BG_ALPHA = 0.3;
 const SHAPE_SELECTOR = "rect, circle, ellipse, polygon, path";
 /** Parts of an SVG that are never drawn where they sit, or hold HTML */
 const NOT_DRAWN = "defs, marker, clipPath, mask, pattern, foreignObject";
-
-/** Extensions that browsers support in requiredExtensions */
-const EXTENSIONS = ["http://www.w3.org/1999/xhtml", "http://www.w3.org/1998/Math/MathML"];
 
 const WHITE = [255, 255, 255];
 const BLACK = [0, 0, 0];
@@ -167,41 +165,6 @@ function hasOwnText(el) {
 }
 
 /**
- * Whether a child of a <switch> passes its test attributes, the way browsers
- * decide it. requiredFeatures always passes.
- * @param {Element} el - Direct child of a switch
- * @returns {boolean} True when the attributes allow it to be drawn
- */
-function passesTests(el) {
-  const ext = el.getAttribute("requiredExtensions");
-  if (ext !== null) {
-    const list = ext.split(/\s+/).filter(Boolean);
-    if (!list.length || list.some((x) => !EXTENSIONS.includes(x))) return false;
-  }
-  const lang = el.getAttribute("systemLanguage");
-  if (lang === null) return true;
-  const primary = (tag) => tag.trim().split("-")[0].toLowerCase();
-  const user = (navigator.languages || [navigator.language]).map(primary);
-  return lang.split(",").some((tag) => user.includes(primary(tag)));
-}
-
-/**
- * Whether the element sits in a <switch> child that is not drawn. A switch
- * draws only its first child that passes its tests, like the HTML label in
- * a draw.io switch, and never the <text> fallback after it. Firefox still
- * gives that fallback a real box, so the box alone cannot tell.
- * @param {Element} el - Element in the diagram
- * @returns {boolean} True when a switch skips it
- */
-function inUndrawnBranch(el) {
-  for (let n = el; n.parentElement; n = n.parentElement) {
-    const parent = n.parentElement;
-    if (parent.localName === "switch" && [...parent.children].find(passesTests) !== n) return true;
-  }
-  return false;
-}
-
-/**
  * Every element that draws text of its own: SVG text and tspan, and HTML
  * elements inside a foreignObject (Mermaid htmlLabels, draw.io). A text
  * whose characters all sit in tspans is skipped, since the tspans paint them.
@@ -211,10 +174,10 @@ function inUndrawnBranch(el) {
 function collectLabels(svg) {
   const labels = [];
   for (const el of svg.querySelectorAll("text, tspan")) {
-    if (!el.closest(NOT_DRAWN) && hasOwnText(el) && !inUndrawnBranch(el)) labels.push(el);
+    if (!el.closest(NOT_DRAWN) && hasOwnText(el) && !undrawnSwitch(el)) labels.push(el);
   }
   for (const el of svg.querySelectorAll("foreignObject *")) {
-    if (hasOwnText(el) && !inUndrawnBranch(el)) labels.push(el);
+    if (hasOwnText(el) && !undrawnSwitch(el)) labels.push(el);
   }
   return labels;
 }
@@ -228,7 +191,7 @@ function collectLabels(svg) {
 function measureShapes(svg) {
   const shapes = [];
   for (const el of svg.querySelectorAll(SHAPE_SELECTOR)) {
-    if (el.closest(NOT_DRAWN) || inUndrawnBranch(el)) continue;
+    if (el.closest(NOT_DRAWN) || undrawnSwitch(el)) continue;
     const style = getComputedStyle(el);
     const fill = (style.fill || "").trim();
     let paint = null;

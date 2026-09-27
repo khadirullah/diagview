@@ -491,6 +491,61 @@ describe("Search: shapes behind plain SVG text", () => {
     expect(window.getComputedStyle).not.toHaveBeenCalled();
   });
 
+  // A draw.io label: a <switch> with the drawn HTML label in a
+  // foreignObject the size of the diagram, then a <text> fallback
+  function drawDrawioLabel(x, y, text, htmlClass) {
+    const sw = add("switch", {}, add("g"));
+    const fo = place(
+      add(
+        "foreignObject",
+        { requiredFeatures: "http://www.w3.org/TR/SVG11/feature#Extensibility" },
+        sw,
+      ),
+      0,
+      0,
+      1000,
+      1000,
+    );
+    const outer = fo.appendChild(document.createElement("div"));
+    const html = place(outer.appendChild(document.createElement("div")), x, y, 60, 14);
+    html.textContent = text;
+    if (htmlClass) html.className = htmlClass;
+    const fallback = place(add("text", {}, sw), x, y, 60, 14);
+    fallback.textContent = text;
+    return { fo, html, fallback };
+  }
+
+  test("a draw.io label matches its drawn HTML and the box under it", () => {
+    const box = place(add("rect", { fill: "#dae8fc" }), 100, 100, 120, 60);
+    const queue = drawDrawioLabel(130, 123, "Queue");
+    const other = place(add("rect", { fill: "#d5e8d4" }), 400, 100, 120, 60);
+    drawDrawioLabel(430, 123, "Worker");
+    const before = svg.outerHTML;
+
+    performSearch(svg, "queue");
+    flushRaf();
+
+    expect(state.searchMatches).toEqual([queue.fo]);
+    expect(marked()).toEqual([box, queue.fo]);
+    expect(queue.fallback.classList.contains("dv-search-match")).toBe(false);
+    expect(other.classList.contains("dv-search-match")).toBe(false);
+    expect(status.textContent).toBe("1 match found");
+
+    performSearch(svg, "");
+    expect(svg.outerHTML).toBe(before);
+  });
+
+  test("a draw.io label whose HTML is a candidate too counts once", () => {
+    const { html, fo } = drawDrawioLabel(130, 123, "Queue", "label");
+
+    performSearch(svg, "queue");
+    flushRaf();
+
+    expect(state.searchMatches).toEqual([html]);
+    expect(fo.classList.contains("dv-search-match")).toBe(false);
+    expect(status.textContent).toBe("1 match found");
+  });
+
   // Graphviz and PlantUML shapes and text often have no class at all, and
   // Mermaid can repeat a class. Clearing must leave both as they were.
   function drawMixedDiagram() {

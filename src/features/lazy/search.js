@@ -6,7 +6,7 @@
 
 import { state } from "../../core/config.js";
 import { TIMING, SELECTORS } from "../../core/constants.js";
-import { throttle, getClientCTM } from "../../core/utils.js";
+import { throttle, getClientCTM, drawnChild, undrawnSwitch } from "../../core/utils.js";
 import { addModalListener } from "../../core/lifecycle.js";
 
 /**
@@ -60,19 +60,32 @@ function getSearchCandidates(clone) {
   }
 
   // Use centralized selector constant
-  const elements = clone.querySelectorAll(SELECTORS.SEARCH_NODES);
+  const sel = SELECTORS.SEARCH_NODES;
+  const elements = clone.querySelectorAll(sel);
   const cache = [];
+  const seen = new Set();
 
   for (let i = 0; i < elements.length; i++) {
-    const el = elements[i];
+    let el = elements[i];
     // Mermaid nests g.node > g.label > text. An ancestor candidate's text
     // contains the descendant's, so it always matches too — keep only the
     // outermost candidate or one node reports "3 matches found".
-    const outer = el.parentElement?.closest(SELECTORS.SEARCH_NODES);
+    const outer = el.parentElement?.closest(sel);
     if (outer && outer !== clone && clone.contains(outer)) continue;
+    // draw.io draws each label as HTML in a <switch> and never the <text>
+    // fallback next to it. Match the drawn child in its place, once, unless
+    // it holds a candidate of its own.
+    const sw = undrawnSwitch(el);
+    if (sw) {
+      el = drawnChild(sw);
+      if (!el || seen.has(el) || el.matches(sel) || el.querySelector(sel)) continue;
+      seen.add(el);
+    }
     cache.push({
       el: el,
       text: (el.textContent || "").toLowerCase(),
+      // What to measure for the shape under a plain-SVG label
+      box: el.localName === "text" ? el : sw && labelBox(el),
     });
   }
 
@@ -81,6 +94,21 @@ function getSearchCandidates(clone) {
 }
 
 const SHAPE_SELECTOR = "rect, circle, ellipse, polygon, path";
+
+/**
+ * The element that holds the text of a drawn switch child. draw.io wraps
+ * its label in a foreignObject the size of the whole diagram and a few
+ * layout divs, so step down while there is a single child and no text.
+ */
+function labelBox(el) {
+  while (
+    el.children.length === 1 &&
+    ![...el.childNodes].some((n) => n.nodeType === 3 && n.data.trim())
+  ) {
+    el = el.firstElementChild;
+  }
+  return el;
+}
 
 /**
  * Box of an element in the SVG's own units, through its client matrix m.
@@ -129,21 +157,22 @@ function getShapeBoxes(clone, m) {
 }
 
 /**
- * A plain SVG draws a label as a <text> next to its shape, not inside it.
- * Return the smallest filled shape under the text's centre, so the match
- * can outline it and keep it undimmed. Mermaid nodes never get here: their
- * outermost candidate is the group that already holds the shape.
+ * A plain SVG draws a label as a <text> next to its shape, not inside it,
+ * and draw.io does the same with its HTML labels. Return the smallest
+ * filled shape under the label's centre, so the match can outline it and
+ * keep it undimmed. Mermaid nodes never get here: their outermost candidate
+ * is the group that already holds the shape.
  */
 function findShapeForText(clone, item) {
   if (item.shape !== undefined) return item.shape;
-  if (item.el.tagName.toLowerCase() !== "text") {
+  if (!item.box) {
     item.shape = null;
     return null;
   }
   // Not laid out yet: measure on a later search instead of caching a miss
   // Client pixels, like getBoundingClientRect (see getClientCTM)
   const m = getClientCTM(clone);
-  const t = m && relativeBox(item.el, m);
+  const t = m && relativeBox(item.box, m);
   if (!t || !size(t)) return null;
   item.shape = null;
   const cx = (t.left + t.right) / 2;

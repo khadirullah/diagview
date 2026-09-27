@@ -1,5 +1,5 @@
 // PNG export of large diagrams with <foreignObject> labels, and the search
-// highlight on Mermaid-shaped and hand-drawn SVGs.
+// highlight on Mermaid-shaped, hand-drawn and draw.io SVGs.
 //
 // Runs offline: the page is file://, the large diagram is generated in the
 // page and no Mermaid is loaded. DV_DIST=/path/to/diagview.umd.js tests
@@ -263,5 +263,61 @@ test.describe("plain SVG search", () => {
 
   test("no dv-pulse animation runs during a plain SVG search", async () => {
     expect(running, "running dv-pulse animations").toBe(0);
+  });
+});
+
+test.describe("draw.io search", () => {
+  let d;
+  let before;
+  test("draw.io: the drawn label stays opaque and its box is outlined", async () => {
+    await openModal("drawio");
+    await canvasTheme("Light");
+    before = await page.evaluate(() => window.__clone().outerHTML);
+    await search("queue");
+    d = await page.evaluate(() => {
+      const svg = window.__clone();
+      const box = svg.querySelector('rect[fill="#dae8fc"]');
+      return {
+        status: document.getElementById("diagview-search-status").textContent,
+        label: window.__eff(svg.querySelector("[id$='dio-queue']")),
+        fallback: svg.querySelector("[id$='dio-queue-fb']").classList.contains("dv-search-match"),
+        stroke: getComputedStyle(box).stroke,
+        width: getComputedStyle(box).strokeWidth,
+        worker: window.__eff(svg.querySelector("[id$='dio-worker']")),
+        workerBox: window.__eff(svg.querySelector('rect[fill="#d5e8d4"]')),
+      };
+    });
+    expect(d.status).toBe("1 match found");
+    expect(d.fallback).toBe(false);
+    expect({ label: d.label, stroke: d.stroke, width: d.width }).toEqual({
+      label: 1,
+      stroke: RING_LIGHT,
+      width: "3px",
+    });
+  });
+
+  test("draw.io: the other label and box are dimmed", async () => {
+    const detail = `label ${d.worker}, box ${d.workerBox}`;
+    expect(d.worker, detail).toBeLessThanOrEqual(0.2);
+    expect(d.workerBox, detail).toBeLessThanOrEqual(0.2);
+  });
+
+  test("draw.io: an edge label matches once without outlining a box", async () => {
+    await search("consume");
+    const e = await page.evaluate(() => {
+      const svg = window.__clone();
+      return {
+        status: document.getElementById("diagview-search-status").textContent,
+        label: window.__eff(svg.querySelector("[id$='dio-edge']")),
+        shapes: svg.querySelectorAll(":is(rect, path).dv-search-match").length,
+      };
+    });
+    expect(e).toEqual({ status: "1 match found", label: 1, shapes: 0 });
+  });
+
+  test("draw.io: clearing the search restores the markup exactly", async () => {
+    await search("");
+    const after = await page.evaluate(() => window.__clone().outerHTML);
+    expect(after === before, "markup changed after clearing").toBe(true);
   });
 });

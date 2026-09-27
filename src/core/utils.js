@@ -1014,3 +1014,50 @@ export function getClientCTM(el) {
   if (!_screenFix || !svg.createSVGMatrix) return ctm;
   return Object.assign(svg.createSVGMatrix(), _screenFix).multiply(ctm);
 }
+
+/** Extensions that browsers support in requiredExtensions */
+const EXTENSIONS = ["http://www.w3.org/1999/xhtml", "http://www.w3.org/1998/Math/MathML"];
+
+/**
+ * Whether a child of a <switch> passes its test attributes, the way browsers
+ * decide it. requiredFeatures always passes.
+ * @param {Element} el - Direct child of a switch
+ * @returns {boolean} True when the attributes allow it to be drawn
+ */
+function passesTests(el) {
+  const ext = el.getAttribute("requiredExtensions");
+  if (ext !== null) {
+    const list = ext.split(/\s+/).filter(Boolean);
+    if (!list.length || list.some((x) => !EXTENSIONS.includes(x))) return false;
+  }
+  const lang = el.getAttribute("systemLanguage");
+  if (lang === null) return true;
+  const primary = (tag) => tag.trim().split("-")[0].toLowerCase();
+  const user = (navigator.languages || [navigator.language]).map(primary);
+  return lang.split(",").some((tag) => user.includes(primary(tag)));
+}
+
+/**
+ * The child of a <switch> that is drawn. A switch draws only its first child
+ * that passes its tests, like the HTML label in a draw.io switch, and never
+ * the <text> fallback after it.
+ * @param {Element} sw - A switch element
+ * @returns {Element|undefined} The drawn child, if any passes
+ */
+export function drawnChild(sw) {
+  return [...sw.children].find(passesTests);
+}
+
+/**
+ * The <switch> that leaves the element undrawn, if one does. Firefox still
+ * gives a draw.io <text> fallback a real box, so the box alone cannot tell.
+ * @param {Element} el - Element in the diagram
+ * @returns {Element|null} The switch that skips it, or null when it is drawn
+ */
+export function undrawnSwitch(el) {
+  for (let n = el; n.parentElement; n = n.parentElement) {
+    const parent = n.parentElement;
+    if (parent.localName === "switch" && drawnChild(parent) !== n) return parent;
+  }
+  return null;
+}
