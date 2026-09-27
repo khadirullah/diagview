@@ -6,6 +6,7 @@
 
 import { state } from "../../core/config.js";
 import { addModalListener } from "../../core/lifecycle.js";
+import { getClientCTM } from "../../core/utils.js";
 
 // Stores the cleanup fn for the minimap click and window resize handlers so
 // they can be removed on modal close without duplicating handlers across frames
@@ -78,7 +79,7 @@ export function updateMinimap(clone, viewport, panzoom) {
       // coordinates — this accounts for the snapshot's letterboxing inside
       // the minimap box and any CSS rotation, which rectangle arithmetic
       // (offset + width ratios) gets wrong.
-      const mmCtm = state.minimapSvg.getScreenCTM();
+      const mmCtm = getClientCTM(state.minimapSvg);
       if (!mmCtm) return;
       const clickPt = state.minimapSvg.createSVGPoint();
       clickPt.x = e.clientX;
@@ -95,7 +96,7 @@ export function updateMinimap(clone, viewport, panzoom) {
       // the point's on-screen position must be read through that group's CTM,
       // which includes the rotation — the SVG root's CTM does not.
       const contentRoot = clone.querySelector(".dv-rot-g") || clone;
-      const ctm = contentRoot.getScreenCTM();
+      const ctm = getClientCTM(contentRoot);
       if (!ctm) return;
       const pt = clone.createSVGPoint();
       pt.x = svgX;
@@ -257,8 +258,8 @@ export function updateMinimap(clone, viewport, panzoom) {
     // Snapshot coordinates are the ORIGINAL diagram's; rotation lives on the
     // inner .dv-rot-g group, so map through its CTM (the root's excludes it).
     const contentRoot = clone.querySelector(".dv-rot-g") || clone;
-    const ctm = contentRoot.getScreenCTM();
-    const mmCtm = state.minimapSvg.getScreenCTM();
+    const ctm = getClientCTM(contentRoot);
+    const mmCtm = getClientCTM(state.minimapSvg);
     if (!ctm || !mmCtm) return;
 
     const inv = ctm.inverse();

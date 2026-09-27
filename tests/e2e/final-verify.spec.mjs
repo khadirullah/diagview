@@ -57,7 +57,7 @@ test.describe("desktop", () => {
     expect(s1, `scale ${s0.toFixed(2)} -> ${s1.toFixed(2)}`).toBeGreaterThan(s0);
   });
 
-  test("share restore centers on shared point", async ({ browser }) => {
+  test("share restore centers on shared point", async ({ browser, browserName }) => {
     await page.evaluate(() => document.getElementById("dv-share").click());
     await page.waitForTimeout(400);
     link = await page.evaluate(() => window.__copied);
@@ -196,11 +196,6 @@ test.describe("mobile (touch)", () => {
   });
 
   test("share restore centers on shared point", async ({ browser, browserName }) => {
-    // Known library bug in WebKit: with a page scale other than 1 (a phone
-    // page without a viewport meta tag, or a pinch-zoomed page) WebKit's
-    // getScreenCTM() includes the page scale while getBoundingClientRect()
-    // does not. share.js mixes the two, so the restored view is off centre.
-    test.fail(browserName === "webkit", "WebKit getScreenCTM() includes the page scale");
     const q = new URL(link).searchParams;
     const mob2 = await newPage(browser, phone(browserName));
     await mob2.goto(REPRO + "?" + q.toString());

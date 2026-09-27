@@ -50,8 +50,21 @@
     // Measure in ORIGINAL diagram coordinates: rotation lives on the inner
     // .dv-rot-g group, whose CTM includes it (the root's does not).
     const root = s.querySelector(".dv-rot-g") || s;
-    const ctm = root.getScreenCTM();
+    let ctm = root.getScreenCTM();
     if (!ctm) return null;
+    // WebKit gives getScreenCTM() in zoomed pixels on a zoomed page, while
+    // getBoundingClientRect() stays in layout pixels. Map the CTM back to
+    // client pixels with a 100x100 probe measured both ways.
+    const probe = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    probe.setAttribute("width", "100");
+    probe.setAttribute("height", "100");
+    probe.style.cssText = "position:absolute;left:0;top:0;width:100px;height:100px;visibility:hidden";
+    document.documentElement.appendChild(probe);
+    const pm = probe.getScreenCTM();
+    const pr = probe.getBoundingClientRect();
+    probe.remove();
+    const client = Object.assign(probe.createSVGMatrix(), { a: pr.width / 100, d: pr.height / 100, e: pr.left, f: pr.top });
+    ctm = client.multiply(pm.inverse()).multiply(ctm);
     const vr = viewport.getBoundingClientRect();
     const pt = s.createSVGPoint();
     pt.x = vr.left + vr.width / 2;

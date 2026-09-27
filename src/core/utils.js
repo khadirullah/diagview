@@ -945,3 +945,72 @@ export function centerSVGViewBox(svg) {
   svg.style.height = "100%";
   svg.setAttribute("preserveAspectRatio", "xMidYMid meet");
 }
+
+// Cached screenToClientMatrix() result, cleared at the end of the task
+let _screenFix;
+
+/**
+ * Screen pixels -> client pixels, or null when the two already agree.
+ *
+ * WebKit scales getScreenCTM() by the page zoom (a pinch zoom, or a phone
+ * showing a page without a viewport meta tag at its zoomed-out initial
+ * scale), while getBoundingClientRect() and mouse clientX/Y stay in layout
+ * pixels. Chromium and Gecko report both in the same pixels. A hidden
+ * 100x100 SVG without a viewBox is measured both ways to get the mapping.
+ *
+ * @returns {{a: number, b: number, c: number, d: number, e: number, f: number}|null}
+ *   The correction, or null if none is needed
+ * @private
+ */
+function screenToClientMatrix() {
+  const probe = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  probe.setAttribute("width", "100");
+  probe.setAttribute("height", "100");
+  probe.style.cssText =
+    "position:absolute;left:0;top:0;width:100px;height:100px;margin:0;padding:0;" +
+    "border:0;transform:none;visibility:hidden;pointer-events:none";
+  // Outside <body>, so the diagram MutationObserver never sees it
+  document.documentElement.appendChild(probe);
+  try {
+    const m = probe.getScreenCTM?.();
+    const r = probe.getBoundingClientRect();
+    if (!m || !r.width || !r.height || !probe.createSVGMatrix) return null;
+    const sx = r.width / 100;
+    const sy = r.height / 100;
+    const agree =
+      Math.abs(m.a - sx) < 1e-6 &&
+      Math.abs(m.d - sy) < 1e-6 &&
+      Math.abs(m.b) < 1e-6 &&
+      Math.abs(m.c) < 1e-6 &&
+      Math.abs(m.e - r.left) < 1e-3 &&
+      Math.abs(m.f - r.top) < 1e-3;
+    if (agree) return null;
+    // WebKit's SVGPoint.matrixTransform only takes an SVGMatrix, not a
+    // DOMMatrix, so stay in SVGMatrix throughout
+    const client = Object.assign(probe.createSVGMatrix(), { a: sx, d: sy, e: r.left, f: r.top });
+    const { a, b, c, d, e, f } = client.multiply(m.inverse());
+    return { a, b, c, d, e, f };
+  } finally {
+    probe.remove();
+  }
+}
+
+/**
+ * An element's getScreenCTM() in client pixels, the space of
+ * getBoundingClientRect() and mouse clientX/Y, in every engine.
+ *
+ * @param {SVGGraphicsElement} el - The SVG element
+ * @returns {SVGMatrix|null} The matrix, or null if there is none
+ */
+export function getClientCTM(el) {
+  const ctm = el?.getScreenCTM?.();
+  if (!ctm) return null;
+  // Probe once per task, callers read several CTMs back to back
+  if (_screenFix === undefined) {
+    _screenFix = screenToClientMatrix();
+    queueMicrotask(() => (_screenFix = undefined));
+  }
+  const svg = el.ownerSVGElement || el;
+  if (!_screenFix || !svg.createSVGMatrix) return ctm;
+  return Object.assign(svg.createSVGMatrix(), _screenFix).multiply(ctm);
+}

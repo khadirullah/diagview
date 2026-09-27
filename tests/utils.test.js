@@ -1,4 +1,4 @@
-import { isBrowser, fixIds, sanitizeFilename } from "../src/core/utils.js";
+import { isBrowser, fixIds, sanitizeFilename, getClientCTM } from "../src/core/utils.js";
 
 describe("Utils API", () => {
   test("isBrowser accurately detects JS environment", () => {
@@ -172,5 +172,98 @@ describe("Utils API", () => {
     expect(sanitizeFilename("你好世界")).toBe("你好世界");
     expect(sanitizeFilename("diagram-123")).toBe("diagram-123");
     expect(sanitizeFilename("!!!")).toBe("diagram"); // fallback
+  });
+});
+
+// jsdom has no SVG geometry, so a small 2D affine matrix stands in for
+// SVGMatrix and the probe's measurements are stubbed on the prototype
+class Mat {
+  constructor(a = 1, b = 0, c = 0, d = 1, e = 0, f = 0) {
+    Object.assign(this, { a, b, c, d, e, f });
+  }
+  multiply(m) {
+    return new Mat(
+      this.a * m.a + this.c * m.b,
+      this.b * m.a + this.d * m.b,
+      this.a * m.c + this.c * m.d,
+      this.b * m.c + this.d * m.d,
+      this.a * m.e + this.c * m.f + this.e,
+      this.b * m.e + this.d * m.f + this.f,
+    );
+  }
+  inverse() {
+    const det = this.a * this.d - this.b * this.c;
+    return new Mat(
+      this.d / det,
+      -this.b / det,
+      -this.c / det,
+      this.a / det,
+      (this.c * this.f - this.d * this.e) / det,
+      (this.b * this.e - this.a * this.f) / det,
+    );
+  }
+}
+
+describe("getClientCTM", () => {
+  const proto = window.SVGElement.prototype;
+  // The screen CTM and client rect the hidden 100x100 probe reports
+  let probeCTM;
+  let probeRect;
+  let el;
+
+  beforeEach(() => {
+    probeCTM = new Mat();
+    probeRect = { left: 0, top: 0, width: 100, height: 100 };
+    proto.createSVGMatrix = () => new Mat();
+    proto.getScreenCTM = function () {
+      return this === el ? new Mat(2, 0, 0, 2, 40, 60) : probeCTM;
+    };
+    proto.getBoundingClientRect = () => probeRect;
+    document.body.innerHTML = "<svg><g></g></svg>";
+    el = document.querySelector("g");
+  });
+
+  afterEach(() => {
+    delete proto.createSVGMatrix;
+    delete proto.getScreenCTM;
+    delete proto.getBoundingClientRect;
+  });
+
+  // Let the per-task cache clear between calls
+  const tick = () => Promise.resolve();
+
+  test("returns null without a CTM", async () => {
+    await tick();
+    el.getScreenCTM = () => null;
+    expect(getClientCTM(el)).toBeNull();
+  });
+
+  test("keeps the CTM when screen and client pixels agree", async () => {
+    await tick();
+    const m = getClientCTM(el);
+    expect([m.a, m.d, m.e, m.f]).toEqual([2, 2, 40, 60]);
+  });
+
+  test("maps a page-zoomed screen CTM back to client pixels", async () => {
+    await tick();
+    // WebKit at a 0.4 page zoom reports screen pixels as client pixels times 0.4
+    probeCTM = new Mat(0.4, 0, 0, 0.4, 0, 0);
+    const real = new Mat(2, 0, 0, 2, 40, 60);
+    proto.getScreenCTM = function () {
+      return this === el ? new Mat(0.4, 0, 0, 0.4, 0, 0).multiply(real) : probeCTM;
+    };
+    const m = getClientCTM(el);
+    expect(m.a).toBeCloseTo(2);
+    expect(m.d).toBeCloseTo(2);
+    expect(m.e).toBeCloseTo(40);
+    expect(m.f).toBeCloseTo(60);
+  });
+
+  test("removes the probe again", async () => {
+    await tick();
+    probeCTM = new Mat(0.5, 0, 0, 0.5, 0, 0);
+    const before = document.documentElement.childElementCount;
+    getClientCTM(el);
+    expect(document.documentElement.childElementCount).toBe(before);
   });
 });

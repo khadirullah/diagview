@@ -20,6 +20,7 @@
 import { state } from "../../core/config.js";
 import { ZOOM } from "../../core/constants.js";
 import { showSuccessToast, showErrorToast } from "../../ui/toast.js";
+import { getClientCTM } from "../../core/utils.js";
 
 /**
  * Manages view state persistence across the diagram lifecycle.
@@ -69,7 +70,8 @@ function getViewportCenterInSVGCoords(viewport, svg) {
     // Force a layout flush to ensure the CTM is up-to-date
     svg.getBoundingClientRect();
 
-    const ctm = svg.getScreenCTM();
+    // Client pixels, like the viewport rect below (see getClientCTM)
+    const ctm = getClientCTM(svg);
     if (!ctm) return null;
 
     // Determine the exact geometric center of the visible viewport
@@ -100,7 +102,7 @@ function getViewportCenterInSVGCoords(viewport, svg) {
  */
 function getSVGPointInScreenCoords(svg, svgX, svgY) {
   try {
-    const ctm = svg.getScreenCTM();
+    const ctm = getClientCTM(svg);
     if (!ctm) return null;
 
     const pt = makeSVGPoint(svg, svgX, svgY);
