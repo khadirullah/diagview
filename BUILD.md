@@ -131,8 +131,15 @@ npm run lint:fix     # auto-fix
 ### Format
 
 ```bash
-npm run format       # runs Prettier on src/, tests/ and root *.js files
+npm run format       # runs Prettier on the .js files in src/, tests/ and the repo root
 ```
+
+### Pre-commit hook
+
+`npm install` sets up a Husky pre-commit hook that runs `lint-staged` on
+the staged files. It runs ESLint with `--fix` and Prettier on
+`src/**/*.js`, and Prettier on `tests/**/*.js` and on JSON, Markdown, CSS
+and YAML files.
 
 ### Bundle size check
 
