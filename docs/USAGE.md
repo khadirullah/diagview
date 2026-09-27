@@ -489,6 +489,8 @@ DiagView.init({
 
 `accentColor`, `backgroundColor` and `textColor` accept any colour the browser accepts, including `oklch()`, `lab()` and `color(display-p3 ...)`. A value the browser rejects (a typo such as `#zzzzzz` or an unknown name) is ignored with a console warning and detection continues as if it were `null`.
 
+A `backgroundColor` with transparency, such as `"transparent"` or `rgba(15, 23, 42, 0.5)`, lets the page show through the viewer. DiagView picks light or dark text and controls for the colour you actually see, which is the page colour with yours laid over it. `"transparent"` follows the page colour alone.
+
 Warning notices, such as the one shown when a transparent JPEG is saved as PNG, are amber (`#f59e0b`). Set `warningColor` to use another colour. It accepts the same colours, and a value the browser rejects logs a console warning and keeps the amber. Success notices use the accent. Error notices are always red. DiagView picks white or near-black text for each notice so the text reaches 4.5:1 on its colour. When neither does, it darkens the colour until white text does.
 
 ### WCAG contrast enforcement

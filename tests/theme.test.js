@@ -105,6 +105,93 @@ describe("Theme Module", () => {
     expect(theme.isDark).toBe(true);
   });
 
+  describe("see-through backgroundColor", () => {
+    const originalCSS = window.CSS;
+
+    // Every colour here is black with some alpha. jsdom cannot resolve
+    // "transparent" or the space syntax, so answer as a browser would.
+    beforeEach(() => {
+      delete document.documentElement.dataset.mockText;
+      window.CSS = { supports: () => true };
+      const computed = window.getComputedStyle;
+      window.getComputedStyle = (el) => {
+        const style = computed(el);
+        if (el.tagName === "META") {
+          Object.defineProperty(style, "color", { value: "rgba(0, 0, 0, 0)", configurable: true });
+        }
+        return style;
+      };
+    });
+
+    afterEach(() => {
+      window.CSS = originalCSS;
+    });
+
+    const withPage = (colour, run) => {
+      document.body.style.backgroundColor = colour;
+      try {
+        clearThemeCache();
+        run(detectTheme());
+      } finally {
+        document.body.style.backgroundColor = "";
+      }
+    };
+
+    test.each(["transparent", "rgba(0, 0, 0, 0)", "rgb(0 0 0 / 0%)", "#0000", "#12345600"])(
+      "%s on a light page keeps dark text and stays light",
+      (colour) => {
+        updateConfig({ backgroundColor: colour });
+        withPage("rgb(255, 255, 255)", (theme) => {
+          expect(theme.bg).toBe(colour);
+          expect(theme.isDark).toBe(false);
+          expect(theme.text).toBe(COLORS.TEXT_LIGHT);
+        });
+      },
+    );
+
+    test("transparent on a dark page uses light text", () => {
+      updateConfig({ backgroundColor: "transparent" });
+      withPage("rgb(15, 23, 42)", (theme) => {
+        expect(theme.bg).toBe("transparent");
+        expect(theme.isDark).toBe(true);
+        expect(getContrastRatio(theme.text, "rgb(15, 23, 42)")).toBeGreaterThanOrEqual(4.5);
+      });
+    });
+
+    test("a half see-through colour is judged mixed with the page", () => {
+      // Black at 20% over white is a light grey, so the text stays dark
+      updateConfig({ backgroundColor: "rgba(0, 0, 0, 0.2)" });
+      withPage("rgb(255, 255, 255)", (theme) => {
+        expect(theme.bg).toBe("rgba(0, 0, 0, 0.2)");
+        expect(theme.isDark).toBe(false);
+        expect(theme.text).toBe(COLORS.TEXT_LIGHT);
+      });
+      // Black at 80% over white is dark
+      updateConfig({ backgroundColor: "rgb(0 0 0 / 80%)" });
+      withPage("rgb(255, 255, 255)", (theme) => expect(theme.isDark).toBe(true));
+    });
+
+    test("opaque colours ignore the page", () => {
+      updateConfig({ backgroundColor: "#000000" });
+      withPage("rgb(255, 255, 255)", (theme) => {
+        expect(theme.isDark).toBe(true);
+        expect(theme.text).toBe(COLORS.TEXT_DARK);
+      });
+      updateConfig({ backgroundColor: "hsl(0, 0%, 0%)" });
+      withPage("rgb(255, 255, 255)", (theme) => expect(theme.isDark).toBe(true));
+    });
+
+    test("the search ring follows the page under a transparent canvas", () => {
+      updateConfig({ backgroundColor: "transparent" });
+      withPage("rgb(255, 255, 255)", () => {
+        syncTheme();
+        expect(document.documentElement.style.getPropertyValue("--dv-search-ring")).toBe(
+          COLORS.SEARCH_RING_LIGHT,
+        );
+      });
+    });
+  });
+
   test("textColor config override is used when it has enough contrast", () => {
     updateConfig({ backgroundColor: "#ffffff", textColor: "#1e293b" });
     clearThemeCache();

@@ -358,6 +358,45 @@ function validConfigColor(key, check = parseColor) {
 }
 
 /**
+ * Read the alpha channel of a colour string.
+ * @private
+ * @returns {number} Alpha from 0 to 1, and 1 when the colour has none
+ */
+function colorAlpha(value) {
+  const v = value.trim().toLowerCase();
+  if (v === "transparent") return 0;
+  if (v.startsWith("#")) {
+    const hex = v.slice(1);
+    if (hex.length === 4) return parseInt(hex[3] + hex[3], 16) / 255;
+    if (hex.length === 8) return parseInt(hex.slice(6), 16) / 255;
+    return 1;
+  }
+  if (!v.endsWith(")")) return 1;
+  // Alpha is after the slash in space syntax, or the fourth comma argument
+  const args = v.slice(v.indexOf("(") + 1, -1);
+  const alpha = args.includes("/") ? args.split("/").pop() : args.split(",")[3];
+  const n = parseFloat(alpha ?? "");
+  if (Number.isNaN(n)) return 1;
+  return Math.min(Math.max(alpha.trim().endsWith("%") ? n / 100 : n, 0), 1);
+}
+
+/**
+ * The colour a see-through canvas shows, which is the canvas colour laid
+ * over the page. An opaque colour comes back unchanged.
+ * @private
+ * @param {string} color - Canvas colour
+ * @param {string} page - Page colour behind the viewer, which must parse
+ * @returns {string} The colour text is actually drawn on
+ */
+function overPage(color, page) {
+  const a = colorAlpha(color);
+  if (a >= 1) return color;
+  const fg = parseColor(color) || [0, 0, 0];
+  const under = /** @type {number[]} */ (parseColor(page));
+  return `rgb(${[0, 1, 2].map((i) => Math.round(fg[i] * a + under[i] * (1 - a))).join(", ")})`;
+}
+
+/**
  * Enhanced theme detection with caching and robust fallbacks
  * @returns {object} Theme object with isDark, bg, text, accent
  */
@@ -379,14 +418,17 @@ export function detectTheme() {
 
   let isDark = isDarkMode();
   let bg = detectBackground(isDark);
+  const page = parseColor(bg) ? bg : isDark ? COLORS.BG_DARK : COLORS.BG_LIGHT;
 
   // Explicit config override (backgroundColor: null = auto-detect).
   // A parseable colour replaces detection and re-derives isDark from its
-  // luminance; an unparseable value is ignored with a warning.
+  // luminance; an unparseable value is ignored with a warning. A colour
+  // with alpha lets the page show through, so its luminance is taken
+  // from the mix of the two, and "transparent" follows the page alone.
   const cfgBg = validConfigColor("backgroundColor");
   if (cfgBg) {
     bg = cfgBg;
-    isDark = getLuminance(...parseColor(cfgBg)) < 0.5;
+    isDark = getLuminance(...parseColor(overPage(cfgBg, page))) < 0.5;
   }
 
   // Apply explicit Canvas Theme Mode overrides if set by user
@@ -422,16 +464,17 @@ export function detectTheme() {
   }
 
   // Ensure sufficient contrast (WCAG AA: 4.5:1)
-  const contrast = getContrastRatio(bg, text);
+  const canvas = overPage(bg, page);
+  const contrast = getContrastRatio(canvas, text);
   if (contrast < 4.5) {
-    const pair = bg + "|" + text;
+    const pair = canvas + "|" + text;
     if (!warnedContrast.has(pair)) {
       warnedContrast.add(pair);
       console.warn(
         `DiagView: Low contrast detected (${contrast.toFixed(2)}:1), using high-contrast fallback`,
       );
     }
-    text = ensureContrast(text, bg);
+    text = ensureContrast(text, canvas);
   }
 
   // Accent: config override, then --diagram-accent if it holds a real colour.
@@ -494,9 +537,10 @@ export function syncTheme() {
   // The search outline follows the canvas, never the diagram's own colours.
   // Pick whichever ring colour stands out more against the canvas.
   const { SEARCH_RING_LIGHT: ringLight, SEARCH_RING_DARK: ringDark } = COLORS;
-  const darkCanvas = parseColor(theme.bg)
-    ? getContrastRatio(ringDark, theme.bg) > getContrastRatio(ringLight, theme.bg)
-    : theme.isDark;
+  const darkCanvas =
+    parseColor(theme.bg) && colorAlpha(theme.bg) >= 1
+      ? getContrastRatio(ringDark, theme.bg) > getContrastRatio(ringLight, theme.bg)
+      : theme.isDark;
   root.style.setProperty("--dv-search-ring", darkCanvas ? ringDark : ringLight);
 
   // The menu toggle track is a faint white wash that only shows on dark
