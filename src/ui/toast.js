@@ -5,7 +5,7 @@
  */
 
 import { state } from "../core/config.js";
-import { TIMING } from "../core/constants.js";
+import { TIMING, COLORS } from "../core/constants.js";
 import { detectTheme, noticeColors } from "../core/theme.js";
 import { setSVGContent } from "../core/utils.js";
 import { ICONS } from "./icons.js";
@@ -50,7 +50,7 @@ const TYPE_ICONS = {
 /**
  * Show toast notification
  * @param {string} message - Text to show
- * @param {string} [type="success"] - success, error or info
+ * @param {string} [type="success"] - success, error, warning or info
  * @param {number|null} [duration] - Time on screen in ms, 0 to keep it
  * @param {string|null} [icon] - Type icon to draw first, a key of TYPE_ICONS
  * @returns {HTMLElement} The toast element
@@ -81,8 +81,9 @@ export function showToast(message, type = "success", duration = null, icon = nul
 
   // Only the latest notice shows, so a result replaces its progress notice.
   // Errors and warnings stay for their full time unless another one follows.
+  const alert = type === "error" || type === "warning";
   container
-    .querySelectorAll(type === "error" ? ".diagview-toast" : ".diagview-toast:not([role=alert])")
+    .querySelectorAll(alert ? ".diagview-toast" : ".diagview-toast:not([role=alert])")
     .forEach((t) => t.remove());
 
   // 2. Create new toast element
@@ -111,11 +112,17 @@ export function showToast(message, type = "success", duration = null, icon = nul
     theme = { isDark: true, accent: "#3b82f6", text: "#ffffff", onAccent: "#fff" };
   }
   const toastConfig = TOAST_TYPES[type] || TOAST_TYPES.info;
-  // The accent is the developer's colour, so its text is picked to reach 4.5:1
-  const colors = type === "success" ? noticeColors(theme.accent) : toastConfig;
+  // The accent and warning colour are the developer's, so their text is
+  // picked to reach 4.5:1
+  const colors =
+    type === "success"
+      ? noticeColors(theme.accent)
+      : type === "warning"
+        ? noticeColors(theme.warning || COLORS.WARNING)
+        : toastConfig;
 
   // 3. Set styles and accessibility
-  if (type === "error") {
+  if (alert) {
     toast.setAttribute("role", "alert");
     toast.setAttribute("aria-live", "assertive");
   } else {
@@ -144,7 +151,7 @@ export function showToast(message, type = "success", duration = null, icon = nul
   const hideAfter =
     duration !== null
       ? duration
-      : type === "error"
+      : alert
         ? state.config.errorToastDuration || TIMING.ERROR_TOAST_DURATION
         : state.config.toastDuration || TIMING.TOAST_DURATION;
 
@@ -227,5 +234,5 @@ export function showProgressToast(message) {
  * Show warning toast (for HTTPS/clipboard issues)
  */
 export function showWarningToast(message) {
-  showToast(message, "error", 5000, "warning"); // Longer duration for warnings
+  showToast(message, "warning", 5000, "warning"); // Longer duration for warnings
 }

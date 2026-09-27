@@ -82,6 +82,9 @@ export const COLORS = {
   SEARCH_RING_LIGHT: "#2563eb",
   SEARCH_RING_DARK: "#fbbf24",
 
+  // Warning notices, unless warningColor sets another
+  WARNING: "#f59e0b",
+
   // Off-state track of the menu toggle on light canvases (4.8:1 on white)
   TOGGLE_TRACK_LIGHT: "#6b7280",
 };

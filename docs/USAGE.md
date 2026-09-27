@@ -489,6 +489,8 @@ DiagView.init({
 
 `accentColor`, `backgroundColor` and `textColor` accept any colour the browser accepts, including `oklch()`, `lab()` and `color(display-p3 ...)`. A value the browser rejects (a typo such as `#zzzzzz` or an unknown name) is ignored with a console warning and detection continues as if it were `null`.
 
+Warning notices, such as the one shown when a transparent JPEG is saved as PNG, are amber (`#f59e0b`). Set `warningColor` to use another colour. It accepts the same colours, and a value the browser rejects logs a console warning and keeps the amber. Success notices use the accent. Error notices are always red. DiagView picks white or near-black text for each notice so the text reaches 4.5:1 on its colour. When neither does, it darkens the colour until white text does.
+
 ### WCAG contrast enforcement
 
 DiagView automatically checks that the detected text color achieves at least a 4.5:1 contrast ratio against the background. If not, it falls back to white (`#ffffff`) or black (`#000000`) as appropriate. This check covers the viewer's own text colour, not the text inside your diagram.

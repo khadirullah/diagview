@@ -84,6 +84,50 @@ describe("Toast Notification System", () => {
     clearThemeCache();
   });
 
+  describe("warning notices", () => {
+    const warning = () => document.querySelector(".diagview-toast-warning");
+
+    test("are amber with dark text and announced at once", () => {
+      showWarningToast("Switched to Transparent PNG");
+      const t = warning();
+      expect(t.getAttribute("role")).toBe("alert");
+      expect(t.getAttribute("aria-live")).toBe("assertive");
+      expect(t.style.backgroundColor).toBe("rgb(245, 158, 11)");
+      expect(t.style.color).toBe("rgb(15, 23, 42)");
+      expect(document.querySelector(".diagview-toast-error")).toBeNull();
+    });
+
+    test("stay for 5 seconds", () => {
+      showWarningToast("Careful");
+      jest.advanceTimersByTime(4900);
+      expect(warning().style.opacity).not.toBe("0");
+      jest.advanceTimersByTime(200);
+      expect(warning().style.opacity).toBe("0");
+    });
+
+    test("use warningColor with text picked to reach 4.5:1", () => {
+      updateConfig({ warningColor: "#7c3aed" });
+      clearThemeCache();
+      showWarningToast("Careful");
+      expect(warning().style.backgroundColor).toBe("rgb(124, 58, 237)");
+      expect(warning().style.color).toBe("rgb(255, 255, 255)");
+      clearThemeCache();
+    });
+
+    test("fall back to amber and warn once when warningColor is not a colour", () => {
+      const warn = jest.spyOn(console, "warn").mockImplementation(() => {});
+      updateConfig({ warningColor: "#zzzzzz" });
+      clearThemeCache();
+      showWarningToast("First");
+      clearThemeCache();
+      showWarningToast("Second");
+      expect(warning().style.backgroundColor).toBe("rgb(245, 158, 11)");
+      const calls = warn.mock.calls.filter(([m]) => String(m).includes("warningColor"));
+      expect(calls).toHaveLength(1);
+      clearThemeCache();
+    });
+  });
+
   test("duration 0 does not auto-hide", () => {
     showToast("Persistent", "success", 0);
     jest.advanceTimersByTime(10000);

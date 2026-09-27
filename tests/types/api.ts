@@ -36,6 +36,7 @@ function expectType<T extends true>(): T | void {}
 const full: DiagViewOptions = {
   diagramSelector: ".diagram, .chart, [data-diagram]",
   accentColor: "#2563eb",
+  warningColor: "#f59e0b",
   backgroundColor: null,
   textColor: "#e2e8f0",
   layout: "floating",
@@ -150,6 +151,7 @@ function configuration(): void {
   const config: DiagViewConfig = getConfiguration();
   expectType<Equal<typeof config.layout, "header" | "floating" | "off">>();
   expectType<Equal<typeof config.accentColor, string | null>>();
+  expectType<Equal<typeof config.warningColor, string>>();
   expectType<Equal<typeof config.security.mode, "strict" | "permissive" | "off">>();
   expectType<Equal<typeof config.ui.buttons.icons.copy, string | null>>();
   expectType<Equal<typeof config.performance.criticalFileLimit, number>>();

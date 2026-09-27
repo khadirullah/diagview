@@ -386,6 +386,7 @@ DiagView.init({
 
   // ── Theme ────────────────────────────────────────
   accentColor: null, // null = page CSS variables, then the built-in blue
+  warningColor: "#f59e0b", // warning notices
   backgroundColor: null, // null = auto-detect
   textColor: null, // null = auto-detect
 

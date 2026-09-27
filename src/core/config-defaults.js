@@ -1,4 +1,4 @@
-import { TIMING, ZOOM, LAYOUTS, BUTTON_STYLES, SELECTORS, EXPORT } from "./constants.js";
+import { TIMING, ZOOM, LAYOUTS, BUTTON_STYLES, SELECTORS, EXPORT, COLORS } from "./constants.js";
 import { deepMerge, deepFreeze } from "./state-utils.js";
 
 /**
@@ -65,6 +65,7 @@ import { deepMerge, deepFreeze } from "./state-utils.js";
  * Full configuration, as returned by getConfiguration().
  * @typedef {object} DiagViewConfig
  * @property {string|null} accentColor - Accent colour, null to detect from the page
+ * @property {string} warningColor - Background of warning notices
  * @property {string|null} backgroundColor - Background colour, null to detect from the page
  * @property {string|null} textColor - Text colour, null to detect from the page
  * @property {"header"|"floating"|"off"} layout - Where the diagram buttons go
@@ -121,6 +122,7 @@ import { deepMerge, deepFreeze } from "./state-utils.js";
 export const INITIAL_CONFIG = {
   // Theme colors (null = auto-detect)
   accentColor: null,
+  warningColor: COLORS.WARNING,
   backgroundColor: null,
   textColor: null,
 

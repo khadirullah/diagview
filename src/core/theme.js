@@ -342,7 +342,7 @@ const warnedContrast = new Set();
 
 /**
  * Read a colour override from config, returning it only if it parses.
- * @param {"backgroundColor"|"textColor"|"accentColor"} key - Config key to read
+ * @param {"backgroundColor"|"textColor"|"accentColor"|"warningColor"} key - Config key to read
  * @param {Function} [check] - Colour test, parseColor by default
  * @returns {string|null} The colour string, or null when unset/invalid
  */
@@ -442,7 +442,9 @@ export function detectTheme() {
     cssVarColor("--diagram-accent") ||
     (isDark ? COLORS.ACCENT_DARK : COLORS.ACCENT_LIGHT);
 
-  const theme = { isDark, bg, text, accent, onAccent: onAccentColor(accent) };
+  const warning = validConfigColor("warningColor", isColor) || COLORS.WARNING;
+
+  const theme = { isDark, bg, text, accent, onAccent: onAccentColor(accent), warning };
 
   // Cache theme
   state.themeCache = theme;
