@@ -505,7 +505,7 @@ The "Canvas Theme" section of the fullscreen menu sets the background behind the
 - **Auto** (default) follows the host page theme detected above, or `backgroundColor` when you set it. It updates when the page switches theme.
 - The swatch row has a colour picker and four presets: White (`#ffffff`), Dark Slate (`#0b0f19`), Navy (`#0f172a`) and Charcoal (`#1e293b`).
 
-Light, Dark and the swatches override `backgroundColor`. The viewer's own text and controls, including the "?" key badge in the topbar, take their colour from the canvas. DiagView does not save the choice; it lasts until the page reloads or `destroy()` runs. Share links carry it in `dv-t` and `dv-c` (see [Share Links](#8-share-links)). The first time someone opens the viewer, a toast points to this menu. Set `showFirstTimeThemeHint: false` to turn it off.
+Light, Dark and the swatches override `backgroundColor`. The viewer's own text and controls, including the "?" key badge in the topbar, take their colour from the canvas. DiagView does not save the choice; it lasts until the page reloads or `destroy()` runs. Share links carry it in `dv-t` and `dv-c` (see [Share Links](#8-share-links)). The first time someone opens the viewer in a browser, a hint just above the menu button points to this menu for six seconds. DiagView stores in `localStorage` that the hint was shown, so it does not come back on later opens or page loads. Set `showFirstTimeThemeHint: false` to turn it off.
 
 ### Canvas grid
 
@@ -670,7 +670,7 @@ DiagView.configure({
 });
 ```
 
-`configure()` calls `updateConfig()` internally and re-syncs the theme and branding visibility. It does not re-initialize diagrams.
+`configure()` calls `updateConfig()` internally and re-syncs the theme, Readable text colours, the canvas grid and branding visibility. It does not re-initialize diagrams.
 
 Options such as `layout` and the button settings apply to diagrams DiagView initializes after the call. To change them for diagrams already on the page, call `destroy()` and then `init()`.
 
@@ -924,7 +924,7 @@ DiagView.init({
 
 ### Natural panning
 
-By default, `ArrowUp` moves the diagram downward (camera moves up). Set `naturalPanning: true` for scroll-like behavior where `ArrowUp` moves the diagram up.
+By default, `ArrowUp` moves the diagram downward (camera moves up), the way a page scrolls. Set `naturalPanning: true` to make each arrow key move the diagram in the arrow's direction, so `ArrowUp` moves the diagram up.
 
 ```javascript
 DiagView.init({ naturalPanning: true });
