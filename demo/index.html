@@ -352,6 +352,40 @@
             color: var(--muted);
         }
 
+        /* ── Common questions ── */
+        .faq {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            column-gap: 48px;
+        }
+
+        .faq > div {
+            padding: 18px 0 20px;
+            border-top: 1px solid var(--line);
+        }
+
+        .faq > :nth-child(-n + 2) {
+            padding-top: 0;
+            border-top: 0;
+        }
+
+        .faq h3 {
+            margin-bottom: 6px;
+            font-size: 1.02rem;
+            line-height: 1.35;
+        }
+
+        .faq p {
+            max-width: 52ch;
+            margin-bottom: 8px;
+            font-size: .93rem;
+            color: var(--muted);
+        }
+
+        .faq .link {
+            font-size: .88rem;
+        }
+
         @media (max-width: 1000px) {
             .hero-grid,
             .qs {
@@ -366,8 +400,14 @@
 
         @media (max-width: 900px) {
             .modes,
-            .more {
+            .more,
+            .faq {
                 grid-template-columns: minmax(0, 1fr);
+            }
+
+            .faq > :nth-child(2) {
+                padding-top: 18px;
+                border-top: 1px solid var(--line);
             }
 
             .mode {
@@ -437,6 +477,7 @@
                 <a href="#layouts">Layouts</a>
                 <a href="#features">Features</a>
                 <a href="#quick-start">Quick start</a>
+                <a href="#faq">FAQ</a>
             </nav>
             <div class="toggles">
                 <label class="swatch" title="Accent colour">
@@ -703,6 +744,52 @@
     accentColor: <span class="v">'#ea580c'</span>
   });
 &lt;/<span class="t">script</span>&gt;</code></pre>
+                    </div>
+                </div>
+            </div>
+        </section>
+        <section class="section" id="faq">
+            <div class="wrap">
+                <div class="section-head">
+                    <h2>Common questions</h2>
+                    <p>Short answers. Each one links to the full answer in the FAQ.</p>
+                </div>
+                <div class="faq">
+                    <div>
+                        <h3>Why doesn't the diagram change colour when I pick a canvas theme?</h3>
+                        <p>Canvas Theme changes only the background behind the diagram. The diagram keeps the colours its author
+                            drew it with.</p>
+                        <a class="link" href="https://github.com/khadirullah/diagview/blob/main/docs/FAQ.md#theming" target="_blank" rel="noopener">Theming in the FAQ</a>
+                    </div>
+                    <div>
+                        <h3>Why do the diagrams on this page change with the theme button?</h3>
+                        <p>This demo draws its Mermaid diagrams again when you switch the page theme or pick an accent. DiagView
+                            does not redraw diagrams itself, and the FAQ shows the code to do it.</p>
+                        <a class="link" href="https://github.com/khadirullah/diagview/blob/main/docs/FAQ.md#theming" target="_blank" rel="noopener">Theming in the FAQ</a>
+                    </div>
+                    <div>
+                        <h3>My diagram text is hard to read on a dark canvas.</h3>
+                        <p>In fullscreen, open the &#9776; menu and pick Readable under Text Colours. DiagView recolours only the
+                            text that is hard to read and keeps its hue.</p>
+                        <a class="link" href="https://github.com/khadirullah/diagview/blob/main/docs/FAQ.md#theming" target="_blank" rel="noopener">Theming in the FAQ</a>
+                    </div>
+                    <div>
+                        <h3>How do I change the accent colour?</h3>
+                        <p>Pass <code>accentColor</code> to <code>init()</code>, or set the <code>--diagram-accent</code> CSS
+                            variable. The accent colours DiagView's buttons and minimap, not the diagram.</p>
+                        <a class="link" href="https://github.com/khadirullah/diagview/blob/main/docs/FAQ.md#theming" target="_blank" rel="noopener">Theming in the FAQ</a>
+                    </div>
+                    <div>
+                        <h3>Do exports keep the original colours?</h3>
+                        <p>Yes. Exports keep the author's colours, even with Readable on. The background is the canvas colour
+                            unless you tick Transparent. A watermark, if you set one, shows up only in exports.</p>
+                        <a class="link" href="https://github.com/khadirullah/diagview/blob/main/docs/FAQ.md#export" target="_blank" rel="noopener">Export in the FAQ</a>
+                    </div>
+                    <div>
+                        <h3>Does it work with diagrams other than Mermaid?</h3>
+                        <p>Yes. DiagView works with any SVG drawn inline on the page, such as Graphviz, PlantUML, D3, draw.io or
+                            a hand-written SVG. Draw the diagram first, then start DiagView.</p>
+                        <a class="link" href="https://github.com/khadirullah/diagview/blob/main/docs/FAQ.md#general" target="_blank" rel="noopener">General in the FAQ</a>
                     </div>
                 </div>
             </div>
