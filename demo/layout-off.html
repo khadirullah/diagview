@@ -9,12 +9,12 @@
     <title>DiagView - Off Layout</title>
     <meta property="og:image" content="https://khadirullah.github.io/diagview/images/hero.jpg">
     <meta name="description"
-        content="DiagView off layout demo — invisible UI, click diagram to open fullscreen viewer.">
+        content="DiagView off layout demo, no visible controls, click a diagram to open the fullscreen viewer.">
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono&display=swap"
+    <link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
         rel="stylesheet">
 
     <!-- Dependencies -->
@@ -31,218 +31,272 @@
     <!-- Development Mode: Uncomment below to use local file -->
     <!-- <script src="../dist/diagview.umd.js" data-diagview-no-auto-init></script> -->
 
-
     <style>
+        /* This page shows DiagView's own colours in blue until an accent is picked */
         :root {
             --diagram-accent: #3b82f6;
         }
 
-        .mermaid {
+        .next {
             display: flex;
-            justify-content: center;
+            flex-wrap: wrap;
+            gap: 8px 24px;
+            margin-top: 20px;
+        }
+
+        @media (max-width: 600px) {
+            .crumbs {
+                display: none;
+            }
         }
     </style>
 
     <script src="demo-runtime.js"></script>
 </head>
-
 <body>
 
-    <div class="controls">
-        <div class="brand">
-            <a href="index.html">
-                <img src="images/logo.jpg" alt="DiagView"
-                    style="width:32px;height:32px;border-radius:8px;object-fit:cover;flex-shrink:0">
-                <div class="brand-meta">
-                    <span class="brand-label">DiagView</span>
-                    <span class="brand-name">Off Layout</span>
-                </div>
+    <header class="nav">
+        <div class="wrap">
+            <a class="brand" href="index.html" aria-label="DiagView demo hub">
+                <svg class="brand-mark" viewBox="0 0 24 24" aria-hidden="true">
+                    <path class="e" d="M12 4.5 4.5 18.5h15Z M12 4.5v7.5 M4.5 18.5 12 12l7.5 6.5" fill="none" />
+                    <circle class="n" cx="12" cy="4.5" r="2.6" />
+                    <circle class="n" cx="12" cy="12" r="2.2" />
+                    <circle class="n" cx="4.5" cy="18.5" r="2.6" />
+                    <circle class="n" cx="19.5" cy="18.5" r="2.6" />
+                </svg>
             </a>
-        </div>
-        <div class="toggles">
-            <label class="accent-label">
-                <span>Security</span>
-                <select id="securitySelector" title="Toggle SVG Sanitization Level">
-                    <option value="strict">Strict (High)</option>
-                    <option value="permissive">Permissive</option>
-                    <option value="off">Off (Trusted)</option>
-                </select>
-            </label>
-            <label class="accent-label">
-                <span>Accent</span>
-                <input type="color" id="accentPicker" value="#3b82f6">
-            </label>
-            <button class="toggle-btn" onclick="toggleTheme()" title="Toggle Dark/Light Mode" aria-label="Toggle dark mode">🌓</button>
-            <a href="index.html" class="toggle-btn" style="background:var(--accent);color:#fff;border:none;">← Hub</a>
-        </div>
-    </div>
-
-    <section class="page-hero">
-        <h1>Off Layout (Stealth UI)</h1>
-        <p>The UI is completely hidden. The diagram itself acts as the trigger button. Perfect for seamless embeds.</p>
-        <div class="badge-row"><span class="badge">✕ Off (Click-only) Mode</span></div>
-    </section>
-
-    <div class="grid">
-        <!-- Org Chart (SVG) -->
-        <div class="card">
-            <div class="card-header">
-                <h3>Company Structure</h3>
-                <span class="card-badge chart-badge">Chart</span>
+            <nav class="crumbs" aria-label="Breadcrumb">
+                <a href="index.html">Demo hub</a>
+                <span class="sep" aria-hidden="true">/</span>
+                <span aria-current="page">Off layout</span>
+            </nav>
+            <div class="toggles">
+                <label class="select" title="SVG sanitisation level">
+                    <span class="lbl">Security</span>
+                    <select id="securitySelector" aria-label="Security">
+                        <option value="strict">Strict</option>
+                        <option value="permissive">Permissive</option>
+                        <option value="off">Off (trusted)</option>
+                    </select>
+                </label>
+                <label class="swatch" title="Accent colour">
+                    <span class="vh">Accent colour</span>
+                    <input type="color" id="accentPicker" value="#3b82f6">
+                </label>
+                <button class="icon-btn theme-btn" type="button" onclick="toggleTheme()" title="Switch light and dark"
+                    aria-label="Switch light and dark theme"></button>
             </div>
-            <div class="chart" data-title="Global Org Chart">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 400">
-                    <defs>
+        </div>
+    </header>
+
+    <main>
+        <section class="page-hero">
+            <div class="wrap">
+                <h1>Off layout (stealth UI)</h1>
+                <p>No toolbar and no buttons. The diagram itself opens the fullscreen viewer, so embeds look
+                    exactly like the plain SVG.</p>
+                <nav class="modes-nav" aria-label="Layout modes">
+                    <a href="layout-header.html">Header bar</a>
+                    <a href="layout-floating.html">Floating</a>
+                    <a href="layout-off.html">Off</a>
+                    <a href="layout-compare.html">Compare</a>
+                </nav>
+            </div>
+        </section>
+
+        <div class="wrap grid" style="--fig-chapter: '1'">
+            <!-- Org Chart (SVG) -->
+            <div class="card">
+                <div class="card-header">
+                    <h3>Company structure</h3>
+                    <span class="tag">Chart</span>
+                </div>
+                <div class="chart" data-title="Global Org Chart">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 400">
+                        <defs>
+                            <style>
+                                .o-box {
+                                    fill: #4f46e5;
+                                    stroke: #4338ca;
+                                    stroke-width: 2;
+                                }
+                    
+                                .o-label {
+                                    fill: white;
+                                    font-family: sans-serif;
+                                    font-size: 12px;
+                                    text-anchor: middle;
+                                }
+                    
+                                .o-title {
+                                    font-weight: bold;
+                                    font-size: 14px;
+                                }
+                    
+                                .o-line {
+                                    stroke: var(--muted, #94a3b8);
+                                    stroke-width: 2;
+                                }
+                            </style>
+                        </defs>
+                        <rect class="o-box" x="250" y="20" width="100" height="60" rx="8" />
+                        <text class="o-label o-title" x="300" y="45">CEO</text>
+                        <text class="o-label" x="300" y="62">John Executive</text>
+                        <line class="o-line" x1="300" y1="80" x2="300" y2="100" />
+                        <line class="o-line" x1="150" y1="100" x2="450" y2="100" />
+                        <line class="o-line" x1="150" y1="100" x2="150" y2="120" />
+                        <line class="o-line" x1="450" y1="100" x2="450" y2="120" />
+                        <rect class="o-box" x="100" y="120" width="100" height="60" rx="8" />
+                        <text class="o-label o-title" x="150" y="145">CTO</text>
+                        <rect class="o-box" x="400" y="120" width="100" height="60" rx="8" />
+                        <text class="o-label o-title" x="450" y="145">CFO</text>
+                    </svg>
+                </div>
+                <p class="card-note">The diagram is the trigger. Click it to open fullscreen.</p>
+            </div>
+
+            <!-- Performance Stress Test (SVG) -->
+            <div class="card">
+                <div class="card-header">
+                    <h3>Performance stress test</h3>
+                    <span class="tag">2,500 nodes</span>
+                </div>
+                <div class="stress-test" data-title="2,500 Nodes Test">
+                    <svg id="stress-svg" width="3000" height="3000" viewBox="0 0 3000 3000"
+                        xmlns="http://www.w3.org/2000/svg">
                         <style>
-                            .o-box {
-                                fill: #4f46e5;
-                                stroke: #4338ca;
-                                stroke-width: 2;
-                            }
-
-                            .o-label {
-                                fill: white;
-                                font-family: sans-serif;
-                                font-size: 12px;
-                                text-anchor: middle;
-                            }
-
-                            .o-title {
-                                font-weight: bold;
-                                font-size: 14px;
-                            }
-
-                            .o-line {
-                                stroke: #94a3b8;
-                                stroke-width: 2;
+                            #stress-node-layer rect {
+                                fill: var(--stress-fill);
+                                fill-opacity: 1;
+                                stroke: var(--stress-line);
                             }
                         </style>
-                    </defs>
-                    <rect class="o-box" x="250" y="20" width="100" height="60" rx="8" />
-                    <text class="o-label o-title" x="300" y="45">CEO</text>
-                    <text class="o-label" x="300" y="62">John Executive</text>
-                    <line class="o-line" x1="300" y1="80" x2="300" y2="100" />
-                    <line class="o-line" x1="150" y1="100" x2="450" y2="100" />
-                    <line class="o-line" x1="150" y1="100" x2="150" y2="120" />
-                    <line class="o-line" x1="450" y1="100" x2="450" y2="120" />
-                    <rect class="o-box" x="100" y="120" width="100" height="60" rx="8" />
-                    <text class="o-label o-title" x="150" y="145">CTO</text>
-                    <rect class="o-box" x="400" y="120" width="100" height="60" rx="8" />
-                    <text class="o-label o-title" x="450" y="145">CFO</text>
-                </svg>
+                        <rect width="100%" height="100%" fill="transparent" />
+                        <g id="stress-node-layer"></g>
+                    </svg>
+                </div>
+                <p class="card-note">Click to open the 2,500 node grid.</p>
             </div>
-            <p style="text-align: center; margin-top: 15px; color: var(--diagram-accent); font-weight: 500;">↑ Diagram
-                is the trigger</p>
-        </div>
 
-        <!-- Complex (Mermaid) -->
-        <div class="card">
-            <div class="card-header">
-                <h3>Complex Workflow</h3>
-                <span class="card-badge mermaid-badge">Mermaid</span>
-            </div>
-            <div class="mermaid" data-title="Stress Test">
-                graph TD
-                A[Start] --> B[Process A]
-                B --> C{Success?}
-                C -->|Yes| D[Finalize]
-                C -->|No| E[Retry]
-                E --> B
-                D --> F[Send Email]
-                F --> G[End]
+            <!-- Complex (Mermaid), tall on purpose -->
+            <div class="card wide">
+                <div class="card-header">
+                    <h3>Complex workflow</h3>
+                    <span class="tag">Mermaid</span>
+                </div>
+                <div class="mermaid" data-title="Stress Test">
+                    graph TD
+                    A[Start] --> B[Process A]
+                    B --> C{Success?}
+                    C -->|Yes| D[Finalize]
+                    C -->|No| E[Retry]
+                    E --> B
+                    D --> F[Send Email]
+                    F --> G[End]
+                </div>
             </div>
         </div>
 
-        <!-- Performance Stress Test (SVG) -->
-        <div class="card">
-            <div class="card-header">
-                <h3>Performance Stress Test</h3>
-                <span class="card-badge stress-badge">2.5k Nodes</span>
+        <!-- Feature highlights -->
+        <section class="section">
+            <div class="wrap">
+                <div class="section-head">
+                    <h2>Why choose this layout?</h2>
+                    <p>Designed for real-world use cases where control placement matters.</p>
+                </div>
+                <div class="cols">
+                    <div>
+                        <h4>Zero DOM overhead</h4>
+                        <p>Off mode adds no wrapper elements, no toolbar, no buttons. DiagView only adds a click
+                            handler, a pointer cursor, a class and a few data attributes, and destroy() removes them
+                            all.</p>
+                    </div>
+                    <div>
+                        <h4>Pointer affordance</h4>
+                        <p>A pointer cursor signals that the diagram does something. Readers find the fullscreen
+                            viewer on their own, and the diagram still looks embedded rather than decorated.</p>
+                    </div>
+                    <div>
+                        <h4>Good for embeds and iframes</h4>
+                        <p>Use it in blog posts, documentation pages, or iframes where toolbar chrome would look out
+                            of place. Clean SVG, full viewer on demand.</p>
+                    </div>
+                </div>
             </div>
-            <div class="stress-test" data-title="2,500 Nodes Test">
-                <svg id="stress-svg" width="3000" height="3000" viewBox="0 0 3000 3000"
-                    xmlns="http://www.w3.org/2000/svg">
-                    <rect width="100%" height="100%" fill="transparent" />
-                    <g id="stress-node-layer"></g>
-                </svg>
-            </div>
-            <p style="text-align: center; margin-top: 10px; color: var(--muted); font-size: 0.8rem;">Click to open the
-                2,500 node grid</p>
-        </div>
-    </div>
+        </section>
 
+        <!-- Keyboard shortcuts -->
+        <section class="section">
+            <div class="wrap">
+                <div class="section-head">
+                    <h2>Keyboard reference</h2>
+                    <p>A click opens the viewer. Once it is open, these keys work and Tab reaches every button.</p>
+                </div>
+                <div class="cols shortcuts">
+                    <div>
+                        <h3 class="grp">Zoom</h3>
+                        <dl>
+                            <dt><kbd>+</kbd></dt>
+                            <dd>Zoom in</dd>
+                            <dt><kbd>-</kbd></dt>
+                            <dd>Zoom out</dd>
+                            <dt><kbd>Space / 0</kbd></dt>
+                            <dd>Reset &amp; center</dd>
+                        </dl>
+                    </div>
+                    <div>
+                        <h3 class="grp">Pan</h3>
+                        <dl>
+                            <dt><kbd>↑ ↓ ← →</kbd></dt>
+                            <dd>Pan diagram</dd>
+                            <dt><kbd>Shift + ↑ ↓ ← →</kbd></dt>
+                            <dd>Fast pan</dd>
+                            <dt><kbd>Drag</kbd></dt>
+                            <dd>Free pan</dd>
+                        </dl>
+                    </div>
+                    <div>
+                        <h3 class="grp">Search</h3>
+                        <dl>
+                            <dt><kbd>F</kbd></dt>
+                            <dd>Open search</dd>
+                            <dt><kbd>Esc</kbd></dt>
+                            <dd>Clear / close</dd>
+                        </dl>
+                    </div>
+                    <div>
+                        <h3 class="grp">Tools</h3>
+                        <dl>
+                            <dt><kbd>M</kbd></dt>
+                            <dd>Meeting mode</dd>
+                            <dt><kbd>R</kbd></dt>
+                            <dd>Rotate 90°</dd>
+                            <dt><kbd>L</kbd></dt>
+                            <dd>Share link</dd>
+                            <dt><kbd>T</kbd></dt>
+                            <dd>Text select</dd>
+                            <dt><kbd>?</kbd></dt>
+                            <dd>Show shortcuts</dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </section>
 
-    <!-- ── Feature highlights ── -->
-    <div class="page-section">
-        <div class="section-header">
-            <h2 class="section-title">Why choose this layout?</h2>
-            <p class="section-subtitle">Designed for real-world use cases where control placement matters.</p>
-        </div>
-        <div class="info-grid">
-            <div class="info-card">
-                <div class="info-icon">✕</div>
-                <h4>Zero DOM Overhead</h4>
-                <p>Off mode adds no wrapper elements, no toolbar, no buttons. DiagView only adds a click handler, a
-                    pointer cursor, a class and a few data attributes, and destroy() removes them all.</p>
-            </div>
-            <div class="info-card">
-                <div class="info-icon">🎯</div>
-                <h4>Pointer Affordance</h4>
-                <p>A pointer cursor signals interactivity without any UI. Users discover the fullscreen viewer
-                    naturally, making diagrams feel embedded rather than decorated.</p>
-            </div>
-            <div class="info-card">
-                <div class="info-icon">🔗</div>
-                <h4>Perfect for Embeds & iFrames</h4>
-                <p>Use in blog posts, documentation pages, or iframes where toolbar chrome would look out of place.
-                    Clean SVG, full viewer on demand.</p>
-            </div>
-        </div>
-    </div>
-
-
-    <!-- ── Keyboard shortcuts ── -->
-    <div class="shortcuts-section">
-        <div class="section-header">
-            <h2 class="section-title">Keyboard Reference</h2>
-            <p class="section-subtitle">Every action is keyboard-accessible. No mouse required.</p>
-        </div>
-        <div class="shortcuts-grid">
-            <div class="shortcut-card">
-                <div class="shortcut-group">Zoom</div>
-                <div class="shortcut-row"><kbd>+</kbd><span>Zoom in</span></div>
-                <div class="shortcut-row"><kbd>-</kbd><span>Zoom out</span></div>
-                <div class="shortcut-row"><kbd>Space / 0</kbd><span>Reset &amp; center</span></div>
-            </div>
-            <div class="shortcut-card">
-                <div class="shortcut-group">Pan</div>
-                <div class="shortcut-row"><kbd>↑ ↓ ← →</kbd><span>Pan diagram</span></div>
-                <div class="shortcut-row"><kbd>Shift + ↑ ↓ ← →</kbd><span>Fast pan</span></div>
-                <div class="shortcut-row"><kbd>Drag</kbd><span>Free pan</span></div>
-            </div>
-            <div class="shortcut-card">
-                <div class="shortcut-group">Search</div>
-                <div class="shortcut-row"><kbd>F</kbd><span>Open search</span></div>
-                <div class="shortcut-row"><kbd>Esc</kbd><span>Clear / close</span></div>
-            </div>
-            <div class="shortcut-card">
-                <div class="shortcut-group">Tools</div>
-                <div class="shortcut-row"><kbd>M</kbd><span>Meeting mode</span></div>
-                <div class="shortcut-row"><kbd>R</kbd><span>Rotate 90°</span></div>
-                <div class="shortcut-row"><kbd>L</kbd><span>Share link</span></div>
-                <div class="shortcut-row"><kbd>T</kbd><span>Text select</span></div>
-                <div class="shortcut-row"><kbd>?</kbd><span>Show shortcuts</span></div>
-            </div>
-        </div>
-    </div>
-
-    <!-- ── Integration code ── -->
-    <div class="code-section">
-        <div class="section-header" style="margin-bottom:20px">
-            <h2 class="section-title" style="font-size:1.3rem">Integration</h2>
-        </div>
-        <div class="code-block">
-            <pre><code><span class="c">// Off mode — zero toolbar DOM, pure click-to-open</span>
+        <!-- Integration code -->
+        <section class="section">
+            <div class="wrap">
+                <div class="section-head">
+                    <h2>Integration</h2>
+                    <p>Turn the controls off for every diagram, or for one at a time.</p>
+                </div>
+                <div class="code">
+                    <div class="code-bar">
+                        <span class="file">app.js</span>
+                        <button class="copy-btn" type="button" data-copy>Copy</button>
+                    </div>
+<pre><code><span class="c">// Off mode, no toolbar DOM, click to open</span>
 <span class="kw">DiagView</span>.init({
   diagramSelector: <span class="v">'.diagram'</span>,
   layout:          <span class="v">'off'</span>
@@ -255,28 +309,30 @@
 &lt;<span class="t">div</span> <span class="a">class</span>=<span class="v">"diagram"</span> <span class="a">data-diagview-layout</span>=<span class="v">"floating"</span>&gt;
   &lt;<span class="t">svg</span>&gt;...&lt;/<span class="t">svg</span>&gt;   <span class="c">// buttons on hover</span>
 &lt;/<span class="t">div</span>&gt;</code></pre>
-        </div>
-        <div class="code-nav">
-            <a href="layout-compare.html" class="code-nav-link">Compare all layouts →</a>
-        </div>
-    </div>
-
-    <footer>
-        <div class="container">
-            <div class="footer-links">
-                <a href="index.html">← Back to Hub</a>
-                <a href="https://github.com/khadirullah/diagview" target="_blank" rel="noopener">GitHub</a>
-                <a href="https://www.npmjs.com/package/diagview" target="_blank" rel="noopener">NPM</a>
+                </div>
+                <div class="next">
+                    <a href="layout-compare.html" class="link">Compare all layouts</a>
+                    <a href="layout-floating.html" class="link">Try the floating layout</a>
+                </div>
             </div>
-            <p class="copyright">DiagView &bull; <span data-version></span> &bull; Built with ❤️</p>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <div class="wrap">
+            <nav aria-label="Project links">
+                <a href="index.html">Demo hub</a>
+                <a href="https://github.com/khadirullah/diagview" target="_blank" rel="noopener">GitHub</a>
+                <a href="https://www.npmjs.com/package/diagview" target="_blank" rel="noopener">npm</a>
+            </nav>
+            <span>DiagView <span data-version></span></span>
         </div>
     </footer>
 
     <script>
-        // Mermaid init
-        mermaid.initialize({ startOnLoad: true, theme: 'default' });
+        mermaid.initialize(demoMermaidConfig());
 
-        // Page-specific: Generate stress nodes + init DiagView
+        // Page-specific: generate stress nodes, render Mermaid, init DiagView
         document.addEventListener('DOMContentLoaded', async () => {
             const stressLayer = document.getElementById('stress-node-layer');
             if (stressLayer) {
@@ -298,6 +354,7 @@
                 }
             }
 
+            try { await document.fonts.ready; } catch (e) { }
             if (window.mermaid) await mermaid.run();
 
             const dvInit = () => DiagView.init({
