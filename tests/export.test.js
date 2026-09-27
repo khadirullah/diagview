@@ -593,6 +593,7 @@ describe("Export embeds self-hosted fonts referenced by relative urls", () => {
     container = document.createElement("div");
     const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
     svg.setAttribute("viewBox", "0 0 100 100");
+    svg.innerHTML = '<text style="font-family: DvTest">Label</text>';
     container.appendChild(svg);
     document.body.appendChild(container);
 

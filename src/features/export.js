@@ -16,6 +16,7 @@ import {
   loadScript,
   getRobustDimensions,
 } from "../core/utils.js";
+import { embedDocumentFonts } from "./export-fonts.js";
 import { cloneSVGForExportAsync } from "../core/svg-clone.js";
 import {
   showSuccessToast,
@@ -69,98 +70,6 @@ function resolveSourceSvg(sourceElement) {
   const svg = sourceElement?.querySelector?.("svg") ?? null;
   if (!svg) showErrorToast("No diagram found");
   return svg;
-}
-
-/**
- * Fetch a URL and return a base64 data URI, or null on failure.
- * Used to embed fonts so export SVGs render consistently.
- * @private
- */
-async function fetchAsDataURI(url) {
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 5000);
-
-  try {
-    const resp = await fetch(url, { mode: "cors", signal: controller.signal });
-    clearTimeout(timeoutId);
-
-    if (!resp.ok) return null;
-    const blob = await resp.blob();
-    return new Promise((res) => {
-      const reader = new FileReader();
-      reader.onload = () => res(reader.result);
-      reader.onerror = () => res(null);
-      reader.readAsDataURL(blob);
-    });
-  } catch (err) {
-    clearTimeout(timeoutId);
-    return null;
-  }
-}
-
-/**
- * Collect @font-face rules from loaded document stylesheets
- * and embed referenced font files as base64 data URIs.
- * Mutates the SVG element's first/new <style> block.
- * @private
- */
-async function embedDocumentFonts(svgEl) {
-  if (typeof document === "undefined" || !document.fonts) return;
-
-  // Wait for all fonts to be loaded before reading metrics / before export
-  await document.fonts.ready;
-
-  const fontFaceRules = [];
-  for (const sheet of document.styleSheets) {
-    try {
-      // Relative url()s inside a rule resolve against the stylesheet that
-      // declares it (or the page for inline <style> blocks), not the export.
-      const base = sheet.href || document.baseURI;
-      for (const rule of sheet.cssRules) {
-        if (rule instanceof CSSFontFaceRule) {
-          fontFaceRules.push({ cssText: rule.cssText, base });
-        }
-      }
-    } catch {
-      // cross-origin stylesheets — skip
-    }
-  }
-
-  if (!fontFaceRules.length) return;
-
-  // Fetch and inline font files referenced by url(...)
-  const inlined = await Promise.all(
-    fontFaceRules.map(async ({ cssText, base }) => {
-      // Replace each url(...) with a base64 data URI. Relative and
-      // root-relative references (self-hosted fonts) are made absolute
-      // first: copied verbatim they cannot resolve inside a data:/blob: image.
-      const urlMatches = [...cssText.matchAll(/url\((['"]?)([^'")\s]+)\1\)/gi)];
-      let result = cssText;
-      for (const [match, , rawUrl] of urlMatches) {
-        if (/^data:/i.test(rawUrl)) continue;
-        let absolute;
-        try {
-          absolute = new URL(rawUrl, base).href;
-        } catch {
-          continue;
-        }
-        const dataURI = await fetchAsDataURI(absolute);
-        if (dataURI) {
-          result = result.replace(match, `url('${dataURI}')`);
-        }
-      }
-      return result;
-    }),
-  );
-
-  // Prepend a <style> with embedded @font-face rules to the SVG
-  let styleEl = svgEl.querySelector("style.dv-font-embed");
-  if (!styleEl) {
-    styleEl = document.createElementNS("http://www.w3.org/2000/svg", "style");
-    styleEl.classList.add("dv-font-embed");
-    svgEl.insertBefore(styleEl, svgEl.firstChild);
-  }
-  styleEl.textContent = inlined.join("\n");
 }
 
 const WATERMARK_STYLES = ["corner", "background", "both"];

@@ -339,7 +339,7 @@ DiagView.init({
 
 ### Fonts
 
-Exports embed the `@font-face` sources used by the diagram, including self-hosted fonts referenced by relative `url()` paths, so the file renders with the same fonts when opened elsewhere. A font file that cannot be fetched is left as its original reference.
+Exports embed the `@font-face` sources used by the diagram, including self-hosted fonts referenced by relative `url()` paths, so the file renders with the same fonts when opened elsewhere. DiagView embeds only the rules the labels need. It picks the family, style and weight the browser would pick for each label, and of those only the files whose `unicode-range` covers a character in the label. A font file that cannot be fetched is left as its original reference.
 
 ### PDF
 
