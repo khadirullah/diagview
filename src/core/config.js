@@ -161,6 +161,9 @@ function readOnlyView(value, owner) {
  * SEC-4: Ensures external consumers cannot mutate library internals, at any depth.
  * Exceptions: `activePanzoom` is the live instance (its methods are meant to be
  * called) and `events` supports on/off/emit but not clear().
+ * @type {Readonly<Omit<DiagViewState, "events">> & {
+ *   readonly events: Omit<ReturnType<typeof EventEmitter>, "clear">
+ * }}
  */
 export const publicState = new Proxy(state, {
   ...READ_ONLY_HANDLER,

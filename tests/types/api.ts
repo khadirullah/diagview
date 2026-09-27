@@ -257,6 +257,11 @@ function stateAndEvents(): void {
   state.events.off("custom", handler);
   // Events may carry no data
   state.events.emit("custom");
+
+  // @ts-expect-error state is read-only
+  state.isModalOpen = true;
+  // @ts-expect-error clear() stays internal
+  state.events.clear();
 }
 
 void [lifecycle, configuration, exporting, modal, utilities, stateAndEvents];
