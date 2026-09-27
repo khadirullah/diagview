@@ -49,15 +49,19 @@ build. Set `E2E_PORT` to use a port other than 9340.
 | `verify-export-search.spec.mjs`    | 12     | PNG export of a 1 MB+ foreignObject diagram, search dimming, ring colour per canvas, plain SVG shape marking, rotation                                                                                                                                                                    |
 | `verify-readable-text.spec.mjs`    | 38     | Text Colours menu row on Mermaid, Graphviz, PlantUML, draw.io and hand-drawn SVGs: which labels change, 4.5:1 contrast, hue kept, exact restore, canvas switch, reopen, SVG export keeps author colours                                                                                   |
 | `verify-menu-buttons.spec.mjs`     | 6      | hover on the Canvas Theme and Text Colours buttons on light, dark and custom canvases, round menu button and swatches under keyboard focus                                                                                                                                                |
+| `verify-minimap-colour.spec.mjs`   | 4      | minimap redraws `currentColor` parts after a canvas swatch or an Auto mode page theme change, indicator and click still work, other diagrams keep their image                                                                                                                             |
+| `verify-share-page-zoom.spec.mjs`  | 6      | share link restore at 0 and 90 degrees, minimap indicator, rotateKeepsView and search outline behind a matched label, all on a zoomed-out phone page                                                                                                                                      |
+| `verify-theme-hint.spec.mjs`       | 3      | first-time theme hint sits above the menu button on desktop and on phone pages with and without a viewport meta tag                                                                                                                                                                       |
 
-That is 144 checks per browser.
+That is 157 checks per browser.
 
 `verify-react-strictmode` loads React from unpkg and `verify-fixes` loads
 Mermaid from jsdelivr, so both need network access. Set
 `DV_CDN=<version>` (e.g. `DV_CDN=1.0.11`) to run those two against a
-published build instead of the local one. `verify-export-search` and
-`verify-readable-text` run offline. Set `DV_DIST=/path/to/diagview.umd.js`
-to test another build.
+published build instead of the local one. The other suites run offline.
+`verify-export-search` and `verify-readable-text` inject the build
+themselves. Set `DV_DIST=/path/to/diagview.umd.js` to test another build
+with those two.
 
 `repro.html` is the shared test page: a 2000x1200 labelled grid SVG (cells
 A1 to J6, 200 units each) so any viewport centre measurement maps to a
@@ -70,9 +74,8 @@ annotated in the spec, never deleted:
 
 - The mobile touch drag check sends touch events through the Chrome
   DevTools Protocol, so it is skipped outside Chromium.
-- Mobile share restore is marked as failing on WebKit. With a page scale
-  other than 1, WebKit's `getScreenCTM()` includes the page scale while
-  `getBoundingClientRect()` does not, and `share.js` mixes the two.
+- The zoomed-out phone page check in `verify-theme-hint` is skipped on
+  Firefox, which cannot emulate a phone page without a viewport meta tag.
 - Two draw.io Text Colours checks are marked as failing on Firefox.
   Firefox gives the undrawn `<text>` fallbacks inside a `<switch>` a
   non-zero box, so `readable-text.js` recolours them too.
@@ -83,6 +86,7 @@ remove the mark once the bug is fixed.
 ## When to run
 
 Whenever you touch pan/zoom, share, minimap, modal open/close, export,
-search, the Text Colours menu row, or the viewport CSS. CI runs the suites
-on every push and pull request and uploads the HTML report when a check
-fails.
+search, the menu buttons, the canvas theme, the theme hint, the Text
+Colours menu row, or the viewport CSS. CI runs the suites on every push to
+`main` and every pull request against it, and uploads the HTML report when
+a check fails.
