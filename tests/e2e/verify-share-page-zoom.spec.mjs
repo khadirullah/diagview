@@ -1,7 +1,8 @@
 // On a page shown zoomed out (a phone without a viewport meta tag), a share
-// link restores the view on the shared point and the minimap indicator
-// covers the visible part of the diagram. WebKit reports getScreenCTM() in
-// zoomed pixels there, while getBoundingClientRect() stays in layout pixels.
+// link restores the view on the shared point, the minimap indicator covers
+// the visible part of the diagram and rotateKeepsView keeps the view.
+// WebKit reports getScreenCTM() in zoomed pixels there, while
+// getBoundingClientRect() stays in layout pixels.
 import { test, expect } from "@playwright/test";
 import { REPRO, newPage } from "./helpers.mjs";
 
@@ -118,3 +119,35 @@ test("minimap indicator covers the visible part", async ({ browser }) => {
     expect(Math.abs(r.got[k] - r.want[k]), detail).toBeLessThan(2);
   }
 });
+
+// Diagram units per client pixel along the diagram's x axis, from A1 and J1
+const unitsPerPixel = (p) =>
+  p.evaluate(() => {
+    const rects = document.querySelectorAll("#diagview-modal-viewport svg rect");
+    const mid = (i) => {
+      const r = rects[i].getBoundingClientRect();
+      return [r.left + r.width / 2, r.top + r.height / 2];
+    };
+    const [ax, ay] = mid(0);
+    const [bx, by] = mid(9);
+    return 1800 / Math.hypot(bx - ax, by - ay);
+  });
+
+for (const turns of [0, 1]) {
+  test(`rotateKeepsView keeps the view from ${turns * 90} degrees`, async ({ browser }) => {
+    const page = await openZoomed(browser, turns);
+    await page.evaluate(() => DiagView.default.configure({ rotateKeepsView: true }));
+    const before = await centerByRects(page);
+    const sizeBefore = await unitsPerPixel(page);
+    await page.keyboard.press("r");
+    await page.waitForTimeout(700);
+    const after = await centerByRects(page);
+    const sizeAfter = await unitsPerPixel(page);
+    const detail = `before (${before.x.toFixed(1)}, ${before.y.toFixed(1)}) after (${after.x.toFixed(1)}, ${after.y.toFixed(1)})`;
+    expect(Math.abs(after.x - before.x), detail).toBeLessThan(2);
+    expect(Math.abs(after.y - before.y), detail).toBeLessThan(2);
+    expect(Math.abs(sizeAfter / sizeBefore - 1), `${sizeBefore} -> ${sizeAfter}`).toBeLessThan(
+      0.01,
+    );
+  });
+}

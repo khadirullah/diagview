@@ -6,7 +6,7 @@
 
 import { state } from "../../core/config.js";
 import { showSuccessToast } from "../../ui/toast.js";
-import { centerSVGViewBox } from "../../core/utils.js";
+import { centerSVGViewBox, getClientCTM } from "../../core/utils.js";
 
 /**
  * Apply a rotation angle to the modal diagram's DOM.
@@ -78,15 +78,16 @@ function modalSvg() {
 }
 
 /**
- * Map a screen point into an element's local coordinates, or back out.
- * @param {SVGGraphicsElement} el - Element whose screen CTM is used
+ * Map a client point into an element's local coordinates, or back out.
+ * Client pixels, like the viewport rect in viewCentre() (see getClientCTM).
+ * @param {SVGGraphicsElement} el - Element whose client CTM is used
  * @param {number} x - X coordinate
  * @param {number} y - Y coordinate
- * @param {boolean} [invert] - Map from screen into local space
+ * @param {boolean} [invert] - Map from client into local space
  * @returns {number[]|null} [x, y], or null when there is no usable CTM
  */
 function mapPoint(el, x, y, invert) {
-  const m = el.getScreenCTM?.();
+  const m = getClientCTM(el);
   if (!m) return null;
   if (!invert) return [m.a * x + m.c * y + m.e, m.b * x + m.d * y + m.f];
   const det = m.a * m.d - m.b * m.c;
@@ -128,12 +129,12 @@ function viewCentre() {
 }
 
 /**
- * Screen pixels per diagram unit, from the element's screen CTM.
+ * Client pixels per diagram unit, from the element's client CTM.
  * @param {SVGGraphicsElement} el - Element to measure
  * @returns {number} Pixels per unit, or 0 when there is no CTM
  */
 function screenUnit(el) {
-  const m = el.getScreenCTM?.();
+  const m = getClientCTM(el);
   return m ? Math.hypot(m.a, m.b) : 0;
 }
 
