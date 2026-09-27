@@ -483,11 +483,22 @@ describe("Theme Module", () => {
       expect(detectTheme().text).toBe(onLight);
     });
 
-    test("textColor and page text variables still go through the old guard", () => {
+    test("a textColor or page text variable that fails gets black or white, whichever reads better", () => {
       setCanvasTheme("custom", "#b3b3b3");
       updateConfig({ textColor: "#fafafa" });
       clearThemeCache();
+      expect(detectTheme().text).toBe("#000000");
+
+      updateConfig({ textColor: "#475569" });
+      clearThemeCache();
+      expect(detectTheme().text).toBe("#000000");
+
+      setCanvasTheme("custom", "#6b7280");
+      updateConfig({ textColor: "#475569" });
+      clearThemeCache();
       expect(detectTheme().text).toBe("#ffffff");
+
+      setCanvasTheme("custom", "#b3b3b3");
 
       updateConfig({ textColor: "#333333" });
       clearThemeCache();
@@ -497,7 +508,7 @@ describe("Theme Module", () => {
       setCanvasTheme("custom", "#b3b3b3");
       document.documentElement.dataset.mockText = "#f1f5f9";
       clearThemeCache();
-      expect(detectTheme().text).toBe("#ffffff");
+      expect(detectTheme().text).toBe("#000000");
 
       document.documentElement.dataset.mockText = "#123456";
       clearThemeCache();

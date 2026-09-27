@@ -302,7 +302,7 @@ A: Pass `accentColor` to `init()`, or call `DiagView.configure({ accentColor: "#
 A: The canvas theme changes only the background, and the diagram keeps its author's colors. In the fullscreen menu, pick "Readable" under "Text Colours". DiagView then recolors only the text that is hard to read and keeps its hue. Exports keep the original colors. See [Text Colours](USAGE.md#text-colours).
 
 **Q: Which text colour does the viewer use on a custom canvas colour?**  
-A: Without `textColor` or `--diagram-text`, the toolbar and menu use `#1e293b` or `#f1f5f9`, whichever has more contrast on the canvas. On a mid-grey canvas where neither reaches 4.5:1, they use black or white. The diagram keeps its own colours. See [WCAG contrast enforcement](USAGE.md#wcag-contrast-enforcement).
+A: Without `textColor` or `--diagram-text`, the toolbar and menu use `#1e293b` or `#f1f5f9`, whichever has more contrast on the canvas. On a mid-grey canvas where neither reaches 4.5:1, they use black or white. A `textColor` or `--diagram-text` that falls under 4.5:1 also turns black or white, whichever has more contrast. The diagram keeps its own colours. See [WCAG contrast enforcement](USAGE.md#wcag-contrast-enforcement).
 
 ---
 

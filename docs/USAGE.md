@@ -521,7 +521,7 @@ Warning notices, such as the one shown when a transparent JPEG is saved as PNG, 
 
 ### WCAG contrast enforcement
 
-DiagView checks that the viewer's text colour reaches at least 4.5:1 against the canvas. When it falls short, DiagView logs a console warning and changes the colour. Its built-in colour, which can fall short on a mid-grey canvas, turns black (`#000000`) or white (`#ffffff`), whichever has more contrast. A `textColor` or `--diagram-text` turns black on a light canvas and white on a dark one. This check covers the viewer's own text colour, not the text inside your diagram.
+DiagView checks that the viewer's text colour reaches at least 4.5:1 against the canvas. When it falls short, DiagView logs a console warning and changes the colour. It turns black (`#000000`) or white (`#ffffff`), whichever has more contrast. This applies to its built-in colour, which can fall short on a mid-grey canvas, and to a `textColor` or `--diagram-text` you set. For example, `textColor: "#475569"` reaches 3.6:1 on a `#b3b3b3` canvas, so the viewer uses black at 10:1. This check covers the viewer's own text colour, not the text inside your diagram.
 
 ### Canvas Theme
 

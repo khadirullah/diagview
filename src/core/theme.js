@@ -213,27 +213,6 @@ export function noticeColors(color) {
 }
 
 /**
- * Ensure color has sufficient contrast against background
- * @private
- */
-function ensureContrast(foreground, background, minRatio = 4.5) {
-  const ratio = getContrastRatio(foreground, background);
-
-  if (ratio >= minRatio) {
-    return foreground;
-  }
-
-  // Fallback to high contrast
-  const bgRgb = parseColor(background);
-  if (!bgRgb) return foreground;
-
-  const bgLum = getLuminance(...bgRgb);
-
-  // If background is dark, use white; if light, use black
-  return bgLum > 0.5 ? "#000000" : "#ffffff";
-}
-
-/**
  * Detect if system/document is in dark mode
  * @private
  */
@@ -481,12 +460,9 @@ export function detectTheme() {
         `DiagView: Low contrast detected (${contrast.toFixed(2)}:1), using high-contrast fallback`,
       );
     }
-    // Our own text falls back to black or white, whichever reads better
-    text = own
-      ? getContrastRatio(canvas, "#000") > getContrastRatio(canvas, "#fff")
-        ? "#000000"
-        : "#ffffff"
-      : ensureContrast(text, canvas);
+    // Fall back to black or white, whichever reads better
+    text =
+      getContrastRatio(canvas, "#000") > getContrastRatio(canvas, "#fff") ? "#000000" : "#ffffff";
   }
 
   // Accent: config override, then --diagram-accent if it holds a real colour.
