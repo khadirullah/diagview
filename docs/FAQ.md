@@ -11,7 +11,7 @@ A: Yes. DiagView is MIT licensed — free for personal and commercial use with n
 A: Only `@panzoom/panzoom` for the fullscreen zoom/pan feature. PDF export loads jsPDF from a CDN the first time it runs. In the ESM build, search, the minimap, rotation, meeting mode and Readable text load on first use. The UMD build carries them all in one file.
 
 **Q: Which diagram libraries does DiagView support?**  
-A: Any library that outputs SVG into the DOM — including Mermaid.js, D3.js, Graphviz, PlantUML (rendered), Kroki, and hand-crafted SVGs. See [Mermaid Integration](USAGE.md#21-mermaid-integration).
+A: Any library that outputs SVG into the DOM — including Mermaid.js, D3.js, Graphviz, PlantUML (rendered), Kroki, draw.io, and hand-crafted SVGs. See [Mermaid Integration](USAGE.md#21-mermaid-integration).
 
 **Q: Does it work without npm?**  
 A: Yes. Drop in two `<script>` tags from a CDN and you are done. See [Installation](USAGE.md#1-installation).
@@ -93,6 +93,9 @@ DiagView.openFullscreen(element, { searchQuery: "my term" });
 
 **Q: Is search case-sensitive?**  
 A: No. All queries and node text are lowercased before comparison.
+
+**Q: Does search work on draw.io diagrams?**  
+A: Yes. draw.io keeps a `<text>` copy of each label that the browser never draws. Search matches the HTML label you see and outlines the box under it.
 
 ---
 
