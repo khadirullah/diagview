@@ -520,8 +520,10 @@ export function syncReadable(bg) {
 
 /**
  * The text colour faded toward the canvas, as far as 30%, while it still
- * reaches 4.5:1. For secondary text such as the menu headings. On a canvas
- * where the text only just passes it stays at full strength.
+ * reaches 4.5:1. For secondary text such as the menu headings and the
+ * search placeholder. The search box lays a faint grey wash over the
+ * canvas, so the colour must pass on that too. On a canvas where the text
+ * only just passes it stays at full strength.
  * @param {string} text - Text colour
  * @param {string} bg - Opaque canvas colour
  * @returns {string} The muted colour
@@ -530,9 +532,11 @@ function mutedText(text, bg) {
   const t = parseColor(text);
   const b = parseColor(bg);
   if (!t || !b) return text;
+  const rgb = (c) => `rgb(${c.map(Math.round).join(", ")})`;
+  const box = rgb(b.map((c) => c + (128 - c) * 0.12));
   for (let step = 6; step > 0; step--) {
-    const mix = `rgb(${t.map((c, i) => Math.round(c + (b[i] - c) * step * 0.05)).join(", ")})`;
-    if (getContrastRatio(mix, bg) >= 4.5) return mix;
+    const mix = rgb(t.map((c, i) => c + (b[i] - c) * step * 0.05));
+    if (getContrastRatio(mix, bg) >= 4.5 && getContrastRatio(mix, box) >= 4.5) return mix;
   }
   return text;
 }

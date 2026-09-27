@@ -724,6 +724,13 @@
   border-radius: 0;
 }
 
+/* Browsers draw placeholders in their own grey, and Firefox also fades
+   them, which left "Search nodes..." unreadable on some canvases */
+.diagview-search-input::placeholder {
+  color: var(--dv-muted-text, var(--dv-text-color));
+  opacity: 1;
+}
+
 .diagview-search-input:focus::placeholder {
   color: transparent;
 }

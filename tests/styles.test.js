@@ -19,11 +19,17 @@ function ruleBody(selector, from = 0) {
   return css.slice(open + 1, close);
 }
 
-describe("styles.css: menu headings", () => {
+describe("styles.css: menu headings and search placeholder", () => {
   test("use the muted text colour instead of opacity, so they keep 4.5:1", () => {
     const body = ruleBody(".dv-menu-lbl {");
     expect(body).toContain("var(--dv-muted-text");
     expect(body).not.toMatch(/opacity\s*:/);
+  });
+
+  test("the search placeholder uses it too, at full opacity in every browser", () => {
+    const body = ruleBody(".diagview-search-input::placeholder {");
+    expect(body).toContain("var(--dv-muted-text");
+    expect(body).toMatch(/opacity:\s*1/);
   });
 });
 

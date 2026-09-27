@@ -209,7 +209,7 @@ describe("Theme Module", () => {
       });
     });
 
-    test("--dv-muted-text fades the text on roomy canvases and keeps 4.5:1 on all of them", () => {
+    test("--dv-muted-text fades the text on roomy canvases and keeps 4.5:1 on the canvas and search box", () => {
       const muted = () => document.documentElement.style.getPropertyValue("--dv-muted-text");
       for (const bg of ["#ffffff", "#0f172a", "#b3b3b3", "#6b7280", "#ff0000"]) {
         updateConfig({ backgroundColor: bg });
@@ -217,8 +217,11 @@ describe("Theme Module", () => {
           const theme = syncTheme();
           expect(getContrastRatio(muted(), bg)).toBeGreaterThanOrEqual(4.5);
           if (bg === "#ffffff") expect(muted()).not.toBe(theme.text);
-          // White only reaches 4.83:1 here, so it fades by just 5%
-          if (bg === "#6b7280") expect(muted()).toBe("rgb(248, 248, 249)");
+          // White only reaches 4.83:1 here, and less on the search box wash
+          if (bg === "#6b7280") expect(muted()).toBe(theme.text);
+          // The search box lays a 12% grey wash over the canvas
+          const box = bg.match(/\w\w/g).map((h) => Math.round(parseInt(h, 16) * 0.88 + 128 * 0.12));
+          expect(getContrastRatio(muted(), `rgb(${box.join(", ")})`)).toBeGreaterThanOrEqual(4.5);
         });
       }
     });
