@@ -67,7 +67,7 @@ DiagView.refresh();
 
 ### `DiagView.configure(options)`
 
-Update configuration at runtime without re-initializing. Syncs theme and branding visibility immediately.
+Update configuration at runtime without re-initializing. Syncs the theme, Readable text colours, the canvas grid and branding visibility immediately.
 
 **Signature:** `configure(options?: DiagViewOptions): void`
 
@@ -78,7 +78,7 @@ DiagView.configure({
 });
 ```
 
-DiagView checks some options on `init()` and `configure()`. An invalid value logs a warning and keeps the value that was in effect before. The exception is `layout`, which falls back to `'floating'`. `highResScale`, `mobileScale`, `maxZoomScale`, `minZoomScale` and `maxPixels` must be finite numbers in their documented range, and `minZoomScale` may not exceed `maxZoomScale`. Timing options such as `toastDuration` must be 0 or more. `diagramSelector` must be a selector the browser accepts, and `allowedImageTypes` must be an array of strings. The `security`, `watermark`, `ui` and `performance` groups must be objects, and DiagView merges them into the current settings. DiagView does not check the values inside those groups, booleans, callbacks or the PDF options. The one exception is export. An unknown `watermark.style` or `watermark.position` logs a warning and uses the default, `'corner'` or `'bottom-right'`. An `opacity` below 0 or above 1 logs a warning and uses 0 or 1. An `opacity` that is not a number logs a warning and uses 0.2. A missing or empty value uses the default without a warning. An unknown `security.mode` works as `'strict'`. An `accentColor`, `backgroundColor` or `textColor` the browser cannot parse logs a warning, and DiagView detects that colour from the page instead. A `warningColor` the browser cannot parse logs a warning, and warning notices use the default amber. DiagView ignores unknown top-level keys and logs a warning.
+DiagView checks some options on `init()` and `configure()`. An invalid value logs a warning and keeps the value that was in effect before. The exception is `layout`, which falls back to `'floating'`. `highResScale`, `mobileScale`, `maxZoomScale`, `minZoomScale` and `maxPixels` must be finite numbers in their documented range, and `minZoomScale` may not exceed `maxZoomScale`. Timing options such as `toastDuration` must be 0 or more. `canvasGrid` must be `'none'` or `'dots'`. `diagramSelector` must be a selector the browser accepts, and `allowedImageTypes` must be an array of strings. The `security`, `watermark`, `ui` and `performance` groups must be objects, and DiagView merges them into the current settings. DiagView does not check the values inside those groups, booleans, callbacks or the PDF options. The one exception is export. An unknown `watermark.style` or `watermark.position` logs a warning and uses the default, `'corner'` or `'bottom-right'`. An `opacity` below 0 or above 1 logs a warning and uses 0 or 1. An `opacity` that is not a number logs a warning and uses 0.2. A missing or empty value uses the default without a warning. An unknown `security.mode` works as `'strict'`. An `accentColor`, `backgroundColor` or `textColor` the browser cannot parse logs a warning, and DiagView detects that colour from the page instead. A `warningColor` the browser cannot parse logs a warning, and warning notices use the default amber. DiagView ignores unknown top-level keys and logs a warning.
 
 ---
 
@@ -117,7 +117,7 @@ All export methods are async and return `Promise<void>`.
 
 Generic export dispatcher.
 
-**Signature:** `exportDiagram(element: HTMLElement, mode: ExportMode, options?: ExportOptions): Promise<void>`
+**Signature:** `exportDiagram(element: HTMLElement, mode: ExportMode, options?: ExportOptions | null): Promise<void>`
 
 ```typescript
 type ExportMode =
@@ -260,7 +260,7 @@ Sanitize an SVG string or DOM Node to prevent XSS injection.
 sanitizeSVG(
   input: string | Node,
   mode?: 'strict' | 'permissive' | 'off',
-  options?: number | SanitizeOptions
+  options?: number | SanitizeOptions | null
 ): string | Node | null
 ```
 
@@ -369,7 +369,7 @@ interface DiagViewConfig {
   animateOpen: boolean; // default: true
 
   // Interaction
-  naturalPanning: boolean; // default: false
+  naturalPanning: boolean; // default: false; true = arrow keys move the diagram in the arrow's direction
   rotateKeepsView: boolean; // default: false; true = rotate keeps the view (size on screen and centre), zoom % adjusts
   rememberZoom: boolean; // default: false
   showMinimap: boolean; // default: true
@@ -401,8 +401,8 @@ interface DiagViewConfig {
   };
 
   // Notifications
-  toastDuration: number; // default: 2500 (ms)
-  errorToastDuration: number; // default: 5000 (ms)
+  toastDuration: number; // default: 2500 (ms), success and info notices
+  errorToastDuration: number; // default: 5000 (ms), error notices
   showFirstTimeThemeHint: boolean; // default: true
 
   // PDF
