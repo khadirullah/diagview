@@ -407,6 +407,104 @@ describe("Theme Module", () => {
     expect(themeCustom.bg).toBe("#0b0f19");
     expect(themeCustom.isDark).toBe(true);
   });
+
+  describe("own text colour", () => {
+    const { TEXT_LIGHT: onLight, TEXT_DARK: onDark } = COLORS;
+    let warn;
+
+    beforeEach(() => {
+      delete document.documentElement.dataset.mockText;
+      warn = jest.spyOn(console, "warn").mockImplementation(() => {});
+    });
+
+    afterEach(() => {
+      setCanvasTheme("auto");
+      document.body.style.backgroundColor = "";
+      warn.mockRestore();
+    });
+
+    test("built-in modes and swatches keep their text colour", () => {
+      expect(setCanvasTheme("light").text).toBe(onLight);
+      expect(setCanvasTheme("dark").text).toBe(onDark);
+      expect(setCanvasTheme("custom", "#ffffff").text).toBe(onLight);
+      for (const swatch of ["#0b0f19", "#0f172a", "#1e293b"]) {
+        expect(setCanvasTheme("custom", swatch).text).toBe(onDark);
+      }
+      for (const light of ["#f8fafc", "#fef3c7", "#e2e8f0"]) {
+        expect(setCanvasTheme("custom", light).text).toBe(onLight);
+      }
+      for (const dark of ["#000000", "#334155", "#1f2937", "#475569"]) {
+        expect(setCanvasTheme("custom", dark).text).toBe(onDark);
+      }
+      expect(warn).not.toHaveBeenCalled();
+    });
+
+    test("Auto follows a light or dark page as before", () => {
+      setCanvasTheme("auto");
+      document.body.style.backgroundColor = "#ffffff";
+      clearThemeCache();
+      expect(detectTheme().text).toBe(onLight);
+
+      document.documentElement.classList.add("dark");
+      document.body.style.backgroundColor = "#0f172a";
+      clearThemeCache();
+      expect(detectTheme().text).toBe(onDark);
+    });
+
+    test.each(["#b3b3b3", "#9ca3af", "#fb923c", "#f97316"])(
+      "a mid-tone canvas %s gets the dark text",
+      (colour) => {
+        const theme = setCanvasTheme("custom", colour);
+        expect(theme.isDark).toBe(true);
+        expect(theme.text).toBe(onLight);
+        expect(getContrastRatio(colour, theme.text)).toBeGreaterThanOrEqual(4.5);
+        expect(warn).not.toHaveBeenCalled();
+      },
+    );
+
+    test.each(["#808080", "#3b82f6"])(
+      "a mid-tone canvas %s where neither reaches 4.5:1 falls back to black",
+      (colour) => {
+        const theme = setCanvasTheme("custom", colour);
+        expect(theme.text).toBe("#000000");
+        expect(getContrastRatio(colour, theme.text)).toBeGreaterThanOrEqual(4.5);
+      },
+    );
+
+    test("a mid-tone backgroundColor or page gets the dark text too", () => {
+      updateConfig({ backgroundColor: "#b3b3b3" });
+      clearThemeCache();
+      expect(detectTheme().text).toBe(onLight);
+
+      resetConfig();
+      document.documentElement.classList.add("dark");
+      document.body.style.backgroundColor = "#9ca3af";
+      clearThemeCache();
+      expect(detectTheme().text).toBe(onLight);
+    });
+
+    test("textColor and page text variables still go through the old guard", () => {
+      setCanvasTheme("custom", "#b3b3b3");
+      updateConfig({ textColor: "#fafafa" });
+      clearThemeCache();
+      expect(detectTheme().text).toBe("#ffffff");
+
+      updateConfig({ textColor: "#333333" });
+      clearThemeCache();
+      expect(detectTheme().text).toBe("#333333");
+
+      resetConfig();
+      setCanvasTheme("custom", "#b3b3b3");
+      document.documentElement.dataset.mockText = "#f1f5f9";
+      clearThemeCache();
+      expect(detectTheme().text).toBe("#ffffff");
+
+      document.documentElement.dataset.mockText = "#123456";
+      clearThemeCache();
+      expect(detectTheme().text).toBe("#123456");
+      delete document.documentElement.dataset.mockText;
+    });
+  });
 });
 
 describe("Theme Module: modern colour syntax and rejected colours", () => {

@@ -449,24 +449,29 @@ export function detectTheme() {
     }
   }
 
+  // The colour text is drawn on, the page mixed in under a see-through canvas
+  const canvas = overPage(bg, page);
+
   // Detect text color with multiple fallbacks.
   // Explicit config override (textColor: null = auto-detect) wins over
   // detection but still goes through the WCAG contrast guard below.
-  let text =
-    validConfigColor("textColor") ||
-    getCSSVariable("--diagram-text", COLORS.TEXT_LIGHT, COLORS.TEXT_DARK, isDark) ||
-    (isDark ? COLORS.TEXT_DARK : COLORS.TEXT_LIGHT);
+  let text = validConfigColor("textColor") || getCSSVariable("--diagram-text", null, null, isDark);
 
   // Fallback to other common variable names
-  if (!text || text === "inherit") {
+  if (text === "inherit") text = getCSSVariable("--text-color", null, null, isDark);
+
+  // With no colour from config or the page, the text is ours. Take
+  // whichever of the two reads better on the canvas, as a mid-tone canvas
+  // can count as dark and still need the dark text.
+  const own = !text;
+  if (own) {
+    const onLight = getContrastRatio(canvas, COLORS.TEXT_LIGHT);
+    const onDark = getContrastRatio(canvas, COLORS.TEXT_DARK);
     text =
-      getCSSVariable("--text-color", COLORS.TEXT_LIGHT, COLORS.TEXT_DARK, isDark) ||
-      getCSSVariable("--foreground", COLORS.TEXT_LIGHT, COLORS.TEXT_DARK, isDark) ||
-      (isDark ? COLORS.TEXT_DARK : COLORS.TEXT_LIGHT);
+      onLight > onDark || (onLight === onDark && !isDark) ? COLORS.TEXT_LIGHT : COLORS.TEXT_DARK;
   }
 
   // Ensure sufficient contrast (WCAG AA: 4.5:1)
-  const canvas = overPage(bg, page);
   const contrast = getContrastRatio(canvas, text);
   if (contrast < 4.5) {
     const pair = canvas + "|" + text;
@@ -476,7 +481,12 @@ export function detectTheme() {
         `DiagView: Low contrast detected (${contrast.toFixed(2)}:1), using high-contrast fallback`,
       );
     }
-    text = ensureContrast(text, canvas);
+    // Our own text falls back to black or white, whichever reads better
+    text = own
+      ? getContrastRatio(canvas, "#000") > getContrastRatio(canvas, "#fff")
+        ? "#000000"
+        : "#ffffff"
+      : ensureContrast(text, canvas);
   }
 
   // Accent: config override, then --diagram-accent if it holds a real colour.
