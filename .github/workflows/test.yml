@@ -24,6 +24,8 @@ jobs:
         run: npm run test
       - name: Verify Build
         run: npm run build
+      - name: Check Package Entry Points
+        run: npm run test:entries
       - name: Check Types
         run: npm run typecheck
       - name: Check Bundle Size

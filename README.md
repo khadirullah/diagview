@@ -103,6 +103,12 @@ DiagView.init({ layout: "floating" });
 
 DiagView does not import Panzoom. It reads `window.Panzoom` when the fullscreen viewer opens, so assign it once in your entry file. Without it, the viewer opens with zoom and pan turned off.
 
+CommonJS code and Jest get the same API from `require()`, which resolves `dist/diagview.umd.cjs`. Panzoom still has to be on `window`.
+
+```javascript
+const DiagView = require("diagview");
+```
+
 ### ESM (Bundlers / Vite / Webpack)
 
 ```javascript

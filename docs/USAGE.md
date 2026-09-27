@@ -54,8 +54,13 @@ npm install diagview @panzoom/panzoom
 ```
 
 ```javascript
-import DiagView from "diagview";
-// ESM build is resolved automatically by package "module" field
+import DiagView from "diagview"; // resolves dist/esm/index.js
+```
+
+CommonJS code and Jest use `require()`, which resolves `dist/diagview.umd.cjs`:
+
+```javascript
+const DiagView = require("diagview");
 ```
 
 ### Bundler (Vite, Webpack, Rollup)

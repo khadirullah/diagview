@@ -80,10 +80,12 @@ const terserConfig = {
 
 export default [
   // UMD build (browser <script> tag) - NO CODE SPLITTING
+  // The same bundle is also written as .cjs for require("diagview"). The
+  // package is "type": "module", so Node reads any .js file in it as ESM.
   {
     input: "src/index.js",
-    output: {
-      file: "dist/diagview.umd.js",
+    output: ["dist/diagview.umd.js", "dist/diagview.umd.cjs"].map((file) => ({
+      file,
       format: "umd",
       name: "DiagView",
       exports: "named",
@@ -92,7 +94,7 @@ export default [
       },
       banner: `/*! DiagView v${pkg.version} | MIT License | github.com/khadirullah/diagview */`,
       inlineDynamicImports: true, // FIX: Inline dynamic imports for UMD
-    },
+    })),
     external: ["@panzoom/panzoom"],
     plugins: [
       stringPlugin(),

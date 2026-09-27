@@ -3,7 +3,7 @@
   "version": "1.0.12",
   "description": "A lightweight framework-agnostic viewer for SVG diagrams (Mermaid, Graphviz, etc). Adds interactive Zoom, Pan, Search, Export, and Presentation Mode.",
   "type": "module",
-  "main": "dist/diagview.umd.js",
+  "main": "dist/diagview.umd.cjs",
   "module": "dist/esm/index.js",
   "unpkg": "dist/diagview.umd.min.js",
   "jsdelivr": "dist/diagview.umd.min.js",
@@ -12,7 +12,7 @@
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/esm/index.js",
-      "require": "./dist/diagview.umd.js"
+      "require": "./dist/diagview.umd.cjs"
     },
     "./style": "./dist/diagview.css"
   },
@@ -25,6 +25,7 @@
     "test": "NODE_OPTIONS=--experimental-vm-modules jest",
     "test:coverage": "NODE_OPTIONS=--experimental-vm-modules jest --coverage",
     "test:e2e": "playwright test",
+    "test:entries": "node scripts/check-entries.cjs",
     "dev": "rollup -c -w",
     "build": "npm run version:sync && npm run clean && npm run build:lib && npm run build:css && npm run build:types",
     "build:lib": "rollup -c",

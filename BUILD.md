@@ -58,6 +58,7 @@ This runs five steps internally:
 | -------------------------- | ------------ | ---------------------------------------------------------------- |
 | `dist/diagview.umd.js`     | UMD          | Browser `<script>` tag (unminified)                              |
 | `dist/diagview.umd.min.js` | UMD minified | Browser `<script>` tag (production)                              |
+| `dist/diagview.umd.cjs`    | UMD          | `require("diagview")` in Node, Jest and CommonJS tools           |
 | `dist/esm/index.js`        | ESM          | Bundlers (Vite, Webpack, Rollup)                                 |
 | `dist/esm/*-<hash>.js`     | ESM chunks   | Lazy-loaded features and shared code for the ESM build           |
 | `dist/diagview.css`        | CSS          | Optional stylesheet (`diagview/style`)                           |
