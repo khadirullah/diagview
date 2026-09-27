@@ -5,7 +5,7 @@
  */
 
 import { jest } from "@jest/globals";
-import { state, resetConfig } from "../src/core/config.js";
+import { state, resetConfig, updateConfig } from "../src/core/config.js";
 import * as theme from "../src/core/theme.js";
 import {
   applyReadableText,
@@ -391,6 +391,61 @@ describe("Readable text: modal wiring", () => {
       expect(viewportText.style.getPropertyValue("fill")).toBe("");
     } finally {
       await destroy();
+      if (!hadMatchMedia) delete window.matchMedia;
+    }
+  });
+
+  test("a transparent canvas is measured against the page under it", async () => {
+    const diagram = buildModal();
+    // "transparent" itself needs a browser to parse, this is the same colour
+    updateConfig({ backgroundColor: "rgba(0, 0, 0, 0)" });
+    createFloatingMenu(document.createElement("div"), diagram);
+    try {
+      // Dark page: #333 labels are hard to read and change
+      document.body.style.backgroundColor = DARK;
+      theme.clearThemeCache();
+      document.querySelector('[data-text-mode="readable"]').click();
+      await flush();
+      const fill = viewportText.style.getPropertyValue("fill");
+      expect(fill).not.toBe("");
+      expect(theme.getContrastRatio(fill, DARK)).toBeGreaterThanOrEqual(4.5);
+
+      // White page: the same labels already read well
+      document.body.style.backgroundColor = LIGHT;
+      theme.clearThemeCache();
+      expect(syncReadableText()).toBe(0);
+      expect(viewportText.style.getPropertyValue("fill")).toBe("");
+    } finally {
+      document.body.style.backgroundColor = "";
+    }
+  });
+
+  test("with a transparent canvas the recolour follows the page colour", async () => {
+    buildModal();
+    updateConfig({ backgroundColor: "rgba(0, 0, 0, 0)" });
+    state.readableText = true;
+    const hadMatchMedia = "matchMedia" in window;
+    window.matchMedia ??= () => ({
+      matches: false,
+      addEventListener() {},
+      removeEventListener() {},
+    });
+    theme.setupThemeWatchers();
+    const settle = async () => {
+      await new Promise((resolve) => setTimeout(resolve, 150));
+      await flush();
+    };
+    try {
+      document.body.style.backgroundColor = LIGHT;
+      await settle();
+      expect(viewportText.style.getPropertyValue("fill")).toBe("");
+
+      document.body.style.backgroundColor = DARK;
+      await settle();
+      expect(viewportText.style.getPropertyValue("fill")).not.toBe("");
+    } finally {
+      theme.teardownThemeWatchers();
+      document.body.style.backgroundColor = "";
       if (!hadMatchMedia) delete window.matchMedia;
     }
   });

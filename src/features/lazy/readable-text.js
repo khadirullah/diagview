@@ -274,7 +274,8 @@ export function restoreText(svg) {
  * Recolour the labels that are hard to read against what sits behind them.
  * Starts from the author's colours, so calling it again never stacks.
  * @param {SVGElement} svg - Diagram SVG in the modal
- * @param {string} canvasBg - Canvas colour
+ * @param {string} canvasBg - Opaque canvas colour as seen. A see-through
+ *   value is laid over white, so pass the theme's seenBg instead.
  * @returns {number} Number of labels recoloured
  */
 export function applyReadableText(svg, canvasBg) {
@@ -334,7 +335,7 @@ export function withOriginalText(svg, fn) {
 
 /**
  * Bring the modal diagram in line with state.readableText.
- * @param {string} [canvasBg] - Canvas colour, detected when omitted
+ * @param {string} [canvasBg] - Canvas colour as seen, detected when omitted
  * @returns {number} Number of labels recoloured
  */
 export function syncReadableText(canvasBg) {
@@ -345,5 +346,6 @@ export function syncReadableText(canvasBg) {
     restoreText(svg);
     return 0;
   }
-  return applyReadableText(svg, canvasBg || detectTheme().bg);
+  // A see-through canvas shows the page, so measure against what is seen
+  return applyReadableText(svg, canvasBg || detectTheme().seenBg);
 }

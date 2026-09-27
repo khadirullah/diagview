@@ -517,13 +517,14 @@ export function setCanvasTheme(mode, customColor = null) {
   clearThemeCache();
 
   const theme = syncTheme();
-  syncReadable(theme.bg);
+  syncReadable(theme.seenBg);
   return theme;
 }
 
 /**
  * Readable text is measured against the canvas, so recolour for a new one.
- * @param {string} bg - Canvas colour
+ * @param {string} bg - Canvas colour as seen, the page colour under a
+ *   see-through canvas
  */
 export function syncReadable(bg) {
   if (state.readableText) {
@@ -596,8 +597,9 @@ export function setupThemeWatchers() {
   let lastBg = null;
   const debouncedSync = debounce(() => {
     clearThemeCache();
-    const { bg } = syncTheme();
-    // In Auto mode the canvas follows the page, so readable text follows too
+    const { seenBg: bg } = syncTheme();
+    // In Auto mode, or with a see-through canvas, the colour seen follows
+    // the page, so readable text follows too
     if (bg !== lastBg) syncReadable(bg);
     lastBg = bg;
   }, TIMING.THEME_SYNC_DEBOUNCE);

@@ -281,7 +281,7 @@ function configure(options = {}) {
 
   updateConfig(options);
   clearThemeCache(); // colour overrides must not wait for the cache to expire
-  syncReadable(syncTheme().bg);
+  syncReadable(syncTheme().seenBg);
   syncBrandingVisibility();
   syncCanvasGrid();
 }
