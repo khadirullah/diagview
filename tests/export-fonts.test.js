@@ -182,4 +182,34 @@ describe("embedDocumentFonts", () => {
     expect(fetchMock).not.toHaveBeenCalled();
     expect(svg.querySelector("style.dv-font-embed")).toBeNull();
   });
+
+  test("warns once per stylesheet whose rules it can't read", async () => {
+    const locked = (href) => ({
+      href,
+      get cssRules() {
+        throw new DOMException("Cannot access rules", "SecurityError");
+      },
+    });
+    const sheets = [
+      ...document.styleSheets,
+      locked("https://fonts.example.com/css?family=A"),
+      locked("https://fonts.example.com/css?family=B"),
+      locked(null),
+    ];
+    Object.defineProperty(document, "styleSheets", { get: () => sheets, configurable: true });
+    const warn = jest.spyOn(console, "warn").mockImplementation(() => {});
+    try {
+      await embedDocumentFonts(svgWith(["Hello"]));
+      await embedDocumentFonts(svgWith(["Hello"]));
+      expect(warn.mock.calls.map((c) => c[0])).toEqual([
+        'DiagView: Can\'t read fonts from https://fonts.example.com/css?family=A. Add crossorigin="anonymous" to its <link> to embed them in exports.',
+        'DiagView: Can\'t read fonts from https://fonts.example.com/css?family=B. Add crossorigin="anonymous" to its <link> to embed them in exports.',
+      ]);
+      // The readable sheet still gets embedded
+      expect(fetched()).toEqual(["sans-400.woff2", "sans-400.woff2"]);
+    } finally {
+      warn.mockRestore();
+      delete document.styleSheets;
+    }
+  });
 });

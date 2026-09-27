@@ -32,6 +32,8 @@ async function fetchAsDataURI(url, base) {
   }
 }
 
+/** Stylesheets already warned about in this page session */
+const warned = new Set();
 const unquote = (s) => s.replace(/["']/g, "").trim().toLowerCase();
 
 /**
@@ -134,7 +136,14 @@ export async function embedDocumentFonts(svgEl) {
         }
       }
     } catch {
-      // cross-origin stylesheets — skip
+      // Only a cross-origin stylesheet loaded without CORS gets here. Say
+      // once per stylesheet why its fonts are missing from the export.
+      const href = sheet.href;
+      if (href && warned.size < warned.add(href).size) {
+        console.warn(
+          `DiagView: Can't read fonts from ${href}. Add crossorigin="anonymous" to its <link> to embed them in exports.`,
+        );
+      }
     }
   }
 
