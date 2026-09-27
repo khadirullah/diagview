@@ -61,7 +61,7 @@ Open a page in `demo/` in your browser. The demo pages load the released `diagvi
 diagview/
 ├── src/
 │   ├── core/             # State, config, events, lifecycle, utils
-│   ├── features/         # Diagram init, export, keyboard
+│   ├── features/         # Diagram init, export, keyboard, pan/zoom
 │   │   └── lazy/         # Search, minimap, share, rotate, meeting mode, readable text
 │   └── ui/               # Modal, floating menu, toast, focus manager
 ├── tests/
@@ -79,7 +79,7 @@ diagview/
 
 ### Key design principles
 
-- **Lazy loading:** Minimap, meeting mode, rotate, Text Colours and the PDF library load on first use through dynamic `import()`. `init()` pre-loads search and share in the background.
+- **Lazy loading:** In the ESM build, search, minimap, meeting mode, rotate and Text Colours are separate chunks that load through dynamic `import()`. `init()` pre-loads search in the background. Share stays in the main bundle because the diagram scan imports it to restore share links from the URL. The PDF library loads from a script tag on the first PDF export. The UMD bundles inline every feature.
 - **No innerHTML sinks:** All DOM mutation uses `createElement`, `createElementNS`, `DOMParser`, or `setSVGContent()`, never `innerHTML`. The only `insertAdjacentHTML` calls insert the library's own icon markup.
 - **Cleanup discipline:** Every listener added during a modal session has a matching removal, usually through `addManagedListener` or `addModalListener`.
 - **No circular dependencies:** Modules are structured to minimize circular imports.
@@ -105,6 +105,8 @@ npm run format
 # Check bundle size against limits
 npm run size
 ```
+
+`npm install` also sets up a Husky pre-commit hook. It runs ESLint and Prettier on the staged files through `lint-staged`, so a commit may reformat what you staged.
 
 ### Environment variables
 
