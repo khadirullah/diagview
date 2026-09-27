@@ -190,6 +190,33 @@ describe("Theme Module", () => {
         );
       });
     });
+
+    test("panels get the solid colour seen through a transparent canvas", () => {
+      const panel = () => document.documentElement.style.getPropertyValue("--dv-panel-bg");
+      updateConfig({ backgroundColor: "transparent" });
+      withPage("rgb(15, 23, 42)", () => {
+        const theme = syncTheme();
+        expect(theme.seenBg).toBe("rgb(15, 23, 42)");
+        expect(panel()).toBe("rgb(15, 23, 42)");
+        expect(getContrastRatio(theme.text, panel())).toBeGreaterThanOrEqual(4.5);
+      });
+      // Black at 20% over white shows as a light grey
+      updateConfig({ backgroundColor: "rgba(0, 0, 0, 0.2)" });
+      withPage("rgb(255, 255, 255)", () => {
+        const theme = syncTheme();
+        expect(panel()).toBe("rgb(204, 204, 204)");
+        expect(getContrastRatio(theme.text, panel())).toBeGreaterThanOrEqual(4.5);
+      });
+    });
+
+    test("an opaque canvas colour is the panel colour as it is", () => {
+      updateConfig({ backgroundColor: "#1e293b" });
+      withPage("rgb(255, 255, 255)", () => {
+        const theme = syncTheme();
+        expect(theme.seenBg).toBe("#1e293b");
+        expect(document.documentElement.style.getPropertyValue("--dv-panel-bg")).toBe("#1e293b");
+      });
+    });
   });
 
   test("textColor config override is used when it has enough contrast", () => {

@@ -398,13 +398,15 @@ function overPage(color, page) {
 
 /**
  * Enhanced theme detection with caching and robust fallbacks
- * @returns {object} Theme object with isDark, bg, text, accent
+ * @returns {object} Theme object with isDark, bg, text, accent, and seenBg,
+ *   the opaque colour a see-through canvas shows over the page
  */
 export function detectTheme() {
   if (typeof window === "undefined") {
     return {
       isDark: false,
       bg: COLORS.BG_LIGHT,
+      seenBg: COLORS.BG_LIGHT,
       text: COLORS.TEXT_LIGHT,
       accent: COLORS.ACCENT_LIGHT,
     };
@@ -487,7 +489,15 @@ export function detectTheme() {
 
   const warning = validConfigColor("warningColor", isColor) || COLORS.WARNING;
 
-  const theme = { isDark, bg, text, accent, onAccent: onAccentColor(accent), warning };
+  const theme = {
+    isDark,
+    bg,
+    seenBg: canvas,
+    text,
+    accent,
+    onAccent: onAccentColor(accent),
+    warning,
+  };
 
   // Cache theme
   state.themeCache = theme;
@@ -530,6 +540,9 @@ export function syncTheme() {
 
   // Update CSS variables
   root.style.setProperty("--dv-bg", theme.bg);
+  // Panels over the diagram need a solid colour so their text keeps its
+  // contrast when the canvas lets the page show through
+  root.style.setProperty("--dv-panel-bg", theme.seenBg);
   root.style.setProperty("--dv-text-color", theme.text);
   root.style.setProperty("--dv-accent", theme.accent);
   root.style.setProperty("--dv-on-accent", theme.onAccent);
@@ -649,6 +662,7 @@ export function teardownThemeWatchers() {
   // Remove the CSS variables syncTheme() put on <html>
   const root = document.documentElement;
   root.style.removeProperty("--dv-bg");
+  root.style.removeProperty("--dv-panel-bg");
   root.style.removeProperty("--dv-text-color");
   root.style.removeProperty("--dv-accent");
   root.style.removeProperty("--dv-on-accent");
