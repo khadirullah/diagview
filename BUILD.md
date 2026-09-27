@@ -89,6 +89,11 @@ npm test -- tests/search.test.js
 npm test -- --watch
 ```
 
+### Type check
+
+`npm run typecheck` compiles `tests/types/api.ts` against the built
+declarations. Run it after `npm run build`.
+
 ### E2E geometry harness (real Chrome)
 
 Interaction paths JSDOM cannot test — pan/zoom geometry, share-link restore

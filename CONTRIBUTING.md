@@ -67,6 +67,7 @@ diagview/
 ├── tests/
 │   ├── *.test.js         # Jest unit tests (one file per module)
 │   ├── e2e/              # Real-browser checks (Playwright, run by hand)
+│   ├── types/            # Type check of the published declarations
 │   └── mocks/            # JSDOM mocks (styleMock.js)
 ├── demo/                 # Static demo pages (load diagview from unpkg)
 ├── docs/                 # Documentation (Markdown)
@@ -138,6 +139,15 @@ npm test -- --watch
 
 Tests use JSDOM. Tests that need canvas import `jest-canvas-mock` themselves, as `tests/export.test.js` does. CSS imports are mocked via `tests/mocks/styleMock.js`.
 
+### Type check
+
+```bash
+npm run build
+npm run typecheck
+```
+
+`tests/types/api.ts` calls the public API through the built `dist/index.d.ts`. It fails when a documented option or call stops compiling, or when a wrong value starts to compile. Add a line there when you add an option.
+
 ---
 
 ## Commit Message Convention
@@ -187,7 +197,7 @@ test(share): add coverage for RAF-based pan fallback
 4. **Run the full test suite locally:**
 
    ```bash
-   npm run lint && npm test && npm run build && npm run size
+   npm run lint && npm test && npm run build && npm run typecheck && npm run size
    ```
 
 5. **Open the PR** against `main`. In the description, answer:
