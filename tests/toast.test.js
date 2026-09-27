@@ -8,6 +8,7 @@ import {
   showInfoToast,
   showWarningToast,
 } from "../src/ui/toast.js";
+import { ICONS } from "../src/ui/icons.js";
 
 describe("Toast Notification System", () => {
   beforeEach(() => {
@@ -81,11 +82,40 @@ describe("Toast Notification System", () => {
   test("convenience methods work", () => {
     showSuccessToast("Success");
     jest.advanceTimersByTime(1);
-    expect(document.body.textContent).toContain("✓ Success");
+    expect(document.body.textContent).toContain("Success");
 
     showErrorToast("Error", "Details");
     jest.advanceTimersByTime(1);
-    expect(document.body.textContent).toContain("✕ Error: Details");
+    expect(document.body.textContent).toContain("Error: Details");
+  });
+
+  test("each type draws its own hidden SVG icon before the message", () => {
+    const icon = () => {
+      const t = [...document.querySelectorAll(".diagview-toast")].pop();
+      const svg = t.firstElementChild;
+      expect(svg.tagName.toLowerCase()).toBe("svg");
+      expect(svg.getAttribute("aria-hidden")).toBe("true");
+      expect(svg.getAttribute("class")).toBe("diagview-toast-icon");
+      return { text: t.textContent, paths: shapes(svg) };
+    };
+    const shapes = (svg) =>
+      [...svg.children].map((c) => `${c.tagName}:${c.getAttribute("d") ?? c.getAttribute("r")}`);
+    const paths = (markup) =>
+      shapes(new DOMParser().parseFromString(markup, "image/svg+xml").documentElement);
+
+    showSuccessToast("Saved");
+    expect(icon()).toEqual({ text: "Saved", paths: paths(ICONS.check) });
+    showInfoToast("Working");
+    expect(icon()).toEqual({ text: "Working", paths: paths(ICONS.info) });
+    showWarningToast("Careful");
+    expect(icon()).toEqual({ text: "Careful", paths: paths(ICONS.warning) });
+    showErrorToast("Broken");
+    expect(icon()).toEqual({ text: "Broken", paths: paths(ICONS.close) });
+  });
+
+  test("a plain toast has no icon", () => {
+    showToast("Text select ON");
+    expect(document.querySelector(".diagview-toast svg")).toBeNull();
   });
 
   describe("one notice at a time", () => {
@@ -94,30 +124,30 @@ describe("Toast Notification System", () => {
     test("the result replaces its progress notice", () => {
       showInfoToast("Processing PNG...");
       showSuccessToast("2.0x PNG saved");
-      expect(shown()).toEqual(["✓ 2.0x PNG saved"]);
+      expect(shown()).toEqual(["2.0x PNG saved"]);
     });
 
     test("a new notice replaces the previous one", () => {
       showSuccessToast("Rotated 90°");
       showSuccessToast("Rotated 180°");
       showSuccessToast("Rotated 270°");
-      expect(shown()).toEqual(["✓ Rotated 270°"]);
+      expect(shown()).toEqual(["Rotated 270°"]);
     });
 
     test("a warning stays under the result that follows it", () => {
       showWarningToast("Switched to Transparent PNG");
       showSuccessToast("Transparent PNG saved");
-      expect(shown()).toEqual(["⚠ Switched to Transparent PNG", "✓ Transparent PNG saved"]);
+      expect(shown()).toEqual(["Switched to Transparent PNG", "Transparent PNG saved"]);
 
       showSuccessToast("Copied");
-      expect(shown()).toEqual(["⚠ Switched to Transparent PNG", "✓ Copied"]);
+      expect(shown()).toEqual(["Switched to Transparent PNG", "Copied"]);
     });
 
     test("an error replaces everything on screen", () => {
       showWarningToast("Switched to Transparent PNG");
       showInfoToast("Processing PNG...");
       showErrorToast("Export Failed");
-      expect(shown()).toEqual(["✕ Export Failed"]);
+      expect(shown()).toEqual(["Export Failed"]);
     });
 
     test("a replaced notice's timer leaves the new one alone", () => {

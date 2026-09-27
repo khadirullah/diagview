@@ -185,7 +185,7 @@ describe("Modal System", () => {
     expect(localStorage.getItem("diagview-canvas-hint-shown")).toBe("true");
     const hint = document.querySelector(".diagview-toast");
     expect(hint.textContent).toBe(
-      "ℹ Hint: Having visibility issues? Change canvas theme from the menu ☰",
+      "Hint: Having visibility issues? Change canvas theme from the menu ☰",
     );
     expect(hint.classList.contains("diagview-toast-menu-hint")).toBe(true);
   });

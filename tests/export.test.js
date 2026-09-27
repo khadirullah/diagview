@@ -1091,7 +1091,7 @@ describe("Copy SVG falls back to a download when the clipboard is unavailable", 
     document.execCommand = jest.fn(() => true);
     await exportDiagram(container, "copy-svg", { filename: "arch" });
     expect(downloads).toHaveLength(0);
-    expect(toastTexts()).toContain("✓ SVG Code copied to clipboard!");
+    expect(toastTexts()).toContain("SVG Code copied to clipboard!");
     expect(onExport).toHaveBeenCalledWith("copy-svg", "arch");
   });
 

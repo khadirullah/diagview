@@ -7,6 +7,8 @@
 import { state } from "../core/config.js";
 import { TIMING } from "../core/constants.js";
 import { detectTheme } from "../core/theme.js";
+import { setSVGContent } from "../core/utils.js";
+import { ICONS } from "./icons.js";
 
 /**
  * Track toast-specific timers to ensure they are properly cleared
@@ -34,10 +36,25 @@ const TOAST_TYPES = {
 };
 
 /**
+ * Icons drawn in front of the message. SVG rather than Unicode symbols,
+ * which some platforms render as colour emoji or with different glyphs.
+ */
+const TYPE_ICONS = {
+  success: ICONS.check,
+  error: ICONS.close,
+  info: ICONS.info,
+  warning: ICONS.warning,
+};
+
+/**
  * Show toast notification
+ * @param {string} message - Text to show
+ * @param {string} [type="success"] - success, error or info
+ * @param {number|null} [duration] - Time on screen in ms, 0 to keep it
+ * @param {string|null} [icon] - Type icon to draw first, a key of TYPE_ICONS
  * @returns {HTMLElement} The toast element
  */
-export function showToast(message, type = "success", duration = null) {
+export function showToast(message, type = "success", duration = null, icon = null) {
   // 1. Ensure container exists and is on top
   let container = document.getElementById("diagview-toast-container");
 
@@ -71,6 +88,16 @@ export function showToast(message, type = "success", duration = null) {
   const toast = document.createElement("div");
   toast.className = `diagview-toast diagview-toast-${type}`;
   toast.textContent = message;
+  if (TYPE_ICONS[icon]) {
+    // Decorative only. Screen readers announce just the message.
+    setSVGContent(toast, TYPE_ICONS[icon], "prepend");
+    const svg = toast.firstElementChild;
+    if (svg) {
+      svg.setAttribute("class", "diagview-toast-icon");
+      svg.setAttribute("aria-hidden", "true");
+      svg.setAttribute("focusable", "false");
+    }
+  }
 
   let theme;
   try {
@@ -170,7 +197,7 @@ export function hideToast() {
  * Show success toast with checkmark
  */
 export function showSuccessToast(message) {
-  showToast(`✓ ${message}`, "success");
+  showToast(message, "success", null, "success");
 }
 
 /**
@@ -178,7 +205,7 @@ export function showSuccessToast(message) {
  */
 export function showErrorToast(message, details = null) {
   const fullMessage = details ? `${message}: ${details}` : message;
-  showToast(`✕ ${fullMessage}`, "error");
+  showToast(fullMessage, "error", null, "error");
 }
 
 /**
@@ -186,12 +213,12 @@ export function showErrorToast(message, details = null) {
  * @returns {HTMLElement} The toast element
  */
 export function showInfoToast(message, duration = null) {
-  return showToast(`ℹ ${message}`, "info", duration);
+  return showToast(message, "info", duration, "info");
 }
 
 /**
  * Show warning toast (for HTTPS/clipboard issues)
  */
 export function showWarningToast(message) {
-  showToast(`⚠ ${message}`, "error", 5000); // Longer duration for warnings
+  showToast(message, "error", 5000, "warning"); // Longer duration for warnings
 }

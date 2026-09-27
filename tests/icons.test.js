@@ -8,10 +8,12 @@ describe("ICONS contains only referenced icons", () => {
   test("exactly the icons used by the UI are exported", () => {
     expect(Object.keys(ICONS).sort()).toEqual(
       [
+        "check",
         "close",
         "copy",
         "dl",
         "fs",
+        "info",
         "laser",
         "menu",
         "reset",
@@ -19,6 +21,7 @@ describe("ICONS contains only referenced icons", () => {
         "search",
         "share",
         "textSelect",
+        "warning",
       ].sort(),
     );
   });

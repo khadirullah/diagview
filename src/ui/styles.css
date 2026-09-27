@@ -1534,6 +1534,18 @@
   line-height: 1.4;
 }
 
+.diagview-toast-icon {
+  width: 1em;
+  height: 1em;
+  margin-right: 0.4em;
+  vertical-align: -0.15em;
+  stroke: currentColor;
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  fill: none;
+}
+
 /* The first-time theme hint sits just above the menu button, flush with
    its right edge, with a tail pointing at it. That keeps it off the button
    and off the middle of the diagram. It uses the button's own offsets and
