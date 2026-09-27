@@ -205,6 +205,45 @@ describe("Readable text: which labels change", () => {
     }
   });
 
+  test("only the drawn child of a switch is recoloured, even when the others have a box", () => {
+    // draw.io: an HTML label first, then a <text> fallback that is never drawn
+    const sw = add("switch", {}, svg);
+    const fo = add(
+      "foreignObject",
+      { requiredFeatures: "http://www.w3.org/TR/SVG11/feature#Extensibility" },
+      sw,
+    );
+    const html = place(addHtml(fo, { "data-color": "#333333" }, "Label"), 10, 10, 60, 12);
+    const fallback = place(add("text", { fill: "#333333" }, sw), 10, 10, 60, 12);
+    // A child that fails its tests passes the turn to the next one
+    const sw2 = add("switch", {}, svg);
+    const ext = place(
+      add("text", { fill: "#333333", requiredExtensions: "http://example.com/x" }, sw2),
+      10,
+      40,
+      60,
+      12,
+    );
+    const lang = place(add("text", { fill: "#333333", systemLanguage: "xx" }, sw2), 10, 40, 60, 12);
+    const english = place(
+      add("text", { fill: "#333333", systemLanguage: "fr, en-GB" }, sw2),
+      10,
+      40,
+      60,
+      12,
+    );
+    const last = place(add("text", { fill: "#333333" }, sw2), 10, 40, 60, 12);
+
+    expect(applyReadableText(svg, DARK)).toBe(2);
+    expect(html.style.getPropertyValue("color")).not.toBe("");
+    expect(english.style.getPropertyValue("fill")).not.toBe("");
+    for (const el of [fallback, ext, lang, last]) {
+      expect(el.style.getPropertyValue("fill")).toBe("");
+    }
+    restoreText(svg);
+    expect(svg.querySelector("[data-dv-text-orig]")).toBeNull();
+  });
+
   test("a tspan with its own fill is checked on its own", () => {
     const text = place(add("text", { fill: "#ffffff" }, svg), 10, 10, 200, 12);
     const plain = place(add("tspan", {}, text), 10, 10, 50, 12);

@@ -419,14 +419,6 @@ test("menu has a Text Colours row that starts in Original", async () => {
 
 // Per diagram on the Charcoal canvas
 
-// Known library bug in Firefox: it gives the <text> fallback in a draw.io
-// <switch> a non-zero getBoundingClientRect() although only the
-// <foreignObject> is drawn. applyReadableText() takes a zero box to mean
-// "not drawn", so in Firefox it recolours the hidden fallbacks of the labels
-// that sit on the canvas. Nothing visible changes. Remove this once the
-// library skips undrawn <switch> children itself.
-const SWITCH_BUG = "Firefox measures the undrawn <text> fallbacks in a <switch>";
-const switchBug = (browserName, d) => browserName === "firefox" && d.key === "drawio";
 DIAGRAMS.forEach((d, index) => {
   const first = index === 0;
   test.describe(d.title, () => {
@@ -471,8 +463,7 @@ DIAGRAMS.forEach((d, index) => {
       });
     }
 
-    test(`${d.title}: Readable changes exactly the expected labels`, async ({ browserName }) => {
-      test.fail(switchBug(browserName, d), SWITCH_BUG);
+    test(`${d.title}: Readable changes exactly the expected labels`, async () => {
       if (!first) await clickTextMode("readable");
       m = await measure(d.labels, MARK);
       const wrong = m.rows.filter((r) => !r.found || r.changed !== r.change);
@@ -492,8 +483,7 @@ DIAGRAMS.forEach((d, index) => {
       ).toBe(true);
     });
 
-    test(`${d.title}: every changed label reaches ${MIN_RATIO}:1`, async ({ browserName }) => {
-      test.fail(switchBug(browserName, d), SWITCH_BUG);
+    test(`${d.title}: every changed label reaches ${MIN_RATIO}:1`, async () => {
       const low = m.rows.filter(
         (r) => r.found && r.changed && (r.ratio === null || r.ratio < MIN_RATIO),
       );
