@@ -749,7 +749,12 @@ function _wireModalEvents(elements, viewport) {
     import("./toast.js")
       .then((m) => {
         if (m?.showToast) {
-          m.showToast(on ? "📋 Text select ON — drag to copy" : "📋 Text select OFF");
+          m.showToast(
+            on ? "Text select ON, drag to copy" : "Text select OFF",
+            on ? "success" : "info",
+            null,
+            "textSelect",
+          );
         }
       })
       .catch(() => {});

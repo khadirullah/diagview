@@ -181,7 +181,7 @@ describe("Toast Notification System", () => {
   });
 
   test("a plain toast has no icon", () => {
-    showToast("Text select ON");
+    showToast("Zoom reset");
     expect(document.querySelector(".diagview-toast svg")).toBeNull();
   });
 

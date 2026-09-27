@@ -66,6 +66,35 @@ describe("Text-select shortcut across modal sessions", () => {
     expect(viewport().classList.contains("dv-text-select")).toBe(true);
   });
 
+  test("the notice shows the toolbar I-beam, accent when on and grey when off", async () => {
+    const { ICONS } = await import("../src/ui/icons.js");
+    const beam = new DOMParser()
+      .parseFromString(ICONS.textSelect, "image/svg+xml")
+      .documentElement.querySelectorAll("line").length;
+    const notice = async () => {
+      await new Promise((r) => setTimeout(r, 0));
+      const t = [...document.querySelectorAll(".diagview-toast")].pop();
+      return {
+        type: t.className,
+        text: t.textContent,
+        lines: t.querySelectorAll("svg.diagview-toast-icon line").length,
+      };
+    };
+
+    state.events.emit("dv:toggle-text-select");
+    expect(await notice()).toEqual({
+      type: "diagview-toast diagview-toast-success",
+      text: "Text select ON, drag to copy",
+      lines: beam,
+    });
+    state.events.emit("dv:toggle-text-select");
+    expect(await notice()).toEqual({
+      type: "diagview-toast diagview-toast-info",
+      text: "Text select OFF",
+      lines: beam,
+    });
+  });
+
   test("subscription is released on destroy-level cleanup", () => {
     runCleanupFunctions();
     state.events.emit("dv:toggle-text-select");

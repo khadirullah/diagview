@@ -45,6 +45,7 @@ const TYPE_ICONS = {
   info: ICONS.info,
   warning: ICONS.warning,
   busy: ICONS.spinner,
+  textSelect: ICONS.textSelect,
 };
 
 /**
