@@ -11,6 +11,11 @@ export function EventEmitter() {
   const events = new Map();
 
   return {
+    /**
+     * @param {string} event - Event name
+     * @param {(data?: *) => void} callback - Called with the emitted data
+     * @returns {() => void} Removes the listener
+     */
     on(event, callback) {
       if (!events.has(event)) events.set(event, []);
       events.get(event).push(callback);
@@ -23,6 +28,10 @@ export function EventEmitter() {
         }
       };
     },
+    /**
+     * @param {string} event - Event name
+     * @param {(data?: *) => void} callback - Listener passed to on()
+     */
     off(event, callback) {
       const callbacks = events.get(event);
       if (callbacks) {
@@ -30,6 +39,10 @@ export function EventEmitter() {
         if (index !== -1) callbacks.splice(index, 1);
       }
     },
+    /**
+     * @param {string} event - Event name
+     * @param {*} [data] - Passed to each listener
+     */
     emit(event, data) {
       const callbacks = events.get(event);
       if (callbacks) {

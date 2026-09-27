@@ -246,6 +246,8 @@ function stateAndEvents(): void {
   state.events.on("custom", handler);
   state.events.emit("custom", { a: 1 });
   state.events.off("custom", handler);
+  // Events may carry no data
+  state.events.emit("custom");
 }
 
 void [lifecycle, configuration, exporting, modal, utilities, stateAndEvents];
