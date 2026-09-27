@@ -25,6 +25,33 @@
   --canvas: #fbfbfc;
   --code-bg: #f1f3f6;
 
+  /* Mermaid colours. demo-runtime.js writes rules that read these into
+     each diagram's own <style>, so the fullscreen copy follows them too. */
+  --note-bg: color-mix(in srgb, var(--accent) 10%, var(--surface));
+  --note-line: color-mix(in srgb, var(--accent) 45%, transparent);
+  --pie-1: var(--accent);
+  --pie-2: #aab4c3;
+  --pie-3: #d7dce4;
+  --pie-ink: #15181d;
+  --styled-fill-opacity: 1;
+  --styled-ink: #15181d;
+  /* Boxes of the 2,500 node stress grid */
+  --stress-fill: color-mix(in srgb, var(--accent) 14%, var(--surface));
+  --stress-line: color-mix(in srgb, var(--accent) 70%, var(--line-strong));
+  /* Soft node tints (class X tintRose) that still tell nodes apart */
+  --tint-rose: #fce7ef;
+  --tint-rose-line: #e39ab8;
+  --tint-amber: #fcf0d4;
+  --tint-amber-line: #d9ad55;
+  --tint-indigo: #e6e9fc;
+  --tint-indigo-line: #98a3e6;
+  --tint-teal: #daf1ec;
+  --tint-teal-line: #6dbfae;
+  --tint-green: #e0f3e4;
+  --tint-green-line: #7fc390;
+  --tint-blue: #e0edfb;
+  --tint-blue-line: #86b1e3;
+
   /* Accent tuned for text, so small links stay readable on both themes */
   --accent-ink: color-mix(in oklab, var(--accent) 78%, #000);
   --accent-soft: color-mix(in srgb, var(--accent) 10%, transparent);
@@ -52,6 +79,26 @@
   --dot: #1f3d64;
   --canvas: #0d2240;
   --code-bg: #081a31;
+  --pie-1: color-mix(in srgb, var(--accent) 86%, #000);
+  --pie-2: #3b5c8c;
+  --pie-3: #56739c;
+  --pie-ink: #f3f7ff;
+  --styled-fill-opacity: 0.22;
+  --styled-ink: var(--ink);
+  --stress-fill: color-mix(in srgb, var(--accent) 24%, var(--surface));
+  --stress-line: color-mix(in srgb, var(--accent) 80%, var(--ink));
+  --tint-rose: #37294a;
+  --tint-rose-line: #a8648c;
+  --tint-amber: #35321f;
+  --tint-amber-line: #ad8a44;
+  --tint-indigo: #232f66;
+  --tint-indigo-line: #7482d6;
+  --tint-teal: #143d47;
+  --tint-teal-line: #4b9f90;
+  --tint-green: #183e37;
+  --tint-green-line: #58a36f;
+  --tint-blue: #173a66;
+  --tint-blue-line: #5c8fd0;
   --accent-ink: color-mix(in oklab, var(--accent) 62%, #fff);
   --accent-soft: color-mix(in srgb, var(--accent) 16%, transparent);
   color-scheme: dark;
@@ -902,97 +949,6 @@ kbd {
   gap: 12px;
   padding: 9px 14px;
   border-bottom: 1px solid var(--line);
-}
-
-/* ── Mermaid in the page theme ────────────────────────────────
-   Mermaid draws once, with the colours of the theme at load time. These
-   rules repaint the inline diagrams when the theme flips. Nodes without a
-   fill of their own get the page surface. Nodes with a `style ... fill:`
-   line keep their colour. On dark pages that fill is thinned out so it
-   reads as a tint of the navy, and the label turns light. */
-.mermaid .node rect:not([style*="fill"]),
-.mermaid .node polygon:not([style*="fill"]),
-.mermaid .node circle:not([style*="fill"]),
-.mermaid .node path:not([style*="fill"]) {
-  fill: var(--surface) !important;
-  stroke: var(--line-strong) !important;
-}
-.mermaid .nodeLabel {
-  color: var(--ink) !important;
-}
-.mermaid .node:has([style*="fill:"]) .nodeLabel {
-  color: #15181d !important;
-}
-.dark .mermaid .node :is(rect, polygon, circle, path)[style*="fill:"] {
-  fill-opacity: 0.22 !important;
-}
-.dark .mermaid .node:has([style*="fill:"]) .nodeLabel {
-  color: var(--ink) !important;
-}
-.mermaid .cluster rect {
-  fill: color-mix(in srgb, var(--surface) 55%, transparent) !important;
-  stroke: var(--line-strong) !important;
-  stroke-dasharray: 4 3;
-}
-.mermaid .cluster-label .nodeLabel {
-  color: var(--ink-2) !important;
-}
-.mermaid .flowchart-link {
-  stroke: var(--muted) !important;
-}
-.mermaid marker path,
-.mermaid marker circle {
-  fill: var(--muted) !important;
-  stroke: var(--muted) !important;
-}
-.mermaid .edgeLabel,
-.mermaid .edgeLabel rect {
-  background-color: var(--canvas) !important;
-  fill: var(--canvas) !important;
-  color: var(--ink-2) !important;
-}
-
-.mermaid .actor {
-  fill: var(--surface) !important;
-  stroke: var(--line-strong) !important;
-}
-.mermaid text.actor,
-.mermaid text.actor > tspan {
-  fill: var(--ink) !important;
-}
-.mermaid .actor-line {
-  stroke: var(--line-strong) !important;
-}
-.mermaid .messageLine0,
-.mermaid .messageLine1 {
-  stroke: var(--muted) !important;
-}
-.mermaid #arrowhead path,
-.mermaid #crosshead path {
-  fill: var(--muted) !important;
-  stroke: var(--muted) !important;
-}
-.mermaid .messageText {
-  fill: var(--ink-2) !important;
-}
-.mermaid .note {
-  fill: color-mix(in srgb, var(--accent) 10%, var(--surface)) !important;
-  stroke: color-mix(in srgb, var(--accent) 45%, transparent) !important;
-}
-.mermaid .noteText,
-.mermaid .noteText > tspan {
-  fill: var(--ink) !important;
-}
-
-.mermaid .pieTitleText,
-.mermaid .legend text {
-  fill: var(--ink) !important;
-}
-.mermaid .pieCircle {
-  stroke: var(--surface) !important;
-}
-.mermaid .pieOuterCircle {
-  stroke: var(--line-strong) !important;
 }
 
 /* Hand-written SVGs that draw lines in mid grey picked for a white page */

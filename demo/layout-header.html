@@ -47,11 +47,6 @@
             --stage-h: 440px;
         }
 
-        /* The state chart draws its arrows with a grey picked for a white page */
-        .dark .diagram .transition {
-            stroke: var(--muted);
-        }
-
         .next {
             display: flex;
             flex-wrap: wrap;
@@ -156,9 +151,9 @@
                     DB_Master --> DB_Slave2[(Postgres Replica 2)]
                     end
 
-                    style LB fill:#fbcfe8,stroke:#db2777,stroke-width:1.5px
-                    style DB_Master fill:#c7d2fe,stroke:#4f46e5,stroke-width:1.5px
-                    style Cache fill:#fde68a,stroke:#d97706,stroke-width:1.5px
+                    class LB tintRose
+                    class DB_Master tintIndigo
+                    class Cache tintAmber
                 </div>
             </div>
 
@@ -213,22 +208,23 @@
                                     text-anchor: middle;
                                 }
     
+                                /* Line colours follow the page theme, here and in fullscreen */
                                 .transition {
-                                    stroke: #4a5568;
+                                    stroke: var(--muted, #4a5568);
                                     stroke-width: 2;
                                     fill: none;
                                     marker-end: url(#arrow);
                                 }
     
                                 .transition-label {
-                                    fill: #4a5568;
+                                    fill: var(--muted, #4a5568);
                                     font-family: sans-serif;
                                     font-size: 10px;
                                     text-anchor: middle;
                                 }
                             </style>
                             <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
-                                <polygon points="0 0, 10 3, 0 6" fill="#4a5568" />
+                                <polygon points="0 0, 10 3, 0 6" fill="#4a5568" style="fill: var(--muted, #4a5568)" />
                             </marker>
                         </defs>
                         <circle class="state start" cx="50" cy="150" r="30" />
@@ -260,7 +256,7 @@
                         <defs>
                             <marker id="nvb-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6"
                                 markerHeight="6" orient="auto-start-reverse">
-                                <path d="M 0 0 L 10 5 L 0 10 z" fill="#64748b" />
+                                <path d="M 0 0 L 10 5 L 0 10 z" fill="#64748b" style="fill: var(--muted, #64748b)" />
                             </marker>
                         </defs>
                         <rect x="10" y="70" width="70" height="40" rx="6" fill="#38b2ac" />
@@ -272,16 +268,16 @@
                         <rect x="180" y="70" width="70" height="40" rx="6" fill="#f56565" />
                         <text x="215" y="94" text-anchor="middle" font-family="sans-serif" font-size="11"
                             fill="white">Exported</text>
-                        <path d="M 80 90 L 93 90" stroke="#64748b" stroke-width="2" marker-end="url(#nvb-arrow)" />
-                        <path d="M 165 90 L 178 90" stroke="#64748b" stroke-width="2" marker-end="url(#nvb-arrow)" />
+                        <path d="M 80 90 L 93 90" stroke="#64748b" style="stroke: var(--muted, #64748b)" stroke-width="2" marker-end="url(#nvb-arrow)" />
+                        <path d="M 165 90 L 178 90" stroke="#64748b" style="stroke: var(--muted, #64748b)" stroke-width="2" marker-end="url(#nvb-arrow)" />
                         <text x="130" y="30" text-anchor="middle" font-family="sans-serif" font-size="11"
-                            fill="#64748b">width="260" height="180"</text>
+                            fill="#64748b" style="fill: var(--muted, #64748b)">width="260" height="180"</text>
                         <text x="130" y="46" text-anchor="middle" font-family="sans-serif" font-size="11"
-                            fill="#64748b">and no viewBox</text>
+                            fill="#64748b" style="fill: var(--muted, #64748b)">and no viewBox</text>
                         <text x="130" y="142" text-anchor="middle" font-family="sans-serif" font-size="11"
-                            fill="#64748b">Shows inline and opens</text>
+                            fill="#64748b" style="fill: var(--muted, #64748b)">Shows inline and opens</text>
                         <text x="130" y="158" text-anchor="middle" font-family="sans-serif" font-size="11"
-                            fill="#64748b">fullscreen like any other SVG</text>
+                            fill="#64748b" style="fill: var(--muted, #64748b)">fullscreen like any other SVG</text>
                     </svg>
                 </div>
             </div>
@@ -308,6 +304,13 @@
                 <div class="stress-test" data-title="2,500 Nodes Test">
                     <svg id="stress-svg" width="3000" height="3000" viewBox="0 0 3000 3000"
                         xmlns="http://www.w3.org/2000/svg">
+                        <style>
+                            #stress-node-layer rect {
+                                fill: var(--stress-fill);
+                                fill-opacity: 1;
+                                stroke: var(--stress-line);
+                            }
+                        </style>
                         <rect width="100%" height="100%" fill="transparent" />
                         <g id="stress-node-layer"></g>
                     </svg>

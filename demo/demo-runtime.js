@@ -46,8 +46,59 @@
         '<svg class="moon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round" aria-hidden="true">' +
         '<path d="M13.5 9.5A5.5 5.5 0 0 1 6.5 2.5a5.5 5.5 0 1 0 7 7Z"/></svg>';
 
-    // Mermaid settings that match the page theme at load time. The shared
-    // CSS repaints nodes and lines if the theme flips later.
+    // Colour rules that Mermaid writes into each diagram's own <style> block
+    // (themeCSS). They read the page colour variables, so a diagram follows
+    // the theme toggle, and the fullscreen viewer's copy of the SVG, which
+    // sits outside every .mermaid host, looks the same as the inline one.
+    // Almost none is !important, so exports keep their baked-in colours.
+    //
+    // Tint a single node with `class LB tintRose` in the diagram source.
+    // Nodes still coloured by a `style X fill:...` line are thinned out on
+    // the dark theme so they read as a tint of the navy.
+    var MERMAID_CSS = [
+        '.node rect, .node circle, .node ellipse, .node polygon, .node path' +
+            ' { fill: var(--surface); stroke: var(--line-strong); }',
+        '.nodeLabel, .label text { color: var(--ink); fill: var(--ink); }',
+        '.node [style*="fill:"] { fill-opacity: var(--styled-fill-opacity, 1); }',
+        '.node:has([style*="fill:"]) .nodeLabel { color: var(--styled-ink, #15181d); }',
+        '.cluster rect { fill: color-mix(in srgb, var(--surface) 55%, transparent);' +
+            ' stroke: var(--line-strong); stroke-dasharray: 4 3; }',
+        '.cluster-label .nodeLabel, .cluster text { color: var(--ink-2); fill: var(--ink-2); }',
+        '.flowchart-link { stroke: var(--muted); }',
+        'marker path, marker circle, #arrowhead path, #crosshead path' +
+            ' { fill: var(--muted); stroke: var(--muted); }',
+        '.edgeLabel, .edgeLabel rect { background-color: var(--canvas); fill: var(--canvas); color: var(--ink-2); }',
+
+        'rect.actor { fill: var(--surface); stroke: var(--line-strong); }',
+        'text.actor, text.actor > tspan { fill: var(--ink); }',
+        'line, .actor-line { stroke: var(--line-strong); }',
+        '.messageLine0, .messageLine1 { stroke: var(--muted); }',
+        '.messageText { fill: var(--ink-2); }',
+        '.note { fill: var(--note-bg); stroke: var(--note-line); }',
+        '.noteText, .noteText > tspan { fill: var(--ink); }',
+
+        '.pieTitleText, .legend text { fill: var(--ink); }',
+        '.pieCircle { stroke: var(--surface); }',
+        '.pieOuterCircle { stroke: var(--line-strong); }',
+        '.slice { fill: var(--pie-ink); }'
+    ];
+    // Pie slices and legend keys in drawing order. Mermaid colours the keys
+    // with inline styles, so only those rules need !important.
+    var PIE = ['#ea580c', '#aab4c3', '#d7dce4'];
+    for (var pi = 1; pi <= 3; pi++) {
+        var pv = 'var(--pie-' + pi + ', ' + PIE[pi - 1] + ')';
+        MERMAID_CSS.push('.pieCircle:nth-of-type(' + pi + ') { fill: ' + pv + '; }',
+            '.legend:nth-of-type(' + pi + ') rect { fill: ' + pv + ' !important; stroke: ' + pv + ' !important; }');
+    }
+    var TINTS = ['Rose', 'Amber', 'Indigo', 'Teal', 'Green', 'Blue'];
+    for (var ti = 0; ti < TINTS.length; ti++) {
+        var tv = '--tint-' + TINTS[ti].toLowerCase();
+        MERMAID_CSS.push('.node.tint' + TINTS[ti] + ' :is(rect, circle, ellipse, polygon, path)' +
+            ' { fill: var(' + tv + '); stroke: var(' + tv + '-line); stroke-width: 1.5px; }');
+    }
+
+    // Mermaid settings that match the page theme at load time, plus the
+    // colour rules above. An extra themeCSS string goes after the shared one.
     // Use: mermaid.initialize(demoMermaidConfig({ flowchart: { ... } }))
     window.demoMermaidConfig = function (extra) {
         var dark = document.documentElement.classList.contains('dark');
@@ -75,9 +126,12 @@
                 pieSectionTextColor: '#15181d', pieStrokeColor: '#ffffff', pieOuterStrokeWidth: '1px'
             }
         };
+        config.themeCSS = MERMAID_CSS.join('\n');
         if (extra) {
             for (var k in extra) {
-                if (k === 'themeVariables') {
+                if (k === 'themeCSS') {
+                    config.themeCSS += '\n' + extra.themeCSS;
+                } else if (k === 'themeVariables') {
                     for (var v in extra.themeVariables) config.themeVariables[v] = extra.themeVariables[v];
                 } else {
                     config[k] = extra[k];
