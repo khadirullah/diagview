@@ -217,6 +217,7 @@ describe("destroy() restores every touched element", () => {
     expect(root.style.getPropertyValue("--dv-text-color")).toBe("");
     expect(root.style.getPropertyValue("--dv-accent")).toBe("");
     expect(root.style.getPropertyValue("--dv-search-ring")).toBe("");
+    expect(root.style.getPropertyValue("--dv-toggle-track")).toBe("");
   });
 
   test("init applies the accent before the viewer ever opens", async () => {

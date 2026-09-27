@@ -10,6 +10,7 @@ import {
   clearThemeCache,
   setCanvasTheme,
   onAccentColor,
+  getContrastRatio,
 } from "../src/core/theme.js";
 import { resetConfig, updateConfig } from "../src/core/config.js";
 import { COLORS } from "../src/core/constants.js";
@@ -249,6 +250,20 @@ describe("Theme Module", () => {
 
     setCanvasTheme("custom", "#fef3c7");
     expect(ring()).toBe(COLORS.SEARCH_RING_LIGHT);
+    warn.mockRestore();
+  });
+
+  test("syncTheme gives the menu toggle a solid track on light canvases only", () => {
+    const warn = jest.spyOn(console, "warn").mockImplementation(() => {});
+    const root = document.documentElement;
+    const track = () => root.style.getPropertyValue("--dv-toggle-track");
+
+    setCanvasTheme("light");
+    expect(track()).toBe(COLORS.TOGGLE_TRACK_LIGHT);
+    expect(getContrastRatio(COLORS.TOGGLE_TRACK_LIGHT, COLORS.BG_LIGHT)).toBeGreaterThanOrEqual(3);
+
+    setCanvasTheme("dark");
+    expect(track()).toBe("");
     warn.mockRestore();
   });
 

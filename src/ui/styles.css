@@ -1213,8 +1213,9 @@
   width: 38px;
   height: 22px;
   border-radius: 9999px;
-  background: rgba(255, 255, 255, 0.15);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  /* --dv-toggle-track is set by syncTheme on light canvases only */
+  background: var(--dv-toggle-track, rgba(255, 255, 255, 0.15));
+  border: 1px solid var(--dv-toggle-track, rgba(255, 255, 255, 0.2));
   cursor: pointer;
   position: relative;
   transition:
@@ -1247,7 +1248,7 @@
 }
 
 .dv-exp-trans-chk:hover {
-  background: rgba(255, 255, 255, 0.25);
+  background: var(--dv-toggle-track, rgba(255, 255, 255, 0.25));
 }
 
 .dv-exp-trans-chk:checked:hover {

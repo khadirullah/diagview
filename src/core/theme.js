@@ -474,6 +474,11 @@ export function syncTheme() {
     : theme.isDark;
   root.style.setProperty("--dv-search-ring", darkCanvas ? ringDark : ringLight);
 
+  // The menu toggle track is a faint white wash that only shows on dark
+  // canvases. Light canvases get a solid grey so the switch stays visible.
+  if (darkCanvas) root.style.removeProperty("--dv-toggle-track");
+  else root.style.setProperty("--dv-toggle-track", COLORS.TOGGLE_TRACK_LIGHT);
+
   // Update modal if exists
   const modal = document.getElementById("diagview-modal");
   if (modal) {
@@ -579,6 +584,7 @@ export function teardownThemeWatchers() {
   root.style.removeProperty("--dv-accent");
   root.style.removeProperty("--dv-on-accent");
   root.style.removeProperty("--dv-search-ring");
+  root.style.removeProperty("--dv-toggle-track");
 
   clearThemeCache();
 }
