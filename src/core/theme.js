@@ -190,6 +190,29 @@ export function onAccentColor(accent) {
 }
 
 /**
+ * Background and text for a notice drawn on a colour. Notice text needs
+ * 4.5:1, more than the 3:1 onAccentColor() allows for icons. White if it
+ * reaches that, then near-black. If neither does, white on the colour
+ * darkened just enough to reach it.
+ * @param {string} color - Notice colour
+ * @returns {{bg: string, text: string}} Colours to draw the notice with
+ */
+export function noticeColors(color) {
+  const rgb = parseColor(color);
+  if (!rgb || getContrastRatio("#fff", color) >= 4.5) return { bg: color, text: "#fff" };
+  if (getContrastRatio(COLORS.BG_DARK, color) >= 4.5) return { bg: color, text: COLORS.BG_DARK };
+  // Mix toward black a step at a time; black itself always passes
+  const hex = (c) => c.toString(16).padStart(2, "0");
+  let bg = color;
+  for (let step = 1; step <= 100; step++) {
+    const k = 1 - step / 100;
+    bg = "#" + rgb.map((c) => hex(Math.round(c * k))).join("");
+    if (getContrastRatio("#fff", bg) >= 4.5) break;
+  }
+  return { bg, text: "#fff" };
+}
+
+/**
  * Ensure color has sufficient contrast against background
  * @private
  */

@@ -10,6 +10,7 @@ import {
   clearThemeCache,
   setCanvasTheme,
   onAccentColor,
+  noticeColors,
   getContrastRatio,
 } from "../src/core/theme.js";
 import { resetConfig, updateConfig } from "../src/core/config.js";
@@ -436,5 +437,23 @@ describe("Theme Module: modern colour syntax and rejected colours", () => {
     expect(theme.bg).toBe("rebeccapurple");
     expect(theme.isDark).toBe(true);
     expect(warn).not.toHaveBeenCalledWith(expect.stringContaining("backgroundColor"));
+  });
+
+  test("notice text reaches 4.5:1 on any colour", () => {
+    const dark = COLORS.BG_DARK;
+    // The default blue and yellow read better with near-black text
+    expect(noticeColors("#3b82f6")).toEqual({ bg: "#3b82f6", text: dark });
+    expect(noticeColors("#facc15")).toEqual({ bg: "#facc15", text: dark });
+    // Dark colours keep white text
+    expect(noticeColors("#9333ea")).toEqual({ bg: "#9333ea", text: "#fff" });
+    expect(noticeColors("#111827")).toEqual({ bg: "#111827", text: "#fff" });
+    // Mid grey fails with both, so it is darkened just enough for white
+    expect(getContrastRatio("#fff", "#7c7c7c")).toBeLessThan(4.5);
+    expect(getContrastRatio(dark, "#7c7c7c")).toBeLessThan(4.5);
+    const grey = noticeColors("#7c7c7c");
+    expect(grey.text).toBe("#fff");
+    expect(grey.bg).not.toBe("#7c7c7c");
+    expect(getContrastRatio("#fff", grey.bg)).toBeGreaterThanOrEqual(4.5);
+    expect(getContrastRatio("#fff", grey.bg)).toBeLessThan(4.7);
   });
 });

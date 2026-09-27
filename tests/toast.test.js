@@ -72,6 +72,18 @@ describe("Toast Notification System", () => {
     clearThemeCache();
   });
 
+  test("the default accent gets dark text and errors stay red with white", () => {
+    showSuccessToast("Saved");
+    const saved = document.querySelector(".diagview-toast-success");
+    expect(saved.style.backgroundColor).toBe("rgb(59, 130, 246)");
+    expect(saved.style.color).toBe("rgb(15, 23, 42)");
+    showErrorToast("Broken");
+    const error = document.querySelector(".diagview-toast-error");
+    expect(error.style.backgroundColor).toBe("rgb(215, 61, 61)");
+    expect(error.style.color).toBe("rgb(255, 255, 255)");
+    clearThemeCache();
+  });
+
   test("duration 0 does not auto-hide", () => {
     showToast("Persistent", "success", 0);
     jest.advanceTimersByTime(10000);

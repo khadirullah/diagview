@@ -6,7 +6,7 @@
 
 import { state } from "../core/config.js";
 import { TIMING } from "../core/constants.js";
-import { detectTheme } from "../core/theme.js";
+import { detectTheme, noticeColors } from "../core/theme.js";
 import { setSVGContent } from "../core/utils.js";
 import { ICONS } from "./icons.js";
 
@@ -26,7 +26,7 @@ const TOAST_TYPES = {
     text: "#ffffff",
   },
   error: {
-    bg: "#ef4444",
+    bg: "#d73d3d",
     text: "#ffffff",
   },
   info: {
@@ -111,24 +111,19 @@ export function showToast(message, type = "success", duration = null, icon = nul
     theme = { isDark: true, accent: "#3b82f6", text: "#ffffff", onAccent: "#fff" };
   }
   const toastConfig = TOAST_TYPES[type] || TOAST_TYPES.info;
+  // The accent is the developer's colour, so its text is picked to reach 4.5:1
+  const colors = type === "success" ? noticeColors(theme.accent) : toastConfig;
 
   // 3. Set styles and accessibility
   if (type === "error") {
     toast.setAttribute("role", "alert");
     toast.setAttribute("aria-live", "assertive");
-    toast.style.backgroundColor = toastConfig.bg;
-    toast.style.color = toastConfig.text;
   } else {
     toast.setAttribute("role", "status");
     toast.setAttribute("aria-live", "polite");
-    if (type === "success") {
-      toast.style.backgroundColor = theme.accent;
-      toast.style.color = theme.onAccent;
-    } else {
-      toast.style.backgroundColor = toastConfig.bg;
-      toast.style.color = toastConfig.text;
-    }
   }
+  toast.style.backgroundColor = colors.bg;
+  toast.style.color = colors.text;
 
   // 4. Animation - Initial state
   toast.style.opacity = "0";

@@ -9,6 +9,7 @@ jest.unstable_mockModule("../src/ui/modal-controls.js", () => ({
 }));
 jest.unstable_mockModule("../src/core/theme.js", () => ({
   detectTheme: jest.fn(() => ({ bg: "#fff", text: "#000" })),
+  noticeColors: jest.fn((bg) => ({ bg, text: "#fff" })),
   syncTheme: jest.fn(),
 }));
 jest.unstable_mockModule("../src/core/lifecycle.js", () => ({
