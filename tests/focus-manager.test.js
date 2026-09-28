@@ -112,6 +112,24 @@ describe("focus trap ignores unrendered and closed-search controls", () => {
     pressTab();
     expect(document.activeElement.id).toBe("diagview-search");
   });
+
+  test("Tab and Shift+Tab stay in the open shortcuts panel", () => {
+    const help = el("div", null, "diagview-help-modal show", modal);
+    const close = el("button", null, "diagview-help-close", help);
+    close.focus();
+    expect(pressTab().defaultPrevented).toBe(true);
+    expect(document.activeElement).toBe(close);
+    expect(pressTab(true).defaultPrevented).toBe(true);
+    expect(document.activeElement).toBe(close);
+  });
+
+  test("a closed shortcuts panel leaves the viewer's own order alone", () => {
+    const help = el("div", null, "diagview-help-modal", modal);
+    el("button", null, "diagview-help-close", help).dataset.hidden = "1";
+    document.getElementById("dv-toggle").focus();
+    pressTab();
+    expect(document.activeElement.className).toBe("diagview-branding");
+  });
 });
 
 describe("focus returns to the diagram after closing", () => {

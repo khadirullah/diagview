@@ -260,7 +260,11 @@ export function setupFocusTrap() {
     if (!state.isModalOpen) return;
     if (e.key !== "Tab") return;
 
-    const focusableElements = getFocusableElements(modal);
+    // The open shortcuts panel is modal too, so Tab stays on its close button
+    const help = modal.querySelector(".diagview-help-modal.show");
+    const focusableElements = help
+      ? [...help.querySelectorAll("button")]
+      : getFocusableElements(modal);
     if (focusableElements.length === 0) return;
 
     // Own every Tab step, not only the wrap-around: the browser's native

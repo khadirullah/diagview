@@ -1808,6 +1808,8 @@
 .diagview-help-modal.show {
   opacity: 1;
   visibility: visible;
+  /* Visible at once, so the close button can take focus on every open */
+  transition-property: opacity;
 }
 
 .diagview-help-content {

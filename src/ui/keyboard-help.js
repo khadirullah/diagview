@@ -27,6 +27,7 @@ const SHORTCUTS = [
 let helpModal = null;
 let autoCloseTimer = null;
 let cleanupPause = null;
+let returnFocus = null;
 
 /**
  * Start or reset the auto-close timer
@@ -178,6 +179,7 @@ export function showKeyboardHelp() {
   if (!state.config.showKeyboardHelp) return;
 
   const modal = createHelpModal();
+  if (!modal.classList.contains("show")) returnFocus = document.activeElement;
   modal.classList.add("show");
 
   // Focus close button for accessibility
@@ -193,8 +195,16 @@ export function showKeyboardHelp() {
  */
 export function hideKeyboardHelp() {
   clearAutoCloseTimer();
+  const back = returnFocus;
+  returnFocus = null;
   if (helpModal) {
+    // Hand focus back unless it has already moved to another control.
+    // A click on the backdrop leaves it on the viewer or the page body.
+    const active = document.activeElement;
+    const viewer = document.getElementById("diagview-modal");
+    const giveBack = helpModal.contains(active) || active === viewer || active === document.body;
     helpModal.classList.remove("show");
+    if (giveBack && back?.isConnected) back.focus({ preventScroll: true });
   }
 }
 
@@ -221,6 +231,7 @@ export function isHelpVisible() {
  */
 export function cleanupKeyboardHelp() {
   clearAutoCloseTimer();
+  returnFocus = null;
   if (cleanupPause) {
     cleanupPause();
     cleanupPause = null;
