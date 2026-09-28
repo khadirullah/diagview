@@ -27,7 +27,7 @@ jest.unstable_mockModule("../src/features/lazy/share.js", () => ({
 // 2. Import modules AFTER mocks are defined
 const { state, resetConfig, updateConfig } = await import("../src/core/config.js");
 const { observeDiagrams, stopObserving, refreshDiagrams } = await import("../src/core/observer.js");
-const { initializeDiagram } = await import("../src/features/diagram-init.js");
+const { initializeDiagram, deinitializeDiagram } = await import("../src/features/diagram-init.js");
 const { openFullscreen } = await import("../src/ui/modal.js");
 
 describe("Observer Module", () => {
@@ -157,5 +157,149 @@ describe("Observer Module", () => {
 
     jest.useRealTimers();
     window.location = originalLocation;
+  });
+});
+
+describe("Observer Module: matches inside other matches", () => {
+  const SVG = "<svg></svg>";
+  const $ = (id) => document.getElementById(id);
+  const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+  beforeEach(() => {
+    document.body.innerHTML = "";
+    resetConfig();
+    state.observer = null;
+    updateConfig({ diagramSelector: ".mermaid, .diagram" });
+    jest.clearAllMocks();
+    deinitializeDiagram.mockImplementation((el) => delete el.dataset.diagviewInit);
+  });
+
+  afterEach(() => {
+    stopObserving();
+    deinitializeDiagram.mockReset();
+  });
+
+  const setUp = () => initializeDiagram.mock.calls.map(([el]) => el.id);
+
+  test("an outer match holding one diagram keeps the only toolbar", () => {
+    document.body.innerHTML =
+      `<div class="diagram" id="outer" data-title="Flow"><pre class="mermaid" id="inner">${SVG}</pre></div>` +
+      `<pre class="mermaid" id="alone">${SVG}</pre>`;
+
+    observeDiagrams();
+
+    expect(setUp()).toEqual(["outer", "alone"]);
+    expect(initializeDiagram).toHaveBeenCalledWith($("outer"), 0);
+    expect(initializeDiagram).toHaveBeenCalledWith($("alone"), 2);
+    // The inner one keeps its index, so share link numbers do not move
+    expect($("inner").dataset.diagviewIndex).toBe("1");
+  });
+
+  test("an outer match holding two diagrams gives way to the inner ones", () => {
+    document.body.innerHTML =
+      `<div class="diagram" id="outer"><pre class="mermaid" id="a">${SVG}</pre>` +
+      `<pre class="mermaid" id="b">${SVG}</pre></div>`;
+
+    observeDiagrams();
+
+    expect(setUp()).toEqual(["a", "b"]);
+    expect(["outer", "a", "b"].map((id) => $(id).dataset.diagviewIndex)).toEqual(["0", "1", "2"]);
+  });
+
+  test("a chain of matches around one SVG gets one toolbar, on the outermost", () => {
+    updateConfig({ diagramSelector: ".mermaid, .diagram, .chart" });
+    document.body.innerHTML = `<div class="diagram" id="top"><div class="chart" id="mid"><pre class="mermaid" id="low">${SVG}</pre></div></div>`;
+
+    observeDiagrams();
+
+    expect(setUp()).toEqual(["top"]);
+  });
+
+  test("lazy init only watches the chosen diagrams, so scroll order cannot change the result", () => {
+    const observed = [];
+    const realObserver = window.IntersectionObserver;
+    window.IntersectionObserver = class {
+      observe(el) {
+        observed.push(el.id);
+      }
+      unobserve() {}
+      disconnect() {}
+    };
+    try {
+      document.body.innerHTML =
+        `<div class="diagram" id="one"><pre class="mermaid" id="one-in">${SVG}</pre></div>` +
+        `<div class="diagram" id="two"><pre class="mermaid" id="a">${SVG}</pre><pre class="mermaid" id="b">${SVG}</pre></div>`;
+
+      observeDiagrams();
+
+      expect(observed).toEqual(["one", "a", "b"]);
+      expect(initializeDiagram).not.toHaveBeenCalled();
+    } finally {
+      window.IntersectionObserver = realObserver;
+    }
+  });
+
+  test("a plain page only pays one closest() call per diagram", () => {
+    document.body.innerHTML =
+      `<div class="diagram" id="d0">${SVG}</div><pre class="mermaid" id="d1">${SVG}</pre>` +
+      `<div class="diagram" id="d2">${SVG}</div>`;
+    const closest = jest.spyOn(Element.prototype, "closest");
+    const queryAll = jest.spyOn(Element.prototype, "querySelectorAll");
+    try {
+      observeDiagrams();
+
+      expect(closest).toHaveBeenCalledTimes(3);
+      // Only the scan of the page itself, none inside a diagram
+      expect(queryAll.mock.contexts.filter((el) => el.id)).toEqual([]);
+      expect(deinitializeDiagram).not.toHaveBeenCalled();
+      expect(setUp()).toEqual(["d0", "d1", "d2"]);
+    } finally {
+      closest.mockRestore();
+      queryAll.mockRestore();
+    }
+  });
+
+  test("a second diagram added later moves the toolbar from the outer match to both inner ones", async () => {
+    document.body.innerHTML = `<div class="diagram" id="outer"><pre class="mermaid" id="a">${SVG}</pre></div>`;
+    observeDiagrams();
+    expect(setUp()).toEqual(["outer"]);
+
+    const b = document.createElement("pre");
+    b.className = "mermaid";
+    b.id = "b";
+    b.innerHTML = SVG;
+    $("outer").appendChild(b);
+    await wait(200);
+
+    expect(deinitializeDiagram).toHaveBeenCalledWith($("outer"));
+    expect(setUp().sort()).toEqual(["a", "b", "outer"]);
+    expect($("outer").dataset.diagviewIndex).toBe("0");
+  });
+
+  test("refresh() after removing one of two inner diagrams moves the toolbar back out", () => {
+    document.body.innerHTML =
+      `<div class="diagram" id="outer"><pre class="mermaid" id="a">${SVG}</pre>` +
+      `<pre class="mermaid" id="b">${SVG}</pre></div>`;
+    observeDiagrams();
+    expect(setUp()).toEqual(["a", "b"]);
+
+    $("b").remove();
+    refreshDiagrams();
+
+    expect(deinitializeDiagram).toHaveBeenCalledWith($("a"));
+    expect(setUp()).toEqual(["a", "b", "outer"]);
+    expect($("a").dataset.diagviewIndex).toBe("1");
+  });
+
+  test("an SVG rendered later into an inner match sets up the outer one", async () => {
+    document.body.innerHTML =
+      '<div class="diagram" id="outer"><pre class="mermaid" id="inner">graph</pre></div>';
+    observeDiagrams();
+    expect(initializeDiagram).not.toHaveBeenCalled();
+
+    $("inner").innerHTML = SVG;
+    await wait(200);
+
+    expect(setUp()).toEqual(["outer"]);
   });
 });

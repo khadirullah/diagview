@@ -7,7 +7,11 @@
 import { state } from "./config.js";
 import { TIMING } from "./constants.js";
 import { debounce, safeQuerySelectorAll, stripDiagViewParams } from "./utils.js";
-import { initializeDiagram, recoverErrorDiagram } from "../features/diagram-init.js";
+import {
+  initializeDiagram,
+  deinitializeDiagram,
+  recoverErrorDiagram,
+} from "../features/diagram-init.js";
 import { createModal, openFullscreen } from "../ui/modal.js";
 import { restoreViewFromURL } from "../features/lazy/share.js";
 
@@ -99,6 +103,53 @@ function getLazyObserver() {
 }
 
 /**
+ * Choose one toolbar where matches sit inside each other, such as a .mermaid
+ * inside a .diagram with the selector ".mermaid, .diagram". An outer match
+ * holding a single diagram keeps the toolbar, because it carries data-title
+ * and the data-diagview-* settings. An outer match holding two or more
+ * diagrams gives way to the inner ones, so each keeps its own fullscreen
+ * button. The choice depends on the markup alone, never on which diagram
+ * lazy init reached first.
+ *
+ * The outer and inner matches it looks at are appended to `diagrams`, so a
+ * scan that starts inside a nested group settles the whole group.
+ * @param {Element[]} diagrams - Matches to process, extended in place
+ * @param {string} selector - Diagram selector
+ * @returns {Set<Element>} Matches that must not get a toolbar
+ */
+function skipNestedDiagrams(diagrams, selector) {
+  const skipped = new Set();
+  // Outer match -> whether it holds two or more diagrams
+  const groups = new Map();
+  let seen = null;
+  const add = (el) => {
+    if (!seen) seen = new Set(diagrams);
+    if (!seen.has(el)) {
+      seen.add(el);
+      diagrams.push(el);
+    }
+  };
+
+  for (let i = 0; i < diagrams.length; i++) {
+    const outer = diagrams[i].parentElement?.closest(selector);
+    if (!outer) continue;
+
+    let many = groups.get(outer);
+    if (many === undefined) {
+      const inner = safeQuerySelectorAll(selector, outer);
+      // Count SVGs, not matches. In .diagram > .chart > .mermaid every level
+      // holds the same single SVG.
+      many = new Set(inner.map((el) => el.querySelector("svg")).filter(Boolean)).size > 1;
+      groups.set(outer, many);
+      if (many) inner.forEach(add);
+    }
+    skipped.add(many ? outer : diagrams[i]);
+    add(outer);
+  }
+  return skipped;
+}
+
+/**
  * Process diagrams within a specific root
  */
 export function processDiagrams(root = document) {
@@ -126,6 +177,7 @@ export function processDiagrams(root = document) {
   // index instead of -1 and share links can find them again.
   const allDiagrams = collectAllDiagrams();
   const indexMap = new Map(allDiagrams.map((d, i) => [d, i]));
+  const skipped = skipNestedDiagrams(diagrams, selector);
 
   diagrams.forEach((diagram) => {
     // A diagram that hit the error boundary keeps its init flag; if its SVG
@@ -133,13 +185,23 @@ export function processDiagrams(root = document) {
     // initialized like a new diagram (refresh() after replacing the SVG).
     if (diagram.dataset.diagviewError) recoverErrorDiagram(diagram);
 
+    // Cache the global index early to assist lazy initialization and share
+    // links. Skipped diagrams keep theirs, so link numbers never shift.
+    const index = indexMap.get(diagram) ?? -1;
+
+    if (skipped.has(diagram)) {
+      state.lazyObserver?.unobserve(diagram);
+      // Set up earlier under the other rule, before a diagram was added or
+      // removed next to it
+      deinitializeDiagram(diagram);
+      diagram.dataset.diagviewIndex = String(index);
+      return;
+    }
+    diagram.dataset.diagviewIndex = String(index);
+
     // Check if diagram is ready (has SVG) and not already initialized
     const hasSvg = diagram.querySelector("svg");
     const isInitialized = diagram.dataset.diagviewInit;
-
-    // Cache the global index early to assist lazy initialization and share links
-    const index = indexMap.get(diagram) ?? -1;
-    diagram.dataset.diagviewIndex = String(index);
 
     if (hasSvg && !isInitialized) {
       const observer = getLazyObserver();

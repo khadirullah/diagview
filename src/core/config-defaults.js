@@ -88,7 +88,7 @@ import { deepMerge, deepFreeze } from "./state-utils.js";
  * @property {DiagViewUIConfig} ui - Button look and icons
  * @property {boolean} showKeyboardHelp - Allow the ? shortcuts panel
  * @property {number} helpTimeout - Milliseconds before the shortcuts panel closes, 0 keeps it open
- * @property {string} diagramSelector - CSS selector for diagram containers
+ * @property {string} diagramSelector - CSS selector for diagram containers. Where matches nest, each diagram gets one toolbar
  * @property {boolean} naturalPanning - Arrow keys move the diagram in the arrow's direction
  * @property {boolean} rotateKeepsView - Rotating keeps the view, the same size on screen and the same centre, instead of fitting the diagram. The zoom % adjusts.
  * @property {boolean} showMinimap - Show the minimap in the viewer

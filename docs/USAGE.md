@@ -958,6 +958,8 @@ document.addEventListener("DOMContentLoaded", async () => {
 });
 ```
 
+When one match sits inside another, such as a `.mermaid` inside a `.diagram`, only one of them gets a toolbar. If the outer element holds a single diagram, the outer one gets it, along with its `data-title` and `data-diagview-*` settings. If it holds two or more, each inner diagram gets its own toolbar and the outer element gets none.
+
 **Dark mode with Mermaid:**
 
 ```javascript
