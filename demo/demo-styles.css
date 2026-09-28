@@ -233,6 +233,9 @@ p {
   min-width: 0;
 }
 .crumbs a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
   text-decoration: none;
   white-space: nowrap;
 }
@@ -1019,6 +1022,9 @@ kbd {
   gap: 4px 20px;
 }
 .footer a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
   text-decoration: none;
 }
 .footer a:hover {
