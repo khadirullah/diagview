@@ -57,11 +57,12 @@ export const ZOOM = {
 };
 
 /**
- * Keyboard pan steps (pixels)
+ * Pan distances (pixels)
  */
 export const PAN = {
-  STEP_NORMAL: 40,
-  STEP_FAST: 120,
+  STEP_NORMAL: 40, // Arrow key step
+  STEP_FAST: 120, // Shift + arrow key step
+  DRAG_CLICK_THRESHOLD: 5, // Pointer travel past which a press and release is a pan, not a click
 };
 
 /**

@@ -475,10 +475,23 @@ function _setupMenuController(elements, sourceElement, clonedSvg) {
     }
   };
 
+  // The viewer swallows the click that ends a mouse pan, so a press on the
+  // diagram closes the menu too. Touch pans end without a click and leave
+  // the menu open, as before.
+  const handlePressOnDiagram = (e) => {
+    if (isOpen && e.pointerType !== "touch" && e.target.closest?.(".diagview-modal-viewport")) {
+      toggleMenu(null, false);
+    }
+  };
+
   requestAnimationFrame(() => {
     if (!state.isModalOpen || !document.contains(container)) return;
     document.addEventListener("click", handleClickOutside);
-    addModalCleanupFunction(() => document.removeEventListener("click", handleClickOutside));
+    document.addEventListener("pointerdown", handlePressOnDiagram, true);
+    addModalCleanupFunction(() => {
+      document.removeEventListener("click", handleClickOutside);
+      document.removeEventListener("pointerdown", handlePressOnDiagram, true);
+    });
   });
 
   // Wiring Helpers

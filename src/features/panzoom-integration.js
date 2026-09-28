@@ -24,7 +24,7 @@
  */
 
 import { state } from "../core/config.js";
-import { ZOOM, TIMING } from "../core/constants.js";
+import { ZOOM, PAN, TIMING } from "../core/constants.js";
 import { checkPanzoomDependency } from "../core/utils.js";
 
 import { addModalListener, addModalCleanupFunction } from "../core/lifecycle.js";
@@ -198,7 +198,36 @@ export function setupViewportInteractions(viewport, element, panzoom) {
     }
   };
 
+  // A pan that starts and ends on a link would open it. The diagram moves
+  // with the pointer, so the release lands on the same element and the
+  // browser fires a click. Swallow the one click that follows a drag.
+  // Capture phase on the viewport runs before Panzoom's own pointerdown
+  // handler and before any link or onclick handler inside the SVG.
+  let downX = 0;
+  let downY = 0;
+  let dragged = false;
+  const handlePointerDown = (e) => {
+    if (!e.isPrimary) return;
+    downX = e.clientX;
+    downY = e.clientY;
+    dragged = false;
+  };
+  const handlePointerUp = (e) => {
+    if (!e.isPrimary) return;
+    dragged = Math.hypot(e.clientX - downX, e.clientY - downY) > PAN.DRAG_CLICK_THRESHOLD;
+  };
+  const handleClickCapture = (e) => {
+    // detail 0 means a keyboard or scripted click, which no drag produced.
+    if (!dragged || e.detail === 0) return;
+    dragged = false;
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
   // Attach event listeners using MODAL listeners (auto-cleanup on close)
+  addModalListener(viewport, "pointerdown", handlePointerDown, true);
+  addModalListener(viewport, "pointerup", handlePointerUp, true);
+  addModalListener(viewport, "click", handleClickCapture, true);
   addModalListener(viewport, "wheel", handleWheel, { passive: false });
   addModalListener(viewport, "mousedown", handleMouseDown, { passive: true });
   addModalListener(viewport, "dblclick", handleDblClick, { passive: true });

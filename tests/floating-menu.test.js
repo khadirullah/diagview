@@ -27,6 +27,7 @@ const { createFloatingMenu } = await import("../src/ui/floating-menu.js");
 const { exportDiagram } = await import("../src/features/export.js");
 const { shareLink } = await import("../src/features/lazy/share.js");
 const { rotateDiagram } = await import("../src/features/lazy/rotate.js");
+const { setupViewportInteractions } = await import("../src/features/panzoom-integration.js");
 
 describe("Floating Menu UI", () => {
   let sourceElement, clonedSvg;
@@ -119,6 +120,54 @@ describe("Floating Menu UI", () => {
 
     expect(panel.classList.contains("active")).toBe(false);
     jest.useRealTimers();
+  });
+
+  describe("panning the diagram with the menu open", () => {
+    let viewport, panel;
+
+    const pointer = (type, x, pointerType) =>
+      viewport.firstChild.dispatchEvent(
+        Object.assign(new MouseEvent(type, { bubbles: true, clientX: x, clientY: 10 }), {
+          isPrimary: true,
+          pointerType,
+        }),
+      );
+
+    beforeEach(() => {
+      jest.useFakeTimers();
+      state.isModalOpen = true;
+      viewport = document.createElement("div");
+      viewport.className = "diagview-modal-viewport";
+      viewport.appendChild(document.createElement("div"));
+      document.body.appendChild(viewport);
+      setupViewportInteractions(viewport, viewport.firstChild, {
+        reset: jest.fn(),
+        zoomWithWheel: jest.fn(),
+      });
+      createFloatingMenu(sourceElement, clonedSvg);
+      panel = document.getElementById("dv-menu-panel");
+      document.getElementById("dv-toggle").click();
+      jest.advanceTimersByTime(100);
+    });
+
+    afterEach(() => {
+      for (const fn of Array.from(state.modalCleanupFunctions)) fn();
+      state.modalCleanupFunctions.clear();
+      jest.useRealTimers();
+    });
+
+    test("a mouse drag closes the menu even though its click is swallowed", () => {
+      pointer("pointerdown", 10, "mouse");
+      pointer("pointerup", 160, "mouse");
+      viewport.firstChild.dispatchEvent(new MouseEvent("click", { bubbles: true, detail: 1 }));
+      expect(panel.classList.contains("active")).toBe(false);
+    });
+
+    test("a finger pan leaves the menu open", () => {
+      pointer("pointerdown", 10, "touch");
+      pointer("pointerup", 160, "touch");
+      expect(panel.classList.contains("active")).toBe(true);
+    });
   });
 
   test("Interaction: Share button calls shareLink", async () => {

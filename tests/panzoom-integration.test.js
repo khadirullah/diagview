@@ -201,3 +201,89 @@ describe("taps reach links and click handlers", () => {
     expect(handleStartEvent).toBe(own);
   });
 });
+
+describe("click after a mouse drag", () => {
+  let viewport, link, onNavigate;
+
+  const pointer = (type, x, pointerType = "mouse") =>
+    viewport.dispatchEvent(
+      Object.assign(new MouseEvent(type, { bubbles: true, clientX: x, clientY: 10 }), {
+        isPrimary: true,
+        pointerType,
+      }),
+    );
+  const click = (detail = 1) => {
+    const e = new MouseEvent("click", { bubbles: true, cancelable: true, detail });
+    link.dispatchEvent(e);
+    return e;
+  };
+
+  beforeEach(() => {
+    resetConfig();
+    state.isModalOpen = true;
+    document.body.innerHTML = "";
+    viewport = document.createElement("div");
+    const element = document.createElement("div");
+    link = document.createElement("a");
+    link.href = "#opened";
+    onNavigate = jest.fn();
+    link.addEventListener("click", onNavigate);
+    element.appendChild(link);
+    viewport.appendChild(element);
+    document.body.appendChild(viewport);
+    setupViewportInteractions(viewport, element, { reset: jest.fn(), zoomWithWheel: jest.fn() });
+  });
+
+  afterEach(() => {
+    for (const fn of Array.from(state.modalCleanupFunctions)) fn();
+    state.modalCleanupFunctions.clear();
+  });
+
+  test("swallows the click that ends a pan", () => {
+    pointer("pointerdown", 10);
+    pointer("pointerup", 160);
+    const e = click();
+    expect(e.defaultPrevented).toBe(true);
+    expect(onNavigate).not.toHaveBeenCalled();
+  });
+
+  test("swallows only one click", () => {
+    pointer("pointerdown", 10);
+    pointer("pointerup", 160);
+    click();
+    click();
+    expect(onNavigate).toHaveBeenCalledTimes(1);
+  });
+
+  test("lets a plain click through, including a small wobble", () => {
+    pointer("pointerdown", 10);
+    pointer("pointerup", 13);
+    const e = click();
+    expect(e.defaultPrevented).toBe(false);
+    expect(onNavigate).toHaveBeenCalledTimes(1);
+  });
+
+  test("lets keyboard clicks through after a drag", () => {
+    pointer("pointerdown", 10);
+    pointer("pointerup", 160);
+    click(0);
+    expect(onNavigate).toHaveBeenCalledTimes(1);
+  });
+
+  test("a tap after a finger pan that fired no click still opens the link", () => {
+    pointer("pointerdown", 10, "touch");
+    pointer("pointerup", 160, "touch");
+    pointer("pointerdown", 40, "touch");
+    pointer("pointerup", 40, "touch");
+    click();
+    expect(onNavigate).toHaveBeenCalledTimes(1);
+  });
+
+  test("closing the viewer removes the listener", () => {
+    for (const fn of Array.from(state.modalCleanupFunctions)) fn();
+    pointer("pointerdown", 10);
+    pointer("pointerup", 160);
+    click();
+    expect(onNavigate).toHaveBeenCalledTimes(1);
+  });
+});
