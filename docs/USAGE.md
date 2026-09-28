@@ -175,7 +175,7 @@ DiagView.init({ layout: "floating" });
 
 ### Header
 
-A toolbar sits above each diagram. On desktop it fades in when you hover the diagram or tab into it; on touch screens it is always visible. It shows the diagram's title (from `data-title` or the SVG `<title>` element) on the left, and action buttons on the right.
+A toolbar sits above each diagram. On desktop it fades in when you hover the diagram or tab into it; on touch screens it is always visible. It shows the diagram's title (from `data-title` or the SVG `<title>` element) on the left, and action buttons on the right. A long title wraps onto a second line. A title too long even for two lines ends in "...", and resting the mouse on it shows the whole title.
 
 ```javascript
 DiagView.init({ layout: "header" });
