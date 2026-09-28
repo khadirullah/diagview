@@ -383,7 +383,7 @@ A: DiagView watermarks are "Silent." They are designed to keep your website clea
 A: No. DiagView renders watermarks using native SVG vectors, ensuring they are crystal clear at any resolution.
 
 **Q: Will a long brand name overlap my diagram?**  
-A: No. DiagView uses a "Safe-Fit" scaling engine. It automatically calculates the available space and reduces the font size until your brand fits perfectly within the diagram boundaries.
+A: It should not run past the edge of the diagram. DiagView estimates the text width at about 0.6 of the font size per character and shrinks the font so that estimate fits the space. The real width depends on the browser's sans-serif font, so a very wide font can still run a little over. To keep the text off the shapes, see the next answer.
 
 **Q: My watermark covers part of my diagram. How do I move it off?**
 A: Set `watermark.placement` to `"margin"`, or add `data-diagview-watermark-placement="margin"` to that diagram. The corner and side text then goes in the blank margin around the diagram and never covers a shape. The trade-off is that a crop to the diagram's edge removes it. The default, `"diagram"`, keeps the text on the diagram, where nobody can crop it off without cutting the diagram. The large centred mark of the `background` and `both` styles stays on the diagram either way. See [Placement](USAGE.md#placement).
