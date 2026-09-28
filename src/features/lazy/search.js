@@ -338,6 +338,15 @@ export function setupSearch(clone, initialQuery = "") {
   if (currentQuery) {
     // Perform initial search immediately
     performSearch(clone, currentQuery);
+    // The phone search bar starts folded, which hid a query from a share
+    // link or openFullscreen(). Unfold it, but leave focus alone so no
+    // keyboard pops up.
+    if (window.matchMedia?.("(max-width: 639px)").matches) {
+      const btn = document.getElementById("dv-search-icon-btn");
+      document.querySelector(".diagview-topbar")?.classList.add("search-open");
+      btn?.classList.add("active");
+      btn?.setAttribute("aria-expanded", "true");
+    }
   }
 
   state.searchMatches = [];

@@ -4,7 +4,12 @@
  */
 
 import { jest } from "@jest/globals";
-import { performSearch, clearSearch, resetSearch } from "../src/features/lazy/search.js";
+import {
+  performSearch,
+  clearSearch,
+  resetSearch,
+  setupSearch,
+} from "../src/features/lazy/search.js";
 import { state, resetConfig } from "../src/core/config.js";
 
 // Mock SVG with searchable nodes
@@ -581,5 +586,79 @@ describe("Search: shapes behind plain SVG text", () => {
     clearSearch();
 
     expect(svg.outerHTML).toBe(before);
+  });
+});
+
+describe("Search: a query given on open", () => {
+  let hadMatchMedia;
+
+  function build() {
+    document.body.innerHTML = `
+      <div class="diagview-topbar">
+        <button id="dv-search-icon-btn" aria-expanded="false"></button>
+        <input id="diagview-search" />
+        <button id="diagview-search-clear"></button>
+      </div>
+      <div id="diagview-modal-viewport"></div>
+    `;
+    const svg = createMockSvg();
+    document.getElementById("diagview-modal-viewport").appendChild(svg);
+    return svg;
+  }
+
+  function phone(matches) {
+    window.matchMedia = jest.fn((q) => ({ matches: matches && q === "(max-width: 639px)" }));
+  }
+
+  beforeEach(() => {
+    resetConfig();
+    hadMatchMedia = "matchMedia" in window;
+    jest.spyOn(window, "requestAnimationFrame").mockImplementation(() => 1);
+    jest.spyOn(window, "cancelAnimationFrame").mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    if (!hadMatchMedia) delete window.matchMedia;
+    document.body.innerHTML = "";
+    state.searchMatches = [];
+    jest.restoreAllMocks();
+  });
+
+  test("opens the phone search bar so the query shows, without focusing it", () => {
+    phone(true);
+    const svg = build();
+    const input = document.getElementById("diagview-search");
+    const btn = document.getElementById("dv-search-icon-btn");
+
+    setupSearch(svg, "data");
+
+    expect(input.value).toBe("data");
+    expect(document.querySelector(".diagview-topbar").classList.contains("search-open")).toBe(true);
+    expect(btn.classList.contains("active")).toBe(true);
+    expect(btn.getAttribute("aria-expanded")).toBe("true");
+    expect(document.activeElement).not.toBe(input);
+  });
+
+  test("leaves the bar folded with no query", () => {
+    phone(true);
+    setupSearch(build(), "");
+
+    expect(document.querySelector(".diagview-topbar").classList.contains("search-open")).toBe(
+      false,
+    );
+    expect(document.getElementById("dv-search-icon-btn").getAttribute("aria-expanded")).toBe(
+      "false",
+    );
+  });
+
+  test("leaves the desktop topbar alone", () => {
+    phone(false);
+    setupSearch(build(), "data");
+
+    expect(document.getElementById("diagview-search").value).toBe("data");
+    expect(document.querySelector(".diagview-topbar").classList.contains("search-open")).toBe(
+      false,
+    );
+    expect(document.getElementById("dv-search-icon-btn").classList.contains("active")).toBe(false);
   });
 });
