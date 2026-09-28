@@ -287,3 +287,20 @@ describe("click after a mouse drag", () => {
     expect(onNavigate).toHaveBeenCalledTimes(1);
   });
 });
+
+describe("zoomAnimationDuration", () => {
+  afterEach(() => {
+    delete window.Panzoom;
+    resetConfig();
+  });
+
+  test("0 zooms without animation", () => {
+    window.Panzoom = jest.fn(() => ({}));
+    state.config = { ...state.config, zoomAnimationDuration: 0 };
+    initializePanzoom(document.createElement("div"));
+    expect(window.Panzoom).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ duration: 0 }),
+    );
+  });
+});

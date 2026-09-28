@@ -178,6 +178,19 @@ describe("Core Config: validateConfig gaps", () => {
     expect(warn).not.toHaveBeenCalled();
   });
 
+  test("notice durations reject 0, animation durations accept it", () => {
+    updateConfig({ toastDuration: 0, errorToastDuration: 0 });
+    expect(warn).toHaveBeenCalledWith("DiagView: toastDuration should be at least 1");
+    expect(warn).toHaveBeenCalledWith("DiagView: errorToastDuration should be at least 1");
+    expect(state.config.toastDuration).toBe(2500);
+    expect(state.config.errorToastDuration).toBe(5000);
+
+    warn.mockClear();
+    updateConfig({ zoomAnimationDuration: 0, panAnimationDuration: 0, helpTimeout: 0 });
+    expect(warn).not.toHaveBeenCalled();
+    expect(state.config.zoomAnimationDuration).toBe(0);
+  });
+
   test("timing keys reject non-numbers", () => {
     updateConfig({ toastDuration: "fast" });
     expect(warn).toHaveBeenCalledWith(expect.stringContaining("toastDuration"));

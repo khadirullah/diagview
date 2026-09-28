@@ -47,7 +47,7 @@ export function initializePanzoom(element, options = {}) {
       minScale: state.config.minZoomScale || ZOOM.MIN_SCALE_DEFAULT,
       canvas: true,
       animate: true,
-      duration: state.config.zoomAnimationDuration || TIMING.ZOOM_ANIMATION_DURATION,
+      duration: state.config.zoomAnimationDuration ?? TIMING.ZOOM_ANIMATION_DURATION,
       noBind: false,
       step: 0.35, // Increased sensitivity for snappier feel (Default is 0.3)
       // Safari drops the click after a touch whose pointerdown was cancelled,

@@ -148,7 +148,7 @@ function handleKeyboardShortcut(e) {
     state.activePanzoom.pan(dx, dy, {
       relative: true,
       animate: true,
-      duration: state.config.panAnimationDuration || TIMING.PAN_ANIMATION_DURATION,
+      duration: state.config.panAnimationDuration ?? TIMING.PAN_ANIMATION_DURATION,
     });
     return;
   }

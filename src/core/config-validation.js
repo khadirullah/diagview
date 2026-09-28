@@ -51,7 +51,8 @@ export function validateConfig(config, previous = DEFAULT_CONFIG) {
       console.warn(`DiagView: ${key} must be a number, keeping ${fallback(key)}`);
       config[key] = fallback(key);
     } else if (value < min || value > max) {
-      console.warn(`DiagView: ${key} should be between ${min} and ${max}`);
+      const range = max === Infinity ? `at least ${min}` : `between ${min} and ${max}`;
+      console.warn(`DiagView: ${key} should be ${range}`);
       config[key] = fallback(key);
     }
   };
@@ -128,12 +129,11 @@ export function validateConfig(config, previous = DEFAULT_CONFIG) {
     config["allowedImageTypes"] = [...fallback("allowedImageTypes")];
   }
 
-  // Timings must be non-negative numbers
-  [
-    "helpTimeout",
-    "toastDuration",
-    "errorToastDuration",
-    "zoomAnimationDuration",
-    "panAnimationDuration",
-  ].forEach((key) => checkNumber(key, 0, Infinity));
+  // Timings must be non-negative numbers. 0 turns an animation off and keeps
+  // the shortcuts panel open. A notice has no close button, so it needs 1 ms
+  // or more.
+  ["helpTimeout", "zoomAnimationDuration", "panAnimationDuration"].forEach((key) =>
+    checkNumber(key, 0, Infinity),
+  );
+  ["toastDuration", "errorToastDuration"].forEach((key) => checkNumber(key, 1, Infinity));
 }

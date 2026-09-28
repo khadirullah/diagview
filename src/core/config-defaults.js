@@ -100,14 +100,14 @@ import { deepMerge, deepFreeze } from "./state-utils.js";
  * @property {string[]} allowedImageTypes - Image types allowed in data URLs
  * @property {DiagViewSecurityConfig} security - Sanitization settings
  * @property {DiagViewPerformanceConfig} performance - Size limits
- * @property {number} toastDuration - Milliseconds a notification stays
- * @property {number} errorToastDuration - Milliseconds an error notification stays
+ * @property {number} toastDuration - Milliseconds a notification stays, 1 or more
+ * @property {number} errorToastDuration - Milliseconds an error notification stays, 1 or more
  * @property {string} pdfLibraryUrl - Script URL for jsPDF
  * @property {string|null} pdfLibraryIntegrity - SRI hash for pdfLibraryUrl, null to skip the check
  * @property {number} maxZoomScale - Largest zoom, 1 to 50
  * @property {number} minZoomScale - Smallest zoom, 0.01 to 1
- * @property {number} zoomAnimationDuration - Zoom animation in milliseconds
- * @property {number} panAnimationDuration - Pan animation in milliseconds
+ * @property {number} zoomAnimationDuration - Zoom animation in milliseconds, 0 for none
+ * @property {number} panAnimationDuration - Pan animation in milliseconds, 0 for none
  * @property {((mode: string, filename: string) => void)|null} onExport - Called after a successful export with the format of the file made and the file name without extension
  * @property {((error: Error) => void)|null} onError - Called when a diagram fails to render
  * @property {((scale: number) => void)|null} onZoomChange - Called with the new zoom scale
