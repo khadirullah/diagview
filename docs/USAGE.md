@@ -1180,13 +1180,15 @@ console.log(DiagView.version); // e.g. "1.0.12"
 
 ### Error placeholder instead of a diagram
 
-DiagView shows a placeholder titled "Syntax Error", "Parse Error", "No Diagram Found" or "Diagram Error" when the `<svg>` fails validation. That happens when the SVG:
+DiagView shows a placeholder titled "Syntax Error", "Parse Error" or "Diagram Error" when the `<svg>` fails validation. That happens when the SVG:
 
 - contains a `<parsererror>` element
 - is a diagram library's error output, for example a Mermaid syntax error
 - has no `g`, `path`, `rect`, `circle`, `text`, `line`, `polygon` or `polyline` element
 - declares a `viewBox` with zero width or height
 - has text but no shapes, and the text contains "error" or "failed"
+
+A container without an `<svg>` gets no placeholder. DiagView leaves it alone and sets it up once an `<svg>` appears in it.
 
 Fix the SVG in place and call `DiagView.refresh()`; the placeholder is removed and the diagram is initialized normally.
 
