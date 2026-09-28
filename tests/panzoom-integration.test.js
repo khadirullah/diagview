@@ -4,7 +4,11 @@
  */
 import { jest } from "@jest/globals";
 import { state, resetConfig } from "../src/core/config.js";
-import { setupViewportInteractions, resetTouchState } from "../src/features/panzoom-integration.js";
+import {
+  initializePanzoom,
+  setupViewportInteractions,
+  resetTouchState,
+} from "../src/features/panzoom-integration.js";
 
 describe("Gesture-scoped will-change", () => {
   let viewport;
@@ -128,5 +132,72 @@ describe("touch: tap after pinch does not reset the zoom", () => {
     touch("touchend", 0);
 
     expect(panzoom.reset).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("taps reach links and click handlers", () => {
+  let handleStartEvent;
+
+  beforeEach(() => {
+    resetConfig();
+    document.body.innerHTML = `
+      <svg>
+        <a href="#a"><rect id="link"/></a>
+        <a xlink:href="#b"><rect id="xlink"/></a>
+        <g onclick="void 0"><g><rect id="handler"/></g></g>
+        <rect id="shape"/>
+      </svg>`;
+    window.Panzoom = jest.fn((el, opts) => {
+      handleStartEvent = opts.handleStartEvent;
+      return {};
+    });
+    initializePanzoom(document.querySelector("svg"));
+  });
+
+  afterEach(() => {
+    delete window.Panzoom;
+  });
+
+  // Runs handleStartEvent and reports whether it cancelled the pointerdown
+  const cancels = (pointerType, id) => {
+    const e = {
+      pointerType,
+      target: document.getElementById(id),
+      preventDefault: jest.fn(),
+      stopPropagation: jest.fn(),
+    };
+    handleStartEvent(e);
+    expect(e.stopPropagation).toHaveBeenCalledTimes(1);
+    return e.preventDefault.mock.calls.length > 0;
+  };
+
+  test("mouse on a link still cancels pointerdown", () => {
+    expect(cancels("mouse", "link")).toBe(true);
+  });
+
+  test("touch on a link does not cancel pointerdown", () => {
+    expect(cancels("touch", "link")).toBe(false);
+  });
+
+  test("touch on an xlink:href link does not cancel pointerdown", () => {
+    expect(cancels("touch", "xlink")).toBe(false);
+  });
+
+  test("touch inside an onclick element does not cancel pointerdown", () => {
+    expect(cancels("touch", "handler")).toBe(false);
+  });
+
+  test("touch on a plain shape cancels pointerdown", () => {
+    expect(cancels("touch", "shape")).toBe(true);
+  });
+
+  test("pen on a link does not cancel pointerdown", () => {
+    expect(cancels("pen", "link")).toBe(false);
+  });
+
+  test("a caller's own handleStartEvent still wins", () => {
+    const own = jest.fn();
+    initializePanzoom(document.querySelector("svg"), { handleStartEvent: own });
+    expect(handleStartEvent).toBe(own);
   });
 });

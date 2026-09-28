@@ -50,6 +50,16 @@ export function initializePanzoom(element, options = {}) {
       duration: state.config.zoomAnimationDuration || TIMING.ZOOM_ANIMATION_DURATION,
       noBind: false,
       step: 0.35, // Increased sensitivity for snappier feel (Default is 0.3)
+      // Safari drops the click after a touch whose pointerdown was cancelled,
+      // so a tap on a link or onclick node would do nothing. Keep the default
+      // for the mouse and for everything else. a[*|href] also matches the
+      // older xlink:href links.
+      handleStartEvent: (e) => {
+        if (e.pointerType === "mouse" || !e.target?.closest?.("a[*|href], [onclick]")) {
+          e.preventDefault();
+        }
+        e.stopPropagation();
+      },
       ...options,
     };
 
