@@ -1,7 +1,7 @@
 # DiagView
 
 > A lightweight, framework-agnostic interactive viewer for SVG diagrams.  
-> Adds Zoom · Pan · Search · Export · Minimap · Rotation · Presentation Mode to any SVG on your page.
+> Adds Zoom · Pan · Search · Export · Minimap · Rotation · Meeting Mode to any SVG on your page.
 
 [![npm version](https://img.shields.io/npm/v/diagview.svg)](https://www.npmjs.com/package/diagview)
 [![Bundle Size](https://img.shields.io/bundlephobia/minzip/diagview)](https://bundlephobia.com/package/diagview)
