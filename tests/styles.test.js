@@ -179,6 +179,13 @@ describe("styles.css: menu buttons", () => {
 });
 
 describe("styles.css: keyboard focus ring", () => {
+  test("the custom colour swatch shows the ring while its hidden input has keyboard focus", () => {
+    const body = ruleBody(".dv-swatch-custom:has(:focus-visible) {");
+    expect(body).not.toBeNull();
+    expect(body).toMatch(/0 0 0 4px var\(--dv-accent\)/);
+    expect(css).not.toMatch(/\.dv-swatch-custom:focus-within/);
+  });
+
   test("keeps each control's own corners instead of its parent's", () => {
     const body = ruleBody(".diagview-menu *:focus-visible {");
     expect(body).toMatch(/box-shadow:/);

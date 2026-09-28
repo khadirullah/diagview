@@ -259,6 +259,12 @@ describe("Floating Menu UI", () => {
       expect(selected()).toEqual(["#ffffff"]);
     });
 
+    test("the custom colour input has its own accessible name", () => {
+      createFloatingMenu(sourceElement, clonedSvg);
+      const input = document.querySelector(".dv-custom-color-input");
+      expect(input.getAttribute("aria-label")).toBe("Custom colour");
+    });
+
     test("reflects the current canvas when rebuilt or reopened", () => {
       state.activeCanvasThemeMode = "custom";
       state.customCanvasColor = "#0B0F19";

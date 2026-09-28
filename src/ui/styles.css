@@ -1343,6 +1343,14 @@
   overflow: visible;
 }
 
+/* The colour input is invisible, so its swatch shows the keyboard ring.
+   Browsers without :has() skip this rule and show no ring. */
+.dv-swatch-custom:has(:focus-visible) {
+  box-shadow:
+    0 0 0 2px var(--dv-bg),
+    0 0 0 4px var(--dv-accent);
+}
+
 .dv-custom-color-input {
   position: absolute;
   top: 0;

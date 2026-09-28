@@ -492,3 +492,5 @@ The declarations describe the package import. The `DiagView` global that the scr
 | Android Chrome  | 90              |
 
 Internet Explorer is not supported.
+
+The custom colour swatch in the ☰ menu shows its keyboard focus ring through `:has()`. Chrome before 105, Firefox before 121 and Safari before 15.4 lack `:has()`, so there the swatch shows no ring. The picker still works from the keyboard.

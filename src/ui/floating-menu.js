@@ -163,6 +163,7 @@ function _createCanvasThemeSection(menuPanel) {
   customInput.type = "color";
   customInput.value = state.customCanvasColor || "#0b0f19";
   customInput.className = "dv-custom-color-input";
+  customInput.setAttribute("aria-label", "Custom colour");
 
   customInput.oninput = (e) => {
     const val = e.target.value;
