@@ -6,7 +6,7 @@
 
 import { state, addCleanupFunction } from "../core/config.js";
 import { detectTheme, syncTheme } from "../core/theme.js";
-import { throttle, setSVGContent, centerSVGViewBox } from "../core/utils.js";
+import { throttle, setSVGContent, centerSVGViewBox, generateUniqueId } from "../core/utils.js";
 import { addModalListener, addModalCleanupFunction } from "../core/lifecycle.js";
 import { cloneSVGForModal } from "../core/svg-clone.js";
 import { BRANDING, TIMING } from "../core/constants.js";
@@ -242,7 +242,11 @@ async function _initCoreInteractions(element, clone, viewport, options, session)
   const panzoom = initializePanzoom(clone);
   state.activePanzoom = panzoom;
 
-  // Get diagram ID for zoom state
+  // Get diagram ID for zoom state. A diagram opened by code before it
+  // scrolled into view has no id yet, so give it one init will keep.
+  if (!element.dataset.diagviewId && element.dataset.diagviewIndex) {
+    element.dataset.diagviewId = generateUniqueId();
+  }
   const diagramId = element.dataset.diagviewId;
 
   // Apply explicit zoom from options (overrides Auto-Fit/Restore)

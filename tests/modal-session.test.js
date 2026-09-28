@@ -179,6 +179,26 @@ describe("rememberZoom saves on panzoomchange and on close", () => {
     }
   });
 
+  test("a diagram opened by code before its lazy init is still remembered", async () => {
+    const el = makeDiagram("unused");
+    delete el.dataset.diagviewId; // lazy init has not run yet
+    await zoomAndClose(el, 2.5, 20, 30);
+
+    expect(el.dataset.diagviewId).toBeTruthy();
+    await openFullscreen(el);
+    await settle();
+    expect(instances[instances.length - 1].zoom).toHaveBeenCalledWith(2.5, expect.anything());
+  });
+
+  test("an element DiagView does not know gets no id when opened", async () => {
+    const el = makeDiagram("unused");
+    delete el.dataset.diagviewId;
+    delete el.dataset.diagviewIndex;
+    await zoomAndClose(el, 2, 0, 0);
+
+    expect(el.dataset.diagviewId).toBeUndefined();
+  });
+
   test("rememberZoom false stores nothing", async () => {
     updateConfig({ rememberZoom: false });
     const el = makeDiagram("d-off");

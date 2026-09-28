@@ -210,11 +210,13 @@ async function _teardown() {
 
     // Restore every diagram we touched (wrapped, layout "off", error-boundary
     // and shadow-root ones alike), then drop the index the observer stamps on
-    // diagrams that were only queued for lazy initialization.
+    // diagrams that were only queued for lazy initialization, and the id the
+    // viewer gives one of those when it is opened early.
     deinitializeAllDiagrams();
     [document, ...state.shadowRoots].forEach((root) => {
       root.querySelectorAll("[data-diagview-index]").forEach((el) => {
         delete el.dataset.diagviewIndex;
+        delete el.dataset.diagviewId;
       });
     });
     state.shadowRoots.forEach((root) => removeStylesFrom(root));

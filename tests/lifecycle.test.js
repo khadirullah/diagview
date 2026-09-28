@@ -221,6 +221,33 @@ describe("destroy() restores every touched element", () => {
     expect(el.closest(".diagview-wrapper")).not.toBeNull();
   });
 
+  test("a diagram opened before its lazy init keeps its id through init and loses it on destroy", async () => {
+    const realObserver = window.IntersectionObserver;
+    window.IntersectionObserver = class {
+      observe() {}
+      unobserve() {}
+      disconnect() {}
+    };
+    try {
+      document.body.innerHTML = `<div class="diagram">${SVG}</div>`;
+      const el = document.querySelector(".diagram");
+      DiagView.init();
+      expect(el.dataset.diagviewInit).toBeUndefined();
+
+      el.dataset.diagviewId = "dv-early"; // what the viewer sets on open
+      await DiagView.destroy();
+      expect(el.dataset.diagviewId).toBeUndefined();
+    } finally {
+      window.IntersectionObserver = realObserver;
+    }
+
+    const el = document.querySelector(".diagram");
+    el.dataset.diagviewId = "dv-early";
+    DiagView.init();
+    expect(el.dataset.diagviewInit).toBe("1");
+    expect(el.dataset.diagviewId).toBe("dv-early");
+  });
+
   test("error-boundary diagram is restored on destroy", async () => {
     document.body.innerHTML = `<div class="diagram"><svg xmlns="http://www.w3.org/2000/svg"></svg></div>`;
     const el = document.querySelector(".diagram");

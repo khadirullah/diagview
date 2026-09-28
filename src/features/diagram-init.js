@@ -288,9 +288,9 @@ export function initializeDiagram(element, precalculatedIndex = -1) {
     return;
   }
 
-  // Generate unique ID and fix SVG ID collisions
-  const uniqueId = generateUniqueId();
-  element.dataset.diagviewId = uniqueId;
+  // Generate a unique ID, or keep the one the viewer gave a diagram that was
+  // opened by code before it scrolled into view
+  if (!element.dataset.diagviewId) element.dataset.diagviewId = generateUniqueId();
 
   // MAJ-7: Cache the index to avoid expensive global DOM queries on modal open
   if (precalculatedIndex >= 0) {
