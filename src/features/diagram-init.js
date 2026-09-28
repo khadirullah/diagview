@@ -175,13 +175,6 @@ function showErrorBoundary(element, svg) {
 }
 
 /**
- * Extract diagram title
- */
-function extractDiagramTitle(element) {
-  return getDiagramTitle(element.querySelector("svg"), element).toUpperCase() || "DIAGRAM";
-}
-
-/**
  * Get button style class from config
  */
 function getButtonStyleClass() {
@@ -333,7 +326,7 @@ export function initializeDiagram(element, precalculatedIndex = -1) {
     return;
   }
 
-  const displayTitle = extractDiagramTitle(element);
+  const title = getDiagramTitle(element.querySelector("svg"), element);
   const styleClass = getButtonStyleClass();
 
   // Create wrapper structure
@@ -349,7 +342,13 @@ export function initializeDiagram(element, precalculatedIndex = -1) {
   // Create label (only for header layout)
   const label = document.createElement("div");
   label.className = "diagview-label";
-  label.textContent = displayTitle;
+  label.textContent = title.toUpperCase() || "DIAGRAM";
+  // A title still cut after two lines shows whole, as the page wrote it, on
+  // hover. Firefox rounds a title that just fits 1px taller.
+  label.addEventListener("pointerenter", () => {
+    if (label.scrollHeight > label.clientHeight + 1) label.title = title;
+    else label.removeAttribute("title");
+  });
 
   // Create buttons using button factory
   const buttons = [

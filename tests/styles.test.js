@@ -333,3 +333,14 @@ describe("styles.css: topbar on a phone page shown zoomed out", () => {
     expect(rule[2]).toMatch(/display:\s*none/);
   });
 });
+
+describe("styles.css: toolbar title", () => {
+  test("wraps to two lines before it is cut", () => {
+    const body = ruleBody(".diagview-label {");
+    expect(body).toMatch(/white-space:\s*normal/);
+    expect(body).toMatch(/-webkit-line-clamp:\s*2/);
+    expect(body).toMatch(/[^-]line-clamp:\s*2/);
+    expect(body).toMatch(/overflow:\s*hidden/);
+    expect(body).not.toMatch(/nowrap/);
+  });
+});

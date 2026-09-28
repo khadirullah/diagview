@@ -152,6 +152,39 @@ describe("Diagram Init: Title Extraction Logic", () => {
 
     expect(document.querySelector(".diagview-label").textContent).toBe("DIAGRAM");
   });
+
+  describe("tooltip for a long title", () => {
+    const TITLE = "Customer Order Processing and Payment Reconciliation (EU)";
+
+    function hover(scrollHeight, clientHeight) {
+      const label = document.querySelector(".diagview-label");
+      Object.defineProperty(label, "scrollHeight", { configurable: true, value: scrollHeight });
+      Object.defineProperty(label, "clientHeight", { configurable: true, value: clientHeight });
+      label.dispatchEvent(new Event("pointerenter"));
+      return label;
+    }
+
+    beforeEach(() => {
+      const container = document.createElement("div");
+      container.dataset.diagviewLayout = "header";
+      container.setAttribute("data-title", TITLE);
+      container.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg"><rect/></svg>';
+      document.body.appendChild(container);
+      initializeDiagram(container);
+    });
+
+    test("shows the whole title as the page wrote it when two lines cut it", () => {
+      const label = hover(46, 31);
+      expect(label.textContent).toBe(TITLE.toUpperCase());
+      expect(label.title).toBe(TITLE);
+    });
+
+    test("is left out when the title fits, and dropped again once it fits", () => {
+      expect(hover(31, 31).hasAttribute("title")).toBe(false);
+      hover(46, 31);
+      expect(hover(31, 31).hasAttribute("title")).toBe(false);
+    });
+  });
 });
 
 describe("Diagram Init: deinitializeDiagram", () => {

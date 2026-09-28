@@ -174,9 +174,14 @@
   letter-spacing: 0.1em;
   color: var(--dv-text-color);
   opacity: 0.6;
-  white-space: nowrap;
+  /* A long title wraps to a second line, and only then ends in "..." */
+  white-space: normal;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  line-height: 1.4;
   overflow: hidden;
-  text-overflow: ellipsis;
   user-select: none;
 }
 
