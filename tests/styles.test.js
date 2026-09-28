@@ -54,7 +54,7 @@ describe("styles.css: topbar shortcut hint", () => {
   });
 
   // Docs sites often style kbd with a more specific rule such as html.dark kbd
-  test.each([".diagview-shortcut-hint kbd {", ".diagview-help-key kbd {"])(
+  test.each([".diagview-shortcut-hint kbd,", ".dv-menu-item kbd {", ".diagview-help-key kbd {"])(
     "%s outranks a host page's kbd colours, border, shadow, font and padding",
     (selector) => {
       const body = ruleBody(selector);
@@ -65,6 +65,13 @@ describe("styles.css: topbar shortcut hint", () => {
       expect(body).toMatch(/box-shadow:\s*none\s*!important/);
     },
   );
+
+  test("menu key badges switch to the accent text colour on a hovered or active item", () => {
+    expect(ruleBody(".dv-menu-item.active kbd {")).toMatch(
+      /color:\s*var\(--dv-on-accent\)\s*!important/,
+    );
+    expect(css).toContain(".dv-menu-item:hover kbd,\n.dv-menu-item.active kbd {");
+  });
 });
 
 describe("styles.css: dead and contradicting rules", () => {

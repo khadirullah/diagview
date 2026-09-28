@@ -553,7 +553,7 @@ The "Canvas Theme" section of the fullscreen menu sets the background behind the
 - **Auto** (default) follows the host page theme detected above, or `backgroundColor` when you set it. It updates when the page switches theme.
 - The swatch row has a colour picker and four presets: White (`#ffffff`), Dark Slate (`#0b0f19`), Navy (`#0f172a`) and Charcoal (`#1e293b`).
 
-Light, Dark and the swatches override `backgroundColor`. The viewer's own text and controls, including the "?" key badge in the topbar, take their colour from the canvas. DiagView does not save the choice; it lasts until the page reloads or `destroy()` runs. Share links carry it in `dv-t` and `dv-c` (see [Share Links](#8-share-links)). The first time someone opens the viewer in a browser, a hint just above the menu button points to this menu for six seconds. DiagView stores in `localStorage` that the hint was shown, so it does not come back on later opens or page loads. Set `showFirstTimeThemeHint: false` to turn it off.
+Light, Dark and the swatches override `backgroundColor`. The viewer's own text and controls take their colour from the canvas. So do the key badges in the topbar and the ☰ menu, also on sites that style `kbd` themselves. DiagView does not save the choice; it lasts until the page reloads or `destroy()` runs. Share links carry it in `dv-t` and `dv-c` (see [Share Links](#8-share-links)). The first time someone opens the viewer in a browser, a hint just above the menu button points to this menu for six seconds. DiagView stores in `localStorage` that the hint was shown, so it does not come back on later opens or page loads. Set `showFirstTimeThemeHint: false` to turn it off.
 
 ### Canvas grid
 

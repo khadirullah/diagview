@@ -758,7 +758,8 @@
 
 /* !important: docs sites often style kbd with a more specific rule, such as
    html.dark kbd, which would otherwise repaint the badge in the page's colours */
-.diagview-shortcut-hint kbd {
+.diagview-shortcut-hint kbd,
+.dv-menu-item kbd {
   padding: 2px 6px !important;
   background: var(--dv-header-bg) !important;
   border-radius: 4px !important;
@@ -1384,6 +1385,12 @@
 
 .dv-menu-item.active {
   background: var(--dv-primary);
+  color: var(--dv-on-accent) !important;
+}
+
+/* On the accent background the key badge follows the item's text colour */
+.dv-menu-item:hover kbd,
+.dv-menu-item.active kbd {
   color: var(--dv-on-accent) !important;
 }
 
