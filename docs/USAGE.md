@@ -599,7 +599,7 @@ The Security modes panel on the [demo page](https://khadirullah.github.io/diagvi
 
 - **`strict` (default).** Use it for any diagram. Keep it for diagrams other people can write, such as wiki or CMS uploads, pasted SVGs and SVGs from an API.
 - **`permissive`.** Use it for your own diagrams that animate with SMIL, such as `<animate>` or `<animateTransform>`.
-- **`off`.** Use it only for your own diagrams whose click handlers or links you need in fullscreen. The copy keeps every script and handler, and they run once the copy is on the page.
+- **`off`.** Use it only for your own diagrams whose click handlers or links you need in fullscreen. The copy keeps every script and handler. Inline event handlers such as `onclick`, `onload` and `onerror` run in the fullscreen copy. A `<script>` element stays in the copy but never runs there, in any browser. Exports keep both unless `security.exportMode` is `"strict"`, and a browser that opens a downloaded SVG file runs its scripts.
 
 `security.exportMode` picks the mode for exports, downloads and clipboard copies. With `"same"`, the default, each export uses its diagram's own mode. With `"strict"`, DiagView cleans every export and copy in `strict` mode, whatever mode the page or the diagram uses on screen. Use it when you need click handlers in fullscreen but want clean files, since a downloaded file reaches people who never saw your page:
 
