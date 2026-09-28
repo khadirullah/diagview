@@ -46,6 +46,19 @@ describe("styles.css: topbar shortcut hint", () => {
   test("key badge takes the canvas text colour, not the host page's kbd colour", () => {
     expect(ruleBody(".diagview-shortcut-hint kbd")).toMatch(/color:\s*var\(--dv-text-color\)/);
   });
+
+  // Docs sites often style kbd with a more specific rule such as html.dark kbd
+  test.each([".diagview-shortcut-hint kbd {", ".diagview-help-key kbd {"])(
+    "%s outranks a host page's kbd colours, border, shadow, font and padding",
+    (selector) => {
+      const body = ruleBody(selector);
+      for (const prop of ["color", "background", "border", "box-shadow", "padding"]) {
+        expect(body).toMatch(new RegExp(`(^|[;\\s])${prop}:[^;]*!important`));
+      }
+      expect(body).toMatch(/font(-size)?:[^;]*!important/);
+      expect(body).toMatch(/box-shadow:\s*none\s*!important/);
+    },
+  );
 });
 
 describe("styles.css: dead and contradicting rules", () => {

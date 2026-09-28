@@ -791,14 +791,21 @@
   flex-shrink: 0;
 }
 
+/* !important: docs sites often style kbd with a more specific rule, such as
+   html.dark kbd, which would otherwise repaint the badge in the page's colours */
 .diagview-shortcut-hint kbd {
-  padding: 2px 6px;
-  background: var(--dv-header-bg);
-  border-radius: 4px;
-  font-family: ui-monospace, monospace;
-  font-weight: 600;
-  color: var(--dv-text-color);
+  padding: 2px 6px !important;
+  background: var(--dv-header-bg) !important;
+  border-radius: 4px !important;
+  font-family: ui-monospace, monospace !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  font-style: normal !important;
+  line-height: normal !important;
+  color: var(--dv-text-color) !important;
   border: 1px solid var(--dv-border-color) !important;
+  box-shadow: none !important;
+  text-shadow: none !important;
 }
 
 @media (min-width: 640px) {
@@ -1842,15 +1849,20 @@
   gap: 0.25rem;
 }
 
+/* !important for the same reason as the topbar's ? badge */
 .diagview-help-key kbd {
-  background: var(--dv-header-bg);
-  border: 1px solid var(--dv-border-color);
-  border-radius: 4px;
-  padding: 0.25rem 0.5rem;
-  font-family: inherit;
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: var(--dv-text-color);
+  background: var(--dv-header-bg) !important;
+  border: 1px solid var(--dv-border-color) !important;
+  border-radius: 4px !important;
+  padding: 0.25rem 0.5rem !important;
+  font-family: inherit !important;
+  font-size: 0.75rem !important;
+  font-weight: 600 !important;
+  font-style: normal !important;
+  line-height: normal !important;
+  color: var(--dv-text-color) !important;
+  box-shadow: none !important;
+  text-shadow: none !important;
 }
 
 .diagview-help-desc {
