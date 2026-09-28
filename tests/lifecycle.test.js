@@ -62,10 +62,15 @@ describe("DiagView Lifecycle", () => {
     const body = document.body;
     body.remove();
     expect(document.body).toBeNull();
+    Object.defineProperty(document, "readyState", { configurable: true, get: () => "loading" });
 
     let result;
-    expect(() => (result = init({ layout: "header" }))).not.toThrow();
-    expect(state.isInitialized).toBe(false);
+    try {
+      expect(() => (result = init({ layout: "header" }))).not.toThrow();
+      expect(state.isInitialized).toBe(false);
+    } finally {
+      delete document.readyState;
+    }
 
     document.documentElement.appendChild(body);
     document.body.innerHTML = `<div class="diagram">${SVG}</div>`;
@@ -75,6 +80,23 @@ describe("DiagView Lifecycle", () => {
     expect(state.isInitialized).toBe(true);
     expect(DiagView.getConfiguration().layout).toBe("header");
     expect(document.getElementById("diagview-modal")).not.toBeNull();
+  });
+
+  test("init() on a parsed page with no <body> settles at once without starting", async () => {
+    // An SVG file has no <body>, and DOMContentLoaded has already fired
+    const body = document.body;
+    body.remove();
+    let settled = false;
+    try {
+      init().then(() => (settled = true));
+      await Promise.resolve();
+    } finally {
+      document.documentElement.appendChild(body);
+    }
+
+    expect(settled).toBe(true);
+    expect(state.isInitialized).toBe(false);
+    expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining("no <body>"));
   });
 
   test("init() issued while destroy() is in flight waits for it, then initializes", async () => {

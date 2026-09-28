@@ -74,7 +74,8 @@ let pendingDestroy = null;
  * Runs synchronously when nothing is pending. If a destroy() is still in
  * flight, the initialization is queued behind it. Called before the page has
  * a <body>, it waits for DOMContentLoaded. Either way the returned
- * promise resolves once DiagView is initialized.
+ * promise resolves once DiagView is initialized. On a parsed page with no
+ * <body>, such as an SVG file, it warns and resolves without starting.
  * @param {DiagViewOptions} [options] - Configuration options
  * @returns {Promise<void>} Resolves when initialization has completed
  */
@@ -89,8 +90,13 @@ function init(options = {}) {
   }
 
   // A script in <head> runs before there is a body to hold the viewer or the
-  // diagrams, so start once the page has been parsed.
+  // diagrams, so start once the page has been parsed. A page that is parsed
+  // and still has no body, such as an SVG file, never gets one.
   if (!document.body) {
+    if (document.readyState !== "loading") {
+      console.warn("DiagView: The page has no <body>, so DiagView did not start");
+      return Promise.resolve();
+    }
     return new Promise((resolve) => {
       document.addEventListener("DOMContentLoaded", () => resolve(init(options)), { once: true });
     });
