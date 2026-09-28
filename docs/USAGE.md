@@ -628,10 +628,10 @@ DiagView.init({ security: { mode: "off", exportMode: "strict" } });
 | `<discard>`, `<mpath>`, `<tref>`, `<math>`, `<feImage>`                                                                                                   | Yes      | No           | No    |
 | `<foreignObject>` whose `src` or `data` is an `http(s)` URL. Other `<foreignObject>` elements stay, since Mermaid and draw.io put their labels in them    | Yes      | No           | No    |
 | `href` on a `<use>` that points to another site (`https://`, `http://` or `//`)                                                                           | Yes      | No           | No    |
-| A `style` attribute with `expression()`, `javascript:` or `vbscript:`, also when hidden by CSS escapes or comments, or with a remote `url()` or `@import` | Yes      | No           | No    |
+| A `style` attribute with `expression()`, `javascript:` or `vbscript:`, also when hidden by CSS escapes or comments, or with `@import` or a remote `url()` | Yes      | No           | No    |
 | A `<style>` block with the same patterns. The whole block goes                                                                                            | Yes      | No           | No    |
 
-With `allowRemoteResources: true`, remote `url()` and `@import` stay in `strict` too. See [Allowing remote resources](#allowing-remote-resources).
+With `allowRemoteResources: true`, `@import` and remote `url()` stay in `strict` too. See [Allowing remote resources](#allowing-remote-resources).
 
 ### What readers notice
 
