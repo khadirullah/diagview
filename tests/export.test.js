@@ -281,6 +281,19 @@ describe("Export Functionality", () => {
       expect(markup()).toContain('text-anchor="end"'); // bottom-right
     });
 
+    test('"both" writes its scaled opacities rounded to three decimals', async () => {
+      updateConfig({ watermark: { enabled: true, text: "MARK", style: "both", opacity: 0.2 } });
+
+      await exportToSVG(container, { filename: "wm" });
+
+      const opacities = [...markup().matchAll(/(?:fill|stroke)-opacity="([^"]*)"/g)].map(
+        (m) => m[1],
+      );
+      // 0.2 * 0.8 for the corner mark, 0.2 * 0.6 for the centre one, halved for the outline
+      expect(opacities).toEqual(expect.arrayContaining(["0.16", "0.08", "0.12", "0.06"]));
+      expect(opacities.every((o) => o.length <= 5)).toBe(true);
+    });
+
     test("an unknown style warns and draws the corner watermark", async () => {
       updateConfig({ watermark: { enabled: true, text: "MARK", style: "fancy" } });
 

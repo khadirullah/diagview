@@ -238,8 +238,9 @@ function injectWatermark(svg, d, sourceSvg = null, pad = 0) {
     text.setAttribute("stroke", contrastColor);
     text.setAttribute("stroke-width", String(effectiveFontSize * 0.05));
     text.setAttribute("paint-order", "stroke");
-    text.setAttribute("fill-opacity", String(textOpacity));
-    text.setAttribute("stroke-opacity", String(textOpacity * 0.5));
+    // Three decimals, so 0.2 * 0.8 is written as 0.16, not 0.16000000000000003
+    text.setAttribute("fill-opacity", String(Math.round(textOpacity * 1000) / 1000));
+    text.setAttribute("stroke-opacity", String(Math.round(textOpacity * 500) / 1000));
     text.setAttribute("pointer-events", "none");
     text.style.userSelect = "none";
 
