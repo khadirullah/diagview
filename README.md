@@ -224,19 +224,19 @@ Any diagram can override the global configuration using `data-diagview-*` attrib
 </div>
 ```
 
-| Attribute                           | Values                              | Description                                          |
-| ----------------------------------- | ----------------------------------- | ---------------------------------------------------- |
-| `data-diagview-layout`              | `header` \| `floating` \| `off`     | Layout for this diagram only                         |
-| `data-diagview-scale`               | `1` to `10`                         | Export resolution for this diagram only              |
-| `data-diagview-sanitize`            | `strict` \| `permissive` \| `off`   | SVG sanitization mode                                |
-| `data-diagview-allow-remote`        | `true` \| `false`                   | Keep remote CSS and fonts under `strict`             |
-| `data-diagview-watermark`           | `true` \| `false`                   | Turn the watermark on or off for this diagram        |
-| `data-diagview-watermark-text`      | Any string                          | Custom brand text (e.g. your name)                   |
-| `data-diagview-watermark-style`     | `corner` \| `background` \| `both`  | Style override for this diagram                      |
-| `data-diagview-watermark-pos`       | `top-left` \| `...` \| `four-sides` | Position override for this diagram                   |
-| `data-diagview-watermark-placement` | `diagram` \| `margin`               | Corner and side text on the diagram or in the margin |
-| `data-diagview-watermark-opacity`   | `0` to `1`                          | Transparency override for this diagram               |
-| `data-title`                        | Any string                          | Title in the header label and in export file names   |
+| Attribute                           | Values                              | Description                                                                         |
+| ----------------------------------- | ----------------------------------- | ----------------------------------------------------------------------------------- |
+| `data-diagview-layout`              | `header` \| `floating` \| `off`     | Layout for this diagram only                                                        |
+| `data-diagview-scale`               | `1` to `10`                         | Export resolution for this diagram only                                             |
+| `data-diagview-sanitize`            | `strict` \| `permissive` \| `off`   | SVG sanitization mode                                                               |
+| `data-diagview-allow-remote`        | `true` \| `false`                   | Keep remote CSS and fonts under `strict`                                            |
+| `data-diagview-watermark`           | `true` \| `false`                   | Turn the watermark on or off for this diagram                                       |
+| `data-diagview-watermark-text`      | Any string                          | Custom brand text (e.g. your name)                                                  |
+| `data-diagview-watermark-style`     | `corner` \| `background` \| `both`  | Style override for this diagram                                                     |
+| `data-diagview-watermark-pos`       | `top-left` \| `...` \| `four-sides` | Position override for this diagram                                                  |
+| `data-diagview-watermark-placement` | `diagram` \| `margin`               | Corner and side text on the diagram or in the margin                                |
+| `data-diagview-watermark-opacity`   | `0` to `1`                          | Transparency override for this diagram                                              |
+| `data-title`                        | Any string                          | Header label, and export file names such as `my_architecture_2026-09-29_101500.png` |
 
 > **Security note:** `data-diagview-sanitize="off"` and `data-diagview-allow-remote="true"` only work when `security.allowOverrides` is `true` in the global config (the default). Use these only with SVGs from fully trusted sources. A diagram's `data-diagview-sanitize` mode also applies to its exports, from the page toolbar and from the fullscreen menu alike. To clean every export and copy in `strict` mode, whatever mode the diagram uses on screen, set `security.exportMode` to `"strict"`. [Choosing a mode](docs/USAGE.md#choosing-a-mode) lists what each mode removes and which one to use.
 

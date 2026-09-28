@@ -233,19 +233,19 @@ Set any of the following `data-diagview-*` attributes directly on a diagram cont
 </div>
 ```
 
-| Attribute                           | Type                               | Description                                   |
-| ----------------------------------- | ---------------------------------- | --------------------------------------------- |
-| `data-diagview-layout`              | `header \| floating \| off`        | Layout for this diagram                       |
-| `data-diagview-scale`               | Integer `1` to `10`                | Export `highResScale` for this diagram        |
-| `data-diagview-sanitize`            | `strict` \| `permissive` \| `off`  | SVG sanitization mode                         |
-| `data-diagview-allow-remote`        | `true` \| `false`                  | Keep remote CSS and fonts under `strict`      |
-| `data-diagview-watermark`           | `true` \| `false`                  | Turn the watermark on or off for this diagram |
-| `data-diagview-watermark-text`      | Any string                         | Custom watermark text                         |
-| `data-diagview-watermark-style`     | `corner` \| `background` \| `both` | Style override for this diagram               |
-| `data-diagview-watermark-pos`       | `top-left` \| `...`                | Position override for this diagram            |
-| `data-diagview-watermark-placement` | `diagram` \| `margin`              | Placement override for this diagram           |
-| `data-diagview-watermark-opacity`   | `0` to `1`                         | Opacity override for this diagram             |
-| `data-title`                        | Any string                         | Title shown in header layout label            |
+| Attribute                           | Type                               | Description                                                                     |
+| ----------------------------------- | ---------------------------------- | ------------------------------------------------------------------------------- |
+| `data-diagview-layout`              | `header \| floating \| off`        | Layout for this diagram                                                         |
+| `data-diagview-scale`               | Integer `1` to `10`                | Export `highResScale` for this diagram                                          |
+| `data-diagview-sanitize`            | `strict` \| `permissive` \| `off`  | SVG sanitization mode                                                           |
+| `data-diagview-allow-remote`        | `true` \| `false`                  | Keep remote CSS and fonts under `strict`                                        |
+| `data-diagview-watermark`           | `true` \| `false`                  | Turn the watermark on or off for this diagram                                   |
+| `data-diagview-watermark-text`      | Any string                         | Custom watermark text                                                           |
+| `data-diagview-watermark-style`     | `corner` \| `background` \| `both` | Style override for this diagram                                                 |
+| `data-diagview-watermark-pos`       | `top-left` \| `...`                | Position override for this diagram                                              |
+| `data-diagview-watermark-placement` | `diagram` \| `margin`              | Placement override for this diagram                                             |
+| `data-diagview-watermark-opacity`   | `0` to `1`                         | Opacity override for this diagram                                               |
+| `data-title`                        | Any string                         | Header label, and export file names such as `my_pipeline_2026-09-29_101500.png` |
 
 > **Requires `security.allowOverrides: true`** (the default) for `data-diagview-sanitize` and `data-diagview-allow-remote` to take effect.
 
