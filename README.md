@@ -244,7 +244,7 @@ Any diagram can override the global configuration using `data-diagview-*` attrib
 
 ## ⌨️ Keyboard Shortcuts
 
-All shortcuts are active when the fullscreen modal is open. They pause while you type in the search box. When a button has focus, `Space` and `Enter` press it and the letter keys still work.
+All shortcuts are active when the fullscreen viewer is open. While the search box or another text field has focus, keys type into the field and only `Esc` acts as a shortcut. The first `Esc` clears the query, the next one leaves the search box, and the one after that closes the viewer. When a button has focus, `Space` and `Enter` press it and the letter keys still work.
 
 | Key              | Action                                                               |
 | ---------------- | -------------------------------------------------------------------- |
