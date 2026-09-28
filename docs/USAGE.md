@@ -417,7 +417,9 @@ https://example.com/docs?dv-idx=2&dv-z=2.500&dv-cx=450&dv-cy=300&dv-r=90&dv-t=cu
 - **Keyboard:** Press `L` in fullscreen
 - **UI:** Open FAB menu → click "Share Link"
 
-Once DiagView has read a share link, it removes the `dv-*` parameters from the address bar with `history.replaceState`, so no history entry is added. It does this even when the link points at no diagram, such as `dv-idx=99`. Other query parameters and the `#hash` stay.
+Once DiagView has read a share link, it removes every query parameter whose name starts with `dv-` from the address bar. It does this whether the link matched a diagram or not, so `?dv-idx=99` or a lone `?dv-z=2` goes too. Other query parameters and the `#hash` stay. DiagView changes the address with `history.replaceState`, so no history entry is added.
+
+The parameters stay in two cases, so DiagView can try again later. One is a page with no diagrams yet. The other is a link to a diagram whose `<svg>` has not arrived yet. DiagView reads the link again when the page adds new elements, when you call `refresh()` and when you call `initShadowRoot()`.
 
 ---
 
@@ -1210,7 +1212,7 @@ Search matches text inside `<text>`, `.node`, `.cluster`, `.edgePath` and `.labe
 ### Share link not working
 
 - On HTTPS or `localhost` the link is copied with the Clipboard API; elsewhere DiagView falls back to `document.execCommand('copy')`
-- The `dv-*` parameters are stripped from the URL after processing to keep bookmarks clean
+- DiagView removes the `dv-*` parameters from the address bar once it has read the link, even when the link matches no diagram. Check that `dv-idx` points at a diagram that exists on the page (see [Share Links](#8-share-links))
 
 ### Mobile controls drift when pinch-zooming
 
