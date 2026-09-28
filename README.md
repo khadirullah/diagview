@@ -473,7 +473,9 @@ DiagView.init({
 
   // ── PDF ──────────────────────────────────────────
   pdfLibraryUrl: "https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js",
-  // pdfLibraryIntegrity is auto-set when using the default URL above.
+  pdfLibraryIntegrity:
+    "sha512-qZvrmS2ekKPF2mSznTQsxqPgnpkI4DNTlrdUmTzrDgektczlKNRRhy5X5AAOnx5S09ydFYWWNSfcEqDTTHgtNA==",
+  // SRI hash of the default URL. DiagView always pairs that URL with this hash.
   // With a custom pdfLibraryUrl, pass its SRI hash as pdfLibraryIntegrity,
   // otherwise the script loads without an integrity check.
 
