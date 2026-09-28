@@ -26,7 +26,8 @@ jest.unstable_mockModule("../src/features/lazy/share.js", () => ({
 
 // 2. Import modules AFTER mocks are defined
 const { state, resetConfig, updateConfig } = await import("../src/core/config.js");
-const { observeDiagrams, stopObserving, refreshDiagrams } = await import("../src/core/observer.js");
+const { observeDiagrams, stopObserving, refreshDiagrams, resetShareLinkCheck } =
+  await import("../src/core/observer.js");
 const { initializeDiagram, deinitializeDiagram } = await import("../src/features/diagram-init.js");
 const { openFullscreen } = await import("../src/ui/modal.js");
 
@@ -350,6 +351,31 @@ describe("Observer Module: share parameters in the address bar", () => {
     expect(replaceState).toHaveBeenCalledTimes(1);
     expect(replaceState).toHaveBeenCalledWith(null, "", "http://localhost/page?keep=1#part");
     expect(state.hasCheckedShareLink).toBe(true);
+  });
+
+  test("a teardown cancels the pending removal and a new start waits in full", () => {
+    useUrl("http://localhost/page?dv-idx=99");
+    restoreViewFromURL.mockReturnValue(false);
+
+    jest.useFakeTimers();
+    try {
+      refreshDiagrams();
+      jest.advanceTimersByTime(2000);
+      // What destroy() does
+      resetShareLinkCheck();
+      jest.advanceTimersByTime(1000);
+      expect(replaceState).not.toHaveBeenCalled();
+
+      // A later init waits its own full time
+      refreshDiagrams();
+      jest.advanceTimersByTime(2999);
+      expect(replaceState).not.toHaveBeenCalled();
+      jest.advanceTimersByTime(1);
+    } finally {
+      jest.useRealTimers();
+    }
+
+    expect(replaceState).toHaveBeenCalledTimes(1);
   });
 
   test("a link that works is removed after the diagram opens", () => {

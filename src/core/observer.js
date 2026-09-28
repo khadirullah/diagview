@@ -305,10 +305,12 @@ export function observeDiagrams() {
 }
 
 /**
- * Reset share link check flag
+ * Reset share link check flag and cancel a pending share link removal
  */
 export function resetShareLinkCheck() {
   state.hasCheckedShareLink = false;
+  clearTimeout(stripTimer);
+  stripTimer = 0;
 }
 
 /**
