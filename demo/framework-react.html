@@ -465,8 +465,8 @@
                         <p>Ticking it re-renders the floating and header viewers with the <code>.diagram</code> element
                             as the component root, with no container around it. Both layouts move that element into a
                             wrapper, so when you then click <b>Unmount</b>, React asks the parent it remembers to remove
-                            a node that is no longer there. Expect a red <code class="sentence">NotFoundError: The node to be removed is
-                            not a child of this node</code> inside each of those two cards. The off layout card never
+                            a node that is no longer there. Expect a red <code class="sentence">NotFoundError</code> inside each of those two cards. The message
+                            after it depends on the browser. The off layout card never
                             re-parents, so it is unaffected. Each card has its own React error boundary, so the crash
                             stays in the card. Click <b>Mount viewers</b> and DiagView re-initialises (untick first for
                             the safe pattern). Without a boundary React 18 would unmount the <em>entire</em> root and
