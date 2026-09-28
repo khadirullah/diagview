@@ -407,7 +407,7 @@ function _attachModalLifecycle(element, clone, viewport, panzoom, diagramId) {
       requestAnimationFrame(() => {
         // Guard again inside the frame to handle rapid close transitions
         if (!state.isModalOpen || !state.activePanzoom) return;
-        state.activePanzoom.reset({ animate: true, duration: 300 });
+        state.activePanzoom.reset({ animate: true });
       });
     }
   }, 300);

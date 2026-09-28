@@ -304,3 +304,56 @@ describe("zoomAnimationDuration", () => {
     );
   });
 });
+
+describe("double click and double tap reset with zoomAnimationDuration", () => {
+  let viewport, element, resets;
+
+  const touch = (type) => {
+    const ev = new Event(type, { bubbles: true, cancelable: true });
+    ev.touches = [];
+    viewport.dispatchEvent(ev);
+  };
+
+  beforeEach(() => {
+    jest.useFakeTimers();
+    resetConfig();
+    resetTouchState();
+    state.isModalOpen = true;
+    document.body.innerHTML = "";
+    viewport = document.createElement("div");
+    element = document.createElement("div");
+    viewport.appendChild(element);
+    document.body.appendChild(viewport);
+    // Like Panzoom, reset() falls back to the instance options for what it
+    // is not given
+    resets = [];
+    window.Panzoom = jest.fn((_el, options) => ({
+      reset: (opts) => resets.push({ ...options, ...opts }),
+    }));
+  });
+
+  afterEach(() => {
+    for (const fn of Array.from(state.modalCleanupFunctions)) fn();
+    state.modalCleanupFunctions.clear();
+    state.isModalOpen = false;
+    delete window.Panzoom;
+    jest.useRealTimers();
+  });
+
+  test.each([
+    [undefined, 200],
+    [0, 0],
+    [600, 600],
+  ])("zoomAnimationDuration %s gives a %s ms reset", (duration, expected) => {
+    if (duration !== undefined) state.config = { ...state.config, zoomAnimationDuration: duration };
+    setupViewportInteractions(viewport, element, initializePanzoom(element));
+
+    viewport.dispatchEvent(new MouseEvent("dblclick", { bubbles: true }));
+    touch("touchend");
+    jest.advanceTimersByTime(100);
+    touch("touchend");
+
+    expect(resets).toHaveLength(2);
+    for (const reset of resets) expect(reset).toMatchObject({ animate: true, duration: expected });
+  });
+});

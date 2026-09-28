@@ -171,7 +171,8 @@ describe("Modal System", () => {
 
     // It's throttled and uses rAF, so wait
     await new Promise((r) => setTimeout(r, 400));
-    expect(panzoomMock.reset).toHaveBeenCalled();
+    // No duration of its own, so Panzoom uses zoomAnimationDuration
+    expect(panzoomMock.reset).toHaveBeenCalledWith({ animate: true });
   });
 
   test("a link to a section of the page closes the viewer and goes there", async () => {

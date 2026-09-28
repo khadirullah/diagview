@@ -149,10 +149,11 @@ export function setupViewportInteractions(viewport, element, panzoom) {
     blurActiveElement();
   };
 
-  // Desktop double-click to reset
+  // Desktop double-click to reset. Reset takes zoomAnimationDuration from
+  // the Panzoom options, as the other resets do.
   const handleDblClick = () => {
     if (isTextSelectActive()) return;
-    panzoom.reset({ animate: true, duration: 250 });
+    panzoom.reset({ animate: true });
   };
 
   // Mobile touch handlers
@@ -191,7 +192,7 @@ export function setupViewportInteractions(viewport, element, panzoom) {
 
     // Double tap to reset
     if (gap < 300 && gap > 0) {
-      panzoom.reset({ animate: true, duration: 250 });
+      panzoom.reset({ animate: true });
       lastTapTime = 0;
     } else {
       lastTapTime = now;
