@@ -437,7 +437,8 @@ Renders a red laser-pointer dot that follows the mouse (or touch point). Designe
 ### Behavior
 
 - The cursor is hidden (`cursor: none`) over the diagram. Over the toolbar and the menu the normal cursor shows, and the dot stays at its last spot on the diagram
-- The laser animates with a pulsing glow
+- The dot follows the mouse, a pen or the first finger, also while you drag to pan. During a pinch it stays with the first finger
+- The dot pulses. With reduced motion on, it holds still at its normal size
 - Toggling again removes the laser and restores the cursor
 - Meeting mode is automatically disabled when the modal closes
 
