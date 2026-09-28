@@ -1358,6 +1358,14 @@
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
 }
 
+/* A faint edge in the text colour, so a swatch close to the panel's own
+   colour (White on light, Navy on dark) still shows */
+.dv-swatch-btn[data-canvas] {
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--dv-text-color) 45%, transparent),
+    0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
 .dv-swatch-btn:hover {
   transform: scale(1.15);
 }

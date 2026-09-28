@@ -189,7 +189,6 @@ function _createCanvasThemeSection(menuPanel) {
     sw.title = name;
     sw.style.backgroundColor = color;
     sw.dataset.canvas = color;
-    if (color === "#ffffff") sw.style.border = "1px solid #cbd5e1";
 
     sw.onclick = () => {
       setCanvasTheme("custom", color);

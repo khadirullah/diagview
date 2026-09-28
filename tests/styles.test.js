@@ -209,6 +209,15 @@ describe("styles.css: keyboard focus ring", () => {
     );
   });
 
+  test("canvas swatches get a faint edge in the text colour, so dark ones show on a dark panel", () => {
+    const body = ruleBody(".dv-swatch-btn[data-canvas] {");
+    expect(body).toMatch(
+      /inset 0 0 0 1px color-mix\(in srgb, var\(--dv-text-color\) 45%, transparent\)/,
+    );
+    // The selected swatch keeps its outline, which the edge does not touch
+    expect(ruleBody(".dv-swatch-btn.active {")).toMatch(/outline:\s*2px solid/);
+  });
+
   test("the custom colour swatch shows the ring while its hidden input has keyboard focus", () => {
     const body = ruleBody(".dv-swatch-custom:has(:focus-visible) {");
     expect(body).not.toBeNull();

@@ -272,6 +272,13 @@ describe("Floating Menu UI", () => {
       expect(selected()).toEqual(["#ffffff"]);
     });
 
+    test("no swatch carries its own border, the stylesheet edges all of them", () => {
+      createFloatingMenu(sourceElement, clonedSvg);
+      const swatches = [...document.querySelectorAll(".dv-swatch-btn[data-canvas]")];
+      expect(swatches).toHaveLength(4);
+      for (const sw of swatches) expect(sw.style.border).toBe("");
+    });
+
     test("the custom colour input has its own accessible name", () => {
       createFloatingMenu(sourceElement, clonedSvg);
       const input = document.querySelector(".dv-custom-color-input");
