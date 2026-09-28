@@ -213,6 +213,12 @@ describe("styles.css: page buttons", () => {
     expect(body).not.toMatch(/background|border|color|box-shadow|filter|!important/);
   });
 
+  test("the floating row leaves room below for the focus ring and keeps the card's height", () => {
+    const body = ruleBody(".diagview-controls-floating {");
+    expect(body).toMatch(/margin-top:\s*6px/);
+    expect(body).toMatch(/margin-bottom:\s*4px/);
+  });
+
   test("built-in icons are outlines and custom icons keep their own fill", () => {
     expect(ruleBody(".diagview-btn svg {")).not.toMatch(/fill|stroke/);
     const outline = ruleBody(".diagview-btn:not(.dv-custom-icon) svg {");

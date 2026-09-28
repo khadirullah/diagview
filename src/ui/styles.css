@@ -218,7 +218,9 @@
 /* Floating Layout (Low-Centered Static) */
 .diagview-controls-floating {
   position: relative !important;
-  margin-top: 10px;
+  /* Room below for the 4px focus ring, which the card would clip */
+  margin-top: 6px;
+  margin-bottom: 4px;
   width: 100% !important;
   background: transparent !important;
   padding: 0 !important;
