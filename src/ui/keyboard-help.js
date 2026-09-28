@@ -66,14 +66,20 @@ function clearAutoCloseTimer() {
 function setupAutoPauseEvents(modal) {
   const pause = () => clearAutoCloseTimer();
   const resume = () => startAutoCloseTimer();
+  // Only a mouse that moves over the card pauses it. Browsers fire
+  // mouseenter when the card opens under a resting pointer, and a tap on
+  // a phone fires mouse events as well.
+  const hover = (e) => {
+    if (e.pointerType === "mouse") pause();
+  };
 
-  modal.addEventListener("mouseenter", pause);
+  modal.addEventListener("pointermove", hover);
   modal.addEventListener("focus", pause, true); // capture phase
   modal.addEventListener("mouseleave", resume);
   modal.addEventListener("blur", resume, true);
 
   return () => {
-    modal.removeEventListener("mouseenter", pause);
+    modal.removeEventListener("pointermove", hover);
     modal.removeEventListener("focus", pause, true);
     modal.removeEventListener("mouseleave", resume);
     modal.removeEventListener("blur", resume, true);
@@ -157,7 +163,7 @@ function createHelpModal() {
 
   closeBtn.addEventListener("click", hideKeyboardHelp);
 
-  // Reset timer on touch; mouse hover pauses it (see setupAutoPauseEvents)
+  // Reset timer on touch; a moving mouse pauses it (see setupAutoPauseEvents)
   content.addEventListener("touchstart", startAutoCloseTimer);
 
   // SEC-7: Determine the best parent for the help modal.

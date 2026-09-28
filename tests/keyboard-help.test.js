@@ -55,11 +55,18 @@ describe("Keyboard help auto-close", () => {
     expect(isHelpVisible()).toBe(true);
   });
 
-  test("hovering the card pauses the timer and leaving restarts it", () => {
+  // jsdom may lack PointerEvent, so give a plain event the pointer type
+  const pointerMove = (pointerType) => {
+    const e = new Event("pointermove", { bubbles: true });
+    Object.defineProperty(e, "pointerType", { value: pointerType });
+    return e;
+  };
+
+  test("moving the mouse over the card pauses the timer and leaving restarts it", () => {
     updateConfig({ helpTimeout: 1500 });
     showKeyboardHelp();
     card().dispatchEvent(new MouseEvent("mouseenter"));
-    card().dispatchEvent(new MouseEvent("mousemove"));
+    card().dispatchEvent(pointerMove("mouse"));
     jest.advanceTimersByTime(5000);
     expect(isHelpVisible()).toBe(true);
 
@@ -68,10 +75,29 @@ describe("Keyboard help auto-close", () => {
     expect(isHelpVisible()).toBe(false);
   });
 
+  test("a pointer that rests where the card opens does not pause the timer", () => {
+    updateConfig({ helpTimeout: 1500 });
+    showKeyboardHelp();
+    // What WebKit sends when the card appears under a still mouse
+    card().dispatchEvent(new MouseEvent("mouseover", { bubbles: true }));
+    card().dispatchEvent(new MouseEvent("mouseenter"));
+    jest.advanceTimersByTime(1500);
+    expect(isHelpVisible()).toBe(false);
+  });
+
+  test("a finger or pen moving over the card does not pause the timer", () => {
+    updateConfig({ helpTimeout: 1500 });
+    showKeyboardHelp();
+    card().dispatchEvent(pointerMove("touch"));
+    card().dispatchEvent(pointerMove("pen"));
+    jest.advanceTimersByTime(1500);
+    expect(isHelpVisible()).toBe(false);
+  });
+
   test("the pointer on the backdrop does not pause the timer", () => {
     updateConfig({ helpTimeout: 1500 });
     showKeyboardHelp();
-    panel().dispatchEvent(new MouseEvent("mouseenter"));
+    panel().dispatchEvent(pointerMove("mouse"));
     jest.advanceTimersByTime(1500);
     expect(isHelpVisible()).toBe(false);
   });

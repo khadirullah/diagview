@@ -1,6 +1,7 @@
 // Keyboard use of the fullscreen viewer: the arrow keys on the open menu's
 // button step into the menu instead of panning the diagram, and the open
-// shortcuts panel keeps every shortcut away from the diagram behind it.
+// shortcuts panel keeps every shortcut away from the diagram behind it. A
+// mouse resting where the panel opens does not stop it closing on its own.
 import { test, expect } from "@playwright/test";
 import { REPRO, newPage } from "./helpers.mjs";
 
@@ -110,4 +111,21 @@ test("?, Escape, Enter and Space on the close button close the panel", async () 
   await page.keyboard.press("Shift+Equal");
   await page.waitForTimeout(400);
   expect((await view()).scale).toBeGreaterThan(before.scale);
+});
+
+test("the panel closes on time under a resting mouse, a moving one pauses it", async () => {
+  await page.evaluate(() => DiagView.configure({ helpTimeout: 1500 }));
+  await page.mouse.move(640, 210); // where the panel opens
+  await page.waitForTimeout(300);
+  await openHelp();
+  await page.waitForTimeout(2500);
+  expect(await helpOpen()).toBe(false);
+
+  await openHelp();
+  await page.mouse.move(660, 220, { steps: 4 });
+  await page.waitForTimeout(2500);
+  expect(await helpOpen()).toBe(true);
+  await page.mouse.move(5, 5, { steps: 4 });
+  await page.waitForTimeout(2500);
+  expect(await helpOpen()).toBe(false);
 });
