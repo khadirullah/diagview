@@ -254,6 +254,24 @@
             margin-bottom: 16px;
         }
 
+        /* React fills the root after the first paint. Holding about the
+           height it ends up with keeps the text below from jumping. */
+        #react-root:empty {
+            min-height: 450px;
+        }
+
+        @media (max-width: 1000px) {
+            #react-root:empty {
+                min-height: 880px;
+            }
+        }
+
+        @media (max-width: 900px) {
+            #react-root:empty {
+                min-height: 1100px;
+            }
+        }
+
         @media (max-width: 760px) {
             .code-compare {
                 grid-template-columns: minmax(0, 1fr);

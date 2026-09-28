@@ -104,6 +104,12 @@
             animation: stage-in .7s var(--ease) .1s both;
         }
 
+        /* Until DiagView adds its 51px toolbar, the diagram holds the same
+           room, so the text next to it does not jump when it renders */
+        .hero .stage > .mermaid {
+            min-height: calc(var(--stage-h) + 51px);
+        }
+
         .stage-caption {
             display: flex;
             flex-wrap: wrap;
