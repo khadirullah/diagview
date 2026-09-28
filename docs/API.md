@@ -427,20 +427,20 @@ interface DiagViewConfig {
   showFirstTimeThemeHint: boolean; // default: true
 
   // PDF
-  pdfLibraryUrl: string; // default: cdnjs jsPDF URL
-  pdfLibraryIntegrity: string | null; // SRI hash; null when using custom URL
+  pdfLibraryUrl: string; // default: 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js'
+  pdfLibraryIntegrity: string | null; // default: the 'sha512-...' SRI hash of that file; null skips the check. A new pdfLibraryUrl without its own hash sets it to null, and the default URL gets the default hash back
 
   // Callbacks
-  onOpen: (() => void) | null;
-  onClose: (() => void) | null;
-  onExport: ((format: string, filename: string) => void) | null;
-  onZoomChange: ((scale: number) => void) | null;
-  onError: ((error: Error) => void) | null;
+  onOpen: (() => void) | null; // default: null
+  onClose: (() => void) | null; // default: null
+  onExport: ((format: string, filename: string) => void) | null; // default: null
+  onZoomChange: ((scale: number) => void) | null; // default: null
+  onError: ((error: Error) => void) | null; // default: null
 
   // Watermark (Silent Branding)
   watermark: {
     enabled: boolean; // default: false
-    text: string; // branding text
+    text: string; // default: ''; an empty text draws no watermark
     style: "corner" | "background" | "both"; // default: 'corner'
     position: "top-left" | "top-right" | "bottom-left" | "bottom-right" | "center" | "four-sides"; // default: 'bottom-right'; four-sides needs the corner or both style
     placement: "diagram" | "margin"; // default: 'diagram'; 'margin' draws corner and side text in the blank margin around the diagram
