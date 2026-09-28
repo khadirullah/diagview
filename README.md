@@ -53,7 +53,7 @@
 | 🎭 **3 Layout Modes**        | Header toolbar, buttons that appear on hover, or click-to-open with no inline controls |
 | 🔧 **Per-Diagram Overrides** | Set layout, export scale, sanitizing and watermark per diagram via `data-*` attributes |
 | 🌐 **Shadow DOM Support**    | Works inside Shadow DOM roots                                                          |
-| 🔄 **Remember Zoom**         | Persist zoom/pan state per diagram across modal opens (session)                        |
+| 🔄 **Remember Zoom**         | Keep zoom, pan and rotation per diagram between opens, until reload                    |
 | 📦 **Minimal Dependencies**  | Only requires @panzoom/panzoom core module                                             |
 | 🚫 **Framework Agnostic**    | Works with React, Vue, Svelte, Angular, or plain HTML                                  |
 | 🏷️ **Silent Branding**       | Off by default. When on, the watermark stamps exports and never shows in the UI        |
@@ -85,7 +85,7 @@ To disable auto-initialization and configure manually:
 </script>
 ```
 
-Auto-init is deferred by one task, so an `init()` call issued synchronously from a module, `defer` or bundler entry script always wins over it; the attribute is only needed when your `init()` runs later (after an `await`, in a framework effect). It works on any `<script>` tag or on `<html>`.
+Auto-init is deferred by one task, so an `init()` call issued synchronously from a module, `defer` or bundler entry script always wins over it; the attribute is only needed when your `init()` runs later (after an `await`, in a framework effect). It works on any element, usually `<html>` or your script tag.
 
 ### NPM
 
