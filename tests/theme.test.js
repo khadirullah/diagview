@@ -316,7 +316,52 @@ describe("Theme Module", () => {
       expect(detectTheme().accent).toBe(COLORS.ACCENT_LIGHT);
       clearThemeCache();
       document.documentElement.classList.add("dark");
-      expect(detectTheme().accent).toBe(COLORS.ACCENT_DARK);
+      document.body.style.backgroundColor = "#0f172a";
+      try {
+        expect(detectTheme().accent).toBe(COLORS.ACCENT_DARK);
+        // With no background the page is white, whatever the class says.
+        // The light-page blue still reaches 4.5:1 on a dark wrapper.
+        clearThemeCache();
+        document.body.style.backgroundColor = "";
+        expect(detectTheme().accent).toBe(COLORS.ACCENT_LIGHT);
+      } finally {
+        document.body.style.backgroundColor = "";
+      }
+    });
+
+    test("a page with no background keeps the light-page blue when the OS is dark", () => {
+      window.matchMedia.mockImplementation((query) => ({
+        matches: query === "(prefers-color-scheme: dark)",
+        media: query,
+      }));
+      document.body.style.backgroundColor = "";
+      document.documentElement.style.backgroundColor = "";
+      clearThemeCache();
+      try {
+        // The browser paints such a page white, whatever the OS says
+        expect(detectTheme().accent).toBe(COLORS.ACCENT_LIGHT);
+      } finally {
+        clearThemeCache();
+      }
+    });
+
+    test("a white page keeps the light-page blue when the OS is dark", () => {
+      window.matchMedia.mockImplementation((query) => ({
+        matches: query === "(prefers-color-scheme: dark)",
+        media: query,
+      }));
+      document.body.style.backgroundColor = "#ffffff";
+      try {
+        expect(detectTheme().accent).toBe(COLORS.ACCENT_LIGHT);
+        clearThemeCache();
+        document.body.style.backgroundColor = "#0f172a";
+        expect(detectTheme().accent).toBe(COLORS.ACCENT_DARK);
+        // A light canvas picked in the menu keeps the blue that reads on both
+        expect(setCanvasTheme("light").accent).toBe(COLORS.ACCENT_LIGHT);
+      } finally {
+        setCanvasTheme("auto");
+        document.body.style.backgroundColor = "";
+      }
     });
 
     test("reads --diagram-accent and ignores --primary and --accent-color", () => {

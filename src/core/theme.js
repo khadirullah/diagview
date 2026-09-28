@@ -263,8 +263,9 @@ function getCSSVariable(varName, fallbackLight, fallbackDark, isDark) {
 /**
  * Detect background color with multiple fallback strategies
  * @private
+ * @returns {string|null} The page's own background, or null when it has none
  */
-function detectBackground(isDark) {
+function detectBackground() {
   const body = getComputedStyle(document.body);
   const html = getComputedStyle(document.documentElement);
 
@@ -279,17 +280,10 @@ function detectBackground(isDark) {
   // Try CSS variables
   if (!bg || bg === "transparent" || bg === "rgba(0, 0, 0, 0)") {
     bg =
-      getCSSVariable("--background", null, null, isDark) ||
-      getCSSVariable("--bg-color", null, null, isDark) ||
-      getCSSVariable("--body-bg", null, null, isDark);
+      getCSSVariable("--background") || getCSSVariable("--bg-color") || getCSSVariable("--body-bg");
   }
 
-  // Use default
-  if (!bg || bg === "transparent" || bg === "rgba(0, 0, 0, 0)") {
-    bg = isDark ? COLORS.BG_DARK : COLORS.BG_LIGHT;
-  }
-
-  return bg;
+  return !bg || bg === "transparent" || bg === "rgba(0, 0, 0, 0)" ? null : bg;
 }
 
 /**
@@ -400,7 +394,16 @@ export function detectTheme() {
   }
 
   let isDark = isDarkMode();
-  let bg = detectBackground(isDark);
+  let bg = detectBackground();
+  // A page with no background shows the browser's own, which stays white
+  // unless the page opts into a dark color-scheme. The OS alone does not
+  // darken it.
+  const painted =
+    bg ||
+    (isDark && /dark/.test(getComputedStyle(document.documentElement).colorScheme)
+      ? COLORS.BG_DARK
+      : COLORS.BG_LIGHT);
+  bg ||= isDark ? COLORS.BG_DARK : COLORS.BG_LIGHT;
   const page = parseColor(bg) ? bg : isDark ? COLORS.BG_DARK : COLORS.BG_LIGHT;
 
   // Explicit config override (backgroundColor: null = auto-detect).
@@ -470,10 +473,16 @@ export function detectTheme() {
   // Accent: config override, then --diagram-accent if it holds a real colour.
   // --primary is not read. Many sites set it near black or white, which
   // makes the accent buttons and notices hard to tell from the page.
+  // The built-in blue must stand out on the page, where the diagram buttons
+  // sit, and on the canvas. A dark OS alone does not make a white page dark.
+  const shown = parseColor(painted) ? painted : page;
+  const worst = (c) => Math.min(getContrastRatio(shown, c), getContrastRatio(canvas, c));
   const accent =
     validConfigColor("accentColor", isColor) ||
     cssVarColor("--diagram-accent") ||
-    (isDark ? COLORS.ACCENT_DARK : COLORS.ACCENT_LIGHT);
+    (worst(COLORS.ACCENT_DARK) > worst(COLORS.ACCENT_LIGHT)
+      ? COLORS.ACCENT_DARK
+      : COLORS.ACCENT_LIGHT);
 
   const warning = validConfigColor("warningColor", isColor) || COLORS.WARNING;
 
