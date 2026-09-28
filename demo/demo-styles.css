@@ -900,7 +900,6 @@ kbd {
   min-height: 300px;
   padding: 20px;
   overflow: hidden;
-  cursor: zoom-in;
 }
 .card > .diagram,
 .card > .mermaid,
