@@ -112,6 +112,21 @@ describe("Floating Menu UI", () => {
     expect(panel.classList.contains("active")).toBe(false);
   });
 
+  test("opening the menu closes the first-time theme hint that points at it", () => {
+    createFloatingMenu(sourceElement, clonedSvg);
+    const hint = document.createElement("div");
+    hint.className = "diagview-toast diagview-toast-menu-hint";
+    const other = document.createElement("div");
+    other.className = "diagview-toast";
+    document.body.append(hint, other);
+
+    document.getElementById("dv-toggle").click();
+
+    expect(hint.isConnected).toBe(false);
+    // Other notices stay
+    expect(other.isConnected).toBe(true);
+  });
+
   test("Clicking outside the menu closes it", () => {
     jest.useFakeTimers();
     state.isModalOpen = true;

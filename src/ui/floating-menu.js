@@ -411,6 +411,8 @@ function _setupMenuController(elements, sourceElement, clonedSvg) {
 
     if (isOpen) {
       markCanvas(); // the canvas may have changed since the menu was built
+      // The first-time theme hint points at this button and would cover the menu
+      document.querySelector(".diagview-toast-menu-hint")?.remove();
       requestAnimationFrame(() => {
         if (isOpen) menuPanel.focus();
       });
