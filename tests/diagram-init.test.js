@@ -319,7 +319,7 @@ describe("Diagram Init: readElementOverrides", () => {
     const warnSpy = jest.spyOn(console, "warn").mockImplementation(() => {});
     container.dataset.diagviewScale = "99";
     initializeDiagram(container);
-    expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining("must be 1–10"));
+    expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining("must be 1 to 10"));
     warnSpy.mockRestore();
   });
 
@@ -553,5 +553,24 @@ describe("Diagram Init: Mermaid syntax errors", () => {
 
     expect(container.dataset.diagviewError).toBeUndefined();
     expect(container.closest(".diagview-wrapper")).not.toBeNull();
+  });
+});
+
+describe("Diagram Init: onError", () => {
+  test("onError gets the title and the message joined by a comma", async () => {
+    const { resetConfig, updateConfig } = await import("../src/core/config.js");
+    const onError = jest.fn();
+    updateConfig({ onError });
+    document.body.innerHTML = '<div class="diagram"></div>';
+    try {
+      initializeDiagram(document.querySelector(".diagram"));
+    } finally {
+      resetConfig();
+      document.body.innerHTML = "";
+    }
+    expect(onError).toHaveBeenCalledTimes(1);
+    expect(onError.mock.calls[0][0].message).toBe(
+      "DiagView: No Diagram Found, No SVG content was found in this container.",
+    );
   });
 });

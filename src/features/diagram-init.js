@@ -165,7 +165,7 @@ function showErrorBoundary(element, svg) {
   // Fire onError callback if configured (A2: was documented but never called)
   if (state.config.onError) {
     try {
-      state.config.onError(new Error(`DiagView: ${errorTitle} — ${errorMessage}`));
+      state.config.onError(new Error(`DiagView: ${errorTitle}, ${errorMessage}`));
     } catch (e) {
       console.error("DiagView: onError callback threw:", e);
     }
@@ -229,13 +229,13 @@ function readElementOverrides(element) {
     }
   }
 
-  // data-diagview-scale="4" (integer 1–10). Export reads the attribute
+  // data-diagview-scale="4" (integer 1 to 10). Export reads the attribute
   // itself, so this only warns about a bad value once, at init.
   if (dataset.diagviewScale) {
     const n = parseInt(dataset.diagviewScale, 10);
     if (isNaN(n) || n < 1 || n > 10) {
       console.warn(
-        `DiagView: data-diagview-scale "${dataset.diagviewScale}" must be 1–10, ignoring.`,
+        `DiagView: data-diagview-scale "${dataset.diagviewScale}" must be 1 to 10, ignoring.`,
       );
     }
   }
