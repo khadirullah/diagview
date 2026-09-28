@@ -1907,4 +1907,9 @@
   .diagview-toast-spin {
     animation-duration: 1.5s;
   }
+
+  /* An endless pulse squeezed to 0.01ms flickers, so the dot holds still */
+  .diagview-laser::before {
+    animation: none;
+  }
 }

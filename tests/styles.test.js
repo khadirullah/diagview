@@ -148,6 +148,11 @@ describe("styles.css: dead and contradicting rules", () => {
     expect(selector).toMatch(/\.diagview-modal \*::before/);
     expect(selector).toMatch(/\.diagview-modal \*::after/);
   });
+
+  test("reduced motion stops the laser pulse instead of speeding it up", () => {
+    const idx = css.lastIndexOf("@media (prefers-reduced-motion: reduce)");
+    expect(ruleBody(".diagview-laser::before {", idx)).toMatch(/animation:\s*none;/);
+  });
 });
 
 describe("styles.css: menu buttons", () => {
