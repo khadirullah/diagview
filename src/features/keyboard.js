@@ -113,7 +113,8 @@ function handleKeyboardShortcut(e) {
         if (linkTarget) {
           e.preventDefault();
           e.stopPropagation();
-          linkTarget.click();
+          // SVG links have no click() method, so send the event itself
+          linkTarget.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true }));
         } else if (!isButton && !isInput) {
           e.preventDefault();
           state.activePanzoom.reset({ animate: true });

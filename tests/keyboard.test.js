@@ -283,6 +283,20 @@ describe("Shortcuts while a control has focus", () => {
     expect(mockPanzoom.reset).not.toHaveBeenCalled();
   });
 
+  test("Space on a focused SVG link follows it, although SVG elements have no click()", () => {
+    document.body.innerHTML =
+      '<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><a xlink:href="#n1"><rect/></a></svg>';
+    const link = document.querySelector("a");
+    const clicks = [];
+    link.addEventListener("click", (e) => {
+      clicks.push(e.detail);
+      e.preventDefault();
+    });
+    link.dispatchEvent(new KeyboardEvent("keydown", { key: " ", bubbles: true }));
+    expect(clicks).toEqual([0]);
+    expect(mockPanzoom.reset).not.toHaveBeenCalled();
+  });
+
   test("letter shortcuts work on a focused checkbox but not in a text field", () => {
     const toggles = jest.fn();
     state.events.on("dv:toggle-text-select", toggles);
