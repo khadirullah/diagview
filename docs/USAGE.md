@@ -378,7 +378,7 @@ DiagView.init({
 });
 ```
 
-With `"none"` DiagView fetches no font files and logs no warning. The exported file names the fonts, and a computer without them shows the labels in a fallback font.
+With `"none"` DiagView fetches no font files and logs no warning. An SVG file names the fonts, and a computer without them shows the labels in a fallback font. PNG, JPEG, WebP, PDF and Copy Image lose the web fonts as well. DiagView draws these files from an SVG loaded as an image, and that image cannot use the page's `@font-face` fonts. Labels set in a web font then come out in a font installed on your computer.
 
 ### PDF
 

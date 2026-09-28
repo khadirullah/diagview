@@ -278,7 +278,7 @@ All shortcuts are active when the fullscreen viewer is open. While the search bo
 | Copy Image | ❌          | Copies PNG to system clipboard                                                |
 | Copy SVG   | ✅          | Copies the SVG markup to the clipboard as text                                |
 
-Exports embed the page fonts the labels use. Set `exportFonts` to `"all"` to embed every `@font-face` rule, or to `"none"` to embed no fonts. An export made during a search keeps its dimming and outline unless `exportSearchHighlight` is `false`.
+Exports embed the page fonts the labels use. Set `exportFonts` to `"all"` to embed every `@font-face` rule, or to `"none"` to embed no fonts. With `"none"`, image and PDF files show the labels in a font installed on your computer. An export made during a search keeps its dimming and outline unless `exportSearchHighlight` is `false`.
 
 PNG, JPEG, WebP, PDF and Copy Image leave out linked images, such as `<image href="logo.png">`. The browser loads nothing that an SVG drawn as an image links to. The file is still saved, and a warning says how many images were left out. When some labels are also hard to read on the background, one warning covers both. SVG exports keep the links. [Linked images](docs/USAGE.md#linked-images) shows how to embed them instead.
 

@@ -193,7 +193,7 @@ await DiagView.copyToClipboard(el);
 
 All export methods resolve without throwing when `element` contains no `<svg>`; they show a "No diagram found" toast instead. Per-diagram `data-diagview-scale` and `data-diagview-watermark-*` attributes on the element are honoured by every export path, inline or fullscreen. On touch devices and narrow screens, `mobileScale` applies instead. Every export path also follows `data-diagview-sanitize` while `security.allowOverrides` is on, unless `security.exportMode` is `'strict'`.
 
-SVG exports and the images drawn from them embed the page fonts their labels use. Set `exportFonts` to `'all'` to embed every `@font-face` rule on the page, or to `'none'` to embed no fonts.
+SVG exports and the images drawn from them embed the page fonts their labels use. Set `exportFonts` to `'all'` to embed every `@font-face` rule on the page, or to `'none'` to embed no fonts. With `'none'`, PNG, JPEG, WebP, PDF and Copy Image files show labels in a font installed on the computer, not in the page's web font.
 
 An export of the diagram open in fullscreen during a search keeps the dimming and the outline. Set `exportSearchHighlight` to `false` to leave them out. The search in the viewer stays as it was.
 
