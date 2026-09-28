@@ -1,4 +1,4 @@
-# DiagView — Usage Guide
+# DiagView usage guide
 
 Complete guide from basic setup to advanced integration patterns.
 
@@ -66,7 +66,8 @@ const DiagView = require("diagview");
 ### Bundler (Vite, Webpack, Rollup)
 
 ```javascript
-// vite.config.js — mark Panzoom as external if loading from CDN
+// vite.config.js
+// Mark Panzoom as external if you load it from a CDN
 export default {
   build: {
     rollupOptions: {
@@ -120,7 +121,7 @@ To match a custom selector:
 
 ### Timing
 
-Auto-init never runs synchronously. It is scheduled one task after `DOMContentLoaded` (or one task after the library finishes evaluating when it is loaded with `type="module"`, `defer`, or after the page has already parsed). A `DiagView.init({...})` you call before that task runs — a bundler entry point, a `<script type="module">`, a `defer` script, or a plain script right after the tag — cancels the pending auto-init and your options win. The opt-out attribute is only required when your own `init()` happens later than that, for example after an `await` (Mermaid rendering, a fetch) or from a framework effect.
+Auto-init never runs synchronously. It is scheduled one task after `DOMContentLoaded` (or one task after the library finishes evaluating when it is loaded with `type="module"`, `defer`, or after the page has already parsed). A `DiagView.init({...})` call that runs before that task cancels the pending auto-init, and your options win. Calls from a bundler entry point, a `<script type="module">`, a `defer` script or a plain script right after the tag all run in time. The opt-out attribute is only required when your own `init()` happens later than that, for example after an `await` (Mermaid rendering, a fetch) or from a framework effect.
 
 `init()` also works from a script in `<head>`. The page has no `<body>` at that point, so DiagView waits for `DOMContentLoaded` and starts then. The promise `init()` returns resolves once it has started.
 
@@ -151,11 +152,11 @@ Use `data-diagview-no-auto-init` on the script tag to take full control:
 **Order matters with async diagram libraries.** Always wait for the diagram library to finish rendering before calling `DiagView.init()`:
 
 ```javascript
-// ✅ Correct — Mermaid renders first
+// ✅ Mermaid renders first, then DiagView scans
 await mermaid.run();
 DiagView.init({ diagramSelector: ".mermaid" });
 
-// ❌ Wrong — DiagView scans before Mermaid outputs SVG
+// ❌ DiagView scans before Mermaid outputs SVG
 DiagView.init({ diagramSelector: ".mermaid" });
 await mermaid.run();
 ```
@@ -235,7 +236,7 @@ Set any of the following `data-diagview-*` attributes directly on a diagram cont
 | Attribute                           | Type                               | Description                                   |
 | ----------------------------------- | ---------------------------------- | --------------------------------------------- |
 | `data-diagview-layout`              | `header \| floating \| off`        | Layout for this diagram                       |
-| `data-diagview-scale`               | Integer `1`–`10`                   | Export `highResScale` for this diagram        |
+| `data-diagview-scale`               | Integer `1` to `10`                | Export `highResScale` for this diagram        |
 | `data-diagview-sanitize`            | `strict` \| `permissive` \| `off`  | SVG sanitization mode                         |
 | `data-diagview-allow-remote`        | `true` \| `false`                  | Allow remote CSS/fonts in SVG                 |
 | `data-diagview-watermark`           | `true` \| `false`                  | Turn the watermark on or off for this diagram |
@@ -243,7 +244,7 @@ Set any of the following `data-diagview-*` attributes directly on a diagram cont
 | `data-diagview-watermark-style`     | `corner` \| `background` \| `both` | Style override for this diagram               |
 | `data-diagview-watermark-pos`       | `top-left` \| `...`                | Position override for this diagram            |
 | `data-diagview-watermark-placement` | `diagram` \| `margin`              | Placement override for this diagram           |
-| `data-diagview-watermark-opacity`   | `0`–`1`                            | Opacity override for this diagram             |
+| `data-diagview-watermark-opacity`   | `0` to `1`                         | Opacity override for this diagram             |
 | `data-title`                        | Any string                         | Title shown in header layout label            |
 
 > **Requires `security.allowOverrides: true`** (the default) for `data-diagview-sanitize` and `data-diagview-allow-remote` to take effect.
@@ -274,7 +275,7 @@ DiagView picks the outline colour from the canvas background. It uses `#2563eb` 
 
 ### Behavior
 
-- All matches are highlighted simultaneously (no next/previous — use zoom/pan to navigate)
+- All matches are highlighted at once. There is no next or previous, so zoom and pan to move between them
 - An `aria-live` region announces the match count to screen readers
 - Pressing `Esc` is two-stage: with a query it clears the query; with an empty query it exits search mode (the next `Esc` closes the viewer)
 - Pressing the `✕` button clears the query
@@ -353,7 +354,7 @@ Every export function resolves without throwing when the element contains no `<s
 DiagView.init({
   highResScale: 4, // Desktop: output is 4× the SVG's intrinsic size
   mobileScale: 2, // Mobile: output is 2× (pointer: coarse or a viewport up to 768 px wide)
-  maxPixels: 16777216, // Safety cap — auto-downscales massive diagrams
+  maxPixels: 16777216, // Safety cap, larger exports are scaled down to fit
 });
 ```
 
@@ -390,7 +391,7 @@ DiagView.init({
 
 ## 8. Share Links
 
-Share the exact zoom level and pan position with anyone. The generated URL contains only DiagView's own parameters — no auth tokens or other query parameters from the host page are included.
+Share the exact zoom level and pan position with anyone. The generated URL is the page address with DiagView's own parameters. It leaves out the page's other query parameters and its `#hash`, so auth tokens and similar values never end up in a shared link.
 
 ### URL parameters
 
@@ -459,7 +460,7 @@ Rotation state is included in share links (`dv-r=90`) and remembered between ope
 
 ## 11. Text Select Mode
 
-By default, Panzoom captures all pointer events so dragging pans the diagram. Text Select Mode suspends pan/zoom and enables native browser text selection over SVG `<text>` nodes — useful for copying node labels.
+By default, Panzoom captures all pointer events so dragging pans the diagram. Text Select Mode suspends pan/zoom and enables native browser text selection over SVG `<text>` nodes, so you can copy node labels.
 
 ### Activation
 
@@ -478,7 +479,7 @@ A thumbnail of the diagram appears in the bottom-left corner of the fullscreen v
 - Accurately scales for both portrait and landscape diagrams
 - Updates on every pan/zoom event (throttled to 100 ms)
 - Shows a rectangle in the accent color indicating the current viewport
-- Supports **click-to-navigate** — clicking any region of the minimap pans the diagram to that area
+- Supports **click-to-navigate**. Clicking any region of the minimap pans the diagram to that area
 - Is hidden on viewports 768 px wide or narrower
 
 ```javascript
@@ -494,8 +495,8 @@ DiagView auto-detects the host page's theme using a cascade of checks:
 
 1. A `dark` class on `<html>` or `<body>`, as in Tailwind
 2. `data-theme="dark"` on `<html>` or `<body>`
-3. `data-bs-theme="dark"` on `<html>` — Bootstrap
-4. `window.matchMedia('(prefers-color-scheme: dark)')` — OS preference
+3. `data-bs-theme="dark"` on `<html>`, as in Bootstrap
+4. The OS preference, read with `window.matchMedia('(prefers-color-scheme: dark)')`
 
 ### CSS variable integration
 
@@ -822,7 +823,7 @@ DiagView.init({
 
 ## 20. Framework Integration
 
-Live example: [React 18 + StrictMode demo](https://khadirullah.github.io/diagview/framework-react.html) — a real React dev-build tree that mounts, unmounts, remounts and replaces diagrams, with an "unsafe pattern" toggle that shows the error the rule below prevents. `demo/framework-react.html` in the repo, verified by `tests/e2e/verify-react-strictmode.spec.mjs`.
+Live example: [React 18 + StrictMode demo](https://khadirullah.github.io/diagview/framework-react.html). It is a real React dev-build tree that mounts, unmounts, remounts and replaces diagrams, with an "unsafe pattern" toggle that shows the error the rule below prevents. `demo/framework-react.html` in the repo, verified by `tests/e2e/verify-react-strictmode.spec.mjs`.
 
 > **The one rule:** keep the diagram element (the one matching `diagramSelector`) nested inside a container that your component renders and owns. With the `floating` and `header` layouts DiagView moves the diagram element into a wrapper so it can place the toolbar next to it. Your framework still believes the element sits where it rendered it, so if it later removes that exact element (unmount, conditional render, key change) the browser throws `NotFoundError: The node to be removed is not a child of this node`. Removing the outer container instead is always safe, because the wrapper is inside it and goes away with it.
 >
@@ -834,7 +835,7 @@ Live example: [React 18 + StrictMode demo](https://khadirullah.github.io/diagvie
 >
 > **Unmount vs detach:** unmounting a component removes its DOM, diagram included, in every layout; DiagView is not deleting anything, its toolbar just goes with the diagram. Call `destroy()` in the cleanup so handlers are released. To remove only the viewer and keep the diagram on the page, leave the component mounted and call `destroy()`; the diagram is returned to where your framework rendered it, and `init()` enhances it again.
 
-### React — with cleanup
+### React with cleanup
 
 ```jsx
 import { useEffect } from "react";
@@ -858,7 +859,7 @@ function DiagramViewer({ svgContent }) {
 }
 ```
 
-### React — no inline toolbar (`layout: "off"`)
+### React without an inline toolbar (`layout: "off"`)
 
 ```jsx
 useEffect(() => {
@@ -872,7 +873,7 @@ useEffect(() => {
 return <div className="diagram" dangerouslySetInnerHTML={{ __html: svgContent }} />;
 ```
 
-### React — SSR (Next.js)
+### React with SSR (Next.js)
 
 ```javascript
 // Ensure DiagView only runs on the client
@@ -883,7 +884,7 @@ if (typeof window !== "undefined") {
 }
 ```
 
-### Vue 3 — Composition API
+### Vue 3 Composition API
 
 ```vue
 <script setup>
@@ -1115,7 +1116,7 @@ console.log(DiagView.version); // e.g. "1.0.12"
 
 1. Check the selector: does your element match `diagramSelector`?
 2. Ensure the element contains an `<svg>` child with visible content. A `viewBox` is not required; width/height-only SVGs work
-3. Check the browser console — errors from SVG validation appear there
+3. Check the browser console, where errors from SVG validation appear
 4. Confirm DiagView initialized: `console.log(DiagView.state.isInitialized)`
 
 ### Error placeholder instead of a diagram
@@ -1154,7 +1155,7 @@ DiagView.init({ highResScale: 8 });
 
 ### PDF export not working
 
-- Check the network tab — jsPDF must load from CDN
+- Check the network tab to see whether jsPDF loaded from the CDN
 - If behind a CSP, host jsPDF locally and point to it:
 
 ```javascript
@@ -1189,7 +1190,7 @@ DiagView never mutates your original SVG's IDs. ID namespacing only happens on t
 
 ## 25. Watermark
 
-DiagView can automatically inject a watermark into your diagrams when they are downloaded or exported. This is a "silent" feature—the watermark is invisible in the viewer on your website, but appears on the saved image to ensure your work is always attributed.
+DiagView can automatically inject a watermark into your diagrams when they are downloaded or exported. This is a "silent" feature. The watermark never shows in the viewer on your website, only on the saved image.
 
 ### Basic Setup
 
