@@ -526,7 +526,8 @@
                 border-top: 1px solid var(--line);
             }
 
-            .mode {
+            .mode,
+            .sec-mode {
                 display: grid;
                 grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
             }
@@ -535,7 +536,8 @@
                 grid-column: 1 / -1;
             }
 
-            .mode .thumb {
+            .mode .thumb,
+            .sec-view {
                 aspect-ratio: auto;
                 border-bottom: 0;
                 border-right: 1px solid var(--line);
@@ -547,12 +549,19 @@
                 --stage-h: 460px;
             }
 
-            .mode {
+            .mode,
+            .sec-mode {
                 display: flex;
             }
 
             .mode .thumb {
                 aspect-ratio: 16 / 9;
+                border-right: 0;
+                border-bottom: 1px solid var(--line);
+            }
+
+            .sec-view {
+                aspect-ratio: 16 / 10;
                 border-right: 0;
                 border-bottom: 1px solid var(--line);
             }
