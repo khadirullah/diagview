@@ -51,8 +51,15 @@
 .diagview-menu * {
   text-decoration: none !important;
   box-sizing: border-box;
-  font-family: inherit;
   -webkit-tap-highlight-color: transparent;
+}
+
+/* Controls take the page font. A diagram keeps the fonts it sets, and
+   labels that set none still inherit the page font. */
+.diagview-wrapper :where(:not(svg, svg *)),
+.diagview-modal :where(:not(svg, svg *)),
+.diagview-menu * {
+  font-family: inherit;
 }
 
 /* Premium Focus Indicators */

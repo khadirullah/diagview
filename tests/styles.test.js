@@ -264,3 +264,17 @@ describe("styles.css: page buttons", () => {
     for (const step of steps) expect(step).toContain("rotate(45deg)");
   });
 });
+
+describe("styles.css: diagram fonts", () => {
+  test("the font reset skips SVG content, so a diagram keeps the fonts it sets", () => {
+    const plain = css.replace(/\/\*[\s\S]*?\*\//g, "");
+    const selectors = [...plain.matchAll(/([^{}]+)\{([^{}]*)\}/g)]
+      .filter(([, , body]) => /font-family:\s*inherit/.test(body))
+      .flatMap(([, sel]) => sel.split(",").map((s) => s.trim()));
+    expect(selectors).not.toContain(".diagview-wrapper *");
+    expect(selectors).not.toContain(".diagview-modal *");
+    expect(ruleBody(".diagview-wrapper :where(:not(svg, svg *))")).toMatch(
+      /font-family:\s*inherit/,
+    );
+  });
+});
