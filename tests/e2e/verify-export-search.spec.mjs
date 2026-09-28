@@ -22,10 +22,12 @@ test.beforeAll(async ({ browser }) => {
   page.on("pageerror", (e) => logs.push(String(e.message)));
   await page.goto(fixtureFile("export-search.html"));
   await page.evaluate(() => localStorage.setItem("diagview-canvas-hint-shown", "true"));
+  await page.evaluate(() =>
+    document.documentElement.setAttribute("data-diagview-no-auto-init", ""),
+  );
   await page.addScriptTag({ path: DIST });
   await page.evaluate(() => {
-    DiagView.default.configure({ animateOpen: false, rememberZoom: false });
-    DiagView.default.init();
+    DiagView.init({ animateOpen: false, rememberZoom: false });
   });
   await page.waitForTimeout(300);
   // Effective opacity multiplies every ancestor's computed opacity up to the

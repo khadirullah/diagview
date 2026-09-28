@@ -15,11 +15,11 @@ async function load(browser, mode) {
   page.on("console", (m) => m.type() === "warning" && page.warnings.push(m.text()));
   await page.goto(fixtureFile("image-handler.html"));
   await page.evaluate(() => localStorage.setItem("diagview-canvas-hint-shown", "true"));
+  await page.evaluate(() =>
+    document.documentElement.setAttribute("data-diagview-no-auto-init", ""),
+  );
   await page.addScriptTag({ path: DIST });
-  await page.evaluate((mode) => {
-    DiagView.default.configure({ animateOpen: false, security: { mode } });
-    DiagView.default.init();
-  }, mode);
+  await page.evaluate((mode) => DiagView.init({ animateOpen: false, security: { mode } }), mode);
   await page.waitForTimeout(300);
   return page;
 }

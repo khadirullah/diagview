@@ -18,10 +18,12 @@ test.beforeAll(async ({ browser }) => {
   page = await newPage(browser, { acceptDownloads: true });
   await page.goto(fixtureFile("export-search.html"));
   await page.evaluate(() => localStorage.setItem("diagview-canvas-hint-shown", "true"));
+  await page.evaluate(() =>
+    document.documentElement.setAttribute("data-diagview-no-auto-init", ""),
+  );
   await page.addScriptTag({ path: DIST });
   await page.evaluate(() => {
-    DiagView.default.configure({ animateOpen: false, rememberZoom: false });
-    DiagView.default.init();
+    DiagView.init({ animateOpen: false, rememberZoom: false });
     window.__clone = () => document.getElementById("diagview-modal-viewport").querySelector("svg");
     window.__eff = (el) => {
       let o = 1;

@@ -311,10 +311,12 @@ test.beforeAll(async ({ browser }) => {
   page.on("pageerror", (e) => errors.push(String(e.message)));
   await page.goto(fixtureFile("readable-text.html"));
   await page.evaluate(() => localStorage.setItem("diagview-canvas-hint-shown", "true"));
+  await page.evaluate(() =>
+    document.documentElement.setAttribute("data-diagview-no-auto-init", ""),
+  );
   await page.addScriptTag({ path: DIST });
   await page.evaluate(() => {
-    DiagView.default.configure({ animateOpen: false, rememberZoom: false });
-    DiagView.default.init();
+    DiagView.init({ animateOpen: false, rememberZoom: false });
   });
   await page.waitForTimeout(300);
 

@@ -15,10 +15,12 @@ let page;
 test.beforeAll(async ({ browser }) => {
   page = await newPage(browser, { acceptDownloads: true });
   await page.goto(fixtureFile("export-fonts.html"));
+  await page.evaluate(() =>
+    document.documentElement.setAttribute("data-diagview-no-auto-init", ""),
+  );
   await page.addScriptTag({ path: DIST });
   await page.evaluate(() => {
-    DiagView.default.configure({ animateOpen: false, rememberZoom: false });
-    DiagView.default.init();
+    DiagView.init({ animateOpen: false, rememberZoom: false });
   });
   await page.evaluate(() => document.fonts.ready);
 });
