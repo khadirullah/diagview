@@ -278,3 +278,21 @@ describe("styles.css: diagram fonts", () => {
     );
   });
 });
+
+describe("styles.css: notices in the viewer", () => {
+  const bottom = (body) => body.match(/bottom:\s*([^;]+);/)[1];
+
+  test("sit above the menu button on narrow screens, where the theme hint goes", () => {
+    const start = css.indexOf("@media (max-width: 660px) {");
+    expect(start).toBeGreaterThan(-1);
+    expect(css.indexOf(".diagview-modal .diagview-toast-container {", start)).toBeGreaterThan(
+      start,
+    );
+    const body = ruleBody(".diagview-modal .diagview-toast-container {", start);
+    expect(bottom(body)).toBe(bottom(ruleBody(".diagview-toast-menu-hint {")));
+  });
+
+  test("outside the viewer they stay at the bottom", () => {
+    expect(bottom(ruleBody(".diagview-toast-container {"))).toBe("24px");
+  });
+});

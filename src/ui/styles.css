@@ -1557,6 +1557,15 @@
   zoom: var(--dv-zoom-comp, 1);
 }
 
+/* In the viewer on narrow screens a centred notice reaches the menu button,
+   so it sits above the button where the theme hint goes */
+@media (max-width: 660px) {
+  .diagview-modal .diagview-toast-container {
+    /* FAB offset + FAB size + 12px gap */
+    bottom: calc(clamp(12px, 3vh, 24px) + clamp(44px, 8vw, 56px) + 12px);
+  }
+}
+
 .diagview-toast {
   padding: 12px 24px;
   border-radius: 12px;
