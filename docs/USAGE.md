@@ -587,9 +587,11 @@ With Readable off, DiagView checks the labels before a PNG, JPEG, WebP, PDF, SVG
 
 ## 14. SVG Sanitization
 
-DiagView never changes the SVG on your page, and the browser renders it as is. The security mode applies only to DiagView's own copies, which are the fullscreen view, exports and clipboard copies. DiagView cleans each copy before the browser loads anything in it, so code the mode removes never runs, not even once. Sanitize untrusted SVG yourself before you put it on the page, for example with `DiagView.utils.sanitizeSVG()`.
+DiagView never sanitizes or rewrites the content of the SVG on your page, and the browser renders it as is. The security mode applies only to DiagView's own copies, which are the fullscreen view, exports and clipboard copies. DiagView cleans each copy before the browser loads anything in it, so code the mode removes never runs, not even once. Sanitize untrusted SVG yourself before you put it on the page, for example with `DiagView.utils.sanitizeSVG()`.
 
-In Safari, an image with an `onerror` handler in your page's own diagram may run that handler once more while DiagView sets up the page. Safari reloads an image when it moves into DiagView's wrapper. This is your page's own code, which already ran when the page loaded. DiagView's copies never run it.
+Setting up a diagram changes the page's `<svg>` element itself in a few small ways. DiagView adds the class `dv-svg-content` and sets `transition: filter 0.3s ease` in its inline style. In the header and floating layouts it also sets `color: inherit`. An SVG that fails validation gets `display: none` and sits hidden behind the error placeholder. `destroy()` removes the class and puts each of these inline values back as it was. A `class` or `style` attribute that DiagView created is removed once it is empty.
+
+In the header and floating layouts, DiagView moves the diagram element into its wrapper when it sets the diagram up, and `destroy()` moves it back. Every browser reloads an `<iframe>`, `<object>` or `<embed>` inside the element each time it moves. Their content starts again from the beginning and loses its state, such as a scroll position or a half-filled form. Safari also reloads images, so an image with an `onerror` handler may run that handler once more. This is your page's own code, which already ran when the page loaded. DiagView's copies never run it. With `layout: "off"` DiagView never moves the element, so nothing reloads.
 
 The Security modes panel on the [demo page](https://khadirullah.github.io/diagview/#security) runs one small diagram through all three modes side by side.
 
