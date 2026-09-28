@@ -303,3 +303,72 @@ describe("Observer Module: matches inside other matches", () => {
     expect(setUp()).toEqual(["outer"]);
   });
 });
+
+describe("Observer Module: share parameters in the address bar", () => {
+  let restoreViewFromURL, replaceState, originalLocation;
+
+  const useUrl = (href) => {
+    delete window.location;
+    window.location = new URL(href);
+  };
+
+  beforeEach(async () => {
+    ({ restoreViewFromURL } = await import("../src/features/lazy/share.js"));
+    document.body.innerHTML = '<div class="diagram"><svg></svg></div>';
+    resetConfig();
+    state.observer = null;
+    state.hasCheckedShareLink = false;
+    updateConfig({ diagramSelector: ".diagram" });
+    jest.clearAllMocks();
+    originalLocation = window.location;
+    replaceState = jest.spyOn(window.history, "replaceState").mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    stopObserving();
+    replaceState.mockRestore();
+    restoreViewFromURL.mockReset();
+    restoreViewFromURL.mockReturnValue(null);
+    window.location = originalLocation;
+  });
+
+  test("a link to a diagram that does not exist is removed, other parameters and the hash stay", () => {
+    useUrl("http://localhost/page?keep=1&dv-idx=99&dv-z=2.000#part");
+    restoreViewFromURL.mockReturnValue(false);
+
+    refreshDiagrams();
+
+    expect(openFullscreen).not.toHaveBeenCalled();
+    expect(replaceState).toHaveBeenCalledTimes(1);
+    expect(replaceState).toHaveBeenCalledWith(null, "", "http://localhost/page?keep=1#part");
+    expect(state.hasCheckedShareLink).toBe(true);
+  });
+
+  test("a link that works is removed after the diagram opens", () => {
+    useUrl("http://localhost/page?dv-idx=0&dv-z=2.000");
+    const diagram = document.querySelector(".diagram");
+    restoreViewFromURL.mockReturnValue({ diagram, index: 0 });
+    jest.useFakeTimers();
+    try {
+      refreshDiagrams();
+      jest.advanceTimersByTime(150);
+    } finally {
+      jest.useRealTimers();
+    }
+
+    expect(openFullscreen).toHaveBeenCalledWith(diagram);
+    expect(replaceState).toHaveBeenCalledWith(null, "", "http://localhost/page");
+  });
+
+  test("a link to a diagram still waiting for its SVG stays until the SVG arrives", () => {
+    useUrl("http://localhost/page?dv-idx=0");
+    const diagram = document.querySelector(".diagram");
+    diagram.innerHTML = "";
+    restoreViewFromURL.mockReturnValue({ diagram, index: 0 });
+
+    refreshDiagrams();
+
+    expect(replaceState).not.toHaveBeenCalled();
+    expect(state.hasCheckedShareLink).toBe(false);
+  });
+});

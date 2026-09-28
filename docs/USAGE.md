@@ -416,7 +416,7 @@ https://example.com/docs?dv-idx=2&dv-z=2.500&dv-cx=450&dv-cy=300&dv-r=90&dv-t=cu
 - **Keyboard:** Press `L` in fullscreen
 - **UI:** Open FAB menu → click "Share Link"
 
-The URL is automatically cleaned from the address bar after DiagView processes it (using `history.replaceState`).
+Once DiagView has read a share link, it removes the `dv-*` parameters from the address bar with `history.replaceState`, so no history entry is added. It does this even when the link points at no diagram, such as `dv-idx=99`. Other query parameters and the `#hash` stay.
 
 ---
 

@@ -65,12 +65,13 @@ export function checkShareLink() {
         console.warn("DiagView: Failed to restore shared view", e);
       });
     }, TIMING.OBSERVER_DEBOUNCE);
-
-    // Only mark as checked if we successfully found and opened the diagram
-    state.hasCheckedShareLink = true;
-    // Cleanup URL to remove internal dv- parameters after processing
-    stripDiagViewParams();
   }
+
+  // Remove the dv- parameters from the address bar once the link is handled.
+  // A link no diagram matches, such as dv-idx=99, goes too, so it is not
+  // bookmarked or passed on.
+  state.hasCheckedShareLink = true;
+  stripDiagViewParams();
 }
 
 /**
