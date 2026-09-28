@@ -194,7 +194,7 @@
                     <span class="tag"><span class="dot"></span>floating</span>
                 </div>
                 <div class="diagram" data-diagview-layout="floating"
-                    data-title="Microservices Architecture (Floating)" id="diag-floating">
+                    data-title="Microservices (Floating)" id="diag-floating">
                     <!-- SVG injected by JS -->
                 </div>
                 <p class="card-note attr-snippet"><span class="a">data-diagview-layout</span>=<span
@@ -208,7 +208,7 @@
                     <span class="tag"><span class="dot"></span>header</span>
                 </div>
                 <div class="diagram" data-diagview-layout="header"
-                    data-title="Microservices Architecture (Header)" id="diag-header">
+                    data-title="Microservices (Header)" id="diag-header">
                 </div>
                 <p class="card-note attr-snippet"><span class="a">data-diagview-layout</span>=<span
                         class="v">"header"</span></p>
@@ -221,7 +221,7 @@
                     <span class="tag"><span class="dot"></span>off</span>
                 </div>
                 <div class="diagram" data-diagview-layout="off"
-                    data-title="Microservices Architecture (Off)" id="diag-off">
+                    data-title="Microservices (Off)" id="diag-off">
                 </div>
                 <p class="card-note attr-snippet"><span class="a">data-diagview-layout</span>=<span
                         class="v">"off"</span><span class="hint">Click the diagram to open it fullscreen.</span></p>
@@ -403,8 +403,8 @@
             const NS = 'http://www.w3.org/2000/svg';
             // Fit the viewBox to the nodes with equal padding on every side,
             // so the diagram sits centred and no node touches the edge
-            const PAD = 24;
-            const minX = 40, minY = 18, maxX = 575, maxY = 278;
+            const PAD = 20;
+            const minX = 15, minY = 18, maxX = 505, maxY = 270;
             const svg = document.createElementNS(NS, 'svg');
             svg.setAttribute('viewBox',
                 `${minX - PAD} ${minY - PAD} ${maxX - minX + 2 * PAD} ${maxY - minY + 2 * PAD}`);
@@ -416,27 +416,26 @@
             // Each diagram needs its own marker id, or all three use the first one's colour
             const markerId = 'arrow-' + palette;
 
-            // Node definitions: [id, label, x, y, w, h]
+            // Node definitions: [id, label, x, y, w, h]. Three columns, so the
+            // labels stay readable in a third of the page
             const nodes = [
-                ['api-gw', 'API Gateway', 210, 18, 160, 38],
-                ['auth', 'Auth Service', 40, 120, 130, 38],
-                ['product', 'Product Service', 225, 120, 130, 38],
-                ['order', 'Order Service', 410, 120, 130, 38],
-                ['user-db', 'User DB', 40, 240, 130, 38],
-                ['prod-db', 'Product DB', 225, 240, 130, 38],
-                ['cache', 'Redis Cache', 370, 240, 110, 38],
-                ['order-db', 'Order DB', 490, 240, 85, 38],
+                ['api-gw', 'API Gateway', 175, 18, 170, 40],
+                ['auth', 'Auth', 15, 120, 150, 40],
+                ['product', 'Products', 185, 120, 150, 40],
+                ['order', 'Orders', 355, 120, 150, 40],
+                ['user-db', 'User DB', 15, 230, 150, 40],
+                ['prod-db', 'Product DB', 185, 230, 150, 40],
+                ['order-db', 'Order DB', 355, 230, 150, 40],
             ];
 
             // Edge definitions: [x1, y1, x2, y2]
             const edges = [
-                [290, 56, 105, 120],  // API GW to Auth
-                [290, 56, 290, 120],  // API GW to Product
-                [290, 56, 475, 120],  // API GW to Order
-                [105, 158, 105, 240],  // Auth to User DB
-                [290, 158, 290, 240],  // Product to Product DB
-                [475, 158, 425, 240],  // Order to Cache
-                [475, 158, 532, 240],  // Order to Order DB
+                [260, 58, 90, 120],  // API GW to Auth
+                [260, 58, 260, 120],  // API GW to Product
+                [260, 58, 430, 120],  // API GW to Order
+                [90, 160, 90, 230],  // Auth to User DB
+                [260, 160, 260, 230],  // Product to Product DB
+                [430, 160, 430, 230],  // Order to Order DB
             ];
 
             // Draw edges first (behind nodes)
@@ -488,9 +487,9 @@
 
                 const text = document.createElementNS(NS, 'text');
                 text.setAttribute('x', x + w / 2);
-                text.setAttribute('y', y + h / 2 + 4);
+                text.setAttribute('y', y + h / 2 + 7);
                 text.setAttribute('text-anchor', 'middle');
-                text.setAttribute('font-size', '11');
+                text.setAttribute('font-size', '22');
                 text.setAttribute('font-family', '"Schibsted Grotesk", system-ui, sans-serif');
                 text.setAttribute('font-weight', '600');
                 text.dataset.part = 'label';
