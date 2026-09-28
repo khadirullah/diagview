@@ -5,7 +5,12 @@
  */
 import { jest } from "@jest/globals";
 import { state, resetConfig, updateConfig } from "../src/core/config.js";
-import { closeModal, lockBodyScroll, unlockBodyScroll } from "../src/ui/modal-controls.js";
+import {
+  closeModal,
+  lockBodyScroll,
+  unlockBodyScroll,
+  syncBrandingVisibility,
+} from "../src/ui/modal-controls.js";
 
 describe("closeModal re-entrancy guard", () => {
   test("concurrent closeModal calls run the teardown (and onClose) exactly once", async () => {
@@ -60,5 +65,21 @@ describe("scroll lock leaves <body> as it found it", () => {
     unlockBodyScroll();
 
     expect(body.getAttribute("style")).toBe("");
+  });
+});
+
+describe("shortcut hint", () => {
+  test("hides with showKeyboardHelp false and comes back when it is turned on", () => {
+    resetConfig();
+    document.body.innerHTML = '<div id="diagview-modal"></div>';
+    const modal = document.getElementById("diagview-modal");
+    syncBrandingVisibility();
+    expect(modal.classList.contains("dv-no-help")).toBe(false);
+    updateConfig({ showKeyboardHelp: false });
+    syncBrandingVisibility();
+    expect(modal.classList.contains("dv-no-help")).toBe(true);
+    updateConfig({ showKeyboardHelp: true });
+    syncBrandingVisibility();
+    expect(modal.classList.contains("dv-no-help")).toBe(false);
   });
 });

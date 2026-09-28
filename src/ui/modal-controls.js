@@ -219,12 +219,14 @@ export async function closeModal() {
 }
 
 /**
- * Sync branding visibility based on current configuration
+ * Sync branding and shortcut hint visibility based on current configuration
  * Reactive to runtime config changes
  */
 export function syncBrandingVisibility() {
   const modal = document.getElementById("diagview-modal");
   const menu = document.getElementById("diagview-temp-menu");
+  // No "Press ? for shortcuts" when ? opens nothing
+  modal?.classList.toggle("dv-no-help", !state.config.showKeyboardHelp);
 
   const elements = [modal, menu].filter((el) => !!el);
   if (elements.length === 0) return;

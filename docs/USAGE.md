@@ -737,6 +737,8 @@ DiagView.init({ rememberZoom: true });
 
 Shortcuts are disabled when the modal is closed. While you type in a text field, such as the search box, all shortcuts except `Esc` are suspended. When a button, link, checkbox or the colour picker has focus, `Space` and `Enter` press it and every other shortcut still works. After `Esc` closes the ☰ menu, focus stays on the menu button, so `F` opens search straight away.
 
+`showKeyboardHelp: false` turns off the `?` panel and hides the "Press ? for shortcuts" hint in the topbar. `DiagView.configure()` switches both at runtime.
+
 ---
 
 ## 18. Runtime Updates

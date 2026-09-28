@@ -784,6 +784,10 @@
   }
 }
 
+.dv-no-help .diagview-shortcut-hint {
+  display: none;
+}
+
 /* Close Button — always pinned top-right */
 .diagview-close-btn {
   all: unset;

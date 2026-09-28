@@ -381,7 +381,7 @@ interface DiagViewConfig {
     };
   };
   showBranding: boolean; // default: true
-  showKeyboardHelp: boolean; // default: true
+  showKeyboardHelp: boolean; // default: true; false also hides the "Press ? for shortcuts" hint
   helpTimeout: number; // default: 8000 (ms); 0 = never
   animateOpen: boolean; // default: true
 

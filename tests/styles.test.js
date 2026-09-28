@@ -47,6 +47,14 @@ describe("styles.css: topbar shortcut hint", () => {
     expect(ruleBody(".diagview-shortcut-hint kbd")).toMatch(/color:\s*var\(--dv-text-color\)/);
   });
 
+  test("hides when the shortcuts panel is turned off, also on wide screens", () => {
+    const wide = css.indexOf(".diagview-shortcut-hint {\n    display: flex;");
+    const hide = css.indexOf(".dv-no-help .diagview-shortcut-hint {");
+    expect(wide).toBeGreaterThan(-1);
+    expect(hide).toBeGreaterThan(wide);
+    expect(ruleBody(".dv-no-help .diagview-shortcut-hint {")).toMatch(/display:\s*none/);
+  });
+
   test("hint text uses the muted colour instead of opacity, so it keeps 4.5:1", () => {
     const body = ruleBody(".diagview-shortcut-hint {");
     expect(body).toContain("color: var(--dv-muted-text");

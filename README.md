@@ -426,7 +426,7 @@ DiagView.init({
     },
   },
   showBranding: true, // Show DiagView branding link
-  showKeyboardHelp: true, // Allow the ? shortcuts panel (false disables it)
+  showKeyboardHelp: true, // Allow the ? shortcuts panel (false disables it and hides the topbar hint)
   showFirstTimeThemeHint: true, // One-time canvas theme tip on first open (stored in localStorage)
   helpTimeout: 8000, // ms before shortcut panel auto-closes (0 = never)
   animateOpen: true, // CSS scale animation when opening fullscreen
