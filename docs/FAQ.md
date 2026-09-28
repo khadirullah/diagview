@@ -225,7 +225,14 @@ CSS `@keyframes` animations in a `<style>` block are kept. `strict` removes the 
 Or globally: `DiagView.init({ security: { allowRemoteResources: true } })`.
 
 **Q: Does sanitization affect the original SVG on the page?**  
-A: No. DiagView clones the SVG before sanitizing. The original DOM element is never mutated.
+A: No. DiagView sanitizes a copy of the SVG for the viewer and for each export, so the sanitizer never changes the diagram on the page. Setting the diagram up does change its `<svg>` a little:
+
+- `init()` adds the `dv-svg-content` class and an inline `transition: filter 0.3s ease`.
+- The header and floating layouts also set an inline `color: inherit`.
+- An SVG that fails to render gets `display: none` and sits behind the error placeholder.
+- During an export, DiagView marks the elements inside it with a `data-dv-match-id` attribute and removes the marks again before the export carries on.
+
+`destroy()` removes the class and puts back the SVG's own `transition`, `color` and `display` values. It also removes a `style` or `class` attribute that DiagView added and left empty. An attribute the page wrote itself stays, even an empty one.
 
 ---
 
