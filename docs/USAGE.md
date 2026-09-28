@@ -425,7 +425,7 @@ Renders a red laser-pointer dot that follows the mouse (or touch point). Designe
 
 ### Behavior
 
-- The cursor is hidden (`cursor: none`) when meeting mode is active
+- The cursor is hidden (`cursor: none`) over the diagram. Over the toolbar and the menu the normal cursor shows, and the dot stays at its last spot on the diagram
 - The laser animates with a pulsing glow
 - Toggling again removes the laser and restores the cursor
 - Meeting mode is automatically disabled when the modal closes
