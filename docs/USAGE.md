@@ -754,6 +754,14 @@ The `?` panel takes focus each time it opens and keeps `Tab` inside it. However 
 DiagView.init({ showKeyboardHelp: true, helpTimeout: 0 });
 ```
 
+The hint shows in the topbar on screens 640 px wide or wider. To hide it and keep the `?` panel, add this rule to your stylesheet:
+
+```css
+#diagview-modal .diagview-shortcut-hint {
+  display: none;
+}
+```
+
 ---
 
 ## 18. Runtime Updates
