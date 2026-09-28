@@ -287,6 +287,8 @@ DiagView picks the outline colour from the canvas background. It uses `#2563eb` 
 DiagView.openFullscreen(element, { searchQuery: "auth service" });
 ```
 
+On a phone the search bar opens with the query in it, so the reader can see and clear it. The keyboard stays closed. A share link with `dv-q` does the same.
+
 ### Search and export
 
 An export made during a search keeps the dimming and the outline, unless `exportSearchHighlight` is `false`. See [Search highlight](#search-highlight).
@@ -777,7 +779,7 @@ The `?` panel takes focus each time it opens and keeps `Tab` inside it. While it
 DiagView.init({ showKeyboardHelp: true, helpTimeout: 0 });
 ```
 
-The hint shows in the topbar on screens 640 px wide or wider. To hide it and keep the `?` panel, add this rule to your stylesheet:
+The hint shows in the topbar on screens 640 px wide or wider. A phone page without a viewport meta tag is laid out wider than the phone's screen, so there the topbar leaves out the hint, the zoom percentage and the DiagView name to give the search box room. To hide it and keep the `?` panel, add this rule to your stylesheet:
 
 ```css
 #diagview-modal .diagview-shortcut-hint {

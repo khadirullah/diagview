@@ -226,7 +226,7 @@ Open the fullscreen viewer for a diagram element.
 ```typescript
 interface OpenOptions {
   zoom?: number; // Initial zoom scale (e.g. 2.5)
-  searchQuery?: string; // Pre-fill the search input
+  searchQuery?: string; // Pre-fill the search input (on a phone this also opens the search bar)
 }
 ```
 
