@@ -13,6 +13,7 @@ import {
   noticeColors,
   getContrastRatio,
   teardownThemeWatchers,
+  setupThemeWatchers,
 } from "../src/core/theme.js";
 import { resetConfig, updateConfig } from "../src/core/config.js";
 import { COLORS } from "../src/core/constants.js";
@@ -777,5 +778,17 @@ describe("Theme Module: the style attribute on <html> after teardown", () => {
     teardownThemeWatchers();
 
     expect(root.getAttribute("style")).toBe("");
+  });
+
+  test("a theme sync still waiting does not write the variables back", async () => {
+    setupThemeWatchers();
+    syncTheme();
+    root.classList.add("dv-test-dark"); // starts the debounced sync
+    await new Promise((r) => setTimeout(r, 0));
+    teardownThemeWatchers();
+
+    await new Promise((r) => setTimeout(r, 150));
+    root.classList.remove("dv-test-dark");
+    expect(root.hasAttribute("style")).toBe(false);
   });
 });

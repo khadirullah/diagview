@@ -315,6 +315,11 @@ const warnedContrast = new Set();
 // Whether <html> had a style attribute before syncTheme() first wrote to it
 let htmlHadStyle = null;
 
+/** Whether <html> had a style attribute before DiagView first wrote to it */
+export function rootHadStyle() {
+  return htmlHadStyle !== false;
+}
+
 /**
  * Read a colour override from config, returning it only if it parses.
  * @param {"backgroundColor"|"textColor"|"accentColor"|"warningColor"} key - Config key to read
@@ -610,11 +615,14 @@ export function clearThemeCache() {
  * Setup theme watchers with debouncing
  */
 
+// The pending theme sync, so teardown can cancel it
+let debouncedSync = null;
+
 export function setupThemeWatchers() {
   if (state.themeObserver) return;
 
   let lastBg = null;
-  const debouncedSync = debounce(() => {
+  debouncedSync = debounce(() => {
     clearThemeCache();
     const { seenBg: bg } = syncTheme();
     // In Auto mode, or with a see-through canvas, the colour seen follows
@@ -657,6 +665,10 @@ export function setupThemeWatchers() {
  * Cleanup theme watchers
  */
 export function teardownThemeWatchers() {
+  // A sync still waiting would write the variables back after we remove them
+  debouncedSync?.cancel();
+  debouncedSync = null;
+
   if (state.themeObserver) {
     state.themeObserver.disconnect();
     state.themeObserver = null;

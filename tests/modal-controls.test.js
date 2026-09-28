@@ -11,6 +11,7 @@ import {
   unlockBodyScroll,
   syncBrandingVisibility,
 } from "../src/ui/modal-controls.js";
+import { syncTheme, teardownThemeWatchers } from "../src/core/theme.js";
 
 describe("closeModal re-entrancy guard", () => {
   test("concurrent closeModal calls run the teardown (and onClose) exactly once", async () => {
@@ -65,6 +66,44 @@ describe("scroll lock leaves <body> as it found it", () => {
     unlockBodyScroll();
 
     expect(body.getAttribute("style")).toBe("");
+  });
+});
+
+describe("destroy() with the viewer open leaves <html> as it found it", () => {
+  const root = document.documentElement;
+  let frames, raf;
+
+  beforeEach(() => {
+    resetConfig();
+    frames = [];
+    raf = jest.spyOn(window, "requestAnimationFrame").mockImplementation((cb) => frames.push(cb));
+  });
+
+  afterEach(() => {
+    raf.mockRestore();
+    root.removeAttribute("style");
+    state.modalCleanupFunctions.clear();
+  });
+
+  // Close, then teardown, then the frame that restores scroll-behavior
+  const closeAndDestroy = () => {
+    syncTheme();
+    lockBodyScroll();
+    unlockBodyScroll();
+    teardownThemeWatchers();
+    frames.forEach((cb) => cb());
+  };
+
+  test("no empty style attribute is left on an <html> that had none", () => {
+    root.removeAttribute("style");
+    closeAndDestroy();
+    expect(root.hasAttribute("style")).toBe(false);
+  });
+
+  test("an empty style attribute the page wrote itself is kept", () => {
+    root.setAttribute("style", "");
+    closeAndDestroy();
+    expect(root.getAttribute("style")).toBe("");
   });
 });
 

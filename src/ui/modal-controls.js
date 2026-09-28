@@ -7,6 +7,7 @@
 import { state, runModalCleanupFunctions } from "../core/config.js";
 import { safeDestroy, clearAsyncTasks } from "../core/lifecycle.js";
 import { removeEmptyAttr } from "../core/utils.js";
+import { rootHadStyle } from "../core/theme.js";
 import { restoreFocus } from "./focus-manager.js";
 import { cleanupModalHistoryState, stopVisualViewportSync } from "./viewport.js";
 import { hideKeyboardHelp } from "./keyboard-help.js";
@@ -14,6 +15,8 @@ import { hideToast } from "./toast.js";
 
 // Whether <body> had a style attribute before the scroll lock wrote to it
 let bodyHadStyle = true;
+// Whether <html> had one before DiagView wrote its theme variables to it
+let htmlHadStyle = true;
 
 /**
  * Lock body scroll (Non-destructive version)
@@ -29,6 +32,7 @@ export function lockBodyScroll() {
   // Stash whatever the page had so we can restore it on unlock.
   htmlEl.dataset.dvPrevScrollBehavior = htmlEl.style.scrollBehavior;
   htmlEl.style.scrollBehavior = "auto";
+  htmlHadStyle = rootHadStyle();
 
   // 1. Standard lock for most browsers
   bodyHadStyle = document.body.hasAttribute("style");
@@ -98,6 +102,9 @@ export function unlockBodyScroll() {
     const prev = htmlEl.dataset.dvPrevScrollBehavior;
     htmlEl.style.scrollBehavior = prev || "";
     delete htmlEl.dataset.dvPrevScrollBehavior;
+    // destroy() may have removed the theme variables since, so drop the
+    // style attribute this leaves empty unless the page had one
+    removeEmptyAttr(htmlEl, "style", htmlHadStyle);
   });
 }
 
