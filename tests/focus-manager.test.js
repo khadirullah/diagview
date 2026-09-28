@@ -113,6 +113,29 @@ describe("focus trap ignores unrendered and closed-search controls", () => {
     expect(document.activeElement.id).toBe("diagview-search");
   });
 
+  test("Tab reaches diagram links written with xlink:href, between the topbar and the menu button", () => {
+    const viewport = el("div", "diagview-modal-viewport", null, modal);
+    modal.insertBefore(viewport, document.getElementById("dv-toggle"));
+    // jsdom only focuses an xlink:href link that has a tabindex. -1 keeps
+    // it out of the [tabindex] part of the selector, so a[*|href] must match.
+    viewport.innerHTML =
+      '<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">' +
+      '<a xlink:href="#one" tabindex="-1"><rect/></a><a href="#two"><rect/></a></svg>';
+    const [one, two] = viewport.querySelectorAll("a");
+    invalidateFocusableCache();
+
+    document.getElementById("diagview-close").focus();
+    pressTab();
+    expect(document.activeElement).toBe(one);
+    pressTab();
+    expect(document.activeElement).toBe(two);
+    pressTab();
+    expect(document.activeElement.id).toBe("dv-toggle");
+    pressTab(true);
+    pressTab(true);
+    expect(document.activeElement).toBe(one);
+  });
+
   test("Tab and Shift+Tab stay in the open shortcuts panel", () => {
     const help = el("div", null, "diagview-help-modal show", modal);
     const close = el("button", null, "diagview-help-close", help);

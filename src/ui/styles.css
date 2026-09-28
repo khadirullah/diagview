@@ -66,6 +66,13 @@
   transition: box-shadow 0.2s ease;
 }
 
+/* box-shadow does not paint on SVG, so links in a diagram get an outline */
+.diagview-modal svg a:focus-visible,
+.diagview-wrapper svg a:focus-visible {
+  outline: 2px solid var(--dv-accent) !important;
+  outline-offset: 2px;
+}
+
 /* Specific override for Search Input (Wrapper handles the focus style) */
 .diagview-search-input:focus-visible {
   outline: none !important;

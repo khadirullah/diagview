@@ -179,6 +179,14 @@ describe("styles.css: menu buttons", () => {
 });
 
 describe("styles.css: keyboard focus ring", () => {
+  test("links in a diagram get an outline, since box-shadow does not paint on SVG", () => {
+    const body = ruleBody(".diagview-wrapper svg a:focus-visible {");
+    expect(body).toMatch(/outline:\s*2px solid var\(--dv-accent\) !important/);
+    expect(css).toContain(
+      ".diagview-modal svg a:focus-visible,\n.diagview-wrapper svg a:focus-visible {",
+    );
+  });
+
   test("the custom colour swatch shows the ring while its hidden input has keyboard focus", () => {
     const body = ruleBody(".dv-swatch-custom:has(:focus-visible) {");
     expect(body).not.toBeNull();
