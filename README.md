@@ -238,7 +238,7 @@ Any diagram can override the global configuration using `data-diagview-*` attrib
 | `data-diagview-watermark-opacity`   | `0` to `1`                          | Transparency override for this diagram               |
 | `data-title`                        | Any string                          | Title in the header label and in export file names   |
 
-> **Security note:** `data-diagview-sanitize="off"` and `data-diagview-allow-remote="true"` only work when `security.allowOverrides` is `true` in the global config (the default). Use these only with SVGs from fully trusted sources. [Choosing a mode](docs/USAGE.md#choosing-a-mode) lists what each mode removes and which one to use.
+> **Security note:** `data-diagview-sanitize="off"` and `data-diagview-allow-remote="true"` only work when `security.allowOverrides` is `true` in the global config (the default). Use these only with SVGs from fully trusted sources. A diagram's `data-diagview-sanitize` mode also applies to its exports, from the page toolbar and from the fullscreen menu alike. To clean every export and copy in `strict` mode, whatever mode the diagram uses on screen, set `security.exportMode` to `"strict"`. [Choosing a mode](docs/USAGE.md#choosing-a-mode) lists what each mode removes and which one to use.
 
 ---
 
