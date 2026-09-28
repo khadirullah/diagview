@@ -40,6 +40,18 @@ describe("Diagram Init: SVG Validation (via error boundary)", () => {
     expect(container.querySelector(".diagview-error")).not.toBeNull();
   });
 
+  test("the error icon has round line caps so the dot under the ! draws", () => {
+    const container = document.createElement("div");
+    container.className = "diagram";
+    document.body.appendChild(container);
+
+    initializeDiagram(container);
+
+    const icon = container.querySelector(".diagview-error-icon");
+    expect(icon.getAttribute("stroke-linecap")).toBe("round");
+    expect(icon.getAttribute("stroke-linejoin")).toBe("round");
+  });
+
   test("initializeDiagram rejects SVG with error class via error boundary", () => {
     const container = document.createElement("div");
     container.className = "diagram";

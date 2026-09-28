@@ -139,6 +139,9 @@ function showErrorBoundary(element, svg) {
   iconSvg.setAttribute("fill", "none");
   iconSvg.setAttribute("stroke", "currentColor");
   iconSvg.setAttribute("stroke-width", "2");
+  // Round caps draw the zero-length path under the "!" as a dot
+  iconSvg.setAttribute("stroke-linecap", "round");
+  iconSvg.setAttribute("stroke-linejoin", "round");
   setSVGContent(iconSvg, '<circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/>');
 
   const titleDiv = document.createElement("div");
