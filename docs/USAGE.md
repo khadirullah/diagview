@@ -746,7 +746,13 @@ Shortcuts are disabled when the modal is closed. While you type in a text field,
 
 The `?` panel takes focus each time it opens and keeps `Tab` inside it. However it closes, focus goes back to where it was before.
 
-`showKeyboardHelp: false` turns off the `?` panel and hides the "Press ? for shortcuts" hint in the topbar. `DiagView.configure()` switches both at runtime.
+`showKeyboardHelp` (default `true`) allows the `?` panel. `false` turns the panel off and hides the "Press ? for shortcuts" hint in the topbar. `DiagView.configure()` switches both at runtime.
+
+`helpTimeout` (default `8000`) is the time in milliseconds before the `?` panel closes by itself, and `0` keeps it open until you close it.
+
+```javascript
+DiagView.init({ showKeyboardHelp: true, helpTimeout: 0 });
+```
 
 ---
 
@@ -1051,6 +1057,22 @@ DiagView.init({
   maxPixels: 25000000, // Allow up to 25MP export (use carefully)
 });
 ```
+
+`performance.largeFileThreshold` (default `1000000`) has no effect. DiagView still accepts it so older configs keep working.
+
+### Animations
+
+```javascript
+DiagView.init({
+  animateOpen: true,
+  zoomAnimationDuration: 200,
+  panAnimationDuration: 200,
+});
+```
+
+- `animateOpen` (default `true`) fades the viewer in and grows it from 95% to full size over 0.3 seconds when it opens. With reduced motion on, the viewer opens without it.
+- `zoomAnimationDuration` (default `200`) is how many milliseconds zoom in, zoom out and reset take to animate. `0` uses the default.
+- `panAnimationDuration` (default `200`) is how many milliseconds one arrow key pan takes to animate. `0` uses the default.
 
 ---
 
