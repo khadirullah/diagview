@@ -50,6 +50,14 @@ describe("styles.css: menu footer", () => {
   });
 });
 
+describe("styles.css: zoom buttons", () => {
+  test("hover on the accent fill, like the other accent buttons, so white keeps 4.5:1", () => {
+    const body = ruleBody(".dv-zoom button:hover {");
+    expect(body).toMatch(/background:\s*var\(--dv-accent-fill\)/);
+    expect(body).toContain("var(--dv-on-accent)");
+  });
+});
+
 describe("styles.css: desktop tooltip", () => {
   test("is placed below the element so the topbar button's tooltip is not clipped", () => {
     const body = ruleBody("[data-tooltip]::after");

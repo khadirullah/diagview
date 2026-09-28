@@ -1175,7 +1175,7 @@
 }
 
 .dv-zoom button:hover {
-  background: var(--dv-primary, var(--dv-accent, #3b82f6));
+  background: var(--dv-accent-fill);
   color: var(--dv-on-accent);
   transform: translateY(-1px);
 }
