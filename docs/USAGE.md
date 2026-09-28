@@ -765,13 +765,13 @@ A double click on the canvas resets the view, as `0` does. On a touch screen a d
 
 A link to a part of the page, such as `#details` or a Mermaid `click` link to `#details`, closes the viewer and then scrolls the page to that part. Back then works as it does after any other link to a part of the page. A link with a `target`, or held with `Ctrl`, `Cmd` or `Shift`, is left to the browser.
 
-While the ☰ menu is open, `Tab` and `Shift+Tab` go through its items and the menu button, and `↑` and `↓` step through its items instead of panning. `←` and `→` do nothing there. `Esc` closes the menu and the arrows pan again.
+While the ☰ menu is open, `Tab` and `Shift+Tab` go through its items and the menu button, and `↑` and `↓` step through its items instead of panning. From the menu button, `↓` goes to the first item and `↑` to the last. `←` and `→` do nothing there. `Esc` closes the menu and the arrows pan again.
 
-The `?` panel takes focus each time it opens and keeps `Tab` inside it. However it closes, focus goes back to where it was before.
+The `?` panel takes focus each time it opens and keeps `Tab` inside it. While it is open, no other shortcut acts on the diagram. `Esc` or `?` closes it, `Enter` or `Space` on its close button does too, and the arrow keys scroll its list. However it closes, focus goes back to where it was before.
 
 `showKeyboardHelp` (default `true`) allows the `?` panel. `false` turns the panel off and hides the "Press ? for shortcuts" hint in the topbar. `DiagView.configure()` switches both at runtime.
 
-`helpTimeout` (default `8000`) is the time in milliseconds before the `?` panel closes by itself, and `0` keeps it open until you close it.
+`helpTimeout` (default `8000`) is the time in milliseconds before the `?` panel closes by itself, and `0` keeps it open until you close it. Moving the mouse over the panel or tabbing into it pauses the timer, and moving the mouse off starts it again. A mouse that rests where the panel opens does not pause it.
 
 ```javascript
 DiagView.init({ showKeyboardHelp: true, helpTimeout: 0 });

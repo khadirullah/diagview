@@ -244,7 +244,7 @@ Any diagram can override the global configuration using `data-diagview-*` attrib
 
 ## ⌨️ Keyboard Shortcuts
 
-All shortcuts are active when the fullscreen viewer is open. While the search box or another text field has focus, keys type into the field and only `Esc` acts as a shortcut. With a query in the box, the first `Esc` clears it, the next one leaves the search box, and the one after that closes the viewer. When a button has focus, `Space` and `Enter` press it and the letter keys still work.
+All shortcuts are active when the fullscreen viewer is open, except while the `?` panel is open. Then only `Esc` and `?` act, and they close it. While the search box or another text field has focus, keys type into the field and only `Esc` acts as a shortcut. With a query in the box, the first `Esc` clears it, the next one leaves the search box, and the one after that closes the viewer. When a button has focus, `Space` and `Enter` press it and the letter keys still work.
 
 | Key                              | Action                                                                  |
 | -------------------------------- | ----------------------------------------------------------------------- |
@@ -262,7 +262,7 @@ All shortcuts are active when the fullscreen viewer is open. While the search bo
 | `?`                              | Show or hide this help                                                  |
 | `Ctrl` / `Cmd` / `Alt` + any key | Left to the browser, so its own shortcuts such as `Ctrl`+`F` still work |
 
-`Tab` also stops on links inside the diagram, and `Enter` or `Space` follows the focused link. A double click on the canvas, or a double tap on a touch screen, resets the view as `0` does. The `?` panel keeps `Tab` inside it and gives focus back when it closes. With `showKeyboardHelp: false` the panel is off and the topbar drops its "Press ? for shortcuts" hint. [Keyboard shortcuts](docs/USAGE.md#17-keyboard-shortcuts) in the usage guide has the details.
+`Tab` also stops on links inside the diagram, and `Enter` or `Space` follows the focused link. A double click on the canvas, or a double tap on a touch screen, resets the view as `0` does. The `?` panel keeps `Tab` inside it, holds back the other shortcuts and gives focus back when it closes. With `showKeyboardHelp: false` the panel is off and the topbar drops its "Press ? for shortcuts" hint. [Keyboard shortcuts](docs/USAGE.md#17-keyboard-shortcuts) in the usage guide has the details.
 
 ---
 
