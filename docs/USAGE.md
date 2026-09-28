@@ -608,7 +608,7 @@ The Security modes panel on the [demo page](https://khadirullah.github.io/diagvi
 
 - **`strict` (default).** Use it for any diagram. Keep it for diagrams other people can write, such as wiki or CMS uploads, pasted SVGs and SVGs from an API.
 - **`permissive`.** Use it for your own diagrams that animate with SMIL, such as `<animate>` or `<animateTransform>`. It keeps the `form` attribute, so a button in the diagram can still submit a form on your page from the fullscreen view. A `formaction` with an `https://` URL on that button sends the form's fields to that address.
-- **`off`.** Use it only for your own diagrams whose click handlers or links you need in fullscreen. The copy keeps every script and handler. Inline event handlers such as `onclick`, `onload` and `onerror` run in the fullscreen copy. A `<script>` element stays in the copy but never runs there, in any browser. Exports keep both unless `security.exportMode` is `"strict"`, and a browser that opens a downloaded SVG file runs its scripts.
+- **`off`.** Use it only for your own diagrams whose inline click handlers or `javascript:` links you need in fullscreen. Other links work in every mode. The copy keeps every script and handler. Inline event handlers such as `onclick`, `onload` and `onerror` run in the fullscreen copy. A `<script>` element stays in the copy but never runs there, in any browser. Exports keep both unless `security.exportMode` is `"strict"`, and a browser that opens a downloaded SVG file runs its scripts.
 
 `security.exportMode` picks the mode for exports, downloads and clipboard copies. With `"same"`, the default, each export uses its diagram's own mode. With `"strict"`, DiagView cleans every export and copy in `strict` mode, whatever mode the page or the diagram uses on screen. Use it when you need click handlers in fullscreen but want clean files, since a downloaded file reaches people who never saw your page:
 
@@ -640,6 +640,7 @@ With `allowRemoteResources: true`, `@import` and remote `url()` stay in `strict`
 
 - Under `strict`, SMIL animations stand still in fullscreen and in exports. CSS `@keyframes` animations in a `<style>` block keep running.
 - Under `strict` and `permissive`, a click handler does nothing in fullscreen, and a `javascript:` link no longer opens anything.
+- In every mode, `off` included, a Mermaid `click` callback does nothing in fullscreen. Mermaid binds it to the diagram on the page, and the copy does not carry it. Mermaid `click` links work.
 - Under `strict`, a `<style>` block that loads a remote font or stylesheet goes away whole, so the copy loses every rule in it.
 - The diagram on the page keeps everything, so it can behave differently from its fullscreen view.
 - With `exportMode: "strict"`, a file can lose an animation or a click handler that still works in fullscreen.

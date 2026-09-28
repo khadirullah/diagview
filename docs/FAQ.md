@@ -182,12 +182,14 @@ A: To draw a diagram onto the image, DiagView first loads the SVG as a `data:` U
 ## SVG Sanitization
 
 **Q: Why did my animation or click stop working in fullscreen?**  
-A: The fullscreen view and exports show a sanitized copy of your diagram, and the diagram on the page stays as it is. The default `strict` mode removes SMIL animations such as `<animate>` and `<animateTransform>`, and every mode except `off` removes `onclick` and other event handlers and `javascript:` links. When DiagView removes code, the console shows a warning that names the diagram and what went. For your own animated diagram, use `permissive`. For your own diagram whose click handlers you need, use `off`:
+A: The fullscreen view and exports show a sanitized copy of your diagram, and the diagram on the page stays as it is. The default `strict` mode removes SMIL animations such as `<animate>` and `<animateTransform>`, and every mode except `off` removes `onclick` and other event handlers and `javascript:` links. When DiagView removes code, the console shows a warning that names the diagram and what went. For your own animated diagram, use `permissive`. For your own diagram whose inline `onclick` handlers you need, use `off`:
 
 ```html
 <div class="diagram" data-diagview-sanitize="permissive">...</div>
 <div class="diagram" data-diagview-sanitize="off">...</div>
 ```
+
+A Mermaid `click` line that calls a function, such as `click A callback` or `click A call showDetails()`, does nothing in fullscreen in any mode, `off` included. Mermaid attaches the function to the diagram on the page with `addEventListener`. The viewer shows a copy, and a copy never carries those listeners. A Mermaid `click` line with a link, such as `click A href "https://example.com"`, works in every mode, since the link is part of the SVG. A link to `#details` closes the viewer and scrolls the page there.
 
 Keep `strict` for diagrams other people can write. See [Choosing a mode](USAGE.md#choosing-a-mode).
 
