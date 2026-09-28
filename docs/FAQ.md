@@ -264,7 +264,7 @@ A: This is a known browser-level limitation in Firefox Mobile (Gecko engine) on 
 ## Frameworks
 
 **Q: React throws `NotFoundError: The node to be removed is not a child of this node` when my component unmounts.**  
-A: With the `floating` or `header` layout, DiagView moves the diagram element into a wrapper to place the toolbar. If React later removes that exact element, it is no longer where React left it. Nest the diagram element inside a container div that your component renders, so React removes the container instead. Or use `layout: "off"`, which never touches the surrounding DOM. See USAGE.md § Framework Integration.
+A: With the `floating` or `header` layout, DiagView moves the diagram element into a wrapper to place the toolbar. If React later removes that exact element, it is no longer where React left it. Nest the diagram element inside a container div that your component renders, so React removes the container instead. Or use `layout: "off"`, which never touches the surrounding DOM. See [Framework integration](USAGE.md#20-framework-integration).
 
 **Q: In development, DiagView stops working after the first render (React StrictMode / hot reload).**  
 A: `init()` queues behind an in-flight `destroy()`, which is the sequence StrictMode produces, so the `useEffect` cleanup-then-setup cycle needs no special handling. Call `destroy()` in the cleanup and `init()` in the effect body, as shown in [USAGE](USAGE.md#20-framework-integration).
@@ -286,7 +286,7 @@ A: Ensure your HTML signals dark mode via one of:
 Or override manually: `DiagView.init({ backgroundColor: '#0f172a', textColor: '#e2e8f0' })`.
 
 **Q: My brand color doesn't apply inside the diagram itself.**  
-A: DiagView applies the accent color to the UI chrome (buttons and minimap), not to the SVG content itself. To style SVG internals, use your own CSS. For Mermaid, draw the diagrams again with your colors, as the [next answer](#theming) shows.
+A: DiagView applies the accent color to the UI chrome (buttons and minimap), not to the SVG content itself. To style SVG internals, use your own CSS. For Mermaid, draw the diagrams again with your colors, as the next answer shows.
 
 **Q: How do I make Mermaid diagrams follow my site's theme or accent color?**  
 A: Draw them again. Mermaid writes its colors into the SVG when it draws, and DiagView shows that SVG as it is. The Canvas Theme in the viewer only changes the background behind the diagram, and `accentColor` only colors DiagView's own controls. Neither redraws the diagram. When the site changes theme or accent, take DiagView down, put back each diagram's Mermaid source, draw it with the new settings and start DiagView again.
@@ -388,7 +388,7 @@ A: No. DiagView renders watermarks using native SVG vectors, ensuring they are c
 **Q: Will a long brand name overlap my diagram?**  
 A: It does not run past the edge of the diagram. DiagView measures the text in the browser's bold sans-serif font and shrinks the font until the text fits its space, so a name full of wide letters such as "W" and "M" shrinks more than one of narrow letters. Where the browser cannot measure text, DiagView estimates about 0.6 of the font size per character, and a very wide name can then run a little over. To keep the text off the shapes, see the next answer.
 
-**Q: My watermark covers part of my diagram. How do I move it off?**
+**Q: My watermark covers part of my diagram. How do I move it off?**  
 A: Set `watermark.placement` to `"margin"`, or add `data-diagview-watermark-placement="margin"` to that diagram. The corner and side text then goes in the blank margin around the diagram and never covers a shape. The trade-off is that a crop to the diagram's edge removes it. The default, `"diagram"`, keeps the text on the diagram, where nobody can crop it off without cutting the diagram. The large centred mark of the `background` and `both` styles stays on the diagram either way. See [Placement](USAGE.md#placement).
 
 **Q: What if my diagram has a yellow or dark background?**  
