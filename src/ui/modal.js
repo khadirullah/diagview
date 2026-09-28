@@ -668,7 +668,7 @@ function _createModalMainContent(modal, content) {
   // Intercept the events that would START a pan before they reach Panzoom,
   // so native text selection can begin. Move events must keep bubbling:
   // Panzoom ignores them without a preceding pointerdown, and other
-  // features (meeting-mode's laser pointer) listen for them on document.
+  // features (meeting-mode's laser pointer) listen for them on the viewport.
   const stopPropIfTextSelect = (e) => {
     if (viewport.classList.contains("dv-text-select")) {
       e.stopPropagation();

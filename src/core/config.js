@@ -339,7 +339,7 @@ export { DEFAULT_CONFIG, INITIAL_CONFIG };
  * @property {{isPinching:boolean,lastTouchCount:number,initialDistance:number}} touchState - Touch gesture state
  * @property {Element|null} lastActiveElement - Element focused before modal opened
  * @property {boolean} meetingMode - Whether laser pointer is active
- * @property {Function|null} laserPointer - Active mousemove handler for laser (internal)
+ * @property {null} laserPointer - Unused and always null (internal)
  * @property {SVGElement|null} minimapSvg - Minimap SVG clone element
  * @property {Element[]} searchMatches - Current search match elements
  * @property {number|null} searchRafId - RAF id for search batching

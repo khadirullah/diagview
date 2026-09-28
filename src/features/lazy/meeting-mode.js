@@ -35,25 +35,20 @@ export function enableMeetingMode() {
     laser.style.transform = `translate3d(${x}px, ${y}px, 0) translate(-50%, -50%)`;
   };
 
-  // Track mouse movement for laser pointer
-  const handleMouseMove = (e) => {
-    moveLaser(e.clientX, e.clientY);
+  // Pointer events cover mouse, pen and touch. Panzoom's pointerdown calls
+  // preventDefault, and the browser then holds back mousemove until the
+  // button comes up, so only pointermove keeps the dot moving during a drag.
+  // Only the first finger moves the dot, so a pinch does not make it jump
+  // between fingers.
+  const handlePointerMove = (e) => {
+    if (e.isPrimary) moveLaser(e.clientX, e.clientY);
   };
 
-  // Track touch movement for mobile support
-  const handleTouchMove = (e) => {
-    if (e.touches && e.touches[0]) {
-      moveLaser(e.touches[0].clientX, e.touches[0].clientY);
-    }
-  };
-
-  viewport.addEventListener("mousemove", handleMouseMove);
-  viewport.addEventListener("touchmove", handleTouchMove, { passive: true });
+  viewport.addEventListener("pointermove", handlePointerMove);
 
   // Store references for removal
   state.activeMeetingHandlers = {
-    mousemove: handleMouseMove,
-    touchmove: handleTouchMove,
+    pointermove: handlePointerMove,
     viewport: viewport, // Store viewport ref in case it changes (unlikely but safe)
   };
   if (!state.meetingCleanupRegistered) {
@@ -76,8 +71,7 @@ export function disableMeetingMode(silent = false) {
   const laser = document.getElementById("diagview-laser");
 
   if (state.activeMeetingHandlers && viewport) {
-    viewport.removeEventListener("mousemove", state.activeMeetingHandlers.mousemove);
-    viewport.removeEventListener("touchmove", state.activeMeetingHandlers.touchmove);
+    viewport.removeEventListener("pointermove", state.activeMeetingHandlers.pointermove);
     state.activeMeetingHandlers = null;
   } else if (state.activeMeetingHandlers) {
     // Handlers exist but viewport is gone - just clear the handlers ref

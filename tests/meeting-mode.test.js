@@ -11,6 +11,13 @@ const { showSuccessToast } = await import("../src/ui/toast.js");
 const { enableMeetingMode, disableMeetingMode, toggleMeetingMode, resetMeetingState } =
   await import("../src/features/lazy/meeting-mode.js");
 
+// JSDOM has no PointerEvent, so build one from a MouseEvent
+const pointerMove = (x, y, isPrimary = true) => {
+  const e = new MouseEvent("pointermove", { clientX: x, clientY: y, bubbles: true });
+  Object.defineProperty(e, "isPrimary", { value: isPrimary });
+  return e;
+};
+
 describe("Meeting Mode", () => {
   let viewport, laser;
 
@@ -35,21 +42,18 @@ describe("Meeting Mode", () => {
     expect(showSuccessToast).toHaveBeenCalledWith(expect.stringContaining("Laser pointer active"));
   });
 
-  test("mouse movement centres the laser on the cursor", () => {
+  test("pointer movement centres the laser on the cursor", () => {
     enableMeetingMode();
-    const event = new MouseEvent("mousemove", { clientX: 500, clientY: 400, bubbles: true });
-    viewport.dispatchEvent(event);
+    viewport.dispatchEvent(pointerMove(500, 400));
     // The stylesheet centres the 28px dot with translate(-50%, -50%); the
     // inline transform must keep that or the dot's top-left lands on the cursor
     expect(laser.style.transform).toBe("translate3d(500px, 400px, 0) translate(-50%, -50%)");
   });
 
-  test("touch movement centres the laser on the touch point", () => {
+  test("a second finger does not move the laser", () => {
     enableMeetingMode();
-    // JSDOM might need specific TouchEvent constructor support
-    const event = new CustomEvent("touchmove", { bubbles: true });
-    event.touches = [{ clientX: 150, clientY: 250 }];
-    viewport.dispatchEvent(event);
+    viewport.dispatchEvent(pointerMove(150, 250));
+    viewport.dispatchEvent(pointerMove(600, 700, false));
     expect(laser.style.transform).toBe("translate3d(150px, 250px, 0) translate(-50%, -50%)");
   });
 
@@ -61,9 +65,7 @@ describe("Meeting Mode", () => {
     });
     try {
       enableMeetingMode();
-      viewport.dispatchEvent(
-        new MouseEvent("mousemove", { clientX: 500, clientY: 400, bubbles: true }),
-      );
+      viewport.dispatchEvent(pointerMove(500, 400));
       expect(laser.style.transform).toBe("translate3d(500px, 400px, 0) translate(-50%, -50%)");
     } finally {
       if (original) Object.defineProperty(window, "visualViewport", original);
@@ -76,12 +78,6 @@ describe("Meeting Mode", () => {
     expect(state.laserPointer).toBeNull();
   });
 
-  test("touch movement does nothing if touches array is empty", () => {
-    enableMeetingMode();
-    const event = new CustomEvent("touchmove", { bubbles: true });
-    expect(laser.style.transform).toBe("");
-  });
-
   test("disableMeetingMode resets state and hides laser", () => {
     enableMeetingMode();
     disableMeetingMode();
@@ -89,6 +85,14 @@ describe("Meeting Mode", () => {
     expect(viewport.classList.contains("meeting")).toBe(false);
     expect(laser.style.display).toBe("none");
     expect(showSuccessToast).toHaveBeenCalledWith("Meeting mode OFF");
+  });
+
+  test("the laser stops following the pointer after disable", () => {
+    enableMeetingMode();
+    viewport.dispatchEvent(pointerMove(150, 250));
+    disableMeetingMode(true);
+    viewport.dispatchEvent(pointerMove(600, 700));
+    expect(laser.style.transform).toBe("translate3d(150px, 250px, 0) translate(-50%, -50%)");
   });
 
   test("toggleMeetingMode switches states", () => {
