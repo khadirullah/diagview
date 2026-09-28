@@ -587,6 +587,22 @@ describe("Export Functionality", () => {
       for (const m of found.slice(1)) expect(inMargin(m)).toBe(true);
     });
 
+    test("a wide name shrinks to its measured width, not the 0.6 estimate", async () => {
+      // Bold "W" is about 0.9 of the font size wide, well over the 0.6 average
+      const measure = jest
+        .spyOn(CanvasRenderingContext2D.prototype, "measureText")
+        .mockImplementation(function (text) {
+          return { width: parseFloat(this.font.match(/(\d+)px/)[1]) * 0.9 * text.length };
+        });
+      const text = "W".repeat(30);
+      const markup = await exportWith({ text, position: "bottom-right" });
+      measure.mockRestore();
+
+      const size = parseFloat(markup.match(/font-size="([\d.]+)px"/)[1]);
+      // The corner mark gets 35% of the 100 px wide diagram
+      expect(size * 0.9 * text.length).toBeCloseTo(35, 5);
+    });
+
     test("data-diagview-watermark-placement overrides the config", async () => {
       container.dataset.diagviewWatermarkPlacement = "margin";
       expect(marks(await exportWith({ placement: "diagram" }))[0]).toMatchObject({

@@ -209,6 +209,18 @@ function injectWatermark(svg, d, sourceSvg = null, pad = 0) {
 
   const { style, pos, placement, opacity } = resolveWatermark(config);
 
+  // Width of the text per pixel of font size. Measured in the browser's
+  // bold sans-serif, as "WWW" is far wider than "iii". Without a canvas,
+  // 0.6 per character is the average.
+  let widthPerPx = config.text.length * 0.6;
+  try {
+    const ctx = document.createElement("canvas").getContext("2d");
+    ctx.font = "bold 100px sans-serif";
+    widthPerPx = ctx.measureText(config.text).width / 100 || widthPerPx;
+  } catch {
+    // Keep the estimate
+  }
+
   const createWatermarkElement = (fontSize, textOpacity, maxWidth = 0) => {
     const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
     text.textContent = config.text;
@@ -217,12 +229,8 @@ function injectWatermark(svg, d, sourceSvg = null, pad = 0) {
 
     // Safe-Fit Scaling: Automatically fit text to available width without distortion
     let effectiveFontSize = fontSize;
-    if (maxWidth > 0) {
-      const charWidthRatio = 0.6; // Average for bold sans-serif
-      const estimatedWidth = config.text.length * (fontSize * charWidthRatio);
-      if (estimatedWidth > maxWidth) {
-        effectiveFontSize = maxWidth / config.text.length / charWidthRatio;
-      }
+    if (maxWidth > 0 && fontSize * widthPerPx > maxWidth) {
+      effectiveFontSize = maxWidth / widthPerPx;
     }
 
     text.setAttribute("font-size", `${effectiveFontSize}px`);
