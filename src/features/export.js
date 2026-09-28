@@ -860,15 +860,23 @@ export async function exportToWebP(sourceElement, options = {}) {
 /**
  * Copy to Clipboard (PNG)
  * @param {HTMLElement} sourceElement - Element containing SVG
- * @param {ExportOptions} [options={}] - Reads filename and modalClone. filename names the
- *   download used when the clipboard is unavailable.
+ * @param {ExportOptions} [options={}] - Reads filename, silent and modalClone. filename names
+ *   the download used when the clipboard is unavailable.
  * @returns {Promise<void>} Resolves when the image is copied or downloaded
  */
 export async function copyToClipboard(sourceElement, options = {}) {
   const sourceSvg = resolveSourceSvg(sourceElement);
   if (!sourceSvg) return;
   const filename = options.filename || generateFilename(sourceSvg);
-  await processImageExport(sourceElement, filename, "png", false, true, options.modalClone);
+  await processImageExport(
+    sourceElement,
+    filename,
+    "png",
+    false,
+    true,
+    options.modalClone,
+    !!options.silent,
+  );
 }
 
 /**
@@ -929,8 +937,8 @@ async function savePDF(sourceElement, filename, { transparent, modalClone, silen
  * @param {HTMLElement} sourceElement - Element containing SVG
  * @param {ExportMode} mode - Export format. An unknown mode exports PNG.
  * @param {ExportOptions|SVGSVGElement|null} [options={}] - Reads filename, transparent,
- *   silent and modalClone. silent hides the progress and JPEG notices for png, jpeg and
- *   webp, and the hard-to-read labels warning for every mode. An SVG element here is
+ *   silent and modalClone. silent hides the progress and JPEG notices for png, jpeg, webp
+ *   and copy, and the hard-to-read labels warning for every mode. An SVG element here is
  *   the old third argument and works as modalClone.
  * @returns {Promise<boolean>} Resolves to true once the file is saved or copied, or downloaded
  *   because the clipboard was unavailable, after the onExport callback. Resolves to false
@@ -982,7 +990,15 @@ export async function exportDiagram(sourceElement, mode, options = {}) {
       ok = await copySVGCode(sourceElement, { filename, modalClone });
       break;
     case "copy":
-      ok = await processImageExport(sourceElement, filename, "png", false, true, modalClone);
+      ok = await processImageExport(
+        sourceElement,
+        filename,
+        "png",
+        false,
+        true,
+        modalClone,
+        silent,
+      );
       break;
     case "pdf":
       ok = await savePDF(sourceElement, filename, opts);

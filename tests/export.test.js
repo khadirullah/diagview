@@ -959,6 +959,8 @@ describe("Warning about labels that are hard to read in the file", () => {
     ["Readable is on", () => (state.readableText = true), () => exportToSVG(container)],
     ["the export is transparent", () => {}, () => exportDiagram(container, "png-transparent")],
     ["the export is silent", () => {}, () => exportDiagram(container, "svg", { silent: true })],
+    ["a copy is silent", () => {}, () => exportDiagram(container, "copy", { silent: true })],
+    ["copyToClipboard is silent", () => {}, () => copyToClipboard(container, { silent: true })],
     [
       "the canvas is light",
       () => (state.activeCanvasThemeMode = "light"),
@@ -977,6 +979,16 @@ describe("Warning about labels that are hard to read in the file", () => {
   ])("no warning when %s", async (_name, setup, run) => {
     setup();
     expect(await warnings(run)).toBe(false);
+  });
+
+  test("a copy without silent warns", async () => {
+    expect(await warnings(() => exportDiagram(container, "copy"))).toBe(true);
+  });
+
+  test("a silent copy skips the Processing toast", async () => {
+    const stop = recordToasts();
+    await copyToClipboard(container, { silent: true });
+    expect(stop().some((t) => /Processing/.test(t))).toBe(false);
   });
 });
 

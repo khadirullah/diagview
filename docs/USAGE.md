@@ -334,12 +334,12 @@ Every export function resolves without throwing when the element contains no `<s
 
 ### Options
 
-| Option        | Type       | Default        | Description                                                                                                                                                                                               |
-| ------------- | ---------- | -------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `transparent` | boolean    | `false`        | Transparent background (PNG/SVG/WebP). JPEG switches to a transparent PNG; PDF keeps the background                                                                                                       |
-| `filename`    | string     | auto-generated | Output filename without extension                                                                                                                                                                         |
-| `modalClone`  | SVGElement | `null`         | Internal, clone from the open modal                                                                                                                                                                       |
-| `silent`      | boolean    | `false`        | Skips the "Processing" toast and the warning shown when a transparent JPEG is saved as PNG (PNG, JPEG and WebP), and the hard-to-read labels warning (every format). Success and error toasts still show. |
+| Option        | Type       | Default        | Description                                                                                                                                                                                                           |
+| ------------- | ---------- | -------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `transparent` | boolean    | `false`        | Transparent background (PNG/SVG/WebP). JPEG switches to a transparent PNG; PDF keeps the background                                                                                                                   |
+| `filename`    | string     | auto-generated | Output filename without extension                                                                                                                                                                                     |
+| `modalClone`  | SVGElement | `null`         | Internal, clone from the open modal                                                                                                                                                                                   |
+| `silent`      | boolean    | `false`        | Skips the "Processing" toast and the warning shown when a transparent JPEG is saved as PNG (PNG, JPEG, WebP and Copy Image), and the hard-to-read labels warning (every format). Success and error toasts still show. |
 
 ### Resolution
 
