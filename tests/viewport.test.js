@@ -205,4 +205,63 @@ describe("Visual Viewport Sync", () => {
     expect(modal.style.transform).toBe("");
     expect(modal.style.width).toBe("");
   });
+
+  describe("narrow screen class", () => {
+    const layoutWidth = (w) =>
+      Object.defineProperty(document.documentElement, "clientWidth", {
+        configurable: true,
+        value: w,
+      });
+    const syncHandler = () =>
+      window.visualViewport.addEventListener.mock.calls.find(([t]) => t === "resize")[1];
+
+    afterEach(async () => {
+      delete document.documentElement.clientWidth;
+      (await import("../src/ui/viewport.js")).stopVisualViewportSync();
+    });
+
+    test("is set on a page laid out wide but shown zoomed out to a phone's width", async () => {
+      const { startVisualViewportSync, stopVisualViewportSync } =
+        await import("../src/ui/viewport.js");
+      layoutWidth(980);
+      Object.assign(window.visualViewport, { width: 980, scale: 390 / 980 });
+      startVisualViewportSync();
+      expect(modal.classList.contains("dv-narrow")).toBe(true);
+
+      stopVisualViewportSync();
+      expect(modal.classList.contains("dv-narrow")).toBe(false);
+    });
+
+    test("is dropped when the phone turns to a wide landscape screen", async () => {
+      const { startVisualViewportSync } = await import("../src/ui/viewport.js");
+      layoutWidth(980);
+      Object.assign(window.visualViewport, { width: 980, scale: 390 / 980 });
+      startVisualViewportSync();
+      Object.assign(window.visualViewport, { width: 980, scale: 844 / 980 });
+      syncHandler()();
+      expect(modal.classList.contains("dv-narrow")).toBe(false);
+    });
+
+    test("is never set on a phone page with a viewport meta tag", async () => {
+      const { startVisualViewportSync } = await import("../src/ui/viewport.js");
+      layoutWidth(390);
+      Object.assign(window.visualViewport, { width: 390, scale: 1 });
+      startVisualViewportSync();
+      expect(modal.classList.contains("dv-narrow")).toBe(false);
+      Object.assign(window.visualViewport, { width: 130, scale: 3 });
+      syncHandler()();
+      expect(modal.classList.contains("dv-narrow")).toBe(false);
+    });
+
+    test("is never set on desktop, also when pinch-zoomed", async () => {
+      const { startVisualViewportSync } = await import("../src/ui/viewport.js");
+      layoutWidth(1280);
+      Object.assign(window.visualViewport, { width: 1280, scale: 1 });
+      startVisualViewportSync();
+      expect(modal.classList.contains("dv-narrow")).toBe(false);
+      Object.assign(window.visualViewport, { width: 320, scale: 4 });
+      syncHandler()();
+      expect(modal.classList.contains("dv-narrow")).toBe(false);
+    });
+  });
 });

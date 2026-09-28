@@ -292,6 +292,11 @@ describe("styles.css: notices in the viewer", () => {
     expect(bottom(body)).toBe(bottom(ruleBody(".diagview-toast-menu-hint {")));
   });
 
+  test("sit above it too on a phone page shown zoomed out", () => {
+    const body = ruleBody(".diagview-modal.dv-narrow .diagview-toast-container {");
+    expect(bottom(body)).toBe(bottom(ruleBody(".diagview-toast-menu-hint {")));
+  });
+
   test("outside the viewer they stay at the bottom", () => {
     expect(bottom(ruleBody(".diagview-toast-container {"))).toBe("24px");
   });
@@ -310,5 +315,21 @@ describe("styles.css: shortcuts panel", () => {
     // The panel colour scrolls with the rows and covers the fixed fade at the end
     expect(body).toMatch(/var\(--dv-help-bg\) 30%\)[^,]*no-repeat local,/);
     expect(body).toMatch(/rgba\(128, 128, 128, 0\.45\)\)[^,]*no-repeat\s+scroll,/);
+  });
+});
+
+describe("styles.css: topbar on a phone page shown zoomed out", () => {
+  test("drops the shortcut hint, zoom badge and branding to make room for search", () => {
+    const plain = css.replace(/\/\*[\s\S]*?\*\//g, "");
+    const rule = [...plain.matchAll(/([^{}]+)\{([^{}]*)\}/g)].find(([, sel]) =>
+      sel.includes(".dv-narrow .diagview-shortcut-hint"),
+    );
+    const selectors = rule[1].split(",").map((x) => x.trim());
+    expect(selectors).toEqual([
+      ".diagview-modal.dv-narrow .diagview-shortcut-hint",
+      ".diagview-modal.dv-narrow .diagview-zoom-display",
+      ".diagview-modal.dv-narrow .diagview-branding",
+    ]);
+    expect(rule[2]).toMatch(/display:\s*none/);
   });
 });

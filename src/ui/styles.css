@@ -808,6 +808,15 @@
   display: none;
 }
 
+/* Set by viewport.js when a page laid out at desktop width is shown zoomed
+   out on a phone. The topbar then has a phone's width, so the extras make
+   way for the search box. */
+.diagview-modal.dv-narrow .diagview-shortcut-hint,
+.diagview-modal.dv-narrow .diagview-zoom-display,
+.diagview-modal.dv-narrow .diagview-branding {
+  display: none;
+}
+
 /* Close Button — always pinned top-right */
 .diagview-close-btn {
   all: unset;
@@ -1564,6 +1573,11 @@
     /* FAB offset + FAB size + 12px gap */
     bottom: calc(clamp(12px, 3vh, 24px) + clamp(44px, 8vw, 56px) + 12px);
   }
+}
+
+/* The same on a phone page shown zoomed out (see .dv-narrow below) */
+.diagview-modal.dv-narrow .diagview-toast-container {
+  bottom: calc(clamp(12px, 3vh, 24px) + clamp(44px, 8vw, 56px) + 12px);
 }
 
 .diagview-toast {

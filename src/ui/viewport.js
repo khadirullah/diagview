@@ -133,6 +133,14 @@ export function startVisualViewportSync() {
     const vv = window.visualViewport;
     if (!vv) return;
 
+    // A phone page without a viewport meta tag is laid out at desktop width
+    // and shown zoomed out. The counter-scaled topbar then has only the
+    // phone's width, so the desktop extras must make room for search.
+    modal.classList.toggle(
+      "dv-narrow",
+      document.documentElement.clientWidth >= 640 && vv.width * vv.scale < 640,
+    );
+
     // Use the visual viewport dimensions directly — NO scale transform.
     // This means the modal's CSS pixel space equals the screen pixel space,
     // so Panzoom operates 1:1 with what the user sees on screen.
@@ -183,6 +191,7 @@ export function startVisualViewportSync() {
 
     // Remove zoom compensation property
     modal.style.removeProperty("--dv-zoom-comp");
+    modal.classList.remove("dv-narrow");
   };
 }
 
