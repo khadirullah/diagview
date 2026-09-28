@@ -416,3 +416,9 @@ describe("styles.css: toolbar title", () => {
     expect(body).not.toMatch(/nowrap/);
   });
 });
+
+describe("styles.css: notice icon", () => {
+  test("stays on the text line when the site makes every svg a block", () => {
+    expect(ruleBody("\n.diagview-toast-icon {")).toMatch(/display:\s*inline-block/);
+  });
+});

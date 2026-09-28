@@ -1621,7 +1621,10 @@
   line-height: 1.4;
 }
 
+/* Inline-block, so a site rule such as svg { display: block } cannot move
+   the icon onto its own line above the text */
 .diagview-toast-icon {
+  display: inline-block;
   width: 1em;
   height: 1em;
   margin-right: 0.4em;
