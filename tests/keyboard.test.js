@@ -102,6 +102,19 @@ describe("Keyboard Shortcuts Integration", () => {
     expect(mockPanzoom.pan).not.toHaveBeenCalled();
   });
 
+  test("Arrow keys on the open menu's button do not pan the diagram", () => {
+    document.body.innerHTML = '<button id="dv-toggle" class="diagview-fab open"></button>';
+    const fab = document.getElementById("dv-toggle");
+    fab.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowDown", bubbles: true }));
+    fab.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowUp", bubbles: true }));
+    expect(mockPanzoom.pan).not.toHaveBeenCalled();
+
+    // Closed menu: the arrows pan again
+    fab.classList.remove("open");
+    fab.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowDown", bubbles: true }));
+    expect(mockPanzoom.pan).toHaveBeenCalledTimes(1);
+  });
+
   test("Arrow keys pan in screen axes regardless of rotation", () => {
     // Rotation lives on an inner <g> inside the SVG, so panzoom deltas are
     // already screen-space. Any compensation here inverts the arrows.

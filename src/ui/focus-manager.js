@@ -248,10 +248,12 @@ export function setupFocusTrap() {
   const trapFocus = (e) => {
     // Only trap when modal is open
     if (!state.isModalOpen) return;
-    // In the open ☰ menu, Up and Down step through its items too
+    // In the open ☰ menu, Up and Down step through its items too. From the
+    // menu button they enter it, Down at the first item and Up at the last.
     const menu = modal.querySelector(".diagview-menu.active");
     const arrow = e.key === "ArrowDown" || e.key === "ArrowUp";
-    if (e.key !== "Tab" && !(arrow && menu?.contains(e.target))) return;
+    const onMenu = menu && (menu.contains(e.target) || e.target.closest?.("#dv-toggle.open"));
+    if (e.key !== "Tab" && !(arrow && onMenu)) return;
 
     // The open shortcuts panel is modal too, so Tab stays on its close button.
     // The open menu keeps Tab on its items and the button that closes it.

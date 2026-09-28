@@ -191,6 +191,33 @@ describe("focus trap ignores unrendered and closed-search controls", () => {
     expect(document.activeElement).toBe(png);
   });
 
+  test("ArrowDown on the open menu's button enters at the first item, ArrowUp at the last", () => {
+    const panel = el("div", "dv-menu-panel", "diagview-menu active", modal);
+    const zoomOut = el("button", "dv-zoomout", null, panel);
+    const png = el("button", "dv-png", null, panel);
+    const fab = document.getElementById("dv-toggle");
+    fab.classList.add("open");
+
+    const press = (key) => {
+      const ev = new KeyboardEvent("keydown", { key, bubbles: true, cancelable: true });
+      document.activeElement.dispatchEvent(ev);
+      return ev;
+    };
+    fab.focus();
+    expect(press("ArrowDown").defaultPrevented).toBe(true);
+    expect(document.activeElement).toBe(zoomOut);
+    fab.focus();
+    expect(press("ArrowUp").defaultPrevented).toBe(true);
+    expect(document.activeElement).toBe(png);
+
+    // A closed menu leaves the arrows on its button alone
+    fab.classList.remove("open");
+    panel.classList.remove("active");
+    fab.focus();
+    expect(press("ArrowDown").defaultPrevented).toBe(false);
+    expect(document.activeElement).toBe(fab);
+  });
+
   test("Tab and Shift+Tab stay in the open shortcuts panel", () => {
     const help = el("div", null, "diagview-help-modal show", modal);
     const close = el("button", null, "diagview-help-close", help);
