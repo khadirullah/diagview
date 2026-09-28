@@ -270,7 +270,7 @@ DiagView picks the outline colour from the canvas background. It uses `#2563eb` 
 ### Activating search
 
 - **Keyboard:** Press `F` to open and focus the search bar
-- **Mobile:** Tap the search icon (🔍) in the top bar
+- **Mobile:** Tap the magnifying glass button in the top bar
 - **Mouse:** Click the search field in the fullscreen topbar
 
 ### Behavior
