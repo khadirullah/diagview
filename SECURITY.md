@@ -36,6 +36,8 @@ Blocks only the most critical vectors (legacy behavior):
 - All `on*` event attributes
 - `javascript:`, `vbscript:` and `data:` URLs in `href`, `xlink:href`, `src`, `action` and `formaction`, with the same `allowedImageTypes` exception as `strict`
 
+`permissive` keeps the `form` attribute by design. A button in the fullscreen view with `form="checkout"` can still submit the page's form with the id `checkout`. A `formaction` with an `https://` URL on that button sends the form's fields to that address. Use `permissive` only for diagrams you wrote yourself.
+
 ### `off`
 
 No sanitization. Only for SVG content from a **fully trusted, developer-controlled source**.
