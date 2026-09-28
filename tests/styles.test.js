@@ -33,6 +33,23 @@ describe("styles.css: menu headings and search placeholder", () => {
   });
 });
 
+describe("styles.css: menu footer", () => {
+  test("uses the muted text colour instead of opacity, so it keeps 4.5:1", () => {
+    const body = ruleBody("\n.dv-menu-footer {");
+    expect(body).toContain("var(--dv-muted-text");
+    expect(body).not.toMatch(/opacity\s*:/);
+    expect(ruleBody(".dv-menu-footer:hover {")).toBeNull();
+  });
+
+  test("the DiagView link is the accent moved toward the text colour, at full strength", () => {
+    const body = ruleBody(".dv-menu-brand {");
+    expect(body).toMatch(/color-mix\(in srgb, var\(--dv-accent\) 75%, var\(--dv-text-color\)\)/);
+    // Browsers without color-mix() get the darker accent fill
+    expect(body).toContain("var(--dv-accent-fill)");
+    expect(body).not.toMatch(/opacity\s*:/);
+  });
+});
+
 describe("styles.css: desktop tooltip", () => {
   test("is placed below the element so the topbar button's tooltip is not clipped", () => {
     const body = ruleBody("[data-tooltip]::after");

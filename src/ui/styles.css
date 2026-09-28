@@ -627,8 +627,8 @@
   text-align: center;
   font-size: 12px;
   font-weight: 500;
-  color: var(--dv-text-color);
-  opacity: 0.75;
+  /* The muted colour instead of opacity, so the text keeps 4.5:1 */
+  color: var(--dv-muted-text, var(--dv-text-color));
   letter-spacing: 0.03em;
   line-height: 1.6;
 }
@@ -644,18 +644,16 @@
   position: relative;
 }
 
+/* The accent moved a quarter of the way to the text colour, darker on a
+   light canvas and lighter on a dark one, reaches 4.5:1 on both */
 .dv-menu-brand {
-  color: var(--dv-primary, var(--dv-accent, #3b82f6)) !important;
-  opacity: 1 !important;
+  color: var(--dv-accent-fill) !important;
+  color: color-mix(in srgb, var(--dv-accent) 75%, var(--dv-text-color)) !important;
 }
 
 .dv-menu-footer a:hover {
   color: var(--dv-primary, var(--dv-accent, #3b82f6));
   opacity: 1;
-}
-
-.dv-menu-footer:hover {
-  opacity: 0.8;
 }
 
 /* Search Container */
