@@ -870,7 +870,8 @@
                 </div>
                 <p class="sec-note">Each copy is the same small SVG passed through
                     <code>DiagView.utils.sanitizeSVG(svg, mode)</code>. Click the button and the link in each one. Only
-                    the <code>off</code> copy runs the diagram's own code.
+                    the <code>off</code> copy runs the diagram's own code. Safari may not run a
+                    <code>javascript:</code> link inside an SVG at all, so there only the button reacts.
                     <a class="link" href="https://github.com/khadirullah/diagview/blob/main/docs/USAGE.md#choosing-a-mode"
                         target="_blank" rel="noopener">Choosing a mode</a>
                 </p>
