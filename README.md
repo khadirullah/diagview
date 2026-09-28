@@ -246,20 +246,21 @@ Any diagram can override the global configuration using `data-diagview-*` attrib
 
 All shortcuts are active when the fullscreen viewer is open. While the search box or another text field has focus, keys type into the field and only `Esc` acts as a shortcut. The first `Esc` clears the query, the next one leaves the search box, and the one after that closes the viewer. When a button has focus, `Space` and `Enter` press it and the letter keys still work.
 
-| Key              | Action                                                               |
-| ---------------- | -------------------------------------------------------------------- |
-| `Esc`            | Close fullscreen (keyboard help, search and the ☰ menu close first) |
-| `Space` / `0`    | Reset zoom and fit the diagram to the screen                         |
-| `+` / `=`        | Zoom in                                                              |
-| `-` / `_`        | Zoom out                                                             |
-| `↑` `↓` `←` `→`  | Pan diagram                                                          |
-| `Shift` + `↑↓←→` | Fast pan (3× speed)                                                  |
-| `F`              | Focus search input                                                   |
-| `T`              | Toggle text-select mode (copy SVG labels)                            |
-| `R`              | Rotate 90° clockwise                                                 |
-| `M`              | Toggle meeting mode (laser pointer)                                  |
-| `L`              | Copy share link to clipboard                                         |
-| `?`              | Show/hide keyboard shortcuts panel                                   |
+| Key                              | Action                                                                  |
+| -------------------------------- | ----------------------------------------------------------------------- |
+| `Esc`                            | Close help, search or menu, then the viewer                             |
+| `Space` / `0`                    | Reset / Fit to screen                                                   |
+| `F`                              | Open search                                                             |
+| `T`                              | Toggle text select (copy SVG labels)                                    |
+| `R`                              | Rotate 90° clockwise                                                    |
+| `M`                              | Meeting mode (laser pointer)                                            |
+| `L`                              | Copy share link                                                         |
+| `+` / `=`                        | Zoom in                                                                 |
+| `-` / `_`                        | Zoom out                                                                |
+| `↑` `↓` `←` `→`                  | Pan diagram                                                             |
+| `Shift`+`Arrows`                 | Fast pan                                                                |
+| `?`                              | Show or hide this help                                                  |
+| `Ctrl` / `Cmd` / `Alt` + any key | Left to the browser, so its own shortcuts such as `Ctrl`+`F` still work |
 
 ---
 
