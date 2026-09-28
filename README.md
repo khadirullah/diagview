@@ -266,17 +266,19 @@ All shortcuts are active when the fullscreen viewer is open. While the search bo
 
 ## 📤 Export Formats
 
-| Format   | Transparent | Notes                                                                         |
-| -------- | ----------- | ----------------------------------------------------------------------------- |
-| PNG      | ✅          | High-res raster. Default scale is 4, or 2 on touch devices and narrow screens |
-| SVG      | ✅          | Fully scalable vector                                                         |
-| JPEG     | ❌          | Smallest file size                                                            |
-| WebP     | ✅          | Modern format; good compression                                               |
-| PDF      | ❌          | Requires jsPDF (lazy-loaded from CDN)                                         |
-| Copy     | ❌          | Copies PNG to system clipboard                                                |
-| Copy SVG | ❌          | Copies the SVG markup to the clipboard as text                                |
+| Format     | Transparent | Notes                                                                         |
+| ---------- | ----------- | ----------------------------------------------------------------------------- |
+| PNG        | ✅          | High-res raster. Default scale is 4, or 2 on touch devices and narrow screens |
+| SVG        | ✅          | Fully scalable vector                                                         |
+| JPEG       | ❌          | Smallest file size                                                            |
+| WebP       | ✅          | Modern format; good compression                                               |
+| PDF        | ❌          | Requires jsPDF (lazy-loaded from CDN)                                         |
+| Copy Image | ❌          | Copies PNG to system clipboard                                                |
+| Copy SVG   | ✅          | Copies the SVG markup to the clipboard as text                                |
 
 Exports embed the page fonts the labels use. Set `exportFonts` to `"all"` to embed every `@font-face` rule, or to `"none"` to embed no fonts. An export made during a search keeps its dimming and outline unless `exportSearchHighlight` is `false`.
+
+PNG, JPEG, WebP, PDF and Copy Image leave out linked images, such as `<image href="logo.png">`. The browser loads nothing that an SVG drawn as an image links to. The file is still saved, and a warning says how many images were left out. When some labels are also hard to read on the background, one warning covers both. SVG exports keep the links. [Linked images](docs/USAGE.md#linked-images) shows how to embed them instead.
 
 ### Programmatic export
 
@@ -294,6 +296,8 @@ await DiagView.copyToClipboard(el);
 // Generic dispatcher (used internally by the UI), resolves to true once the file is saved
 const saved = await DiagView.exportDiagram(el, "png", { transparent: true });
 ```
+
+Pass `silent: true` to skip the linked image and hard-to-read label warnings in every format. For PNG, JPEG, WebP and Copy Image it also skips the progress notice.
 
 ---
 
