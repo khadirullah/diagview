@@ -1684,9 +1684,10 @@
 /* Success state after a copy or download. It comes after the style rules */
 /* so it also wins while the pointer is still over the button. The icon */
 /* steps aside for a check drawn with borders, so it needs no font or image. */
+/* #059669 keeps the white check at 3.8:1. */
 .diagview-btn.success {
-  background: #10b981 !important;
-  border-color: #10b981 !important;
+  background: #059669 !important;
+  border-color: #059669 !important;
   color: white !important;
 }
 

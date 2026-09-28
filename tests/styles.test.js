@@ -230,7 +230,17 @@ describe("styles.css: page buttons", () => {
       expect(hover).toBeGreaterThan(-1);
       expect(success).toBeGreaterThan(hover);
     }
-    expect(ruleBody(".diagview-btn.success {")).toMatch(/background:\s*#10b981 !important/);
+    expect(ruleBody(".diagview-btn.success {")).toMatch(/background:\s*#059669 !important/);
+  });
+
+  // The white check needs 3:1 against the green. #10b981 gave only 2.5:1
+  test("the success green is dark enough for the white check", () => {
+    const hex = ruleBody(".diagview-btn.success {").match(/background:\s*#([0-9a-f]{6})/i)[1];
+    const lum = [0, 2, 4]
+      .map((i) => parseInt(hex.slice(i, i + 2), 16) / 255)
+      .map((c) => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4));
+    const l = 0.2126 * lum[0] + 0.7152 * lum[1] + 0.0722 * lum[2];
+    expect(1.05 / (l + 0.05)).toBeGreaterThanOrEqual(3);
   });
 
   test("a help description that wraps keeps apart from its keys and flush right", () => {
