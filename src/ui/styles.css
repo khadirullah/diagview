@@ -785,8 +785,8 @@
   align-items: center;
   gap: 6px;
   font-size: 12px;
-  opacity: 0.6;
-  color: var(--dv-text-color);
+  /* Muted colour, not opacity, so the hint keeps 4.5:1 on mid-grey canvases */
+  color: var(--dv-muted-text, var(--dv-text-color));
   white-space: nowrap;
   flex-shrink: 0;
 }

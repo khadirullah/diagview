@@ -47,6 +47,12 @@ describe("styles.css: topbar shortcut hint", () => {
     expect(ruleBody(".diagview-shortcut-hint kbd")).toMatch(/color:\s*var\(--dv-text-color\)/);
   });
 
+  test("hint text uses the muted colour instead of opacity, so it keeps 4.5:1", () => {
+    const body = ruleBody(".diagview-shortcut-hint {");
+    expect(body).toContain("color: var(--dv-muted-text");
+    expect(body).not.toMatch(/opacity\s*:/);
+  });
+
   // Docs sites often style kbd with a more specific rule such as html.dark kbd
   test.each([".diagview-shortcut-hint kbd {", ".diagview-help-key kbd {"])(
     "%s outranks a host page's kbd colours, border, shadow, font and padding",
