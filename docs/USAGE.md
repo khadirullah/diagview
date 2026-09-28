@@ -317,6 +317,8 @@ A diagram can hold an image in two ways. An embedded image carries its data in t
 
 PNG, JPEG, WebP, PDF and Copy Image leave linked images out. DiagView draws the SVG as an image to make these files, and the browser loads nothing an SVG drawn that way links to. The export then shows a warning in place of the saved notice, for example "4.0x PNG saved, but 2 linked images were left out. Only embedded images can go into image files." The file is still saved or copied, so `exportDiagram()` resolves to `true` and `onExport` fires. When the same export also finds labels that are hard to read (see [Text Colours](#text-colours)), one warning says both: "4.0x PNG saved, but 1 linked image was left out and some labels are hard to read on this background. Turn on Readable and export again." With `silent: true` the plain saved notice shows instead. To keep an image in these files, embed it as a base64 `data:` URL of one of the `allowedImageTypes`.
 
+A browser can also refuse to let DiagView read back the image it drew, and then the export fails. The notice says "Export blocked by cross-origin image" only when the copy links an image, a `<use>`, a CSS `url()` or an `@import` on another origin. A `data:` URL, a relative link or a link to your own site does not count. Any other failure shows "Export Failed" with the browser's message.
+
 ### Programmatic export
 
 ```javascript
