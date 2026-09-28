@@ -57,8 +57,10 @@ build. Set `E2E_PORT` to use a port other than 9340.
 | `verify-image-handler.spec.mjs`    | 3      | an image `onerror` in the diagram runs once on page load and not again for fullscreen or PNG export in strict and permissive mode, which log one warning about it, and does run again in "off" mode                                                                                       |
 | `verify-keyboard.spec.mjs`         | 4      | Down and Up on the open menu button enter the menu, the open `?` panel blocks every shortcut and its list scrolls with the arrows, `?`, Esc, Enter and Space close it, and it closes on time under a resting mouse                                                                        |
 | `verify-phone-topbar.spec.mjs`     | 5      | a query from `openFullscreen()` or a share link opens the phone search bar without the keyboard, Back clears it, desktop keeps its topbar, and a zoomed-out phone page keeps room for the search box                                                                                      |
+| `verify-section-links.spec.mjs`    | 3      | a `#` link in the viewer lands on the page's copy of a diagram node, scrolls to a page section, and scrolls again when the address already names it                                                                                                                                       |
+| `verify-reset-duration.spec.mjs`   | 6      | double click and the reset after a window resize take `zoomAnimationDuration` by default, at 0 and at 700                                                                                                                                                                                 |
 
-That is 181 checks per browser.
+That is 192 checks per browser.
 
 `verify-react-strictmode` loads React from unpkg and `verify-fixes` loads
 Mermaid from jsdelivr, so both need network access. Set
