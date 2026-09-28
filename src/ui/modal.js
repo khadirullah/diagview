@@ -631,7 +631,7 @@ function _createModalTopbar(content) {
   textSelectDesktopBtn.setAttribute("aria-label", "Toggle text select to copy SVG node labels");
   textSelectDesktopBtn.setAttribute("aria-pressed", "false");
   textSelectDesktopBtn.setAttribute("type", "button");
-  textSelectDesktopBtn.setAttribute("data-tooltip", "Text select — copy SVG labels  (T)");
+  textSelectDesktopBtn.setAttribute("data-tooltip", "Text select to copy SVG labels (T)");
   setSVGContent(textSelectDesktopBtn, ICONS.textSelect);
   topbar.appendChild(textSelectDesktopBtn);
 
