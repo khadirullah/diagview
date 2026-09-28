@@ -262,6 +262,8 @@ All shortcuts are active when the fullscreen viewer is open. While the search bo
 | `?`                              | Show or hide this help                                                  |
 | `Ctrl` / `Cmd` / `Alt` + any key | Left to the browser, so its own shortcuts such as `Ctrl`+`F` still work |
 
+`Tab` also stops on links inside the diagram, and `Space` follows the focused link. The `?` panel keeps `Tab` inside it and gives focus back when it closes. With `showKeyboardHelp: false` the panel is off and the topbar drops its "Press ? for shortcuts" hint. [Keyboard shortcuts](docs/USAGE.md#17-keyboard-shortcuts) in the usage guide has the details.
+
 ---
 
 ## 📤 Export Formats
@@ -388,7 +390,7 @@ DiagView.init(); // init normally first
 DiagView.initShadowRoot(shadow); // then scan the shadow root
 ```
 
-The stylesheet is installed inside the shadow root, so the inline toolbar is styled without any extra CSS.
+The stylesheet is installed inside the shadow root, so the inline toolbar is styled without any extra CSS. Closing the viewer puts focus back on the button or diagram inside the shadow root that opened it.
 
 ### Mermaid.js
 
