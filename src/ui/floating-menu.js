@@ -11,7 +11,6 @@ import { sanitizeSVG } from "../core/utils.js";
 import { exportDiagram } from "../features/export.js";
 import { ICONS } from "./icons.js";
 import { createMenuItem } from "./button-factory.js";
-import { invalidateFocusableCache } from "./focus-manager.js";
 import { BRANDING } from "../core/constants.js";
 
 /**
@@ -402,7 +401,6 @@ function _setupMenuController(elements, sourceElement, clonedSvg) {
 
     isOpen = nextState;
 
-    invalidateFocusableCache();
     menuPanel.classList.toggle("active", isOpen);
     fab.classList.toggle("open", isOpen);
     fab.replaceChildren();

@@ -6,7 +6,6 @@ import { jest } from "@jest/globals";
 import { state, resetConfig } from "../src/core/config.js";
 import {
   setupFocusTrap,
-  invalidateFocusableCache,
   saveFocus,
   restoreFocus,
   resetFocusManagement,
@@ -26,7 +25,6 @@ describe("focus trap ignores unrendered and closed-search controls", () => {
   beforeEach(() => {
     resetConfig();
     document.body.innerHTML = "";
-    invalidateFocusableCache();
 
     // jsdom has no layout: emulate checkVisibility() via a data-hidden marker
     // on the display:none ancestor (what .dv-topbar-actions is on desktop).
@@ -87,7 +85,6 @@ describe("focus trap ignores unrendered and closed-search controls", () => {
     const container = document.querySelector(".diagview-search-container");
     container.style.opacity = "0";
     container.style.pointerEvents = "none";
-    invalidateFocusableCache();
 
     // Mid-list Tab steps over the collapsed search input straight to Close
     document.getElementById("dv-text-select-btn").focus();
@@ -107,7 +104,6 @@ describe("focus trap ignores unrendered and closed-search controls", () => {
     container.style.opacity = "";
     container.style.pointerEvents = "";
     document.querySelector(".dv-topbar-actions").dataset.hidden = "1";
-    invalidateFocusableCache();
 
     document.getElementById("dv-toggle").focus();
     pressTab();
@@ -123,7 +119,6 @@ describe("focus trap ignores unrendered and closed-search controls", () => {
       '<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">' +
       '<a xlink:href="#one" tabindex="-1"><rect/></a><a href="#two"><rect/></a></svg>';
     const [one, two] = viewport.querySelectorAll("a");
-    invalidateFocusableCache();
 
     document.getElementById("diagview-close").focus();
     pressTab();
@@ -135,6 +130,23 @@ describe("focus trap ignores unrendered and closed-search controls", () => {
     pressTab(true);
     pressTab(true);
     expect(document.activeElement).toBe(one);
+  });
+
+  test("Tab reaches the search clear button right after it appears", () => {
+    const input = document.getElementById("diagview-search");
+    const clear = el("button", "diagview-search-clear", null, input.parentNode);
+    clear.dataset.hidden = "1"; // empty box: the clear button is hidden
+
+    input.focus();
+    pressTab();
+    expect(document.activeElement.id).toBe("diagview-close");
+    pressTab(true);
+    expect(document.activeElement).toBe(input);
+
+    // Typing shows the clear button; the next Tab comes well within 500 ms
+    delete clear.dataset.hidden;
+    pressTab();
+    expect(document.activeElement).toBe(clear);
   });
 
   test("Tab and Shift+Tab stay in the open shortcuts panel", () => {

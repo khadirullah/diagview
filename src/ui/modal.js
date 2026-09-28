@@ -18,12 +18,7 @@ import {
   saveZoomState,
   restoreZoomState,
 } from "../features/panzoom-integration.js";
-import {
-  setupModalFocusManagement,
-  saveFocus,
-  setInitialFocus,
-  invalidateFocusableCache,
-} from "./focus-manager.js";
+import { setupModalFocusManagement, saveFocus, setInitialFocus } from "./focus-manager.js";
 import { closeModal, lockBodyScroll } from "./modal-controls.js";
 import { createFloatingMenu } from "./floating-menu.js";
 import { pushModalHistoryState, startVisualViewportSync } from "./viewport.js";
@@ -780,7 +775,6 @@ function _wireModalEvents(elements, viewport) {
   // Search Toggle
   searchIconBtn.addEventListener("click", () => {
     const open = topbar.classList.toggle("search-open");
-    invalidateFocusableCache();
     searchIconBtn.classList.toggle("active", open);
     searchIconBtn.setAttribute("aria-expanded", String(open));
     // Focus in the same task. Waiting a frame let keys typed right after F
@@ -792,7 +786,6 @@ function _wireModalEvents(elements, viewport) {
   // Search Clear & Back
   searchBackBtn.addEventListener("click", () => {
     topbar.classList.remove("search-open");
-    invalidateFocusableCache();
     searchIconBtn.classList.remove("active");
     searchIconBtn.setAttribute("aria-expanded", "false");
     import("../features/lazy/search.js").then((m) => m.clearSearch()).catch(() => {});

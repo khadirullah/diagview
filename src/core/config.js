@@ -93,7 +93,6 @@ function createInitialState() {
       }
     })(),
     meetingCleanupRegistered: false,
-    focusableElements: null,
   };
 }
 
@@ -365,5 +364,4 @@ export { DEFAULT_CONFIG, INITIAL_CONFIG };
  * @property {WeakMap<SVGElement, {angle: number, boxes: Array<*>}>} searchShapeCache - Filled shapes of plain SVGs and the rotation they were measured at, for text matches
  * @property {boolean} isStorageAvailable - Whether sessionStorage is available
  * @property {boolean} meetingCleanupRegistered - Meeting mode cleanup flag
- * @property {HTMLElement[]|null} focusableElements - Cached focusable elements for modal
  */

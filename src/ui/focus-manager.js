@@ -9,8 +9,7 @@ import { state } from "../core/config.js";
 import { addModalCleanupFunction } from "../core/lifecycle.js";
 
 // Focus Management State handled via state.focusManagementSetup in config.js
-let _focusCacheTimestamp = 0;
-const FOCUS_CACHE_TTL = 500; // ms
+
 // The diagram saveFocus() gave a tabindex, so destroy() can take it back
 let _tabindexOwner = null;
 
@@ -103,10 +102,6 @@ export function setupModalFocusManagement() {
   if (!modal) return;
   state.focusManagementSetup = true;
 
-  // The focusable list depends on the current search/topbar state — rebuild
-  // it for every session rather than serving a list from the previous one.
-  invalidateFocusableCache();
-
   // OPTIMIZATION: Track last execution to prevent double-firing for pointerdown + mousedown
   let lastBlurTime = 0;
 
@@ -185,14 +180,6 @@ export function shouldHandleKeyboardEvent(event) {
 }
 
 /**
- * Invalidate the focusable elements cache
- */
-export function invalidateFocusableCache() {
-  state.focusableElements = null;
-  _focusCacheTimestamp = 0;
-}
-
-/**
  * True when the element is actually rendered. getComputedStyle(el).display
  * only reflects the element's own declaration, so children of a display:none
  * ancestor (the .dv-topbar-actions row on desktop) used to pass as focusable
@@ -223,15 +210,11 @@ function isInClosedSearch(el) {
 }
 
 /**
- * Get all focusable elements within modal (with caching)
+ * Get all focusable elements within modal. Built fresh on every Tab, since
+ * the search clear button, the menu and the topbar change between presses.
  */
 function getFocusableElements(modal) {
-  const now = Date.now();
-  if (state.focusableElements && now - _focusCacheTimestamp < FOCUS_CACHE_TTL) {
-    return state.focusableElements;
-  }
-
-  const focusable = Array.from(
+  return Array.from(
     modal.querySelectorAll(
       // a[*|href] also matches SVG links written with xlink:href, as Mermaid 10 does
       'button:not([disabled]), a[*|href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
@@ -241,10 +224,6 @@ function getFocusableElements(modal) {
     if (style.display === "none" || style.visibility === "hidden") return false;
     return isRendered(el) && !isInClosedSearch(el);
   });
-
-  state.focusableElements = focusable;
-  _focusCacheTimestamp = now;
-  return focusable;
 }
 
 /**
@@ -311,7 +290,6 @@ export function setupFocusTrap() {
  */
 export function resetFocusManagement() {
   state.focusManagementSetup = false;
-  _focusCacheTimestamp = 0;
   // Moving the diagram out of its wrapper drops focus without a blur event
   // in Firefox and Safari, so the blur handler alone would leave it behind
   dropTabindex();

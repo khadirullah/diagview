@@ -44,7 +44,6 @@ jest.unstable_mockModule("../src/ui/focus-manager.js", () => ({
   setupModalFocusManagement: jest.fn(),
   saveFocus: jest.fn(),
   setInitialFocus: jest.fn(),
-  invalidateFocusableCache: jest.fn(),
 }));
 jest.unstable_mockModule("../src/ui/floating-menu.js", () => ({
   createFloatingMenu: jest.fn(),
