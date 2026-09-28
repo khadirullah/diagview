@@ -297,7 +297,7 @@ interface RemovedCode {
 const clean = DiagView.utils.sanitizeSVG(rawSvg, "strict");
 
 // With a size limit
-const clean = DiagView.utils.sanitizeSVG(rawSvg, "strict", { maxChars: 500000 });
+const limited = DiagView.utils.sanitizeSVG(rawSvg, "strict", { maxChars: 500000 });
 
 // Sanitize a DOM node. It returns a new node and leaves the original as it was.
 const cleanNode = DiagView.utils.sanitizeSVG(svgElement, "permissive");
