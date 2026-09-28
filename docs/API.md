@@ -238,7 +238,7 @@ await DiagView.openFullscreen(el, { searchQuery: "database" });
 await DiagView.openFullscreen(el, { zoom: 1.5, searchQuery: "auth" });
 ```
 
-With `rememberZoom` on, a diagram that matches `diagramSelector` opens at its saved zoom, pan and rotation, even before it has scrolled into view. A `zoom` option replaces the saved view for that open.
+With `rememberZoom` on, a diagram that matches `diagramSelector` opens at its saved zoom, pan and rotation, even before it has scrolled into view. A `zoom` option replaces the saved view for that open, so the diagram opens without its saved pan and rotation. The view the diagram has when it closes then becomes the saved view, as after any open, and the next open without `zoom` does not go back to the older one. A `zoom` option also skips the view in a share link that points at the diagram, though the link's search query still applies.
 
 While the modal is already open or still opening, `openFullscreen()` returns without doing anything. To switch to another diagram, close first:
 
