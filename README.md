@@ -506,6 +506,8 @@ DiagView.init({
 });
 ```
 
+---
+
 ## 🚀 Live Demo
 
 Experience all features including Search, Export, and Meeting Mode in our interactive playground:
