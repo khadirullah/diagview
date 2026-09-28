@@ -23,6 +23,7 @@
   --dv-border-color: rgba(128, 128, 128, 0.2);
   --dv-accent: #3b82f6;
   --dv-on-accent: #fff; /* text on the accent, set by syncTheme */
+  --dv-accent-fill: var(--dv-primary); /* accent behind labels, set by syncTheme */
   /* Default Fallback */
   --dv-primary: var(--dv-accent);
   --dv-popover-bg: rgba(128, 128, 128, 0.08);
@@ -1194,7 +1195,7 @@
 }
 
 .dv-exp button:hover {
-  background: var(--dv-primary, var(--dv-accent, #3b82f6));
+  background: var(--dv-accent-fill);
   border-color: transparent;
   color: var(--dv-on-accent);
   transform: translateY(-2px);
@@ -1304,7 +1305,7 @@
 }
 
 .dv-theme-btn.active {
-  background: var(--dv-primary, var(--dv-accent, #3b82f6));
+  background: var(--dv-accent-fill);
   color: var(--dv-on-accent);
   border-color: transparent;
 }
@@ -1399,7 +1400,7 @@
 }
 
 .dv-menu-item:hover {
-  background: var(--dv-primary, var(--dv-accent, #3b82f6));
+  background: var(--dv-accent-fill);
   color: var(--dv-on-accent);
 }
 
@@ -1408,7 +1409,7 @@
 }
 
 .dv-menu-item.active {
-  background: var(--dv-primary);
+  background: var(--dv-accent-fill);
   color: var(--dv-on-accent) !important;
 }
 

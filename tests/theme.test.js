@@ -313,6 +313,25 @@ describe("Theme Module", () => {
       expect(document.documentElement.style.getPropertyValue("--dv-on-accent")).toBe("#fff");
     });
 
+    test("menu labels on the accent reach 4.5:1 and keep white on the usual blue", () => {
+      const fill = () => document.documentElement.style.getPropertyValue("--dv-accent-fill");
+      syncTheme();
+      expect(document.documentElement.style.getPropertyValue("--dv-on-accent")).toBe("#fff");
+      expect(getContrastRatio("#fff", fill())).toBeGreaterThanOrEqual(4.5);
+      expect(getContrastRatio("#fff", fill())).toBeLessThan(4.8);
+      // Accents that already pass, or that take dark text, are left as they are
+      for (const accent of ["#7c3aed", "#60a5fa", "#f59e0b"]) {
+        clearThemeCache();
+        updateConfig({ accentColor: accent });
+        syncTheme();
+        expect(fill()).toBe(accent);
+      }
+      clearThemeCache();
+      updateConfig({ accentColor: "#16a34a" });
+      syncTheme();
+      expect(getContrastRatio("#fff", fill())).toBeGreaterThanOrEqual(4.5);
+    });
+
     test("uses the built-in default for light and dark pages", () => {
       expect(detectTheme().accent).toBe(COLORS.ACCENT_LIGHT);
       clearThemeCache();

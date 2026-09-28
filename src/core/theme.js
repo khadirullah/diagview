@@ -201,15 +201,41 @@ export function noticeColors(color) {
   const rgb = parseColor(color);
   if (!rgb || getContrastRatio("#fff", color) >= 4.5) return { bg: color, text: "#fff" };
   if (getContrastRatio(COLORS.BG_DARK, color) >= 4.5) return { bg: color, text: COLORS.BG_DARK };
-  // Mix toward black a step at a time; black itself always passes
+  return { bg: darkenForWhite(rgb), text: "#fff" };
+}
+
+/**
+ * A colour mixed toward black just far enough for white text on it to
+ * reach 4.5:1, a step at a time. Black itself always passes.
+ * @private
+ * @param {number[]} rgb - Colour to darken
+ * @returns {string} Hex colour
+ */
+function darkenForWhite(rgb) {
   const hex = (c) => c.toString(16).padStart(2, "0");
-  let bg = color;
+  let bg = "";
   for (let step = 1; step <= 100; step++) {
     const k = 1 - step / 100;
     bg = "#" + rgb.map((c) => hex(Math.round(c * k))).join("");
     if (getContrastRatio("#fff", bg) >= 4.5) break;
   }
-  return { bg, text: "#fff" };
+  return bg;
+}
+
+/**
+ * Fill for menu buttons and items that carry a label on the accent. Text
+ * needs 4.5:1, more than the 3:1 onAccentColor() allows for icons. Where
+ * the text on the accent is white and falls short, the fill is the accent
+ * darkened just enough, so the usual blue keeps its white labels.
+ * @private
+ * @param {string} accent - Accent colour
+ * @returns {string} The accent, or the accent darkened
+ */
+function accentFill(accent) {
+  const rgb = parseColor(accent);
+  return rgb && onAccentColor(accent) === "#fff" && getContrastRatio("#fff", accent) < 4.5
+    ? darkenForWhite(rgb)
+    : accent;
 }
 
 /**
@@ -574,6 +600,7 @@ export function syncTheme() {
   root.style.setProperty("--dv-muted-text", mutedText(theme.text, theme.seenBg));
   root.style.setProperty("--dv-accent", theme.accent);
   root.style.setProperty("--dv-on-accent", theme.onAccent);
+  root.style.setProperty("--dv-accent-fill", accentFill(theme.accent));
 
   // The search outline follows the canvas, never the diagram's own colours.
   // Pick whichever ring colour stands out more against the canvas.
@@ -700,6 +727,7 @@ export function teardownThemeWatchers() {
   root.style.removeProperty("--dv-muted-text");
   root.style.removeProperty("--dv-accent");
   root.style.removeProperty("--dv-on-accent");
+  root.style.removeProperty("--dv-accent-fill");
   root.style.removeProperty("--dv-search-ring");
   root.style.removeProperty("--dv-toggle-track");
   removeEmptyAttr(root, "style", htmlHadStyle !== false);
