@@ -1121,6 +1121,19 @@ kbd {
   }
 }
 
+/* Small phones: the header row has room for the toggles only when the
+   DiagView on/off button drops its first word. Screen readers still get it. */
+@media (max-width: 400px) {
+  .toggle-btn .lbl {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

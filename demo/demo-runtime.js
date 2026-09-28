@@ -419,7 +419,8 @@
             function show(on) {
                 btn.dataset.state = on ? 'on' : 'off';
                 btn.setAttribute('aria-pressed', on ? 'true' : 'false');
-                btn.textContent = on ? 'DiagView on' : 'DiagView off';
+                // The word DiagView hides on very narrow screens, see demo-styles.css
+                btn.innerHTML = '<span class="lbl">DiagView </span>' + (on ? 'on' : 'off');
             }
             show(true);
 

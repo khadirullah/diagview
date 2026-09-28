@@ -99,6 +99,18 @@
             margin-top: 20px;
         }
 
+        /* Long attribute names break instead of widening the page on a phone.
+           Short ones still move to the next line whole. */
+        @media (max-width: 400px) {
+            .options code,
+            .cols code {
+                display: inline-block;
+                max-width: 100%;
+                white-space: normal;
+                overflow-wrap: anywhere;
+            }
+        }
+
         .options {
             display: grid;
             grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
