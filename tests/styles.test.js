@@ -233,6 +233,12 @@ describe("styles.css: page buttons", () => {
     expect(ruleBody(".diagview-btn.success {")).toMatch(/background:\s*#10b981 !important/);
   });
 
+  test("a help description that wraps keeps apart from its keys and flush right", () => {
+    expect(ruleBody(".diagview-help-row {")).toMatch(/gap:\s*0\.75rem/);
+    expect(ruleBody(".diagview-help-key {")).toMatch(/flex-shrink:\s*0/);
+    expect(ruleBody(".diagview-help-desc {")).toMatch(/text-align:\s*right/);
+  });
+
   test("the success check replaces the icon instead of drawing over it", () => {
     expect(ruleBody(".diagview-btn.success svg {")).toMatch(/visibility:\s*hidden/);
     const check = ruleBody(".diagview-btn.success::after {");

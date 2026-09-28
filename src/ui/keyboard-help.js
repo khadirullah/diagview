@@ -9,19 +9,20 @@ import { TIMING } from "../core/constants.js";
 import { setSVGContent } from "../core/utils.js";
 import { registerTimeout } from "../core/lifecycle.js";
 
+// A combo's keys are pressed together and show with a plain "+" between them
 const SHORTCUTS = [
-  { keys: ["Esc"], desc: "Close fullscreen" },
+  { keys: ["Esc"], desc: "Close help, search or menu, then the viewer" },
   { keys: ["Space", "0"], desc: "Reset / Fit to screen" },
-  { keys: ["F"], desc: "Focus search" },
+  { keys: ["F"], desc: "Open search" },
   { keys: ["T"], desc: "Toggle text select (copy SVG labels)" },
-  { keys: ["R"], desc: "Rotate 90°" },
+  { keys: ["R"], desc: "Rotate 90° clockwise" },
   { keys: ["M"], desc: "Meeting mode (laser pointer)" },
-  { keys: ["L"], desc: "Share link" },
+  { keys: ["L"], desc: "Copy share link" },
   { keys: ["+", "="], desc: "Zoom in" },
   { keys: ["-", "_"], desc: "Zoom out" },
   { keys: ["↑", "↓", "←", "→"], desc: "Pan diagram" },
-  { keys: ["Shift", "+", "Arrows"], desc: "Fast pan" },
-  { keys: ["?"], desc: "Show this help" },
+  { keys: ["Shift", "Arrows"], combo: true, desc: "Fast pan" },
+  { keys: ["?"], desc: "Show or hide this help" },
 ];
 
 let helpModal = null;
@@ -119,7 +120,7 @@ function createHelpModal() {
   const grid = document.createElement("div");
   grid.className = "diagview-help-grid";
 
-  SHORTCUTS.forEach(({ keys, desc }) => {
+  SHORTCUTS.forEach(({ keys, desc, combo }) => {
     const row = document.createElement("div");
     row.className = "diagview-help-row";
 
@@ -130,7 +131,7 @@ function createHelpModal() {
       kbd.textContent = k;
       keyEl.appendChild(kbd);
       if (index < keys.length - 1) {
-        keyEl.appendChild(document.createTextNode(" "));
+        keyEl.appendChild(document.createTextNode(combo ? "+" : " "));
       }
     });
 

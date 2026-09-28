@@ -1,6 +1,6 @@
 /**
  * Keyboard help panel tests
- * Covers the helpTimeout auto-close and its hover/focus pause.
+ * Covers the helpTimeout auto-close and its hover/focus pause, and the rows it lists.
  */
 
 import { jest } from "@jest/globals";
@@ -129,5 +129,38 @@ describe("Keyboard help auto-close", () => {
     other.focus();
     hideKeyboardHelp();
     expect(document.activeElement).toBe(other);
+  });
+});
+
+describe("Keyboard help list", () => {
+  beforeEach(() => {
+    resetConfig();
+    document.body.innerHTML = "";
+    showKeyboardHelp();
+  });
+
+  afterEach(() => cleanupKeyboardHelp());
+
+  const row = (desc) =>
+    [...document.querySelectorAll(".diagview-help-row")].find(
+      (r) => r.querySelector(".diagview-help-desc").textContent === desc,
+    );
+
+  test("the Esc row says what Esc closes and in which order", () => {
+    expect(row("Close help, search or menu, then the viewer").textContent).toMatch(/^Esc/);
+  });
+
+  test("Shift and Arrows show as one combo with a plus between two keys", () => {
+    const key = row("Fast pan").querySelector(".diagview-help-key");
+    expect([...key.querySelectorAll("kbd")].map((k) => k.textContent)).toEqual(["Shift", "Arrows"]);
+    expect(key.textContent).toBe("Shift+Arrows");
+  });
+
+  test("alternative keys keep a space between them", () => {
+    expect(row("Zoom in").querySelector(".diagview-help-key").textContent).toBe("+ =");
+  });
+
+  test("the ? row says it both shows and hides the panel", () => {
+    expect(row("Show or hide this help")).toBeDefined();
   });
 });
