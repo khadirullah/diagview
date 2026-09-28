@@ -495,6 +495,42 @@ describe("warning when code is removed from a diagram", () => {
     expect(codeWarnings()).toEqual([]);
   });
 
+  describe('security.exportMode "strict"', () => {
+    const offDiagram = () => {
+      const svg = diagram(6, '<rect onclick="b()"/><animate attributeName="x" values="0;1"/>');
+      svg.parentElement.dataset.diagviewSanitize = "off";
+      return svg;
+    };
+
+    beforeEach(() => updateConfig({ security: { exportMode: "strict" } }));
+
+    test("cleans exports in strict mode without a warning", async () => {
+      const svg = offDiagram();
+      const exported = await cloneSVGForExportAsync(svg);
+      expect(exported.querySelector("[onclick]")).toBeNull();
+      expect(exported.querySelector("animate")).toBeNull();
+      expect(codeWarnings()).toEqual([]);
+    });
+
+    test("leaves the fullscreen view in the diagram's own mode", () => {
+      const modal = cloneSVGForModal(offDiagram());
+      expect(modal.querySelector("[onclick]")).not.toBeNull();
+    });
+
+    test("still warns once for a diagram that is strict anyway", async () => {
+      const svg = diagram(7, '<rect onclick="b()"/>');
+      await cloneSVGForExportAsync(svg);
+      await cloneSVGForExportAsync(svg);
+      expect(codeWarnings()).toHaveLength(1);
+    });
+
+    test('"same" exports in the diagram\'s own mode', async () => {
+      updateConfig({ security: { exportMode: "same" } });
+      const exported = await cloneSVGForExportAsync(offDiagram());
+      expect(exported.querySelector("[onclick]")).not.toBeNull();
+    });
+  });
+
   test('never warns in "off" mode', () => {
     const svg = diagram(5, '<script>alert(1)</script><rect onclick="b()"/>');
     cloneSVG(svg, { securityMode: "off" });

@@ -592,6 +592,14 @@ The Security modes panel on the [demo page](https://khadirullah.github.io/diagvi
 - **`permissive`.** Use it for your own diagrams that animate with SMIL, such as `<animate>` or `<animateTransform>`.
 - **`off`.** Use it only for your own diagrams whose click handlers or links you need in fullscreen. The copy keeps every script and handler, and they run once the copy is on the page.
 
+`security.exportMode` picks the mode for exports, downloads and clipboard copies. With `"same"`, the default, each export uses its diagram's own mode. With `"strict"`, DiagView cleans every export and copy in `strict` mode, whatever mode the page or the diagram uses on screen. Use it when you need click handlers in fullscreen but want clean files, since a downloaded file reaches people who never saw your page:
+
+```javascript
+DiagView.init({ security: { mode: "off", exportMode: "strict" } });
+```
+
+`exportMode` has no `data-diagview-*` attribute, so one diagram cannot loosen it. `allowRemoteResources` and `data-diagview-allow-remote` still apply to exports.
+
 ### What each mode removes
 
 | Removed from the copy                                                                                                                                     | `strict` | `permissive` | `off` |
@@ -615,6 +623,7 @@ With `allowRemoteResources: true`, remote `url()` and `@import` stay in `strict`
 - Under `strict` and `permissive`, a click handler does nothing in fullscreen, and a `javascript:` link no longer opens anything.
 - Under `strict`, a `<style>` block that loads a remote font or stylesheet goes away whole, so the copy loses every rule in it.
 - The diagram on the page keeps everything, so it can behave differently from its fullscreen view.
+- With `exportMode: "strict"`, a file can lose an animation or a click handler that still works in fullscreen.
 
 ### Console warning for removed code
 
@@ -624,7 +633,7 @@ When `strict` or `permissive` removes code from a diagram, DiagView logs one war
 DiagView: Removed code from this diagram in strict mode: 1 event handler (onerror). Use security.mode "off" only for diagrams you trust.
 ```
 
-The warning passes the diagram's element along, so the browser console shows it next to the message. Hover or click it there to find the diagram on the page. Animations, CSS and remote resources that `strict` removes do not trigger the warning, and `off` never warns.
+The warning passes the diagram's element along, so the browser console shows it next to the message. Hover or click it there to find the diagram on the page. Animations, CSS and remote resources that `strict` removes do not trigger the warning, and `off` never warns. Code that `exportMode: "strict"` removes from an export does not warn either, since you asked for it.
 
 ### Setting the mode
 
@@ -641,9 +650,9 @@ DiagView.init({ security: { mode: "permissive" } });
 </div>
 ```
 
-`data-diagview-sanitize` changes the mode for that one diagram. The mode covers its fullscreen view and every export and copy of it, from the page toolbar or the fullscreen menu. It works only while `security.allowOverrides` is `true`, which is the default. Set `allowOverrides: false` when page authors should not be able to turn sanitizing off.
+`data-diagview-sanitize` changes the mode for that one diagram. The mode covers its fullscreen view and every export and copy of it, from the page toolbar or the fullscreen menu, unless `security.exportMode` is `"strict"`. It works only while `security.allowOverrides` is `true`, which is the default. Set `allowOverrides: false` when page authors should not be able to turn sanitizing off.
 
-A mistyped mode logs a warning. An unknown `security.mode` uses `strict`. An unknown `data-diagview-sanitize` value uses the global mode and warns once per value.
+A mistyped mode logs a warning. An unknown `security.mode` uses `strict`. An unknown `data-diagview-sanitize` value uses the global mode and warns once per value. An unknown `security.exportMode` warns and uses `"same"`.
 
 ### Allowing remote resources
 

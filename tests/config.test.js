@@ -163,6 +163,21 @@ describe("Core Config: validateConfig gaps", () => {
     expect(warn).not.toHaveBeenCalled();
   });
 
+  test("an unknown security.exportMode warns and uses same", () => {
+    expect(state.config.security.exportMode).toBe("same");
+    updateConfig({ security: { exportMode: "strict" } });
+    expect(warn).not.toHaveBeenCalled();
+    expect(state.config.security.exportMode).toBe("strict");
+
+    updateConfig({ security: { exportMode: "off" } });
+    expect(warn).toHaveBeenCalledWith('DiagView: Unknown security.exportMode "off", using "same"');
+    expect(state.config.security.exportMode).toBe("same");
+
+    warn.mockClear();
+    updateConfig({ security: { mode: "permissive" } });
+    expect(warn).not.toHaveBeenCalled();
+  });
+
   test("timing keys reject non-numbers", () => {
     updateConfig({ toastDuration: "fast" });
     expect(warn).toHaveBeenCalledWith(expect.stringContaining("toastDuration"));

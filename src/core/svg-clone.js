@@ -248,6 +248,7 @@ function warnRemovedCode(svg, mode, { scripts, handlers, urls }) {
  * @param {boolean} options.preserveStyleElements - Copy <style> tags (default: true)
  * @param {'strict'|'permissive'|'off'} options.securityMode - SVG sanitization mode (default: 'strict')
  * @param {number} options.maxChars - Hard size limit in serialized chars (default: performance.criticalFileLimit)
+ * @param {boolean} options.warnRemoved - Warn when the sanitizer removed code (default: true)
  * @returns {SVGElement|null} Cloned SVG element, or null when blocked by the size limit
  */
 export function cloneSVG(svg, options = {}) {
@@ -265,6 +266,7 @@ export function cloneSVG(svg, options = {}) {
     skipIdFix = false,
     allowRemoteResources = state.config.security.allowRemoteResources,
     maxChars = criticalFileLimit,
+    warnRemoved = true,
   } = options;
 
   if (!svg) {
@@ -322,7 +324,7 @@ export function cloneSVG(svg, options = {}) {
     allowedImageTypes: state.config.allowedImageTypes,
     removed,
   });
-  warnRemovedCode(svg, securityMode, removed);
+  if (warnRemoved) warnRemovedCode(svg, securityMode, removed);
 
   if (!clone) {
     showErrorToast("Diagram blocked", "File size exceeds security limits");
@@ -519,13 +521,18 @@ export function cloneSVGForExportAsync(svg, paint = null) {
       svg.closest?.(state.config.diagramSelector || ".diagram, .mermaid, .chart") ||
       (svg.closest?.("#diagview-modal") ? state.activeSourceElement : null);
     const security = resolveElementSecurity(container);
+    // security.exportMode "strict" cleans every export in strict mode. Code
+    // it removes only for the file is what the site asked for, so it does
+    // not warn.
+    const mode = state.config.security?.exportMode === "strict" ? "strict" : security.mode;
     const clone = cloneSVG(svg, {
       preserveText: true,
       preserveStyles: false,
       preserveStyleElements: true,
-      securityMode: security.mode,
+      securityMode: mode,
       allowRemoteResources: security.allowRemoteResources,
       skipIdFix: true,
+      warnRemoved: mode === security.mode,
     });
 
     // Remove match-ids from ORIGINAL immediately (before any awaits)

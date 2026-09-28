@@ -194,6 +194,12 @@ Per-element (requires `security.allowOverrides: true`, the default):
 <div class="diagram" data-diagview-sanitize="off">...</div>
 ```
 
+Add `exportMode: "strict"` to keep click handlers in fullscreen but clean every downloaded or copied file. See [Choosing a mode](USAGE.md#choosing-a-mode).
+
+```javascript
+DiagView.init({ security: { mode: "off", exportMode: "strict" } });
+```
+
 **Q: My SVG animations (`<animate>`, `<animateTransform>`, `<set>`) get stripped. Why?**  
 A: `strict` mode removes `<animate>`, `<animateTransform>`, `<set>`, and similar elements as they are known XSS vectors. Switch to `permissive` for the affected diagram:
 

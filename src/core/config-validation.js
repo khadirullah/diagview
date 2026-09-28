@@ -116,6 +116,12 @@ export function validateConfig(config, previous = DEFAULT_CONFIG) {
     config["security"].mode = "strict";
   }
 
+  const { exportMode } = config["security"];
+  if (exportMode !== "same" && exportMode !== "strict") {
+    console.warn(`DiagView: Unknown security.exportMode "${exportMode}", using "same"`);
+    config["security"].exportMode = "same";
+  }
+
   const types = config["allowedImageTypes"];
   if (!Array.isArray(types) || !types.every((t) => typeof t === "string")) {
     console.warn("DiagView: allowedImageTypes must be an array of strings, keeping previous value");

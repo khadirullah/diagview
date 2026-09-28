@@ -27,6 +27,8 @@ import { deepMerge, deepFreeze } from "./state-utils.js";
  * @property {"strict"|"permissive"|"off"} mode - SVG sanitization level
  * @property {boolean} allowOverrides - Let data-diagview-sanitize change the mode per diagram
  * @property {boolean} allowRemoteResources - Keep external fonts and stylesheets
+ * @property {"same"|"strict"} exportMode - Mode for exports and clipboard copies. "same" uses
+ *   each diagram's own mode, and "strict" cleans every export in strict mode
  */
 
 /**
@@ -189,6 +191,9 @@ export const INITIAL_CONFIG = {
     allowOverrides: true,
     // Allow external resources (e.g. Google Fonts, remote CSS) in strict/permissive mode
     allowRemoteResources: false,
+    // 'same' - Exports and copies use each diagram's own mode
+    // 'strict' - Every export and copy is cleaned in strict mode
+    exportMode: "same",
   },
 
   // Performance & Safeguards

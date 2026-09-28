@@ -456,6 +456,7 @@ DiagView.init({
     mode: "strict", // 'strict' | 'permissive' | 'off'
     allowOverrides: true, // Allow data-diagview-sanitize per element
     allowRemoteResources: false, // Allow @import / url() to external URLs
+    exportMode: "same", // 'same' | 'strict' ('strict' cleans every export and copy)
   },
   allowedImageTypes: ["png", "jpeg", "webp", "gif"],
 

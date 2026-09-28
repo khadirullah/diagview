@@ -65,7 +65,12 @@ const full: DiagViewOptions = {
   maxPixels: 16777216,
   exportSearchHighlight: true,
   exportFonts: "used",
-  security: { mode: "strict", allowOverrides: true, allowRemoteResources: false },
+  security: {
+    mode: "strict",
+    allowOverrides: true,
+    allowRemoteResources: false,
+    exportMode: "same",
+  },
   allowedImageTypes: ["png", "jpeg", "webp", "gif"],
   performance: { largeFileThreshold: 1000000, criticalFileLimit: 50000000 },
   toastDuration: 2500,
@@ -92,7 +97,7 @@ const full: DiagViewOptions = {
 const empty: DiagViewOptions = {};
 const partialNested: DiagViewOptions = {
   ui: { buttons: { icons: { copy: null } } },
-  security: { mode: "off" },
+  security: { mode: "off", exportMode: "strict" },
   performance: {},
   watermark: { enabled: true, placement: "diagram" },
 };
@@ -131,6 +136,8 @@ const badGrid: DiagViewOptions = { canvasGrid: "lines" };
 const badFonts: DiagViewOptions = { exportFonts: "some" };
 // @ts-expect-error security.mode is a fixed set of strings
 const badMode: DiagViewOptions = { security: { mode: "loose" } };
+// @ts-expect-error security.exportMode is "same" or "strict"
+const badExportMode: DiagViewOptions = { security: { exportMode: "off" } };
 // @ts-expect-error button style is a fixed set of strings
 const badStyle: DiagViewOptions = { ui: { buttons: { style: "outline" } } };
 // @ts-expect-error watermark style is a fixed set of strings
@@ -144,7 +151,7 @@ const badZoom: DiagViewOptions = { maxZoomScale: "25" };
 
 void [full, empty, partialNested, caseInsensitive, cleared, unknownKey, fontsAll, fontsNone];
 void [badLayout, badMinimap, badGrid, badMode, badStyle, badWatermark, badZoomCb, badZoom];
-void [badSearchExport, badFonts, badPlacement];
+void [badSearchExport, badFonts, badPlacement, badExportMode];
 
 async function lifecycle(): Promise<void> {
   expectType<Equal<ReturnType<typeof init>, Promise<void>>>();
@@ -168,6 +175,7 @@ function configuration(): void {
   expectType<Equal<typeof config.accentColor, string | null>>();
   expectType<Equal<typeof config.warningColor, string>>();
   expectType<Equal<typeof config.security.mode, "strict" | "permissive" | "off">>();
+  expectType<Equal<typeof config.security.exportMode, "same" | "strict">>();
   expectType<Equal<typeof config.ui.buttons.icons.copy, string | null>>();
   expectType<Equal<typeof config.performance.criticalFileLimit, number>>();
   expectType<Equal<typeof config.watermark.opacity, number>>();
