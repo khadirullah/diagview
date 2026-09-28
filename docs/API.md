@@ -1,4 +1,4 @@
-# DiagView — Public API Reference
+# DiagView public API reference
 
 All methods are available on the `DiagView` global (UMD) or the default export (ESM). The ESM build also exports each of them by name, along with `state`, `utils` and `version`.
 
@@ -292,7 +292,7 @@ const clean = DiagView.utils.sanitizeSVG(rawSvg, "strict");
 // With a size limit
 const clean = DiagView.utils.sanitizeSVG(rawSvg, "strict", { maxChars: 500000 });
 
-// Sanitize a DOM node (returns a new node — original is not mutated)
+// Sanitize a DOM node. It returns a new node and leaves the original as it was.
 const cleanNode = DiagView.utils.sanitizeSVG(svgElement, "permissive");
 
 // Find out what code it removed
@@ -393,14 +393,14 @@ interface DiagViewConfig {
   canvasGrid: "none" | "dots"; // default: 'none'; dot grid behind the fullscreen diagram
 
   // Zoom / Pan
-  maxZoomScale: number; // default: 25 (range: 1–50)
-  minZoomScale: number; // default: 0.05 (range: 0.01–1)
+  maxZoomScale: number; // default: 25 (range: 1 to 50)
+  minZoomScale: number; // default: 0.05 (range: 0.01 to 1)
   zoomAnimationDuration: number; // default: 200 (ms)
   panAnimationDuration: number; // default: 200 (ms)
 
   // Export
-  highResScale: number; // default: 4 (range: 1–10)
-  mobileScale: number; // default: 2 (range: 1–5)
+  highResScale: number; // default: 4 (range: 1 to 10)
+  mobileScale: number; // default: 2 (range: 1 to 5)
   maxPixels: number; // default: 16777216 (16MP), range: 1000000 to 268435456
   exportSearchHighlight: boolean; // default: true; false = exports made during a search leave out its dimming and outline
   exportFonts: "used" | "all" | "none"; // default: 'used'; page fonts to embed in exports
@@ -443,7 +443,7 @@ interface DiagViewConfig {
     style: "corner" | "background" | "both"; // default: 'corner'
     position: "top-left" | "top-right" | "bottom-left" | "bottom-right" | "center" | "four-sides"; // default: 'bottom-right'; four-sides needs the corner or both style
     placement: "diagram" | "margin"; // default: 'diagram'; 'margin' draws corner and side text in the blank margin around the diagram
-    opacity: number; // default: 0.2 (range 0.0–1.0)
+    opacity: number; // default: 0.2 (range: 0 to 1)
   };
 }
 ```

@@ -1,4 +1,4 @@
-# DiagView — Build & Development Guide
+# DiagView build and development guide
 
 ---
 

@@ -1,17 +1,17 @@
-# DiagView — Frequently Asked Questions
+# DiagView frequently asked questions
 
 ---
 
 ## General
 
 **Q: Is DiagView free?**  
-A: Yes. DiagView is MIT licensed — free for personal and commercial use with no attribution required (though it is appreciated).
+A: Yes. DiagView is MIT licensed, so you can use it for personal and commercial work. Attribution is not required, though it is appreciated.
 
 **Q: What does DiagView require?**  
 A: Only `@panzoom/panzoom` for the fullscreen zoom/pan feature. PDF export loads jsPDF from a CDN the first time it runs. In the ESM build, search, the minimap, rotation, meeting mode and Readable text load on first use. The UMD build carries them all in one file.
 
 **Q: Which diagram libraries does DiagView support?**  
-A: Any library that outputs SVG into the DOM — including Mermaid.js, D3.js, Graphviz, PlantUML (rendered), Kroki, draw.io, and hand-crafted SVGs. See [Mermaid Integration](USAGE.md#21-mermaid-integration).
+A: Any library that outputs SVG into the DOM. That includes Mermaid.js, D3.js, Graphviz, PlantUML (rendered), Kroki, draw.io, and hand-crafted SVGs. See [Mermaid Integration](USAGE.md#21-mermaid-integration).
 
 **Q: Does it work without npm?**  
 A: Yes. Drop in two `<script>` tags from a CDN and you are done. See [Installation](USAGE.md#1-installation).
@@ -338,7 +338,7 @@ A: DiagView removes them with `history.replaceState` once it has read them, incl
 ## Performance
 
 **Q: Does DiagView slow down pages with many diagrams?**  
-A: No. DiagView uses an `IntersectionObserver` to initialize diagrams lazily — only when they are 200 px from the viewport. Diagrams off-screen consume almost no resources.
+A: No. DiagView uses an `IntersectionObserver` to initialize each diagram lazily, once it comes within 200 px of the viewport. Diagrams off-screen consume almost no resources.
 
 **Q: Search is slow on a large diagram.**  
 A: Search pre-warms its candidate cache during browser idle time. On very large diagrams (5,000+ nodes), the first search may take a moment. Subsequent searches use the cache and are O(n) string comparisons with no DOM reads.
