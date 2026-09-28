@@ -278,3 +278,49 @@ describe("rotateKeepsView", () => {
     expect(state.rotationAngle).toBe(90);
   });
 });
+
+describe("rotation is remembered for the diagram that is open", () => {
+  let first, opened;
+
+  beforeEach(() => {
+    resetConfig();
+    updateConfig({ rememberZoom: true });
+    clearAllZoomStates();
+    state.rotationAngle = 0;
+    state.activePanzoom = mockPanzoom;
+    first = document.createElement("div");
+    first.className = "diagram";
+    first.dataset.diagviewId = "dv-first";
+    opened = document.createElement("div");
+    document.body.prepend(first);
+    document.body.append(opened);
+    // openFullscreen() falls back to index 0 for an element outside the selector
+    state.currentDiagramIndex = 0;
+  });
+
+  afterEach(() => {
+    first.remove();
+    opened.remove();
+    state.activeSourceElement = null;
+  });
+
+  const flush = () => new Promise((resolve) => setTimeout(resolve, 20));
+
+  test("rotating an element outside the selector saves nothing for the first diagram", async () => {
+    state.activeSourceElement = opened;
+    rotateDiagram();
+    await flush();
+
+    expect(restoreZoomState("dv-first", mockPanzoom)).toBe(false);
+  });
+
+  test("rotating an open diagram saves under its own id", async () => {
+    opened.dataset.diagviewId = "dv-opened";
+    state.activeSourceElement = opened;
+    rotateDiagram();
+    await flush();
+
+    expect(restoreZoomState("dv-first", mockPanzoom)).toBe(false);
+    expect(restoreZoomState("dv-opened", mockPanzoom)).toBe(true);
+  });
+});

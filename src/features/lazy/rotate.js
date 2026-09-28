@@ -189,9 +189,8 @@ export function rotateDiagram() {
     );
   }
 
-  // Save state
-  const diagrams = document.querySelectorAll(state.config.diagramSelector);
-  const active = diagrams[state.currentDiagramIndex];
+  // Save state under the diagram that is open
+  const active = state.activeSourceElement;
   if (active?.dataset?.diagviewId) {
     import("../panzoom-integration.js").then((m) =>
       m.saveZoomState(active.dataset.diagviewId, state.activePanzoom),
