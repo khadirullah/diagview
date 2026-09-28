@@ -994,7 +994,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 });
 ```
 
-When one match sits inside another, such as a `.mermaid` inside a `.diagram`, only one of them gets a toolbar. If the outer element holds a single diagram, the outer one gets it, along with its `data-title` and `data-diagview-*` settings. If it holds two or more, each inner diagram gets its own toolbar and the outer element gets none.
+When one match sits inside another, such as a `.mermaid` inside a `.diagram`, only one of them gets a toolbar. If the outer element holds a single diagram, the outer one gets it, along with its `data-title` and `data-diagview-*` settings. If it holds two or more, each inner diagram gets its own toolbar and the outer element gets none. DiagView counts the `<svg>` elements inside to decide. `refresh()` and diagrams added later follow the same rule. A match without a toolbar keeps its place in the numbering, so share links (`dv-idx`) still open the same diagrams.
 
 **Dark mode with Mermaid:**
 
@@ -1057,6 +1057,8 @@ DiagView.init({
   diagramSelector: ".mermaid, .graphviz, [data-diagram], figure.chart",
 });
 ```
+
+Where one match sits inside another, each diagram still gets one toolbar. See [Mermaid Integration](#21-mermaid-integration) for which element gets it.
 
 ### Natural panning
 
