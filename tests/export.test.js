@@ -2027,3 +2027,86 @@ describe("backgroundColor transparent in formats without transparency", () => {
     expect(fills).toEqual(["rgba(0, 0, 0, 0)"]);
   });
 });
+
+describe("PDF page size", () => {
+  let container, pages, images;
+
+  const render = async (w, h) => {
+    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    svg.setAttribute("viewBox", `0 0 ${w} ${h}`);
+    svg.innerHTML = '<rect width="50" height="50"/>';
+    container.replaceChildren(svg);
+    await exportToPDF(container, { filename: "d" });
+  };
+
+  beforeEach(() => {
+    container = document.createElement("div");
+    document.body.appendChild(container);
+    updateConfig({ highResScale: 1, maxPixels: 16000000 });
+    global.URL.createObjectURL = jest.fn().mockReturnValue("blob:mock-url");
+    global.URL.revokeObjectURL = jest.fn();
+    global.Image = jest.fn(() => {
+      const img = document.createElement("img");
+      Object.defineProperty(img, "src", {
+        set() {
+          setTimeout(() => this.onload && this.onload(), 5);
+        },
+      });
+      return img;
+    });
+    pages = [];
+    images = [];
+    window.jspdf = {
+      jsPDF: class {
+        constructor(orientation, unit, format) {
+          pages.push({ orientation, unit, format });
+        }
+        addImage(data, type, x, y, w, h) {
+          images.push([x, y, w, h]);
+        }
+        save() {}
+      },
+    };
+  });
+
+  afterEach(() => {
+    container.remove();
+    delete window.jspdf;
+    hideToast();
+  });
+
+  // The export adds a margin of 5% of the long side all round
+  const sizes = () => {
+    expect(pages).toHaveLength(1);
+    expect(images).toHaveLength(1);
+    const [w, h] = pages[0].format;
+    // The image always fills the page exactly
+    expect(images[0]).toEqual([0, 0, w, h]);
+    return [w, h];
+  };
+
+  test("a diagram within the page limit keeps its size", async () => {
+    await render(800, 400);
+    expect(pages[0].unit).toBe("px");
+    expect(pages[0].orientation).toBe("l");
+    expect(sizes()).toEqual([880, 480]);
+  });
+
+  test("a very wide diagram shrinks page and image together to fit 14400 pt", async () => {
+    await render(20000, 1000);
+    const [w, h] = sizes();
+    // 10800 px is 14400 pt in jsPDF's px unit. Unscaled it is 22000 x 3000.
+    expect(w).toBe(10800);
+    expect(h).toBeCloseTo((10800 * 3000) / 22000, 6);
+    expect(pages[0].orientation).toBe("l");
+  });
+
+  test("a very tall diagram shrinks the same way", async () => {
+    await render(500, 21600);
+    const [w, h] = sizes();
+    // Unscaled it is 2660 x 23760
+    expect(h).toBe(10800);
+    expect(w).toBeCloseTo((10800 * 2660) / 23760, 6);
+    expect(pages[0].orientation).toBe("p");
+  });
+});

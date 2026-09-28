@@ -1031,9 +1031,15 @@ async function savePDF(sourceElement, filename, { transparent, modalClone, silen
     );
     const imgData = canvas.toDataURL("image/png");
 
+    // jsPDF caps a page side at 14400 pt, and its px unit is 96/72 pt, so
+    // a side over 10800 px would lose its far end. Shrink the page and the
+    // image together to fit.
+    const fit = Math.min(1, 10800 / Math.max(width, height));
+    const w = width * fit;
+    const h = height * fit;
     const { jsPDF } = window.jspdf;
-    const pdf = new jsPDF(width > height ? "l" : "p", "px", [width, height]);
-    pdf.addImage(imgData, "PNG", 0, 0, width, height, undefined, "FAST");
+    const pdf = new jsPDF(w > h ? "l" : "p", "px", [w, h]);
+    pdf.addImage(imgData, "PNG", 0, 0, w, h, undefined, "FAST");
     pdf.save(`${filename}.pdf`);
     showSaved("PDF saved", { linked, faint, silent, kind: "PDF" });
     return true;
