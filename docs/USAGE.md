@@ -1234,6 +1234,7 @@ Search reads the text of every `<text>` element and of every element with the cl
 - The label is HTML in a `<foreignObject>` with none of those classes on it or around it. Add `class="label"` to the `<foreignObject>` or to a group that holds it.
 - The text is drawn as paths, as when an editor converts text to outlines, or it is part of an embedded image.
 - The query runs across a line break. Each line can be its own `<text>` element, and a `<br>` in an HTML label adds no space between the lines. Search for words from one line.
+- Panzoom did not load. Search starts only when zoom and pan do. See [Zoom/pan not working in fullscreen](#zoompan-not-working-in-fullscreen).
 
 ### Share link not working
 

@@ -21,7 +21,7 @@ A: Yes. Drop in two `<script>` tags from a CDN and you are done. See [Installati
 ## Installation
 
 **Q: Why doesn't zoom work?**  
-A: DiagView could not find `window.Panzoom` when the viewer opened. It checks each time fullscreen opens, so script order does not matter. If you use share links, Panzoom must exist before `init()` runs, because a share link opens the viewer right after `init()`. When Panzoom is missing, the console logs "Panzoom library not found" and a toast says "Zoom/pan requires Panzoom library". Export still works. Zoom, pan, the minimap and most keyboard shortcuts do not. With npm, set `window.Panzoom = Panzoom` as shown in the [README](../README.md#npm).
+A: DiagView could not find `window.Panzoom` when the viewer opened. It checks each time fullscreen opens, so script order does not matter. If you use share links, Panzoom must exist before `init()` runs, because a share link opens the viewer right after `init()`. When Panzoom is missing, the console logs "Panzoom library not found" and a toast says "Zoom/pan requires Panzoom library". Export still works. Zoom, pan, search, the minimap and every keyboard shortcut except `Esc` and `?` do not. The search box still opens, but typing in it finds nothing. With npm, set `window.Panzoom = Panzoom` as shown in the [README](../README.md#npm).
 
 **Q: Can I use Panzoom from npm instead of CDN?**  
 A: Yes. Run `npm install @panzoom/panzoom`, then import it and assign it in your entry file with `window.Panzoom = Panzoom`. DiagView does not import Panzoom itself and only reads `window.Panzoom`, so no bundler setting does this for you.
@@ -91,6 +91,7 @@ A: Search reads the text of every `<text>` element and of every element with the
 - The label is HTML in a `<foreignObject>` with none of those classes on it or around it. Add `class="label"` to the `<foreignObject>` or to a group that holds it.
 - The text is drawn as paths, as when an editor converts text to outlines, or it is part of an embedded image.
 - The query runs across a line break. Each line can be its own `<text>` element, and a `<br>` in an HTML label adds no space between the lines. Search for words from one line.
+- Panzoom did not load. Search starts only when zoom and pan do. See [Zoom/pan not working in fullscreen](USAGE.md#zoompan-not-working-in-fullscreen).
 
 **Q: Can I pre-fill the search when opening fullscreen?**
 
