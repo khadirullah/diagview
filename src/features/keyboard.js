@@ -72,6 +72,10 @@ function handleKeyboardShortcut(e) {
     return;
   }
 
+  // The open help panel is modal: no shortcut reaches the diagram behind it.
+  // Arrow keys keep their default and scroll the panel's list.
+  if (isHelpVisible()) return;
+
   // Check if we should handle other keyboard events
   if (!shouldHandleKeyboardEvent(e)) {
     return;

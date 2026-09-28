@@ -175,6 +175,45 @@ describe("Keyboard Shortcuts Integration", () => {
     cleanupKeyboardHelp();
   });
 
+  test("no shortcut acts on the diagram while the help panel is open", async () => {
+    const errorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
+    const emitSpy = jest.spyOn(state.events, "emit");
+    window.dispatchEvent(new KeyboardEvent("keydown", { key: "?" }));
+    expect(isHelpVisible()).toBe(true);
+    const close = document.activeElement;
+    expect(close.className).toBe("diagview-help-close");
+
+    const keys = ["r", "R", "+", "=", "-", "_", "0", " ", "m", "l", "f", "t", "T"];
+    const arrows = ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"];
+    for (const key of [...keys, ...arrows]) {
+      const ev = new KeyboardEvent("keydown", { key, bubbles: true, cancelable: true });
+      close.dispatchEvent(ev);
+      // Arrows keep their default, so the panel's list scrolls
+      if (arrows.includes(key)) expect(ev.defaultPrevented).toBe(false);
+    }
+    await new Promise((resolve) => setTimeout(resolve, 20));
+
+    for (const fn of ["zoomIn", "zoomOut", "reset", "pan"]) {
+      expect(mockPanzoom[fn]).not.toHaveBeenCalled();
+    }
+    expect(errorSpy).not.toHaveBeenCalled(); // R would have tried to load rotate
+    expect(emitSpy).not.toHaveBeenCalled();
+    expect(isHelpVisible()).toBe(true);
+
+    // ? and Escape still close it, and the shortcuts work again afterwards
+    window.dispatchEvent(new KeyboardEvent("keydown", { key: "?" }));
+    expect(isHelpVisible()).toBe(false);
+    window.dispatchEvent(new KeyboardEvent("keydown", { key: "?" }));
+    window.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
+    expect(isHelpVisible()).toBe(false);
+    window.dispatchEvent(new KeyboardEvent("keydown", { key: "+" }));
+    expect(mockPanzoom.zoomIn).toHaveBeenCalledTimes(1);
+
+    emitSpy.mockRestore();
+    errorSpy.mockRestore();
+    cleanupKeyboardHelp();
+  });
+
   test("a failed lazy chunk is reported instead of rejecting unhandled", async () => {
     const errorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
     const unhandled = [];
