@@ -61,6 +61,8 @@ export function isInputFocused() {
  */
 export function saveFocus() {
   let el = document.activeElement;
+  // Focus inside a shadow root reports the host, so follow it to the real element
+  while (el?.shadowRoot?.activeElement) el = el.shadowRoot.activeElement;
   // Clicking a diagram with no toolbar (layout "off") leaves focus on body.
   // Return to the diagram instead, so keyboard users keep their place. It
   // holds tabindex -1 until it loses focus, so it never joins the tab order.
@@ -78,7 +80,7 @@ export function restoreFocus() {
   const target = state.lastActiveElement;
   state.lastActiveElement = null;
   // Fall back to body when the element left the document
-  if (target) (document.contains(target) ? target : document.body).focus({ preventScroll: true });
+  if (target) (target.isConnected ? target : document.body).focus({ preventScroll: true });
 }
 
 /**

@@ -163,3 +163,39 @@ describe("focus returns to the diagram after closing", () => {
     expect(diagram.hasAttribute("tabindex")).toBe(false);
   });
 });
+
+describe("focus restore inside a shadow root", () => {
+  let shadow;
+
+  beforeEach(() => {
+    document.body.innerHTML = '<div id="host"></div>';
+    shadow = document.getElementById("host").attachShadow({ mode: "open" });
+    shadow.innerHTML = '<div id="d"></div><button id="b"></button>';
+  });
+
+  afterEach(() => {
+    state.activeSourceElement = null;
+  });
+
+  test("the toolbar button gets focus back, not the page body", () => {
+    const button = shadow.getElementById("b");
+    button.focus();
+    saveFocus();
+    button.blur();
+    restoreFocus();
+
+    expect(shadow.activeElement).toBe(button);
+  });
+
+  test("a clicked diagram gets focus back and then drops its tabindex", () => {
+    const diagram = shadow.getElementById("d");
+    state.activeSourceElement = diagram;
+    document.activeElement.blur();
+    saveFocus();
+    restoreFocus();
+
+    expect(shadow.activeElement).toBe(diagram);
+    diagram.blur();
+    expect(diagram.hasAttribute("tabindex")).toBe(false);
+  });
+});
