@@ -981,6 +981,22 @@ describe("Warning about labels that are hard to read in the file", () => {
     expect(await warnings(run)).toBe(false);
   });
 
+  test.each([
+    ["png", "1.0x PNG saved"],
+    ["webp", "1.0x WebP saved"],
+  ])("a %s that also leaves out linked images shows one notice", async (mode, saved) => {
+    const image = document.createElementNS(NS, "image");
+    image.setAttribute("href", "logo.png");
+    svg.appendChild(image);
+    const stop = recordToasts();
+    await exportDiagram(container, mode);
+    const seen = stop().filter((t) => !t.startsWith("Processing"));
+
+    expect(seen).toEqual([
+      `${saved}, but 1 linked image was left out and some labels are hard to read on this background. Turn on Readable, or pick Light, and export again.`,
+    ]);
+  });
+
   test("a copy without silent warns", async () => {
     expect(await warnings(() => exportDiagram(container, "copy"))).toBe(true);
   });

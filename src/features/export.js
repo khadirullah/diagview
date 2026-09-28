@@ -313,23 +313,22 @@ function injectWatermark(svg, d, sourceSvg = null, pad = 0) {
 const warnedFaint = new WeakSet();
 
 /**
- * Warn that some labels will be hard to read in the file. Once per viewer
+ * Advice for labels that will be hard to read in the file. Once per viewer
  * open, as each open has a new modal clone, and once per page diagram
  * for toolbar exports.
  * @private
  * @param {SVGSVGElement|null} source - SVG the export came from, null when the labels read fine
  * @param {boolean} [silent] - Skip the warning
+ * @returns {string} The advice, or "" when there is nothing to say
  */
-function warnFaint(source, silent) {
-  if (!source || silent || warnedFaint.has(source)) return;
+function faintAdvice(source, silent) {
+  if (!source || silent || warnedFaint.has(source)) return "";
   warnedFaint.add(source);
   // Light helps only on a background where white text reads better than black
   const { bg } = detectTheme();
   const light =
     getContrastRatio(bg, "#fff") >= getContrastRatio(bg, "#000") ? ", or pick Light," : "";
-  showWarningToast(
-    `Some labels are hard to read on this background. Turn on Readable${light} and export again.`,
-  );
+  return `Turn on Readable${light} and export again.`;
 }
 
 /**
@@ -354,20 +353,31 @@ function countLinkedImages(svg) {
 }
 
 /**
- * Show the saved or copied notice. When linked images were left out of the
- * file, a warning with the count takes its place, unless the export is silent.
+ * Show the saved or copied notice, then the hard-to-read labels warning if
+ * there is one. When linked images were left out of the file, a warning with
+ * the count takes the place of the notice, and takes in the labels warning
+ * too, since only one notice shows at a time. silent skips both warnings.
  * @private
  * @param {string} message - The notice for a complete file
- * @param {number} linked - Linked images the file lacks
- * @param {boolean} [silent] - Skip the warning
- * @param {string} [kind] - What the file is, for the warning
+ * @param {object} [found] - What the export found
+ * @param {number} [found.linked] - Linked images the file lacks
+ * @param {SVGSVGElement|null} [found.faint] - Source whose labels are hard to read
+ * @param {boolean} [found.silent] - Skip the warnings
+ * @param {string} [found.kind] - What the file is, for the linked images warning
  */
-function showSaved(message, linked, silent, kind = "image") {
-  if (!linked || silent) return showSuccessToast(message);
-  const images = linked === 1 ? "1 linked image was" : `${linked} linked images were`;
-  showWarningToast(
-    `${message.replace(/!$/, "")}, but ${images} left out. Only embedded images can go into ${kind} files.`,
-  );
+function showSaved(message, { linked = 0, faint = null, silent = false, kind = "image" } = {}) {
+  const advice = faintAdvice(faint, silent);
+  if (linked && !silent) {
+    const images = linked === 1 ? "1 linked image was" : `${linked} linked images were`;
+    const done = `${message.replace(/!$/, "")}, but ${images} left out`;
+    return showWarningToast(
+      advice
+        ? `${done} and some labels are hard to read on this background. ${advice}`
+        : `${done}. Only embedded images can go into ${kind} files.`,
+    );
+  }
+  showSuccessToast(message);
+  if (advice) showWarningToast(`Some labels are hard to read on this background. ${advice}`);
 }
 
 /**
@@ -640,8 +650,7 @@ async function saveSVG(originalSvg, filename, { transparent: isTransparent, moda
     }
 
     downloadSVG(await serializeSVGAsync(svg), filename);
-    showSuccessToast("SVG saved");
-    warnFaint(prepared.faint, silent);
+    showSaved("SVG saved", { faint: prepared.faint, silent });
     return true;
   } catch (e) {
     showErrorToast("SVG Failed", e.message);
@@ -769,6 +778,7 @@ async function processImageExport(
         transparent,
       );
       canvasRef = canvas;
+      const found = { linked, faint, silent };
 
       const quality = isWebP ? 0.95 : undefined;
       const blob = await new Promise((resolve, reject) => {
@@ -785,7 +795,7 @@ async function processImageExport(
           const url = URL.createObjectURL(blob);
           downloadFile(url, `${filename}.${ext}`);
           setTimeout(() => URL.revokeObjectURL(url), TIMING.CLEANUP_DELAY);
-          showSaved(`${label} downloaded (Clipboard unavailable)`, linked, silent);
+          showSaved(`${label} downloaded (Clipboard unavailable)`, found);
         };
 
         // Clipboard (PNG only usually)
@@ -794,7 +804,7 @@ async function processImageExport(
         } else {
           try {
             await navigator.clipboard.write([new ClipboardItem({ [mime]: blob })]);
-            showSaved("Copied to clipboard!", linked, silent);
+            showSaved("Copied to clipboard!", found);
           } catch (err) {
             // Safari requires the write to happen inside the user gesture; by
             // the time the canvas has rendered that window has closed and it
@@ -809,9 +819,8 @@ async function processImageExport(
         downloadFile(downloadUrl, `${filename}.${ext}`);
         // Revoke after a short delay to ensure browser has started the download
         setTimeout(() => URL.revokeObjectURL(downloadUrl), TIMING.BUTTON_SUCCESS_DURATION);
-        showSaved(`${scale.toFixed(1)}x ${label} saved`, linked, silent);
+        showSaved(`${scale.toFixed(1)}x ${label} saved`, found);
       }
-      warnFaint(faint, silent);
       return ext;
     } finally {
       // DOM-4: Release canvas memory immediately
@@ -971,8 +980,7 @@ async function savePDF(sourceElement, filename, { transparent, modalClone, silen
     const pdf = new jsPDF(width > height ? "l" : "p", "px", [width, height]);
     pdf.addImage(imgData, "PNG", 0, 0, width, height, undefined, "FAST");
     pdf.save(`${filename}.pdf`);
-    showSaved("PDF saved", linked, silent, "PDF");
-    warnFaint(faint, silent);
+    showSaved("PDF saved", { linked, faint, silent, kind: "PDF" });
     return true;
   } catch (e) {
     if (!e?.dvReported) showErrorToast("PDF Failed", e.message);
