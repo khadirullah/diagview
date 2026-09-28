@@ -758,6 +758,8 @@ The table lists the keys in the order of the `?` help panel.
 
 Shortcuts are disabled when the modal is closed. While you type in a text field, such as the search box, all shortcuts except `Esc` are suspended. When a button, link or the colour picker has focus, `Space` and `Enter` press it. A focused checkbox ticks with `Space` only, as the browser does nothing for `Enter` there. Every other shortcut still works on these controls. After `Esc` closes the ☰ menu, focus stays on the menu button, so `F` opens search straight away.
 
+A double click on the canvas resets the view, as `0` does. On a touch screen a double tap does the same, with the second tap within 300 ms of the first. Lifting the last finger of a pinch does not count as a tap. Neither works while text select mode is on.
+
 `Tab` also reaches the links inside the diagram, after the topbar and before the ☰ menu button, and `Enter` or `Space` follows the focused link. Chrome and Firefox draw an accent outline around it. Safari draws no outline on SVG links, so there the focused link shows no ring.
 
 A link to a part of the page, such as `#details` or a Mermaid `click` link to `#details`, closes the viewer and then scrolls the page to that part. Back then works as it does after any other link to a part of the page. A link with a `target`, or held with `Ctrl`, `Cmd` or `Shift`, is left to the browser.
