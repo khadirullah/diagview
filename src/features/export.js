@@ -85,13 +85,14 @@ const WATERMARK_POSITIONS = [
   "center",
   "four-sides",
 ];
+const WATERMARK_PLACEMENTS = ["diagram", "margin"];
 
 /**
- * Resolve the watermark style, position and opacity. An unknown style or
- * position logs a warning and uses the default, so a typo still gives a
- * watermark. An opacity outside 0 to 1 is clamped into that range, and one
- * that is not a number uses 0.2. A missing or empty value uses the default
- * without a warning.
+ * Resolve the watermark style, position, placement and opacity. An unknown
+ * style, position or placement logs a warning and uses the default, so a
+ * typo still gives a watermark. An opacity outside 0 to 1 is clamped into
+ * that range, and one that is not a number uses 0.2. A missing or empty value
+ * uses the default without a warning.
  * @private
  */
 function resolveWatermark(config) {
@@ -115,6 +116,16 @@ function resolveWatermark(config) {
     pos = "bottom-right";
   }
 
+  let placement = String(config.placement || "diagram")
+    .trim()
+    .toLowerCase();
+  if (!WATERMARK_PLACEMENTS.includes(placement)) {
+    console.warn(
+      `DiagView: Unknown watermark placement "${config.placement}", expected diagram or margin. Using diagram.`,
+    );
+    placement = "diagram";
+  }
+
   const isEmpty =
     config.opacity == null || (typeof config.opacity === "string" && config.opacity.trim() === "");
   let opacity = isEmpty ? 0.2 : config.opacity;
@@ -136,15 +147,16 @@ function resolveWatermark(config) {
     opacity = Number(opacity);
   }
 
-  return { style, pos, opacity };
+  return { style, pos, placement, opacity };
 }
 
 /**
  * Injects a watermark into the SVG for branding during export.
- * Supports "background" (centered/rotated) and "corner" styles.
+ * Supports "background" (centered/rotated) and "corner" styles. `pad` is
+ * the width of the blank margin the export adds around the diagram.
  * @private
  */
-function injectWatermark(svg, d, sourceSvg = null) {
+function injectWatermark(svg, d, sourceSvg = null, pad = 0) {
   if (!(svg instanceof SVGElement)) return;
 
   // 1. Start with global config
@@ -170,6 +182,9 @@ function injectWatermark(svg, d, sourceSvg = null) {
     if (dataset.diagviewWatermarkText) config.text = dataset.diagviewWatermarkText;
     if (dataset.diagviewWatermarkStyle) config.style = dataset.diagviewWatermarkStyle;
     if (dataset.diagviewWatermarkPos) config.position = dataset.diagviewWatermarkPos;
+    if (dataset.diagviewWatermarkPlacement) {
+      config.placement = dataset.diagviewWatermarkPlacement;
+    }
     if (dataset.diagviewWatermarkOpacity) {
       const raw = dataset.diagviewWatermarkOpacity.trim();
       const n = Number(raw);
@@ -191,7 +206,7 @@ function injectWatermark(svg, d, sourceSvg = null) {
   const mainColor = theme.isDark ? "#ffffff" : "#000000";
   const contrastColor = theme.isDark ? "#000000" : "#ffffff";
 
-  const { style, pos, opacity } = resolveWatermark(config);
+  const { style, pos, placement, opacity } = resolveWatermark(config);
 
   const createWatermarkElement = (fontSize, textOpacity, maxWidth = 0) => {
     const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
@@ -253,43 +268,42 @@ function injectWatermark(svg, d, sourceSvg = null) {
   }
 
   // 2. CORNER / SIDES LAYER (Small & Professional)
+  // With placement "margin" the marks sit in the middle of the blank margin
+  // around the diagram, so they never cover a shape. The text shrinks to fit
+  // that band.
   if (style === "corner" || style === "both") {
+    const inMargin = placement === "margin";
     const maxDim = Math.max(d.w, d.h);
-    const fontSize = maxDim * 0.025; // Always small relative to diagram
+    let fontSize = maxDim * 0.025; // Always small relative to diagram
+    if (inMargin) fontSize = Math.min(fontSize, pad * 0.6);
     const margin = fontSize;
+    const inset = inMargin ? 0 : margin;
     const sideOpacity = style === "both" ? opacity * 0.8 : opacity;
 
+    const top = inMargin ? d.y - pad / 2 : d.y + margin + fontSize;
+    const bottom = inMargin ? d.y + d.h + pad / 2 : d.y + d.h - margin;
+    const place = (x, y, anchor, maxWidth, rotation) => {
+      const el = createWatermarkElement(fontSize, sideOpacity, maxWidth);
+      if (inMargin) el.setAttribute("dominant-baseline", "middle");
+      addAt(el, x, y, anchor, rotation);
+    };
+
     if (pos === "four-sides") {
-      const sides = [
-        { x: d.x + d.w / 2, y: d.y + margin + fontSize, anchor: "middle", max: d.w * 0.5 },
-        { x: d.x + d.w / 2, y: d.y + d.h - margin, anchor: "middle", max: d.w * 0.5 },
-        { x: d.x + margin, y: d.y + d.h / 2, anchor: "middle", rot: -90, max: d.h * 0.5 },
-        { x: d.x + d.w - margin, y: d.y + d.h / 2, anchor: "middle", rot: 90, max: d.h * 0.5 },
-      ];
-
-      sides.forEach((p) => {
-        const el = createWatermarkElement(fontSize, sideOpacity, p.max);
-        addAt(el, p.x, p.y, p.anchor, p.rot);
-      });
+      const left = inMargin ? d.x - pad / 2 : d.x + margin;
+      const right = inMargin ? d.x + d.w + pad / 2 : d.x + d.w - margin;
+      place(d.x + d.w / 2, top, "middle", d.w * 0.5);
+      place(d.x + d.w / 2, bottom, "middle", d.w * 0.5);
+      place(left, d.y + d.h / 2, "middle", d.h * 0.5, -90);
+      place(right, d.y + d.h / 2, "middle", d.h * 0.5, 90);
     } else if (pos !== "center") {
-      const cornerMaxWidth = d.w * 0.35; // Strict corner limit
-      const el = createWatermarkElement(fontSize, sideOpacity, cornerMaxWidth);
-
-      let x, y, anchor;
-      if (pos.includes("right")) {
-        x = d.x + d.w - margin;
-        anchor = "end";
-      } else {
-        x = d.x + margin;
-        anchor = "start";
-      }
-
-      if (pos.includes("bottom")) {
-        y = d.y + d.h - margin;
-      } else {
-        y = d.y + margin + fontSize;
-      }
-      addAt(el, x, y, anchor);
+      // Corner text lines up with the diagram's left or right edge
+      const east = pos.includes("right");
+      place(
+        east ? d.x + d.w - inset : d.x + inset,
+        pos.includes("bottom") ? bottom : top,
+        east ? "end" : "start",
+        d.w * 0.35, // Strict corner limit
+      );
     }
   }
 }
@@ -416,7 +430,7 @@ async function prepareSvgForExport(svg, modalClone, transparent) {
   });
 
   // Inject watermark if enabled (Silent Branding)
-  injectWatermark(exportSvg, d, svg);
+  injectWatermark(exportSvg, d, svg, padding);
 
   return { width, height, bg: theme.bg, svg: exportSvg, faint: faint ? sourceSvg : null };
 }

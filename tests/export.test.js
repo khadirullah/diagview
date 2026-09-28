@@ -424,6 +424,203 @@ describe("Export Functionality", () => {
       expect(markup()).toContain('fill-opacity="0"');
     });
   });
+
+  // The test diagram is 100 by 100 at the origin, and the export adds a
+  // 20 unit margin around it
+  describe("watermark.placement", () => {
+    let warn, click, downloaded;
+    beforeEach(() => {
+      state.activeSourceElement = null;
+      warn = jest.spyOn(console, "warn").mockImplementation(() => {});
+      downloaded = "";
+      click = jest.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(function () {
+        downloaded = this.href;
+      });
+    });
+    afterEach(() => {
+      warn.mockRestore();
+      click.mockRestore();
+      for (const key of Object.keys(container.dataset)) delete container.dataset[key];
+      updateConfig({
+        watermark: {
+          enabled: false,
+          text: "",
+          style: "corner",
+          position: "bottom-right",
+          placement: "diagram",
+          opacity: 0.2,
+        },
+      });
+    });
+    const exportWith = async (watermark) => {
+      updateConfig({
+        watermark: {
+          enabled: true,
+          text: "MARK",
+          style: "corner",
+          position: "bottom-right",
+          placement: "diagram",
+          opacity: 0.2,
+          ...watermark,
+        },
+      });
+      await exportToSVG(container, { filename: "wm" });
+      return decodeURIComponent(downloaded.replace(/^data:image\/svg\+xml;charset=utf-8,/, ""));
+    };
+    const marks = (markup) =>
+      [...new DOMParser().parseFromString(markup, "text/html").querySelectorAll("text")].map(
+        (t) => ({
+          x: Number(t.getAttribute("x")),
+          y: Number(t.getAttribute("y")),
+          anchor: t.getAttribute("text-anchor"),
+          baseline: t.getAttribute("dominant-baseline"),
+          transform: t.getAttribute("transform"),
+        }),
+      );
+    const warnings = () =>
+      warn.mock.calls.map((c) => String(c[0])).filter((m) => m.includes("atermark"));
+    const inDiagram = (m) => m.x >= 0 && m.x <= 100 && m.y >= 0 && m.y <= 100;
+    const inMargin = (m) =>
+      m.x >= -20 &&
+      m.x <= 120 &&
+      m.y >= -20 &&
+      m.y <= 120 &&
+      !(m.x > 0 && m.x < 100 && m.y > 0 && m.y < 100);
+
+    const styles = ["corner", "background", "both"];
+    const positions = [
+      "top-left",
+      "top-right",
+      "bottom-left",
+      "bottom-right",
+      "center",
+      "four-sides",
+    ];
+
+    test('"diagram" gives the same file as no placement at all', async () => {
+      for (const style of styles) {
+        for (const position of positions) {
+          const unset = await exportWith({ style, position, placement: undefined });
+          const diagram = await exportWith({ style, position, placement: "diagram" });
+          expect(diagram).toBe(unset);
+        }
+      }
+      expect(warnings()).toEqual([]);
+    });
+
+    test('"diagram" draws corner and side marks inside the diagram', async () => {
+      for (const position of [
+        "top-left",
+        "top-right",
+        "bottom-left",
+        "bottom-right",
+        "four-sides",
+      ]) {
+        const found = marks(await exportWith({ position }));
+        expect(found.length).toBeGreaterThan(0);
+        for (const m of found) {
+          expect(inDiagram(m)).toBe(true);
+          expect(m.baseline).toBeNull();
+        }
+      }
+    });
+
+    test('"margin" centres four-sides marks in the margin on each side', async () => {
+      const found = marks(await exportWith({ position: "four-sides", placement: "margin" }));
+      expect(found).toEqual([
+        { x: 50, y: -10, anchor: "middle", baseline: "middle", transform: null },
+        { x: 50, y: 110, anchor: "middle", baseline: "middle", transform: null },
+        { x: -10, y: 50, anchor: "middle", baseline: "middle", transform: "rotate(-90, -10, 50)" },
+        { x: 110, y: 50, anchor: "middle", baseline: "middle", transform: "rotate(90, 110, 50)" },
+      ]);
+    });
+
+    test.each([
+      ["top-left", 0, -10, "start"],
+      ["top-right", 100, -10, "end"],
+      ["bottom-left", 0, 110, "start"],
+      ["bottom-right", 100, 110, "end"],
+    ])(
+      '"margin" puts %s text in the margin, lined up with the diagram edge',
+      async (position, x, y, anchor) => {
+        const found = marks(await exportWith({ position, placement: "margin" }));
+        expect(found).toEqual([{ x, y, anchor, baseline: "middle", transform: null }]);
+        expect(inMargin(found[0])).toBe(true);
+      },
+    );
+
+    test('"margin" keeps the text size and fits it inside the margin', async () => {
+      const fontSize = (markup) => parseFloat(markup.match(/font-size="([\d.]+)px"/)[1]);
+      for (const width of [100, 600, 2000]) {
+        svg.setAttribute("viewBox", `0 0 ${width} 100`);
+        svg.setAttribute("width", String(width));
+        const diagram = await exportWith({ position: "bottom-right" });
+        const markup = await exportWith({ position: "bottom-right", placement: "margin" });
+        const pad = -Number(markup.match(/viewBox="(-?[\d.]+)/)[1]);
+        expect(fontSize(markup)).toBe(fontSize(diagram));
+        expect(fontSize(markup)).toBeLessThanOrEqual(pad * 0.6);
+        expect(marks(markup)[0]).toMatchObject({ x: width, y: 100 + pad / 2 });
+      }
+    });
+
+    test('"center" and "background" stay on the diagram with "margin"', async () => {
+      for (const [style, position] of [
+        ["corner", "center"],
+        ["background", "bottom-right"],
+        ["background", "four-sides"],
+      ]) {
+        const diagram = await exportWith({ style, position });
+        const margin = await exportWith({ style, position, placement: "margin" });
+        expect(margin).toBe(diagram);
+        expect(marks(margin)).toEqual([
+          { x: 50, y: 50, anchor: "middle", baseline: "middle", transform: "rotate(-30, 50, 50)" },
+        ]);
+      }
+    });
+
+    test('"both" keeps the centre mark on the diagram and moves the small marks', async () => {
+      const found = marks(
+        await exportWith({ style: "both", position: "four-sides", placement: "margin" }),
+      );
+      expect(found).toHaveLength(5);
+      expect(found[0].transform).toBe("rotate(-30, 50, 50)");
+      for (const m of found.slice(1)) expect(inMargin(m)).toBe(true);
+    });
+
+    test("data-diagview-watermark-placement overrides the config", async () => {
+      container.dataset.diagviewWatermarkPlacement = "margin";
+      expect(marks(await exportWith({ placement: "diagram" }))[0]).toMatchObject({
+        x: 100,
+        y: 110,
+      });
+
+      container.dataset.diagviewWatermarkPlacement = "diagram";
+      expect(inDiagram(marks(await exportWith({ placement: "margin" }))[0])).toBe(true);
+      expect(warnings()).toEqual([]);
+    });
+
+    test("placement matches without regard to case or spaces", async () => {
+      const found = marks(await exportWith({ placement: " MARGIN " }));
+      expect(found[0]).toMatchObject({ x: 100, y: 110 });
+      expect(warnings()).toEqual([]);
+    });
+
+    test("an unknown placement warns once and uses diagram", async () => {
+      const found = marks(await exportWith({ position: "four-sides", placement: "outside" }));
+      expect(warnings()).toEqual([
+        'DiagView: Unknown watermark placement "outside", expected diagram or margin. Using diagram.',
+      ]);
+      for (const m of found) expect(inDiagram(m)).toBe(true);
+    });
+
+    test("an unknown placement from an attribute warns and uses diagram", async () => {
+      container.dataset.diagviewWatermarkPlacement = "edge";
+      const found = marks(await exportWith({ placement: "margin" }));
+      expect(warnings()).toEqual([expect.stringContaining('placement "edge"')]);
+      expect(warnings()[0]).toContain("Using diagram.");
+      expect(inDiagram(found[0])).toBe(true);
+    });
+  });
 });
 
 // ---------------------------------------------------------------------------

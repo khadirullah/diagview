@@ -295,6 +295,34 @@
                     <p class="look">Download to see all five marks.</p>
                 </div>
             </div>
+
+            <!-- 6. Marks in the margin -->
+            <div class="card wide">
+                <div class="card-header">
+                    <h3>Marks in the margin</h3>
+                    <span class="tag">Inline SVG</span>
+                </div>
+                <div class="diagram" data-title="Marks in the margin"
+                    data-diagview-watermark="true"
+                    data-diagview-watermark-text="khadirullah.com"
+                    data-diagview-watermark-style="corner"
+                    data-diagview-watermark-pos="four-sides"
+                    data-diagview-watermark-placement="margin">
+                    <svg viewBox="0 0 800 200" xmlns="http://www.w3.org/2000/svg">
+                        <rect x="1" y="1" width="220" height="198" rx="8" fill="#10b981" fill-opacity="0.12" stroke="#10b981" stroke-width="2" />
+                        <text x="111" y="107" text-anchor="middle" fill="#15181d" style="fill: var(--ink)" font-family="sans-serif" font-size="20" font-weight="800">EDGE TO EDGE</text>
+                        <path d="M221 100 H579" stroke="#10b981" stroke-width="2" />
+                        <rect x="579" y="1" width="220" height="198" rx="8" fill="#10b981" fill-opacity="0.12" stroke="#10b981" stroke-width="2" />
+                        <text x="689" y="107" text-anchor="middle" fill="#15181d" style="fill: var(--ink)" font-family="sans-serif" font-size="20" font-weight="800">NOTHING COVERED</text>
+                    </svg>
+                </div>
+                <div class="card-note">
+                    <p>The four side marks sit in the blank margin around the diagram, so shapes that reach the edge
+                        stay clear. A crop to the diagram's edge removes them.</p>
+                    <div class="attrs"><code>style="corner"</code><code>pos="four-sides"</code><code>placement="margin"</code></div>
+                    <p class="look">Download and compare with the four side card above.</p>
+                </div>
+            </div>
         </div>
 
         <!-- Feature highlights -->
@@ -343,6 +371,9 @@
                         <dt>Position</dt>
                         <dd><code>top-left</code>, <code>top-right</code>, <code>bottom-left</code>,
                             <code>bottom-right</code>, <code>center</code> or <code>four-sides</code></dd>
+                        <dt>Placement</dt>
+                        <dd><code>diagram</code> by default, or <code>margin</code> to put corner and side text in the
+                            blank margin with <code>data-diagview-watermark-placement</code></dd>
                         <dt>Opacity</dt>
                         <dd>A number from 0 to 1, <code>0.2</code> by default</dd>
                     </dl>
@@ -359,6 +390,7 @@
     text: <span class="v">'© Your Company'</span>,
     style: <span class="v">'corner'</span>,
     position: <span class="v">'bottom-right'</span>,
+    placement: <span class="v">'diagram'</span>,
     opacity: <span class="b">0.2</span>
   }
 });

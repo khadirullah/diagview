@@ -44,6 +44,12 @@ import { deepMerge, deepFreeze } from "./state-utils.js";
  */
 
 /**
+ * Where the small corner and side marks go. "diagram" draws them just inside
+ * the diagram's edge. "margin" draws them in the blank margin around it.
+ * @typedef {"diagram"|"margin"} WatermarkPlacement
+ */
+
+/**
  * Export matches watermark values without regard to case. This accepts each
  * part between hyphens in lower, upper or capitalised case, so "Corner",
  * "TOP-LEFT" and "Top-Left" all type check.
@@ -60,6 +66,7 @@ import { deepMerge, deepFreeze } from "./state-utils.js";
  * @property {string} text - Watermark text
  * @property {AnyCase<WatermarkStyle>} style - Corner text, a large centred mark, or both
  * @property {AnyCase<WatermarkPosition>} position - Where corner text goes
+ * @property {AnyCase<WatermarkPlacement>} placement - Corner and side text on the diagram or in the margin around it
  * @property {number} opacity - From 0 to 1
  */
 
@@ -222,6 +229,7 @@ export const INITIAL_CONFIG = {
     text: "",
     style: "corner", // "corner" | "background" | "both"
     position: "bottom-right", // "top-left" | "top-right" | "bottom-left" | "bottom-right" | "center" | "four-sides"
+    placement: "diagram", // "diagram" | "margin"
     opacity: 0.2,
   },
 };

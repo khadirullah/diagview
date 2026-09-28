@@ -232,18 +232,19 @@ Set any of the following `data-diagview-*` attributes directly on a diagram cont
 </div>
 ```
 
-| Attribute                         | Type                               | Description                                   |
-| --------------------------------- | ---------------------------------- | --------------------------------------------- |
-| `data-diagview-layout`            | `header \| floating \| off`        | Layout for this diagram                       |
-| `data-diagview-scale`             | Integer `1`–`10`                   | Export `highResScale` for this diagram        |
-| `data-diagview-sanitize`          | `strict` \| `permissive` \| `off`  | SVG sanitization mode                         |
-| `data-diagview-allow-remote`      | `true` \| `false`                  | Allow remote CSS/fonts in SVG                 |
-| `data-diagview-watermark`         | `true` \| `false`                  | Turn the watermark on or off for this diagram |
-| `data-diagview-watermark-text`    | Any string                         | Custom watermark text                         |
-| `data-diagview-watermark-style`   | `corner` \| `background` \| `both` | Style override for this diagram               |
-| `data-diagview-watermark-pos`     | `top-left` \| `...`                | Position override for this diagram            |
-| `data-diagview-watermark-opacity` | `0`–`1`                            | Opacity override for this diagram             |
-| `data-title`                      | Any string                         | Title shown in header layout label            |
+| Attribute                           | Type                               | Description                                   |
+| ----------------------------------- | ---------------------------------- | --------------------------------------------- |
+| `data-diagview-layout`              | `header \| floating \| off`        | Layout for this diagram                       |
+| `data-diagview-scale`               | Integer `1`–`10`                   | Export `highResScale` for this diagram        |
+| `data-diagview-sanitize`            | `strict` \| `permissive` \| `off`  | SVG sanitization mode                         |
+| `data-diagview-allow-remote`        | `true` \| `false`                  | Allow remote CSS/fonts in SVG                 |
+| `data-diagview-watermark`           | `true` \| `false`                  | Turn the watermark on or off for this diagram |
+| `data-diagview-watermark-text`      | Any string                         | Custom watermark text                         |
+| `data-diagview-watermark-style`     | `corner` \| `background` \| `both` | Style override for this diagram               |
+| `data-diagview-watermark-pos`       | `top-left` \| `...`                | Position override for this diagram            |
+| `data-diagview-watermark-placement` | `diagram` \| `margin`              | Placement override for this diagram           |
+| `data-diagview-watermark-opacity`   | `0`–`1`                            | Opacity override for this diagram             |
+| `data-title`                        | Any string                         | Title shown in header layout label            |
 
 > **Requires `security.allowOverrides: true`** (the default) for `data-diagview-sanitize` and `data-diagview-allow-remote` to take effect.
 
@@ -1184,23 +1185,25 @@ DiagView.init({
 
 ### Configuration Options
 
-| Option     | Type    | Default          | Description                                                                                                                               |
-| ---------- | ------- | ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
-| `enabled`  | boolean | `false`          | Whether to inject branding on export/download                                                                                             |
-| `text`     | string  | `""`             | The branding text (e.g. your domain or name)                                                                                              |
-| `style`    | string  | `"corner"`       | `corner` \| `background` (PowerPoint style) \| `both`                                                                                     |
-| `position` | string  | `"bottom-right"` | `top-left` \| `top-right` \| `bottom-left` \| `bottom-right` \| `center` \| `four-sides`. `four-sides` needs the `corner` or `both` style |
-| `opacity`  | number  | `0.2`            | Transparency level (0.0 to 1.0)                                                                                                           |
+| Option      | Type    | Default          | Description                                                                                                                               |
+| ----------- | ------- | ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| `enabled`   | boolean | `false`          | Whether to inject branding on export/download                                                                                             |
+| `text`      | string  | `""`             | The branding text (e.g. your domain or name)                                                                                              |
+| `style`     | string  | `"corner"`       | `corner` \| `background` (PowerPoint style) \| `both`                                                                                     |
+| `position`  | string  | `"bottom-right"` | `top-left` \| `top-right` \| `bottom-left` \| `bottom-right` \| `center` \| `four-sides`. `four-sides` needs the `corner` or `both` style |
+| `placement` | string  | `"diagram"`      | `diagram` \| `margin`. Where corner and side text goes. See [Placement](#placement)                                                       |
+| `opacity`   | number  | `0.2`            | Transparency level (0.0 to 1.0)                                                                                                           |
 
 ### Values DiagView does not know
 
-Export checks `style`, `position` and `opacity` each time it draws the watermark, from the config and from the `data-diagview-watermark-*` attributes. Case and spaces around the value do not matter at runtime, so `"Corner"` and `"TOP-LEFT"` work. A mistake never removes the watermark. DiagView draws it with the fallback below and logs a console warning that names the value it used.
+Export checks `style`, `position`, `placement` and `opacity` each time it draws the watermark, from the config and from the `data-diagview-watermark-*` attributes. Case and spaces around the value do not matter at runtime, so `"Corner"` and `"TOP-LEFT"` work. A mistake never removes the watermark. DiagView draws it with the fallback below and logs a console warning that names the value it used.
 
-| Option     | Valid values                                                                   | Missing or empty           | Anything else                                                                                                                                        |
-| ---------- | ------------------------------------------------------------------------------ | -------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `style`    | `corner`, `background`, `both`                                                 | `corner`, no warning       | `corner`, with a warning                                                                                                                             |
-| `position` | `top-left`, `top-right`, `bottom-left`, `bottom-right`, `center`, `four-sides` | `bottom-right`, no warning | `bottom-right`, with a warning                                                                                                                       |
-| `opacity`  | A number from 0 to 1, such as `0.2` or `"0.2"`                                 | `0.2`, no warning          | Below 0 uses 0 and above 1 uses 1. Anything that is not a number uses 0.2 in the config, and the config opacity in an attribute. Each logs a warning |
+| Option      | Valid values                                                                   | Missing or empty           | Anything else                                                                                                                                        |
+| ----------- | ------------------------------------------------------------------------------ | -------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `style`     | `corner`, `background`, `both`                                                 | `corner`, no warning       | `corner`, with a warning                                                                                                                             |
+| `position`  | `top-left`, `top-right`, `bottom-left`, `bottom-right`, `center`, `four-sides` | `bottom-right`, no warning | `bottom-right`, with a warning                                                                                                                       |
+| `placement` | `diagram`, `margin`                                                            | `diagram`, no warning      | `diagram`, with a warning                                                                                                                            |
+| `opacity`   | A number from 0 to 1, such as `0.2` or `"0.2"`                                 | `0.2`, no warning          | Below 0 uses 0 and above 1 uses 1. Anything that is not a number uses 0.2 in the config, and the config opacity in an attribute. Each logs a warning |
 
 For example, `opacity: 5` draws at full strength, `opacity: "abc"` draws at 0.2, and `data-diagview-watermark-opacity="abc"` keeps whatever opacity the config sets.
 
@@ -1245,6 +1248,28 @@ Shows **both** the large background text AND the corner signature.
 #### 4. Four Sides
 
 With the `corner` or `both` style, `position: "four-sides"` places your text on all four edges of the image. The `background` style ignores the position.
+
+### Placement
+
+`placement` decides where the small corner and side text goes. It applies to the `corner` style, to the small text of `both`, and to `four-sides`.
+
+- `"diagram"` (the default) draws the text on the diagram, just inside its edge. Nobody can crop it off without cutting into the diagram. It can cover a shape that sits close to the edge.
+- `"margin"` draws the text in the blank margin that every export adds around the diagram. It never covers a shape. A crop to the diagram's edge removes it.
+
+Pick `"margin"` when a clean diagram matters more than a mark that is hard to remove. In the margin, corner text lines up with the diagram's left or right edge, and four-sides text sits in the middle of each side.
+
+```javascript
+DiagView.init({
+  watermark: {
+    enabled: true,
+    text: "khadirullah.com",
+    position: "four-sides",
+    placement: "margin",
+  },
+});
+```
+
+The large centred mark of `background`, `both` and `position: "center"` always stays on the diagram, whatever the placement. To set it for one diagram, use `data-diagview-watermark-placement="margin"` or `"diagram"`.
 
 ### File Size Note
 

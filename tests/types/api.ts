@@ -83,6 +83,7 @@ const full: DiagViewOptions = {
     text: "ACME",
     style: "both",
     position: "four-sides",
+    placement: "margin",
     opacity: 0.2,
   },
 };
@@ -93,12 +94,12 @@ const partialNested: DiagViewOptions = {
   ui: { buttons: { icons: { copy: null } } },
   security: { mode: "off" },
   performance: {},
-  watermark: { enabled: true },
+  watermark: { enabled: true, placement: "diagram" },
 };
 
 // Watermark values are matched without regard to case
 const caseInsensitive: DiagViewOptions = {
-  watermark: { style: "Corner", position: "TOP-LEFT" },
+  watermark: { style: "Corner", position: "TOP-LEFT", placement: "Diagram" },
 };
 
 // Callbacks may be cleared
@@ -134,6 +135,8 @@ const badMode: DiagViewOptions = { security: { mode: "loose" } };
 const badStyle: DiagViewOptions = { ui: { buttons: { style: "outline" } } };
 // @ts-expect-error watermark style is a fixed set of strings
 const badWatermark: DiagViewOptions = { watermark: { style: "tiled" } };
+// @ts-expect-error watermark placement is "diagram" or "margin"
+const badPlacement: DiagViewOptions = { watermark: { placement: "outside" } };
 // @ts-expect-error onZoomChange receives a number
 const badZoomCb: DiagViewOptions = { onZoomChange: (scale: string) => void scale };
 // @ts-expect-error maxZoomScale is a number
@@ -141,7 +144,7 @@ const badZoom: DiagViewOptions = { maxZoomScale: "25" };
 
 void [full, empty, partialNested, caseInsensitive, cleared, unknownKey, fontsAll, fontsNone];
 void [badLayout, badMinimap, badGrid, badMode, badStyle, badWatermark, badZoomCb, badZoom];
-void [badSearchExport, badFonts];
+void [badSearchExport, badFonts, badPlacement];
 
 async function lifecycle(): Promise<void> {
   expectType<Equal<ReturnType<typeof init>, Promise<void>>>();
