@@ -79,10 +79,11 @@ function createInitialState() {
     searchShapeCache: new WeakMap(),
 
     // Meeting mode internal state
-    // Storage availability (B4)
+    // Storage availability
     isStorageAvailable: (() => {
-      if (typeof window === "undefined" || typeof sessionStorage === "undefined") return false;
       try {
+        // A sandboxed iframe throws on any read of sessionStorage, even typeof
+        if (typeof window === "undefined" || typeof sessionStorage === "undefined") return false;
         const key = "__dv_test__";
         sessionStorage.setItem(key, "1");
         sessionStorage.removeItem(key);

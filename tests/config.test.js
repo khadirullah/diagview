@@ -289,3 +289,28 @@ describe("Core Config: publicState is read-only all the way down", () => {
     expect(publicState.config.watermark.enabled).toBe(false);
   });
 });
+
+describe("Core Config: storage probe", () => {
+  afterEach(() => {
+    resetConfig();
+  });
+
+  test("a page where reading sessionStorage throws still loads, with storage marked unavailable", () => {
+    // A sandboxed iframe without allow-same-origin throws SecurityError on any read
+    const original = Object.getOwnPropertyDescriptor(window, "sessionStorage");
+    Object.defineProperty(window, "sessionStorage", {
+      configurable: true,
+      get() {
+        throw new DOMException("The document is sandboxed", "SecurityError");
+      },
+    });
+    try {
+      expect(() => resetConfig()).not.toThrow();
+      expect(state.isStorageAvailable).toBe(false);
+    } finally {
+      Object.defineProperty(window, "sessionStorage", original);
+    }
+    resetConfig();
+    expect(state.isStorageAvailable).toBe(true);
+  });
+});
