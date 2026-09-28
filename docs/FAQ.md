@@ -347,7 +347,7 @@ A: Without `textColor` or `--diagram-text`, the toolbar and menu use `#1e293b` o
 A: Share links use the diagram's **index** on the page (`dv-idx`). If the page structure changes between the link being generated and opened, the index may not match. This is a known limitation for highly dynamic pages.
 
 **Q: I see `dv-*` parameters in my URL bar.**  
-A: DiagView removes them with `history.replaceState` once it has read them, including from a link that points at no diagram. If you see them persisting, check that `history.replaceState` is not blocked by your app's router.
+A: DiagView removes them with `history.replaceState` once it has read them. A link that points at no diagram goes 3 seconds after DiagView first read it. If you see them persisting, check that `history.replaceState` is not blocked by your app's router.
 
 ---
 

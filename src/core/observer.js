@@ -17,6 +17,10 @@ import { restoreViewFromURL } from "../features/lazy/share.js";
 
 // Share Link Handling (State managed via config.js)
 
+/** Milliseconds a share link waits for its diagram before it is removed */
+const SHARE_LINK_WAIT = 3000;
+let stripTimer = 0;
+
 /**
  * Every diagram DiagView knows about, in a stable order: the document first,
  * then each shadow root passed to initShadowRoot() in registration order.
@@ -65,11 +69,22 @@ export function checkShareLink() {
         console.warn("DiagView: Failed to restore shared view", e);
       });
     }, TIMING.OBSERVER_DEBOUNCE);
+  } else {
+    // The diagram may come later, from initShadowRoot(), refresh() or a
+    // late render, and each of those checks again. A link that still
+    // matches nothing, such as dv-idx=99, leaves the address bar after a
+    // wait, so it is not bookmarked or passed on.
+    stripTimer ||= setTimeout(() => {
+      stripTimer = 0;
+      if (!state.hasCheckedShareLink) {
+        state.hasCheckedShareLink = true;
+        stripDiagViewParams();
+      }
+    }, SHARE_LINK_WAIT);
+    return;
   }
 
-  // Remove the dv- parameters from the address bar once the link is handled.
-  // A link no diagram matches, such as dv-idx=99, goes too, so it is not
-  // bookmarked or passed on.
+  // Remove the dv- parameters from the address bar once the link is handled
   state.hasCheckedShareLink = true;
   stripDiagViewParams();
 }

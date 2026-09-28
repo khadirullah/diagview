@@ -336,7 +336,15 @@ describe("Observer Module: share parameters in the address bar", () => {
     useUrl("http://localhost/page?keep=1&dv-idx=99&dv-z=2.000#part");
     restoreViewFromURL.mockReturnValue(false);
 
-    refreshDiagrams();
+    jest.useFakeTimers();
+    try {
+      refreshDiagrams();
+      // The diagram may still arrive, so the link waits a moment
+      expect(replaceState).not.toHaveBeenCalled();
+      jest.advanceTimersByTime(3000);
+    } finally {
+      jest.useRealTimers();
+    }
 
     expect(openFullscreen).not.toHaveBeenCalled();
     expect(replaceState).toHaveBeenCalledTimes(1);
@@ -357,6 +365,31 @@ describe("Observer Module: share parameters in the address bar", () => {
     }
 
     expect(openFullscreen).toHaveBeenCalledWith(diagram);
+    expect(replaceState).toHaveBeenCalledWith(null, "", "http://localhost/page");
+  });
+
+  test("a link to a diagram in a shadow root added after init opens it", () => {
+    useUrl("http://localhost/page?dv-idx=1&dv-z=2.000");
+    restoreViewFromURL.mockImplementation((all) => all[1] && { diagram: all[1], index: 1 });
+    const host = document.createElement("div");
+    document.body.appendChild(host);
+
+    jest.useFakeTimers();
+    try {
+      refreshDiagrams();
+      // What initShadowRoot() does for a component that renders after init
+      const root = host.attachShadow({ mode: "open" });
+      root.innerHTML = '<div class="diagram"><svg></svg></div>';
+      state.shadowRoots.add(root);
+      refreshDiagrams();
+      jest.advanceTimersByTime(3000);
+    } finally {
+      jest.useRealTimers();
+      state.shadowRoots.clear();
+    }
+
+    expect(openFullscreen).toHaveBeenCalledWith(host.shadowRoot.querySelector(".diagram"));
+    expect(replaceState).toHaveBeenCalledTimes(1);
     expect(replaceState).toHaveBeenCalledWith(null, "", "http://localhost/page");
   });
 

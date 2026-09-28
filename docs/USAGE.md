@@ -421,9 +421,9 @@ https://example.com/docs?dv-idx=2&dv-z=2.500&dv-cx=450&dv-cy=300&dv-r=90&dv-t=cu
 - **Keyboard:** Press `L` in fullscreen
 - **UI:** Open FAB menu → click "Share Link"
 
-Once DiagView has read a share link, it removes every query parameter whose name starts with `dv-` from the address bar. It does this whether the link matched a diagram or not, so `?dv-idx=99` or a lone `?dv-z=2` goes too. Other query parameters and the `#hash` stay. DiagView changes the address with `history.replaceState`, so no history entry is added.
+Once DiagView has opened the diagram a share link points to, it removes every query parameter whose name starts with `dv-` from the address bar. A link that matches no diagram, such as `?dv-idx=99` or a lone `?dv-z=2`, goes too, 3 seconds after DiagView first read it. Other query parameters and the `#hash` stay. DiagView changes the address with `history.replaceState`, so no history entry is added.
 
-The parameters stay in two cases, so DiagView can try again later. One is a page with no diagrams yet. The other is a link to a diagram whose `<svg>` has not arrived yet. DiagView reads the link again when the page adds new elements, when you call `refresh()` and when you call `initShadowRoot()`.
+Until then DiagView can try again. It also keeps the parameters while the page has no diagrams yet, and while the diagram the link points to has no `<svg>` yet. DiagView reads the link again when the page adds new elements, when you call `refresh()` and when you call `initShadowRoot()`. A diagram in a shadow root that you register within those 3 seconds still opens.
 
 ---
 
@@ -1230,7 +1230,7 @@ Search reads the text of every `<text>` element and of every element with the cl
 ### Share link not working
 
 - On HTTPS or `localhost` the link is copied with the Clipboard API; elsewhere DiagView falls back to `document.execCommand('copy')`
-- DiagView removes the `dv-*` parameters from the address bar once it has read the link, even when the link matches no diagram. Check that `dv-idx` points at a diagram that exists on the page (see [Share Links](#8-share-links))
+- DiagView removes the `dv-*` parameters from the address bar once it has read the link. A link that matches no diagram goes after 3 seconds. Check that `dv-idx` points at a diagram that exists on the page (see [Share Links](#8-share-links))
 
 ### Mobile controls drift when pinch-zooming
 
