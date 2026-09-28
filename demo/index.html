@@ -22,14 +22,14 @@
         rel="stylesheet" crossorigin="anonymous">
 
     <!-- Dependencies -->
-    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@panzoom/panzoom@4.5.1/dist/panzoom.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/@panzoom/panzoom@4.5.1/dist/panzoom.min.js" defer></script>
 
     <!-- Styles -->
     <link rel="stylesheet" href="demo-styles.css">
 
     <!-- DiagView Core -->
-    <script src="https://unpkg.com/diagview@1.0.12/dist/diagview.umd.js" data-diagview-no-auto-init></script>
+    <script src="https://unpkg.com/diagview@1.0.12/dist/diagview.umd.js" defer data-diagview-no-auto-init></script>
 
     <style>
         /* ── Hero ── */
@@ -968,7 +968,8 @@
     <script>
         // Security modes: one sample SVG run through the real sanitizer in each
         // mode. The list under each copy compares the copy with the sample.
-        (function () {
+        // DiagView loads with defer, so this waits for DOMContentLoaded.
+        document.addEventListener('DOMContentLoaded', function () {
             var SAMPLE =
                 '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 150" role="img" aria-label="Sample diagram">' +
                 '<g transform="translate(58 62)"><rect class="spin" x="-24" y="-24" width="48" height="48" rx="8">' +
@@ -1012,25 +1013,26 @@
                     ul.appendChild(li);
                 });
             });
-        })();
+        });
     </script>
     <script>
         // Hero diagram: neutral line work, the DiagView node carries the accent.
         // The rules go into the SVG so the fullscreen copy looks the same.
-        mermaid.initialize(demoMermaidConfig({
-            flowchart: { curve: 'basis', padding: 12, nodeSpacing: 26, rankSpacing: 44 },
-            themeCSS: [
-                '.cluster rect { fill: transparent; stroke-dasharray: 5 4; }',
-                '.cluster-label .nodeLabel { color: var(--muted); font-family: var(--mono);' +
-                    ' font-size: 11px; letter-spacing: .12em; text-transform: uppercase; }',
-                '.node.hub polygon { fill: color-mix(in srgb, var(--accent) 12%, var(--surface));' +
-                    ' stroke: var(--accent); stroke-width: 2px; }',
-                '.node.hub .nodeLabel { font-weight: 700; color: var(--accent-ink); }',
-                '.node.src .nodeLabel { font-family: var(--mono); font-size: 13px; }'
-            ].join('\n')
-        }));
-
+        // The libraries load with defer, so they are ready by DOMContentLoaded.
         document.addEventListener('DOMContentLoaded', async () => {
+            mermaid.initialize(demoMermaidConfig({
+                flowchart: { curve: 'basis', padding: 12, nodeSpacing: 26, rankSpacing: 44 },
+                themeCSS: [
+                    '.cluster rect { fill: transparent; stroke-dasharray: 5 4; }',
+                    '.cluster-label .nodeLabel { color: var(--muted); font-family: var(--mono);' +
+                        ' font-size: 11px; letter-spacing: .12em; text-transform: uppercase; }',
+                    '.node.hub polygon { fill: color-mix(in srgb, var(--accent) 12%, var(--surface));' +
+                        ' stroke: var(--accent); stroke-width: 2px; }',
+                    '.node.hub .nodeLabel { font-weight: 700; color: var(--accent-ink); }',
+                    '.node.src .nodeLabel { font-family: var(--mono); font-size: 13px; }'
+                ].join('\n')
+            }));
+
             // Left to right is unreadable on a phone, so the hero draws top-down there
             const narrow = matchMedia('(max-width: 600px)').matches;
             const host = document.getElementById('heroDiagram');

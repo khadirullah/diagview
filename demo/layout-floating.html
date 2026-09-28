@@ -18,15 +18,15 @@
         rel="stylesheet" crossorigin="anonymous">
 
     <!-- Dependencies -->
-    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@panzoom/panzoom@4.5.1/dist/panzoom.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/@panzoom/panzoom@4.5.1/dist/panzoom.min.js" defer></script>
 
     <!-- Styles -->
     <link rel="stylesheet" href="demo-styles.css">
 
     <!-- Primary: CDN (Online) -->
     <!-- DiagView Core -->
-    <script src="https://unpkg.com/diagview@1.0.12/dist/diagview.umd.js" data-diagview-no-auto-init></script>
+    <script src="https://unpkg.com/diagview@1.0.12/dist/diagview.umd.js" defer data-diagview-no-auto-init></script>
 
     <!-- Development Mode: Uncomment below to use local file -->
     <!-- <script src="../dist/diagview.umd.js" data-diagview-no-auto-init></script> -->
@@ -559,10 +559,11 @@
     </footer>
 
     <script>
-        mermaid.initialize(demoMermaidConfig());
-
-        // Page-specific: generate stress nodes, render Mermaid, init DiagView
+        // Page-specific: generate stress nodes, render Mermaid, init DiagView.
+        // The libraries load with defer, so they are ready by DOMContentLoaded.
         document.addEventListener('DOMContentLoaded', async () => {
+            mermaid.initialize(demoMermaidConfig());
+
             const stressLayer = document.getElementById('stress-node-layer');
             if (stressLayer) {
                 for (let r = 0; r < 50; r++) {

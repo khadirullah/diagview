@@ -17,15 +17,15 @@
         rel="stylesheet" crossorigin="anonymous">
 
     <!-- Dependencies -->
-    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@panzoom/panzoom@4.5.1/dist/panzoom.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/@panzoom/panzoom@4.5.1/dist/panzoom.min.js" defer></script>
 
     <!-- Styles -->
     <link rel="stylesheet" href="demo-styles.css">
 
     <!-- Primary: CDN (Online) -->
     <!-- DiagView Core -->
-    <script src="https://unpkg.com/diagview@1.0.12/dist/diagview.umd.js" data-diagview-no-auto-init></script>
+    <script src="https://unpkg.com/diagview@1.0.12/dist/diagview.umd.js" defer data-diagview-no-auto-init></script>
 
     <!-- Development Mode: Uncomment below to use local file -->
     <!-- <script src="../dist/diagview.umd.js" data-diagview-no-auto-init></script> -->
@@ -422,14 +422,6 @@
     </footer>
 
     <script>
-        // Edge labels ("Success", "Error") get the canvas colour behind them
-        // instead of Mermaid's default, which is a black box on dark pages
-        mermaid.initialize(demoMermaidConfig({
-            themeVariables: {
-                edgeLabelBackground: document.documentElement.classList.contains('dark') ? '#0d2240' : '#fbfbfc'
-            }
-        }));
-
         // PlantUML draws black lines and text and relies on a white page. Put a
         // white sheet inside the SVG itself, so the diagram stays readable on the
         // navy page, in the fullscreen viewer and in exports.
@@ -455,7 +447,16 @@
             svg.setAttribute('viewBox', [(vb ? vb.x : 0) - pad - 1, (vb ? vb.y : 0) - pad - 1, w + pad * 2 + 2, h + pad * 2 + 2].join(' '));
         }
 
+        // The libraries load with defer, so they are ready by DOMContentLoaded
         document.addEventListener('DOMContentLoaded', async () => {
+            // Edge labels ("Success", "Error") get the canvas colour behind them
+            // instead of Mermaid's default, which is a black box on dark pages
+            mermaid.initialize(demoMermaidConfig({
+                themeVariables: {
+                    edgeLabelBackground: document.documentElement.classList.contains('dark') ? '#0d2240' : '#fbfbfc'
+                }
+            }));
+
             // 1. Fetch PlantUML and inline it
             try {
                 const response = await fetch('https://www.plantuml.com/plantuml/svg/SoWkIImgAStDuNBAJrBGjLDmpCbCJbMmKiX8pSd9vt98pKi1IW80');
