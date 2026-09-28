@@ -117,7 +117,7 @@ All export methods are async. `exportDiagram()` resolves to a boolean that says 
 
 Generic export dispatcher.
 
-**Signature:** `exportDiagram(element: HTMLElement, mode: ExportMode, options?: ExportOptions | null): Promise<boolean>`
+**Signature:** `exportDiagram(element: HTMLElement, mode: ExportMode, options?: ExportOptions | SVGSVGElement | null): Promise<boolean>`
 
 ```typescript
 type ExportMode =
@@ -140,7 +140,7 @@ await DiagView.exportDiagram(el, "pdf");
 await DiagView.exportDiagram(el, "copy");
 ```
 
-`"copy"` puts a PNG on the clipboard and `"copy-svg"` copies the SVG markup as text. When the browser cannot copy, they download the PNG or the .svg file instead. `"png-transparent"` and `"webp-transparent"` export with a transparent background. `"download"` exports a PNG. An unknown mode exports a PNG. You may omit `options` or pass `null`. `exportDiagram()` uses `filename` when you pass one. Otherwise it names the file from the diagram's title and the local date and time, as in `checkout_sequence_2026-09-28_011554`. The title is `data-title` first, then a `<title>` directly inside the `<svg>`, then a chart title Mermaid draws, and `diagram_export` when there is none. DiagView lowercases it, turns spaces into underscores and drops every character other than letters, digits, `.`, `-` and `_`. `silent` hides the progress notice for PNG, JPEG, WebP and Copy Image, the JPEG transparency notice, and the hard-to-read labels and linked images warnings in every mode (see [Text Colours](USAGE.md#text-colours) and [Linked images](USAGE.md#linked-images)). It is the call the toolbar and the fullscreen menu use, and the only export call that fires the `onExport` callback. It fires only after the export succeeds, so a failed or blocked export does not fire it. The promise resolves to `true` when the export succeeds, after `onExport`, and to `false` when it fails or is blocked. Success and failure follow the same rules as `onExport`. The `exportTo*()` methods and `copyToClipboard()` do not fire it.
+`"copy"` puts a PNG on the clipboard and `"copy-svg"` copies the SVG markup as text. When the browser cannot copy, they download the PNG or the .svg file instead. `"png-transparent"` and `"webp-transparent"` export with a transparent background. `"download"` exports a PNG. An unknown mode exports a PNG. You may omit `options` or pass `null`. An `<svg>` element in place of `options` works as `modalClone`, which keeps code written for the older `exportDiagram(element, mode, svg)` form working. `exportDiagram()` uses `filename` when you pass one. Otherwise it names the file from the diagram's title and the local date and time, as in `checkout_sequence_2026-09-28_011554`. The title is `data-title` first, then a `<title>` directly inside the `<svg>`, then a chart title Mermaid draws, and `diagram_export` when there is none. DiagView lowercases it, turns spaces into underscores and drops every character other than letters, digits, `.`, `-` and `_`. `silent` hides the progress notice for PNG, JPEG, WebP and Copy Image, the JPEG transparency notice, and the hard-to-read labels and linked images warnings in every mode (see [Text Colours](USAGE.md#text-colours) and [Linked images](USAGE.md#linked-images)). It is the call the toolbar and the fullscreen menu use, and the only export call that fires the `onExport` callback. It fires only after the export succeeds, so a failed or blocked export does not fire it. The promise resolves to `true` when the export succeeds, after `onExport`, and to `false` when it fails or is blocked. Success and failure follow the same rules as `onExport`. The `exportTo*()` methods and `copyToClipboard()` do not fire it.
 
 ### `DiagView.exportToPNG(element, options?)`
 
@@ -200,6 +200,7 @@ interface ExportOptions {
   transparent?: boolean; // Transparent background (default: false)
   filename?: string; // Base filename without extension (default: auto)
   silent?: boolean; // Skip the progress and JPEG transparency toasts (PNG, JPEG, WebP and Copy Image), and the hard-to-read labels and linked images warnings (default: false)
+  modalClone?: SVGSVGElement | null; // The viewer's copy to export in place of the page SVG, as the fullscreen menu does (default: null)
 }
 ```
 
