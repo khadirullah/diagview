@@ -1340,6 +1340,26 @@ describe("exportDiagram honours the filename and silent options", () => {
     expect(dl.names).toEqual(["arch.png"]);
   });
 
+  test.each(["svg", "png"])(
+    "a %s export of a nested diagram uses the outer title",
+    async (mode) => {
+      // A .mermaid inside a titled .diagram. The outer one has the toolbar.
+      container.className = "diagram";
+      container.dataset.title = "Outer title";
+      container.dataset.diagviewIndex = "0";
+      container.dataset.diagviewInit = "1";
+      const inner = document.createElement("div");
+      inner.className = "mermaid";
+      inner.dataset.diagviewIndex = "1";
+      inner.appendChild(container.querySelector("svg"));
+      container.appendChild(inner);
+      const dl = captureDownloads();
+      await exportDiagram(container, mode, { silent: true });
+      dl.restore();
+      expect(dl.names).toEqual([expect.stringMatching(/^outer_title_\d{4}-\d{2}-\d{2}_\d{6}\./)]);
+    },
+  );
+
   test("without a filename the generated name is kept", async () => {
     const dl = captureDownloads();
     await exportDiagram(container, "webp");
@@ -1782,6 +1802,33 @@ describe("generateFilename", () => {
     expect(name(`<div data-diagview-index="0"><svg ${NS}><rect/></svg></div>`)).toBe(
       "diagram_export",
     );
+  });
+
+  // A .mermaid inside a titled .diagram. Both keep an index, only the outer
+  // one gets the toolbar and shows its title in the header.
+  const NESTED = `<div class="diagram" data-title="Outer title" data-diagview-index="0">
+    <div class="mermaid" data-diagview-index="1"><svg ${NS}><rect/></svg></div></div>`;
+
+  test("a nested diagram takes the title of the element with the toolbar", () => {
+    expect(name(NESTED.replace('data-diagview-index="0"', '$& data-diagview-init="1"'))).toBe(
+      "outer_title",
+    );
+  });
+
+  test("before init the element passed to the export gives the title", () => {
+    document.body.innerHTML = NESTED;
+    const outer = document.querySelector(".diagram");
+    expect(generateFilename(outer.querySelector("svg"), outer)).toMatch(
+      /^outer_title_\d{4}-\d{2}-\d{2}_\d{6}$/,
+    );
+  });
+
+  test("a wrapper that is not a diagram does not hide the diagram's title", () => {
+    const plain = `<div data-diagview-index="0" data-title="Own title"><svg ${NS}></svg></div>`;
+    document.body.innerHTML = `<section>${plain}</section>`;
+    expect(
+      generateFilename(document.querySelector("svg"), document.querySelector("section")),
+    ).toMatch(/^own_title_/);
   });
 });
 

@@ -46,14 +46,20 @@ import {
 /**
  * Build the export file name from the diagram's title and a timestamp
  * @param {Element} svg - The diagram's SVG on the page
+ * @param {Element} [element] - The element passed to the export
  * @returns {string} File name without extension
  */
-export function generateFilename(svg) {
+export function generateFilename(svg, element) {
+  // The title comes from the element with the toolbar, so the file name
+  // matches the header. In a .mermaid inside a titled .diagram that is the
+  // outer element, not the inner match next to the SVG.
+  const owner =
+    svg.closest("[data-diagview-init]") || element?.closest?.("[data-diagview-index]") || undefined;
   // The data-title or the SVG's own <title> first, then a title drawn on the
   // diagram. Mermaid draws one as text.titleText, or with the chart type in
   // front, such as flowchartTitleText.
   const rawTitle =
-    getDiagramTitle(svg) ||
+    getDiagramTitle(svg, owner) ||
     svg.querySelector('text.title, text.titleText, text[class$="TitleText"], text.diagview-title')
       ?.textContent ||
     "diagram";
@@ -678,7 +684,7 @@ export async function renderToCanvas(
  */
 export async function exportToSVG(sourceElement, options = {}) {
   const svg = resolveSourceSvg(sourceElement);
-  if (svg) await saveSVG(svg, options.filename || generateFilename(svg), options);
+  if (svg) await saveSVG(svg, options.filename || generateFilename(svg, sourceElement), options);
 }
 
 /**
@@ -771,7 +777,7 @@ export async function copySVGCode(sourceElement, options = {}) {
     if (copied) {
       showSuccessToast("SVG Code copied to clipboard!");
     } else {
-      downloadSVG(data, options.filename || generateFilename(originalSvg));
+      downloadSVG(data, options.filename || generateFilename(originalSvg, sourceElement));
       showSuccessToast("SVG downloaded (Clipboard unavailable)");
     }
     return true;
@@ -914,7 +920,7 @@ async function processImageExport(
 export async function exportToPNG(sourceElement, options = {}) {
   const sourceSvg = resolveSourceSvg(sourceElement);
   if (!sourceSvg) return;
-  const filename = options.filename || generateFilename(sourceSvg);
+  const filename = options.filename || generateFilename(sourceSvg, sourceElement);
   await processImageExport(
     sourceElement,
     filename,
@@ -935,7 +941,7 @@ export async function exportToPNG(sourceElement, options = {}) {
 export async function exportToJPEG(sourceElement, options = {}) {
   const sourceSvg = resolveSourceSvg(sourceElement);
   if (!sourceSvg) return;
-  const filename = options.filename || generateFilename(sourceSvg);
+  const filename = options.filename || generateFilename(sourceSvg, sourceElement);
   await processImageExport(
     sourceElement,
     filename,
@@ -956,7 +962,7 @@ export async function exportToJPEG(sourceElement, options = {}) {
 export async function exportToWebP(sourceElement, options = {}) {
   const sourceSvg = resolveSourceSvg(sourceElement);
   if (!sourceSvg) return;
-  const filename = options.filename || generateFilename(sourceSvg);
+  const filename = options.filename || generateFilename(sourceSvg, sourceElement);
   await processImageExport(
     sourceElement,
     filename,
@@ -978,7 +984,7 @@ export async function exportToWebP(sourceElement, options = {}) {
 export async function copyToClipboard(sourceElement, options = {}) {
   const sourceSvg = resolveSourceSvg(sourceElement);
   if (!sourceSvg) return;
-  const filename = options.filename || generateFilename(sourceSvg);
+  const filename = options.filename || generateFilename(sourceSvg, sourceElement);
   await processImageExport(
     sourceElement,
     filename,
@@ -999,7 +1005,8 @@ export async function copyToClipboard(sourceElement, options = {}) {
  */
 export async function exportToPDF(sourceElement, options = {}) {
   const svg = resolveSourceSvg(sourceElement);
-  if (svg) await savePDF(sourceElement, options.filename || generateFilename(svg), options);
+  if (svg)
+    await savePDF(sourceElement, options.filename || generateFilename(svg, sourceElement), options);
 }
 
 /**
@@ -1083,7 +1090,7 @@ export async function exportDiagram(sourceElement, mode, options = {}) {
     return false;
   }
 
-  const filename = options.filename || generateFilename(svg);
+  const filename = options.filename || generateFilename(svg, sourceElement);
   const silent = options.silent;
 
   // Parse legacy modes mapping
