@@ -1355,7 +1355,7 @@ DiagView.init({
 });
 ```
 
-The large centred mark of `background`, `both` and `position: "center"` always stays on the diagram, whatever the placement. To set it for one diagram, use `data-diagview-watermark-placement="margin"` or `"diagram"`.
+The large centred mark of `background`, `both` and `position: "center"` goes over the middle of the diagram whatever the placement, so it covers the shapes there at the set opacity. DiagView measures the text in bold sans-serif and shrinks the font until the text fits across the diagram at its slant. The corner and side text shrinks the same way to fit its space. Where the browser cannot measure text, DiagView estimates 0.6 of the font size per letter, and a name of wide letters such as "W" and "M" can then run past its space. To set the placement for one diagram, use `data-diagview-watermark-placement="margin"` or `"diagram"`.
 
 ### File Size Note
 
