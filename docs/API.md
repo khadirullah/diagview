@@ -30,7 +30,7 @@ DiagView.init();
 DiagView.init({ layout: "header", showMinimap: false });
 ```
 
-Initialization runs synchronously, so you do not need to await it in normal use. The returned promise exists for one case: if a `destroy()` is still in flight when `init()` is called, the initialization is queued behind it and the promise resolves once DiagView is ready. This is what happens under React StrictMode and hot module reload, where cleanup calls `destroy()` and the effect immediately calls `init()` again.
+Initialization runs synchronously in normal use, so you do not need to await it. The returned promise stays pending in two cases. If a `destroy()` is still in flight when `init()` is called, DiagView queues the initialization behind it. This is what happens under React StrictMode and hot module reload, where cleanup calls `destroy()` and the effect immediately calls `init()` again. If `init()` runs before the page has a `<body>`, as from a plain script in `<head>`, DiagView waits for `DOMContentLoaded` and initializes then. In both cases the promise resolves once DiagView is ready. On a page that has finished loading with no `<body>`, such as an SVG file, `init()` logs a warning and resolves without starting.
 
 Calling `init()` more than once without an intervening `destroy()` is a no-op (logs a warning).
 

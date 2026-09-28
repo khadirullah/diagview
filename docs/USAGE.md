@@ -123,7 +123,7 @@ To match a custom selector:
 
 Auto-init never runs synchronously. It is scheduled one task after `DOMContentLoaded` (or one task after the library finishes evaluating when it is loaded with `type="module"`, `defer`, or after the page has already parsed). A `DiagView.init({...})` call that runs before that task cancels the pending auto-init, and your options win. Calls from a bundler entry point, a `<script type="module">`, a `defer` script or a plain script right after the tag all run in time. The opt-out attribute is only required when your own `init()` happens later than that, for example after an `await` (Mermaid rendering, a fetch) or from a framework effect.
 
-`init()` also works from a script in `<head>`. The page has no `<body>` at that point, so DiagView waits for `DOMContentLoaded` and starts then. The promise `init()` returns resolves once it has started.
+`init()` also works from a script in `<head>`. The page has no `<body>` at that point, so DiagView waits for `DOMContentLoaded` and starts then. The promise `init()` returns resolves once it has started. On a page that has finished loading and has no `<body>`, such as an SVG file, `init()` logs a warning and resolves without starting.
 
 The opt-out attribute works on any element. Put it on the library's `<script>` tag, on your own script tag, or on `<html>`. A bundled app has no script named `diagview`, so use `<html>` or the app's own tag:
 
