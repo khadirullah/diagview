@@ -9,6 +9,7 @@ import {
   invalidateFocusableCache,
   saveFocus,
   restoreFocus,
+  resetFocusManagement,
 } from "../src/ui/focus-manager.js";
 
 describe("focus trap ignores unrendered and closed-search controls", () => {
@@ -189,9 +190,20 @@ describe("focus returns to the diagram after closing", () => {
     saveFocus();
     restoreFocus();
     other.focus();
+    resetFocusManagement();
 
     expect(document.activeElement).toBe(other);
     expect(diagram.getAttribute("tabindex")).toBe("0");
+  });
+
+  test("destroy removes the tabindex even when the diagram never lost focus", () => {
+    document.activeElement.blur();
+    saveFocus();
+    restoreFocus();
+    expect(diagram.getAttribute("tabindex")).toBe("-1");
+
+    resetFocusManagement();
+    expect(diagram.hasAttribute("tabindex")).toBe(false);
   });
 
   test("a focused opener still gets focus back", () => {

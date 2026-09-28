@@ -11,6 +11,14 @@ import { addModalCleanupFunction } from "../core/lifecycle.js";
 // Focus Management State handled via state.focusManagementSetup in config.js
 let _focusCacheTimestamp = 0;
 const FOCUS_CACHE_TTL = 500; // ms
+// The diagram saveFocus() gave a tabindex, so destroy() can take it back
+let _tabindexOwner = null;
+
+function dropTabindex() {
+  _tabindexOwner?.removeEventListener("blur", dropTabindex);
+  _tabindexOwner?.removeAttribute("tabindex");
+  _tabindexOwner = null;
+}
 
 // Inputs that are pressed or picked rather than typed into. Letter shortcuts
 // still work while one of them has focus.
@@ -67,8 +75,10 @@ export function saveFocus() {
   // Return to the diagram instead, so keyboard users keep their place. It
   // holds tabindex -1 until it loses focus, so it never joins the tab order.
   if (el === document.body && (el = state.activeSourceElement) && !el.hasAttribute("tabindex")) {
+    dropTabindex();
     el.tabIndex = -1;
-    el.addEventListener("blur", () => el.removeAttribute("tabindex"), { once: true });
+    el.addEventListener("blur", dropTabindex);
+    _tabindexOwner = el;
   }
   state.lastActiveElement = el;
 }
@@ -302,4 +312,7 @@ export function setupFocusTrap() {
 export function resetFocusManagement() {
   state.focusManagementSetup = false;
   _focusCacheTimestamp = 0;
+  // Moving the diagram out of its wrapper drops focus without a blur event
+  // in Firefox and Safari, so the blur handler alone would leave it behind
+  dropTabindex();
 }
