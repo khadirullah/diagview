@@ -372,6 +372,7 @@ p {
 
 /* Labelled select, used for the Security level */
 .select {
+  position: relative;
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -383,13 +384,33 @@ p {
   font-size: 0.85rem;
   color: var(--muted);
 }
+/* WebKit draws its own grey box inside the pill unless appearance is off */
 .select select {
+  -webkit-appearance: none;
+  appearance: none;
   height: 100%;
+  padding: 0 22px 0 0;
   border: 0;
+  border-radius: 0;
   background: transparent;
   color: var(--ink);
   font: 500 0.85rem var(--font);
   cursor: pointer;
+}
+/* The chevron that appearance: none takes away, in the text colour.
+   Clicks pass through it to the select. */
+.select::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  right: 12px;
+  width: 6px;
+  height: 6px;
+  margin-top: -5px;
+  border: solid var(--ink);
+  border-width: 0 1.5px 1.5px 0;
+  transform: rotate(45deg);
+  pointer-events: none;
 }
 .select select:focus-visible {
   outline: none;
