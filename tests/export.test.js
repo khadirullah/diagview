@@ -1560,7 +1560,7 @@ describe("onExport fires and exportDiagram resolves to true only after a success
       throw new DOMException("Tainted canvases may not be exported", "SecurityError");
     };
     expect(await exportDiagram(container, "png")).toBe(false);
-    expect(toastTexts().some((t) => t.includes("cross-origin image"))).toBe(true);
+    expect(toastTexts().some((t) => t.includes("Export Failed"))).toBe(true);
     expect(onExport).not.toHaveBeenCalled();
   });
 
@@ -1854,5 +1854,91 @@ describe("Linked images left out of image and PDF files", () => {
     htmlLabel(PIXEL);
     const { seen } = await run("png");
     expect(seen).toContain("1.0x PNG saved");
+  });
+});
+
+describe("The notice when the browser will not read the canvas back", () => {
+  const NS = "http://www.w3.org/2000/svg";
+  let container, svg, errorSpy, clickSpy;
+
+  const add = (tag, attrs, text = "") => {
+    const el = document.createElementNS(NS, tag);
+    for (const [k, v] of Object.entries(attrs)) el.setAttribute(k, v);
+    el.textContent = text;
+    svg.appendChild(el);
+  };
+  const notice = async () => {
+    const stop = recordToasts();
+    const ok = await exportDiagram(container, "png");
+    return { ok, seen: stop() };
+  };
+
+  beforeEach(() => {
+    container = document.createElement("div");
+    svg = document.createElementNS(NS, "svg");
+    svg.setAttribute("viewBox", "0 0 100 100");
+    container.appendChild(svg);
+    document.body.appendChild(container);
+    updateConfig({ highResScale: 1, maxPixels: 16000000, security: { mode: "permissive" } });
+    global.URL.createObjectURL = jest.fn().mockReturnValue("blob:mock-url");
+    global.URL.revokeObjectURL = jest.fn();
+    global.Image = jest.fn(() => {
+      const img = document.createElement("img");
+      Object.defineProperty(img, "src", {
+        set() {
+          setTimeout(() => this.onload && this.onload(), 5);
+        },
+      });
+      return img;
+    });
+    HTMLCanvasElement.prototype.toBlob = () => {
+      throw new DOMException("Tainted canvases may not be exported", "SecurityError");
+    };
+    errorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
+    clickSpy = jest.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    container.remove();
+    errorSpy.mockRestore();
+    clickSpy.mockRestore();
+    hideToast();
+    updateConfig({ security: { mode: "strict" } });
+  });
+
+  test.each([
+    ["an HTML label", () => add("foreignObject", {}, "label")],
+    ["an image on the same site", () => add("image", { href: "logo.png" })],
+    ["an embedded image", () => add("image", { href: "data:image/png;base64,AAAA" })],
+    ["a link to another site", () => add("a", { href: "https://example.com/" })],
+  ])("with %s it is the plain failure notice", async (_name, setup) => {
+    setup();
+    const { ok, seen } = await notice();
+    expect(ok).toBe(false);
+    expect(seen).toContain("Export Failed: Tainted canvases may not be exported");
+    expect(seen.some((t) => t.includes("cross-origin"))).toBe(false);
+  });
+
+  test.each([
+    ["an image", () => add("image", { href: "https://example.com/a.png" })],
+    ["a protocol-relative image", () => add("image", { href: "//example.com/a.png" })],
+    ["a CSS url()", () => add("style", {}, "rect { mask: url(https://example.com/m.png); }")],
+    ["an @import", () => add("style", {}, '@import "https://example.com/a.css";')],
+  ])("with %s from another site it names the cross-origin cause", async (_name, setup) => {
+    setup();
+    const { ok, seen } = await notice();
+    expect(ok).toBe(false);
+    expect(seen.some((t) => t.startsWith("Export blocked by cross-origin image"))).toBe(true);
+  });
+
+  test("the SVG file keeps an image from another site as it was", async () => {
+    add("image", { href: "https://example.com/a.png" });
+    let downloaded = "";
+    clickSpy.mockImplementation(function () {
+      downloaded = decodeURIComponent(this.href);
+    });
+    await exportDiagram(container, "svg");
+    expect(downloaded).toContain('href="https://example.com/a.png"');
+    expect(downloaded).not.toContain("crossorigin");
   });
 });

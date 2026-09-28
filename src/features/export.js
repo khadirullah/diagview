@@ -353,6 +353,34 @@ function countLinkedImages(svg) {
 }
 
 /**
+ * Whether the copy links an image or resource on another site. Only such a
+ * link can explain a canvas the browser will not let DiagView read back.
+ * @private
+ * @param {SVGSVGElement} svg - The copy that gets drawn
+ * @returns {boolean} True for an image, <use>, CSS url() or @import on another origin
+ */
+function linksOtherSite(svg) {
+  const urls = [];
+  for (const el of svg.querySelectorAll("image, img, use, feImage")) {
+    urls.push(el.getAttribute("href") || el.getAttribute("xlink:href") || el.getAttribute("src"));
+  }
+  for (const el of svg.querySelectorAll("style, [style]")) {
+    const css = el.localName === "style" ? el.textContent : el.getAttribute("style");
+    for (const m of css.matchAll(/url\(\s*["']?([^"')\s]+)|@import\s+["']([^"']+)/gi)) {
+      urls.push(m[1] || m[2]);
+    }
+  }
+  return urls.some((url) => {
+    if (!url || /^\s*data:/i.test(url)) return false;
+    try {
+      return new URL(url.trim(), location.href).origin !== location.origin;
+    } catch {
+      return false;
+    }
+  });
+}
+
+/**
  * Show the saved or copied notice, then the hard-to-read labels warning if
  * there is one. When linked images were left out of the file, a warning with
  * the count takes the place of the notice, and takes in the labels warning
@@ -471,12 +499,6 @@ async function prepareSvgForExport(svg, modalClone, transparent) {
   // when loaded as <img>, causing the SVG to have no intrinsic size → clipping.
   exportSvg.style.cssText = "";
   exportSvg.removeAttribute("transform");
-
-  // Fix cross-origin images inside the SVG
-  exportSvg.querySelectorAll("image").forEach((img) => {
-    const href = img.getAttribute("href") || img.getAttribute("xlink:href") || "";
-    if (/^https?:\/\//.test(href)) img.setAttribute("crossorigin", "anonymous");
-  });
 
   // Inject watermark if enabled (Silent Branding)
   injectWatermark(exportSvg, d, svg, padding);
@@ -610,7 +632,15 @@ export async function renderToCanvas(sourceElement, modalClone, transparent = fa
   ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
   if (blobUrl) URL.revokeObjectURL(blobUrl);
 
-  return { canvas, scale, width, height, faint, linked: countLinkedImages(finalSvg) };
+  return {
+    canvas,
+    scale,
+    width,
+    height,
+    faint,
+    linked: countLinkedImages(finalSvg),
+    foreign: linksOtherSite(finalSvg),
+  };
 }
 
 /**
@@ -737,6 +767,8 @@ async function processImageExport(
   modalClone,
   silent = false,
 ) {
+  // Set once the copy is drawn, for the notice if reading it back fails
+  let foreign = false;
   try {
     const isWebP = format === "webp";
     const isJpeg = format === "jpeg" || format === "jpg";
@@ -772,12 +804,10 @@ async function processImageExport(
 
     let canvasRef = null;
     try {
-      const { canvas, scale, faint, linked } = await renderToCanvas(
-        sourceElement,
-        modalClone,
-        transparent,
-      );
+      const drawn = await renderToCanvas(sourceElement, modalClone, transparent);
+      const { canvas, scale, faint, linked } = drawn;
       canvasRef = canvas;
+      foreign = drawn.foreign;
       const found = { linked, faint, silent };
 
       const quality = isWebP ? 0.95 : undefined;
@@ -833,11 +863,13 @@ async function processImageExport(
     if (e?.dvReported) return;
     console.error("DiagView Export Error:", e);
 
-    // Handle "Tainted Canvas" security error specifically
-    if (e.name === "SecurityError" || e.message?.includes("tainted")) {
+    // A canvas the browser will not read back. Blame another site only when
+    // the copy links to one. Chrome and Safari also refuse a canvas drawn
+    // from the blob: fallback when it has HTML labels.
+    if (foreign && (e.name === "SecurityError" || e.message?.includes("tainted"))) {
       showErrorToast(
         "Export blocked by cross-origin image",
-        "An embedded image from another domain blocked canvas export. " +
+        "An image or resource from another site blocked canvas export. " +
           "Use SVG export instead, or ensure external images have CORS headers (Access-Control-Allow-Origin: *).",
       );
     } else {
