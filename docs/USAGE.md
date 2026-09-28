@@ -1110,7 +1110,7 @@ DiagView.init({
 ```
 
 - `animateOpen` (default `true`) fades the viewer in and grows it from 95% to full size over 0.3 seconds when it opens. With reduced motion on, the viewer opens without it.
-- `zoomAnimationDuration` (default `200`) is how many milliseconds zoom in, zoom out and reset take to animate. `0` turns the animation off.
+- `zoomAnimationDuration` (default `200`) is how many milliseconds zoom in, zoom out and every reset take to animate. That covers the reset button, `0` and `Space`, a double click or double tap, and the reset after the window grows or shrinks by more than a fifth. `0` turns the animation off.
 - `panAnimationDuration` (default `200`) is how many milliseconds one arrow key pan takes to animate. `0` turns the animation off.
 
 ---
