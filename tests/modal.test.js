@@ -128,6 +128,9 @@ describe("Modal System", () => {
     searchBtn.click();
     expect(topbar.classList.contains("search-open")).toBe(true);
     expect(searchBtn.getAttribute("aria-expanded")).toBe("true");
+    // Focus lands before the click returns, so keys typed right after F go
+    // to the box instead of the shortcut handler
+    expect(document.activeElement).toBe(document.getElementById("diagview-search"));
 
     searchBtn.click();
     expect(topbar.classList.contains("search-open")).toBe(false);

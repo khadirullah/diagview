@@ -779,9 +779,10 @@ function _wireModalEvents(elements, viewport) {
     invalidateFocusableCache();
     searchIconBtn.classList.toggle("active", open);
     searchIconBtn.setAttribute("aria-expanded", String(open));
-    if (open) {
-      requestAnimationFrame(() => searchInput?.focus());
-    }
+    // Focus in the same task. Waiting a frame let keys typed right after F
+    // reach the shortcut handler instead of the box. preventScroll keeps the
+    // page still while the search bar is still sliding in on phones.
+    if (open) searchInput?.focus({ preventScroll: true });
   });
 
   // Search Clear & Back
