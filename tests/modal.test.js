@@ -196,6 +196,67 @@ describe("Modal System", () => {
     location.hash = "";
   });
 
+  test("a link to a part of the diagram goes to the page's own copy of it", async () => {
+    const viewport = document.getElementById("diagview-modal-viewport");
+    // The viewer's copy carries prefixed ids, the page's diagram the originals
+    viewport.innerHTML =
+      '<svg xmlns="http://www.w3.org/2000/svg"><a href="#dv-mg0abc-x1y2z-node2"><rect/></a>' +
+      '<g id="dv-mg0abc-x1y2z-node2"></g></svg>';
+    svg.innerHTML = '<g id="node2"></g>';
+
+    viewport
+      .querySelector("a")
+      .dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true }));
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    expect(location.hash).toBe("#node2");
+    location.hash = "";
+  });
+
+  test("a link to the section the address already names still scrolls there", async () => {
+    const viewport = document.getElementById("diagview-modal-viewport");
+    viewport.innerHTML =
+      '<svg xmlns="http://www.w3.org/2000/svg"><a href="#details"><rect/></a></svg>';
+    const section = document.createElement("section");
+    section.id = "details";
+    section.scrollIntoView = jest.fn();
+    document.body.appendChild(section);
+    location.hash = "#details";
+
+    viewport
+      .querySelector("a")
+      .dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true }));
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    expect(section.scrollIntoView).toHaveBeenCalledTimes(1);
+    location.hash = "";
+  });
+
+  test("the wait for the viewer's history step leaves no popstate listener behind", async () => {
+    const viewport = document.getElementById("diagview-modal-viewport");
+    viewport.innerHTML =
+      '<svg xmlns="http://www.w3.org/2000/svg"><a href="#details"><rect/></a></svg>';
+    history.replaceState({ diagviewModal: true }, "");
+    const add = jest.spyOn(window, "addEventListener");
+    const remove = jest.spyOn(window, "removeEventListener");
+    try {
+      viewport
+        .querySelector("a")
+        .dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true }));
+      // No popstate comes, so the time limit ends the wait
+      await new Promise((resolve) => setTimeout(resolve, 600));
+
+      const listener = add.mock.calls.find(([type]) => type === "popstate")[1];
+      expect(remove).toHaveBeenCalledWith("popstate", listener);
+      expect(location.hash).toBe("#details");
+    } finally {
+      add.mockRestore();
+      remove.mockRestore();
+      history.replaceState(null, "");
+      location.hash = "";
+    }
+  });
+
   test("links that open a new tab do not expose window.opener", async () => {
     await openFullscreen(container);
     const links = [...document.querySelectorAll('a[target="_blank"]')];

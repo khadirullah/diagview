@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>DiagView section links</title>
+<style>body{font-family:sans-serif;margin:24px;background:#fff;color:#1e293b} .diagram{width:640px;margin:12px 0} .gap{height:1600px}</style>
+</head>
+<body>
+<div class="diagram" id="diag" data-title="Steps">
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 640 1400">
+  <a href="#node2"><rect x="20" y="20" width="200" height="80" fill="#dbeafe"/><text x="40" y="70">To step 2</text></a>
+  <a xlink:href="#details"><rect x="400" y="20" width="200" height="80" fill="#fef3c7"/><text x="420" y="70">To details</text></a>
+  <g id="node2"><rect x="20" y="1300" width="200" height="80" fill="#dcfce7"/><text x="40" y="1350">Step 2</text></g>
+</svg>
+</div>
+<div class="gap"></div>
+<section id="details"><h2>Details</h2><p>The section a diagram links to.</p></section>
+<div class="gap"></div>
+<script src="../../../node_modules/@panzoom/panzoom/dist/panzoom.min.js"></script>
+<script src="../../../dist/diagview.umd.js"></script>
+</body>
+</html>
