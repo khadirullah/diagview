@@ -11,7 +11,7 @@ A: Yes. DiagView is MIT licensed, so you can use it for personal and commercial 
 A: Only `@panzoom/panzoom` for the fullscreen zoom/pan feature. PDF export loads jsPDF from a CDN the first time it runs. In the ESM build, search, share links, the minimap, rotation, meeting mode and Readable text load on first use. The UMD build carries them all in one file.
 
 **Q: Which diagram libraries does DiagView support?**  
-A: Any library that outputs SVG into the DOM. That includes Mermaid.js, D3.js, Graphviz, PlantUML (rendered), Kroki, draw.io, and hand-crafted SVGs. See [Mermaid Integration](USAGE.md#21-mermaid-integration).
+A: Any library that outputs SVG into the DOM. That includes Mermaid.js, D3.js, Graphviz, PlantUML (rendered), Kroki, draw.io, and hand-crafted SVGs. See [Mermaid integration](USAGE.md#21-mermaid-integration).
 
 **Q: Does it work without npm?**  
 A: Yes. Drop in two `<script>` tags from a CDN and you are done. See [Installation](USAGE.md#1-installation).
@@ -179,7 +179,7 @@ A: To draw a diagram onto the image, DiagView first loads the SVG as a `data:` U
 
 ---
 
-## SVG Sanitization
+## SVG sanitization
 
 **Q: Why did my animation or click stop working in fullscreen?**  
 A: The fullscreen view and exports show a sanitized copy of your diagram, and the diagram on the page stays as it is. The default `strict` mode removes SMIL animations such as `<animate>` and `<animateTransform>`, and every mode except `off` removes `onclick` and other event handlers and `javascript:` links. When DiagView removes code, the console shows a warning that names the diagram and what went. For your own animated diagram, use `permissive`. For your own diagram whose inline `onclick` handlers you need, use `off`:
@@ -337,14 +337,14 @@ The minimap and exports show the redrawn colors.
 A: Pass `accentColor` to `init()`, or call `DiagView.configure({ accentColor: "#f59e0b" })` to change it later. Without `accentColor`, DiagView uses `--diagram-accent` if it holds a colour, then its built-in blue. It does not read the site's `--primary` or `--accent-color`. It reads the page variables again when the `class`, `data-theme` or `style` attribute of `<html>` or `<body>` changes, so a theme or accent switcher that sets them applies at once. An `accentColor` in the config always wins over the page variables.
 
 **Q: My diagram text is hard to read on a dark canvas.**  
-A: The canvas theme changes only the background, and the diagram keeps its author's colors. In the fullscreen menu, pick "Readable" under "Text Colours". DiagView then recolors only the text that is hard to read and keeps its hue. Exports with a background get the same recolored text. Transparent exports and Copy SVG keep the original colors. With Readable off, an export warns once when some labels will be hard to read on its background. See [Text Colours](USAGE.md#text-colours).
+A: The canvas theme changes only the background, and the diagram keeps its author's colors. In the fullscreen menu, pick "Readable" under "Text Colours". DiagView then recolors only the text that is hard to read and keeps its hue. Exports with a background get the same recolored text. Transparent exports and Copy SVG keep the original colors. With Readable off, an export warns once when some labels will be hard to read on its background. See [Text colours](USAGE.md#text-colours).
 
 **Q: Which text colour does the viewer use on a custom canvas colour?**  
 A: Without `textColor` or `--diagram-text`, the toolbar and menu use `#1e293b` or `#f1f5f9`, whichever has more contrast on the canvas. On a mid-grey canvas where neither reaches 4.5:1, they use black or white. A `textColor` or `--diagram-text` that falls under 4.5:1 also turns black or white, whichever has more contrast. The diagram keeps its own colours. See [WCAG contrast enforcement](USAGE.md#wcag-contrast-enforcement).
 
 ---
 
-## Share Links
+## Share links
 
 **Q: The share link doesn't open the right diagram.**  
 A: Share links use the diagram's **index** on the page (`dv-idx`). If the page structure changes between the link being generated and opened, the index may not match. This is a known limitation for highly dynamic pages.
@@ -377,7 +377,7 @@ The stylesheet is installed inside the root so the inline toolbar renders correc
 
 ---
 
-## Branding & Watermarking
+## Branding & watermarking
 
 **Q: Why don't I see the watermark in the viewer?**  
 A: DiagView watermarks are "Silent." They are designed to keep your website clean and professional. They only appear on the exported file (PNG, JPEG, WebP, SVG, or PDF), on copied images and in copied SVG markup to ensure your work is attributed when shared.

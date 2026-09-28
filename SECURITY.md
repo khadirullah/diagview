@@ -1,6 +1,6 @@
-# Security Policy
+# Security policy
 
-## Supported Versions
+## Supported versions
 
 Only the latest stable release receives security updates.
 
@@ -11,7 +11,7 @@ Only the latest stable release receives security updates.
 
 ---
 
-## SVG Sanitization Model
+## SVG sanitization model
 
 DiagView processes untrusted SVG content from the DOM. The built-in sanitizer (`src/core/utils.js → sanitizeSVG`) implements a three-tier security model:
 
@@ -44,7 +44,7 @@ No sanitization. Only for SVG content from a **fully trusted, developer-controll
 
 ---
 
-## Reporting a Vulnerability
+## Reporting a vulnerability
 
 Please **do not** file a public GitHub Issue for security vulnerabilities.
 
@@ -65,7 +65,7 @@ Please **do not** file a public GitHub Issue for security vulnerabilities.
 
 ---
 
-## Known Limitations
+## Known limitations
 
 - **`<style>` block CSS parsing** is pattern-based, not a full CSS parser. Highly obfuscated CSS injection (beyond hex/unicode escapes) is not guaranteed to be caught in `strict` mode. Keep `strict` mode for untrusted SVGs, and use `'off'` only for SVGs you fully control.
 - **`data-diagview-sanitize="off"`** and **`data-diagview-allow-remote="true"`** disable protections on a per-element basis. These attributes only function when `security.allowOverrides: true` is set (the default). You can disable per-element overrides globally:

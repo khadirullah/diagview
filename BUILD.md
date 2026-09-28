@@ -11,7 +11,7 @@
 
 ---
 
-## Initial Setup
+## Initial setup
 
 ```bash
 git clone https://github.com/khadirullah/diagview.git
@@ -37,7 +37,7 @@ Open a page in `demo/` directly in your browser. The demo pages load the release
 
 ---
 
-## Production Build
+## Production build
 
 ```bash
 # Clean previous build artifacts + generate all bundles + TypeScript declarations
@@ -120,7 +120,7 @@ npm run test:e2e
 
 ---
 
-## Code Quality
+## Code quality
 
 ### Lint
 
@@ -205,7 +205,7 @@ This will:
 
 ---
 
-## Pre-publish Checklist
+## Pre-publish checklist
 
 The `prepublishOnly` script runs automatically before `npm publish`:
 
@@ -215,7 +215,7 @@ npm run lint && npm test && npm run build
 
 ---
 
-## Environment Variables
+## Environment variables
 
 | Variable       | Effect                                             |
 | -------------- | -------------------------------------------------- |

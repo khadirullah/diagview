@@ -87,7 +87,7 @@ To disable auto-initialization and configure manually:
 
 Auto-init is deferred by one task, so an `init()` call issued synchronously from a module, `defer` or bundler entry script always wins over it; the attribute is only needed when your `init()` runs later (after an `await`, in a framework effect). It works on any element, usually `<html>` or your script tag.
 
-### NPM
+### npm
 
 ```bash
 npm install diagview @panzoom/panzoom

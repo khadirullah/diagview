@@ -4,19 +4,20 @@ All methods are available on the `DiagView` global (UMD) or the default export (
 
 ---
 
-## Table of Contents
+## Table of contents
 
-- [Core Methods](#core-methods)
-- [Export Methods](#export-methods)
-- [Modal Methods](#modal-methods)
-- [Utility Methods](#utility-methods)
+- [Core methods](#core-methods)
+- [Export methods](#export-methods)
+- [Modal methods](#modal-methods)
+- [Utility methods](#utility-methods)
 - [State (read-only)](#state-read-only)
-- [Configuration Reference](#configuration-reference)
+- [Configuration reference](#configuration-reference)
 - [TypeScript](#typescript)
+- [Browser support](#browser-support)
 
 ---
 
-## Core Methods
+## Core methods
 
 ### `DiagView.init(options?)`
 
@@ -113,7 +114,7 @@ Closing the viewer puts focus back on the button or diagram inside the shadow ro
 
 ---
 
-## Export Methods
+## Export methods
 
 All export methods are async. `exportDiagram()` resolves to a boolean that says whether the export worked. The others resolve to `undefined`.
 
@@ -144,7 +145,7 @@ await DiagView.exportDiagram(el, "pdf");
 await DiagView.exportDiagram(el, "copy");
 ```
 
-`"copy"` puts a PNG on the clipboard and `"copy-svg"` copies the SVG markup as text. When the browser cannot copy, they download the PNG or the .svg file instead. `"png-transparent"` and `"webp-transparent"` export with a transparent background. `"download"` exports a PNG. An unknown mode exports a PNG. You may omit `options` or pass `null`. An `<svg>` element in place of `options` works as `modalClone`, which keeps code written for the older `exportDiagram(element, mode, svg)` form working. `exportDiagram()` uses `filename` when you pass one. Otherwise it names the file from the diagram's title and the local date and time, as in `checkout_sequence_2026-09-28_011554`. The title is `data-title` first, then a `<title>` directly inside the `<svg>`, then a chart title Mermaid draws, and `diagram_export` when there is none. DiagView lowercases it, turns spaces into underscores and drops every character other than letters, digits, `.`, `-` and `_`. `silent` hides the progress notice for PNG, JPEG, WebP and Copy Image, the JPEG transparency notice, and the hard-to-read labels and linked images warnings in every mode (see [Text Colours](USAGE.md#text-colours) and [Linked images](USAGE.md#linked-images)). It is the call the toolbar and the fullscreen menu use, and the only export call that fires the `onExport` callback. It fires only after the export succeeds, so a failed or blocked export does not fire it. The promise resolves to `true` when the export succeeds, after `onExport`, and to `false` when it fails or is blocked. A PDF export that falls back to PNG because jsPDF did not load also resolves to `false` and does not fire `onExport`, though the PNG is saved. An image or PDF export that leaves out linked images still succeeds. Its warning gives the count, and names hard-to-read labels too when the export finds both. Success and failure follow the same rules as `onExport`. The `exportTo*()` methods and `copyToClipboard()` do not fire it.
+`"copy"` puts a PNG on the clipboard and `"copy-svg"` copies the SVG markup as text. When the browser cannot copy, they download the PNG or the .svg file instead. `"png-transparent"` and `"webp-transparent"` export with a transparent background. `"download"` exports a PNG. An unknown mode exports a PNG. You may omit `options` or pass `null`. An `<svg>` element in place of `options` works as `modalClone`, which keeps code written for the older `exportDiagram(element, mode, svg)` form working. `exportDiagram()` uses `filename` when you pass one. Otherwise it names the file from the diagram's title and the local date and time, as in `checkout_sequence_2026-09-28_011554`. The title is `data-title` first, then a `<title>` directly inside the `<svg>`, then a chart title Mermaid draws, and `diagram_export` when there is none. DiagView lowercases it, turns spaces into underscores and drops every character other than letters, digits, `.`, `-` and `_`. `silent` hides the progress notice for PNG, JPEG, WebP and Copy Image, the JPEG transparency notice, and the hard-to-read labels and linked images warnings in every mode (see [Text colours](USAGE.md#text-colours) and [Linked images](USAGE.md#linked-images)). It is the call the toolbar and the fullscreen menu use, and the only export call that fires the `onExport` callback. It fires only after the export succeeds, so a failed or blocked export does not fire it. The promise resolves to `true` when the export succeeds, after `onExport`, and to `false` when it fails or is blocked. A PDF export that falls back to PNG because jsPDF did not load also resolves to `false` and does not fire `onExport`, though the PNG is saved. An image or PDF export that leaves out linked images still succeeds. Its warning gives the count, and names hard-to-read labels too when the export finds both. Success and failure follow the same rules as `onExport`. The `exportTo*()` methods and `copyToClipboard()` do not fire it.
 
 ### `DiagView.exportToPNG(element, options?)`
 
@@ -197,7 +198,7 @@ SVG exports and the images drawn from them embed the page fonts their labels use
 
 An export of the diagram open in fullscreen during a search keeps the dimming and the outline. Set `exportSearchHighlight` to `false` to leave them out. The search in the viewer stays as it was.
 
-### Export Options
+### Export options
 
 ```typescript
 interface ExportOptions {
@@ -210,11 +211,11 @@ interface ExportOptions {
 
 `copyToClipboard()` ignores `transparent`. `exportToPDF()` keeps the background and shows a warning when `transparent` is set.
 
-While Readable is on under Text Colours, every export with a background recolours hard-to-read labels against that background, as the viewer does. Transparent exports and `"copy-svg"` keep the author's colours. See [Text Colours](USAGE.md#text-colours).
+While Readable is on under Text Colours, every export with a background recolours hard-to-read labels against that background, as the viewer does. Transparent exports and `"copy-svg"` keep the author's colours. See [Text colours](USAGE.md#text-colours).
 
 ---
 
-## Modal Methods
+## Modal methods
 
 ### `DiagView.openFullscreen(element, options?)`
 
@@ -261,7 +262,7 @@ DiagView.closeModal();
 
 ---
 
-## Utility Methods
+## Utility methods
 
 ### `DiagView.utils.sanitizeSVG(input, mode?, options?)`
 
@@ -358,7 +359,7 @@ console.log(DiagView.state.searchMatches.length);
 
 ---
 
-## Configuration Reference
+## Configuration reference
 
 ### Full type definition
 
@@ -487,9 +488,9 @@ The declarations describe the package import. The `DiagView` global that the scr
 
 ---
 
-## Browser Support
+## Browser support
 
-| Browser         | Minimum Version |
+| Browser         | Minimum version |
 | --------------- | --------------- |
 | Chrome          | 90              |
 | Firefox         | 88              |

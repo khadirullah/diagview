@@ -4,31 +4,31 @@ Complete guide from basic setup to advanced integration patterns.
 
 ---
 
-## Table of Contents
+## Table of contents
 
 1. [Installation](#1-installation)
-2. [Auto-Initialization](#2-auto-initialization)
-3. [Manual Initialization](#3-manual-initialization)
-4. [Layout Modes](#4-layout-modes)
-5. [Per-Diagram Overrides](#5-per-diagram-overrides)
+2. [Auto-initialization](#2-auto-initialization)
+3. [Manual initialization](#3-manual-initialization)
+4. [Layout modes](#4-layout-modes)
+5. [Per-diagram overrides](#5-per-diagram-overrides)
 6. [Search](#6-search)
 7. [Export](#7-export)
-8. [Share Links](#8-share-links)
-9. [Meeting Mode](#9-meeting-mode)
+8. [Share links](#8-share-links)
+9. [Meeting mode](#9-meeting-mode)
 10. [Rotation](#10-rotation)
-11. [Text Select Mode](#11-text-select-mode)
+11. [Text select mode](#11-text-select-mode)
 12. [Minimap](#12-minimap)
 13. [Theming](#13-theming)
-14. [SVG Sanitization](#14-svg-sanitization)
+14. [SVG sanitization](#14-svg-sanitization)
 15. [Shadow DOM](#15-shadow-dom)
-16. [Remember Zoom](#16-remember-zoom)
-17. [Keyboard Shortcuts](#17-keyboard-shortcuts)
-18. [Runtime Updates](#18-runtime-updates)
+16. [Remember zoom](#16-remember-zoom)
+17. [Keyboard shortcuts](#17-keyboard-shortcuts)
+18. [Runtime updates](#18-runtime-updates)
 19. [Callbacks](#19-callbacks)
-20. [Framework Integration](#20-framework-integration)
-21. [Mermaid Integration](#21-mermaid-integration)
-22. [Advanced Configuration](#22-advanced-configuration)
-23. [Programmatic Control](#23-programmatic-control)
+20. [Framework integration](#20-framework-integration)
+21. [Mermaid integration](#21-mermaid-integration)
+22. [Advanced configuration](#22-advanced-configuration)
+23. [Programmatic control](#23-programmatic-control)
 24. [Troubleshooting](#24-troubleshooting)
 25. [Watermark](#25-watermark)
 
@@ -47,7 +47,7 @@ Complete guide from basic setup to advanced integration patterns.
 <!-- Or for auto-updates within v1: diagview@1 -->
 ```
 
-### NPM
+### npm
 
 ```bash
 npm install diagview @panzoom/panzoom
@@ -88,7 +88,7 @@ Without `window.Panzoom`, the viewer still opens but zoom and pan are off. The c
 
 ---
 
-## 2. Auto-Initialization
+## 2. Auto-initialization
 
 When the page has no `data-diagview-no-auto-init` attribute, DiagView automatically scans for diagrams and initializes itself after `DOMContentLoaded`. The default selector is:
 
@@ -133,7 +133,7 @@ The opt-out attribute works on any element. Put it on the library's `<script>` t
 
 ---
 
-## 3. Manual Initialization
+## 3. Manual initialization
 
 Use `data-diagview-no-auto-init` on the script tag to take full control:
 
@@ -163,9 +163,9 @@ await mermaid.run();
 
 ---
 
-## 4. Layout Modes
+## 4. Layout modes
 
-### Floating (Default)
+### Floating (default)
 
 The floating layout keeps the diagram area clean. On hover, the buttons fade in at the bottom of the card. They use the same `ui.buttons.style` as the header layout, so see [Button style](#button-style) to change their look. In fullscreen, a FAB (Floating Action Button) at the bottom-right gives access to export, share, rotate, and meeting mode.
 
@@ -216,7 +216,7 @@ This is the most performant layout for dense pages with many diagrams.
 
 ---
 
-## 5. Per-Diagram Overrides
+## 5. Per-diagram overrides
 
 Set any of the following `data-diagview-*` attributes directly on a diagram container to override the global configuration for that element only. All other diagrams are unaffected.
 
@@ -305,7 +305,7 @@ In fullscreen, open the FAB menu (bottom-right) and click any export button. The
 
 ### Search highlight
 
-An export from the fullscreen viewer shows what the viewer shows, so during a search the file has the dimmed nodes and the outlined match. With Readable on, labels have the same recoloured text as in the viewer, unless the file is transparent (see [Text Colours](#text-colours)). Set `exportSearchHighlight: false` to export the plain diagram instead. The search in the viewer stays as it was.
+An export from the fullscreen viewer shows what the viewer shows, so during a search the file has the dimmed nodes and the outlined match. With Readable on, labels have the same recoloured text as in the viewer, unless the file is transparent (see [Text colours](#text-colours)). Set `exportSearchHighlight: false` to export the plain diagram instead. The search in the viewer stays as it was.
 
 ```javascript
 DiagView.configure({ exportSearchHighlight: false });
@@ -315,7 +315,7 @@ DiagView.configure({ exportSearchHighlight: false });
 
 A diagram can hold an image in two ways. An embedded image carries its data in the SVG as a `data:` URL. A linked image points to a file, such as `<image href="logo.png">` or an `<img>` in an HTML label. The page and the SVG export show both, since the SVG file keeps the link.
 
-PNG, JPEG, WebP, PDF and Copy Image leave linked images out. DiagView draws the SVG as an image to make these files, and the browser loads nothing an SVG drawn that way links to. The export then shows a warning in place of the saved notice, for example "4.0x PNG saved, but 2 linked images were left out. Only embedded images can go into image files." The file is still saved or copied, so `exportDiagram()` resolves to `true` and `onExport` fires. When the same export also finds labels that are hard to read (see [Text Colours](#text-colours)), one warning says both: "4.0x PNG saved, but 1 linked image was left out and some labels are hard to read on this background. Turn on Readable and export again." With `silent: true` the plain saved notice shows instead. To keep an image in these files, embed it as a base64 `data:` URL of one of the `allowedImageTypes`.
+PNG, JPEG, WebP, PDF and Copy Image leave linked images out. DiagView draws the SVG as an image to make these files, and the browser loads nothing an SVG drawn that way links to. The export then shows a warning in place of the saved notice, for example "4.0x PNG saved, but 2 linked images were left out. Only embedded images can go into image files." The file is still saved or copied, so `exportDiagram()` resolves to `true` and `onExport` fires. When the same export also finds labels that are hard to read (see [Text colours](#text-colours)), one warning says both: "4.0x PNG saved, but 1 linked image was left out and some labels are hard to read on this background. Turn on Readable and export again." With `silent: true` the plain saved notice shows instead. To keep an image in these files, embed it as a base64 `data:` URL of one of the `allowedImageTypes`.
 
 A browser can also refuse to let DiagView read back the image it drew, and then the export fails. For PNG, JPEG, WebP and Copy Image, the notice says "Export blocked by cross-origin image" only when the copy links an image, a `<use>`, a CSS `url()` or an `@import` on another origin. A `data:` URL, a relative link or a link to your own site does not count. Any other failure of these four shows "Export Failed" with the browser's message. A PDF that fails shows "PDF Failed" with the message. SVG export and Copy SVG do not draw an image. When they fail, they show "SVG Failed" or "Copy SVG Failed". A diagram over `performance.criticalFileLimit` shows "Diagram blocked" in every format.
 
@@ -395,7 +395,7 @@ A custom `pdfLibraryUrl` without its own `pdfLibraryIntegrity` loads with no int
 
 ---
 
-## 8. Share Links
+## 8. Share links
 
 Share the exact zoom level and pan position with anyone. The generated URL is the page address with DiagView's own parameters. It leaves out the page's other query parameters and its `#hash`, so auth tokens and similar values never end up in a shared link.
 
@@ -429,7 +429,7 @@ Until then DiagView can try again. It also keeps the parameters while the page h
 
 ---
 
-## 9. Meeting Mode
+## 9. Meeting mode
 
 Renders a red laser-pointer dot that follows the mouse (or touch point). Designed for screen-sharing presentations.
 
@@ -467,7 +467,7 @@ Rotation state is included in share links (`dv-r=90`) and remembered between ope
 
 ---
 
-## 11. Text Select Mode
+## 11. Text select mode
 
 By default, Panzoom captures all pointer events so dragging pans the diagram. Text Select Mode suspends pan/zoom and enables native browser text selection over SVG `<text>` nodes, so you can copy node labels.
 
@@ -555,7 +555,7 @@ DiagView checks that the viewer's text colour reaches at least 4.5:1 against the
 
 The menu headings and the search placeholder use a lighter shade of the same colour, stored in `--dv-muted-text` on `<html>`. DiagView fades the text colour toward the canvas by up to 30% and stops before it drops under 4.5:1, on the canvas and on the search box's grey wash. On a canvas where the text only just passes, they stay at full strength.
 
-### Canvas Theme
+### Canvas theme
 
 The "Canvas Theme" section of the fullscreen menu sets the background behind the diagram:
 
@@ -563,7 +563,7 @@ The "Canvas Theme" section of the fullscreen menu sets the background behind the
 - **Auto** (default) follows the host page theme detected above, or `backgroundColor` when you set it. It updates when the page switches theme.
 - The swatch row has a colour picker and four presets: White (`#ffffff`), Dark Slate (`#0b0f19`), Navy (`#0f172a`) and Charcoal (`#1e293b`).
 
-Light, Dark and the swatches override `backgroundColor`. The viewer's own text and controls take their colour from the canvas. So do the key badges in the topbar and the ☰ menu, also on sites that style `kbd` themselves. DiagView does not save the choice; it lasts until the page reloads or `destroy()` runs. Share links carry it in `dv-t` and `dv-c` (see [Share Links](#8-share-links)). The first time someone opens the viewer in a browser, a hint just above the menu button points to this menu for six seconds. DiagView stores in `localStorage` that the hint was shown, so it does not come back on later opens or page loads. Where the browser blocks storage, the hint never shows. Set `showFirstTimeThemeHint: false` to turn it off.
+Light, Dark and the swatches override `backgroundColor`. The viewer's own text and controls take their colour from the canvas. So do the key badges in the topbar and the ☰ menu, also on sites that style `kbd` themselves. DiagView does not save the choice; it lasts until the page reloads or `destroy()` runs. Share links carry it in `dv-t` and `dv-c` (see [Share links](#8-share-links)). The first time someone opens the viewer in a browser, a hint just above the menu button points to this menu for six seconds. DiagView stores in `localStorage` that the hint was shown, so it does not come back on later opens or page loads. Where the browser blocks storage, the hint never shows. Set `showFirstTimeThemeHint: false` to turn it off.
 
 ### Canvas grid
 
@@ -575,7 +575,7 @@ DiagView.init({ canvasGrid: "dots" });
 
 The dots move with the diagram as you pan and zoom. Their spacing doubles or halves to stay between 16 and 32 pixels, so they neither blur into grey when zoomed out nor thin out when zoomed in. They take the viewer's text colour at low opacity, so they follow the canvas theme. The grid is a CSS background on the viewer, so exports, clipboard copies and the diagram on the page never show it. `configure({ canvasGrid })` turns it on or off while the viewer is open. There is no per-diagram attribute for it.
 
-### Text Colours
+### Text colours
 
 The Canvas Theme section of the fullscreen menu changes only the background behind the diagram. The diagram keeps its author's colours, so dark text drawn for a light page can be hard to read on a dark canvas. The "Text Colours" row under the swatches has two buttons:
 
@@ -594,7 +594,7 @@ With Readable off, DiagView checks the labels before a PNG, JPEG, WebP, PDF, SVG
 
 ---
 
-## 14. SVG Sanitization
+## 14. SVG sanitization
 
 DiagView never sanitizes or rewrites the content of the SVG on your page, and the browser renders it as is. The security mode applies only to DiagView's own copies, which are the fullscreen view, exports and clipboard copies. DiagView cleans each copy before the browser loads anything in it, so code the mode removes never runs, not even once. Sanitize untrusted SVG yourself before you put it on the page, for example with `DiagView.utils.sanitizeSVG()`.
 
@@ -723,7 +723,7 @@ Diagrams inside shadow roots are numbered after the ones in the document, in the
 
 ---
 
-## 16. Remember Zoom
+## 16. Remember zoom
 
 When enabled, DiagView remembers each diagram's zoom level, pan position, and rotation after every change, whether it comes from dragging, the mouse wheel, the keyboard or the toolbar buttons. On the next open, the saved state is restored automatically.
 
@@ -737,7 +737,7 @@ DiagView.init({ rememberZoom: true });
 
 ---
 
-## 17. Keyboard Shortcuts
+## 17. Keyboard shortcuts
 
 The table lists the keys in the order of the `?` help panel.
 
@@ -746,7 +746,7 @@ The table lists the keys in the order of the `?` help panel.
 | `Esc`                                  | Close help, search or menu, then the viewer | Each press closes one thing. The shortcut panel goes first. While the search box has focus, `Esc` clears the query, then leaves search. An open ☰ menu closes next and focus returns to its button. Then the viewer closes |
 | `Space` / `0`                          | Reset / Fit to screen                       | On a focused link inside the diagram, `Space` follows the link                                                                                                                                                              |
 | `F`                                    | Open search                                 | On mobile, opens the search bar first                                                                                                                                                                                       |
-| `T`                                    | Toggle text select (copy SVG labels)        | See [Text Select Mode](#11-text-select-mode)                                                                                                                                                                                |
+| `T`                                    | Toggle text select (copy SVG labels)        | See [Text select mode](#11-text-select-mode)                                                                                                                                                                                |
 | `R`                                    | Rotate 90° clockwise                        |                                                                                                                                                                                                                             |
 | `M`                                    | Meeting mode (laser pointer)                | Press again to turn it off                                                                                                                                                                                                  |
 | `L`                                    | Copy share link                             | Clipboard API on HTTPS or localhost, `execCommand('copy')` elsewhere                                                                                                                                                        |
@@ -787,7 +787,7 @@ The hint shows in the topbar on screens 640 px wide or wider. To hide it and kee
 
 ---
 
-## 18. Runtime Updates
+## 18. Runtime updates
 
 ### Change configuration
 
@@ -862,7 +862,7 @@ DiagView.init({
 
 ---
 
-## 20. Framework Integration
+## 20. Framework integration
 
 Live example: [React 18 + StrictMode demo](https://khadirullah.github.io/diagview/framework-react.html). It is a real React dev-build tree that mounts, unmounts, remounts and replaces diagrams, with an "unsafe pattern" toggle that shows the error the rule below prevents. `demo/framework-react.html` in the repo, verified by `tests/e2e/verify-react-strictmode.spec.mjs`.
 
@@ -986,7 +986,7 @@ export class AppComponent implements OnInit, OnDestroy {
 
 ---
 
-## 21. Mermaid Integration
+## 21. Mermaid integration
 
 ```html
 <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
@@ -1022,7 +1022,7 @@ Mermaid fixes the theme when it draws, so a later theme switch leaves the diagra
 
 ---
 
-## 22. Advanced Configuration
+## 22. Advanced configuration
 
 ### Button style
 
@@ -1070,7 +1070,7 @@ DiagView.init({
 });
 ```
 
-Where one match sits inside another, each diagram still gets one toolbar. See [Mermaid Integration](#21-mermaid-integration) for which element gets it.
+Where one match sits inside another, each diagram still gets one toolbar. See [Mermaid integration](#21-mermaid-integration) for which element gets it.
 
 ### Natural panning
 
@@ -1109,7 +1109,7 @@ DiagView.init({
 
 ---
 
-## 23. Programmatic Control
+## 23. Programmatic control
 
 ### Open fullscreen from code
 
@@ -1242,13 +1242,13 @@ Search reads the text of every `<text>` element and of every element with the cl
 ### Share link not working
 
 - On HTTPS or `localhost` the link is copied with the Clipboard API; elsewhere DiagView falls back to `document.execCommand('copy')`
-- DiagView removes the `dv-*` parameters from the address bar once it has read the link. A link that matches no diagram goes after 3 seconds. Check that `dv-idx` points at a diagram that exists on the page (see [Share Links](#8-share-links))
+- DiagView removes the `dv-*` parameters from the address bar once it has read the link. A link that matches no diagram goes after 3 seconds. Check that `dv-idx` points at a diagram that exists on the page (see [Share links](#8-share-links))
 
 ### Mobile controls drift when pinch-zooming
 
 No setting is needed. When the modal opens, DiagView syncs its UI to the visual viewport and keeps it in sync while the browser is pinch-zoomed. If you still see drift, please open an issue with the device and browser version.
 
-### "Double Prefixing" on SVG IDs
+### "Double prefixing" on SVG IDs
 
 DiagView never mutates your original SVG's IDs. ID namespacing only happens on the internal clone used in the fullscreen modal. If you see IDs changing on the host page, please open an issue.
 
@@ -1258,7 +1258,7 @@ DiagView never mutates your original SVG's IDs. ID namespacing only happens on t
 
 DiagView can automatically inject a watermark into your diagrams when they are downloaded or exported. This is a "silent" feature. The watermark never shows in the viewer on your website, only on the saved image.
 
-### Basic Setup
+### Basic setup
 
 Enable watermarking in your initialization call:
 
@@ -1273,7 +1273,7 @@ DiagView.init({
 });
 ```
 
-### Configuration Options
+### Configuration options
 
 | Option      | Type    | Default          | Description                                                                                                                               |
 | ----------- | ------- | ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
@@ -1321,21 +1321,21 @@ The attribute goes on the element that `diagramSelector` matches. For Mermaid, t
 </script>
 ```
 
-### Branding Styles
+### Branding styles
 
-#### 1. Full-Canvas Overlay
+#### 1. Full-canvas overlay
 
 Places a large, faint version of your text in the center of the diagram, rotated at -30 degrees. This is the most protective option as it covers the main content area. Note: This style is always centered and ignores the `position` setting. With the `corner` style, `position: "center"` draws this layer in place of the corner signature.
 
-#### 2. Corner (Professional Signature)
+#### 2. Corner (professional signature)
 
 Places a small signature in the corner of your choice. This style obeys the `position` setting.
 
-#### 3. Both (Ultimate Protection)
+#### 3. Both (ultimate protection)
 
 Shows **both** the large background text AND the corner signature.
 
-#### 4. Four Sides
+#### 4. Four sides
 
 With the `corner` or `both` style, `position: "four-sides"` places your text on all four edges of the image. The `background` style ignores the position.
 
@@ -1361,10 +1361,10 @@ DiagView.init({
 
 The large centred mark of `background`, `both` and `position: "center"` goes over the middle of the diagram whatever the placement, so it covers the shapes there at the set opacity. DiagView measures the text in bold sans-serif and shrinks the font until the text fits across the diagram at its slant. The corner and side text shrinks the same way to fit its space. Where the browser cannot measure text, DiagView estimates 0.6 of the font size per letter, and a name of wide letters such as "W" and "M" can then run past its space. To set the placement for one diagram, use `data-diagview-watermark-placement="margin"` or `"diagram"`.
 
-### File Size Note
+### File size note
 
 Adding watermarks increases the complexity of the exported image. While the impact is minimal for most diagrams, using the `both` style or `four-sides` position will slightly increase the final file size of your exported PNG, SVG, or PDF files.
 
-### Visibility Optimization
+### Visibility optimization
 
 DiagView uses a "Contrast Stroke" technique to ensure your watermark is visible on any background. If your diagram has light yellow boxes (like Mermaid charts) or dark nodes, the watermark will remain legible by using a subtle outline of the opposite color.
