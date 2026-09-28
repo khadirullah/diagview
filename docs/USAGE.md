@@ -641,7 +641,7 @@ DiagView.init({ security: { mode: "permissive" } });
 </div>
 ```
 
-`data-diagview-sanitize` changes the mode for that one diagram. It works only while `security.allowOverrides` is `true`, which is the default. Set `allowOverrides: false` when page authors should not be able to turn sanitizing off.
+`data-diagview-sanitize` changes the mode for that one diagram. The mode covers its fullscreen view and every export and copy of it, from the page toolbar or the fullscreen menu. It works only while `security.allowOverrides` is `true`, which is the default. Set `allowOverrides: false` when page authors should not be able to turn sanitizing off.
 
 A mistyped mode logs a warning. An unknown `security.mode` uses `strict`. An unknown `data-diagview-sanitize` value uses the global mode and warns once per value.
 

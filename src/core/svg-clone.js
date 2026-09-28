@@ -514,7 +514,10 @@ export function cloneSVGForExportAsync(svg, paint = null) {
     // cloneSVG applies performance.criticalFileLimit as its size guard.
     // Security: per-element override > global config, gated by allowOverrides
     // (same resolution as the modal preset so both paths sanitize alike).
-    const container = svg.closest?.(state.config.diagramSelector || ".diagram, .mermaid, .chart");
+    // The fullscreen copy sits in the viewer, so it takes the open diagram's.
+    const container =
+      svg.closest?.(state.config.diagramSelector || ".diagram, .mermaid, .chart") ||
+      (svg.closest?.("#diagview-modal") ? state.activeSourceElement : null);
     const security = resolveElementSecurity(container);
     const clone = cloneSVG(svg, {
       preserveText: true,

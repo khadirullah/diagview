@@ -60,6 +60,42 @@ describe("per-element security overrides in clone presets", () => {
     expect(exported.querySelector("animate")).toBeNull();
     expect(hasRemoteImport(exported)).toBe(false);
   });
+
+  describe("an export from the fullscreen viewer", () => {
+    let viewerSvg;
+
+    beforeEach(() => {
+      const modal = document.createElement("div");
+      modal.id = "diagview-modal";
+      viewerSvg = cloneSVGForModal(dirty);
+      modal.appendChild(viewerSvg);
+      document.body.appendChild(modal);
+      state.activeSourceElement = dirty.parentElement;
+    });
+
+    afterEach(() => {
+      state.activeSourceElement = null;
+    });
+
+    test("uses the open diagram's own mode", async () => {
+      const exported = await cloneSVGForExportAsync(viewerSvg);
+      expect(exported.querySelector("animate")).not.toBeNull();
+      expect(hasRemoteImport(exported)).toBe(true);
+    });
+
+    test("still follows allowOverrides: false", async () => {
+      updateConfig({ security: { allowOverrides: false } });
+      const exported = await cloneSVGForExportAsync(viewerSvg);
+      expect(exported.querySelector("animate")).toBeNull();
+    });
+
+    test("an SVG outside the viewer does not take the open diagram's mode", async () => {
+      const stray = viewerSvg.cloneNode(true);
+      document.body.appendChild(stray);
+      const exported = await cloneSVGForExportAsync(stray);
+      expect(exported.querySelector("animate")).toBeNull();
+    });
+  });
 });
 
 describe("SVG Cloning Utilities", () => {
