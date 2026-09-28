@@ -451,6 +451,38 @@ describe("Diagram Init: button style and custom icons", () => {
     expect(btn("fullscreen").classList.contains("dv-custom-icon")).toBe(false);
   });
 
+  test("a plain custom icon is inserted unchanged", () => {
+    updateConfig({ ui: { buttons: { icons: { download: CUSTOM } } } });
+    initializeDiagram(container);
+    const icon = btn("download").querySelector("svg");
+    expect(icon.getAttribute("viewBox")).toBe("0 0 24 24");
+    expect(icon.getAttribute("stroke")).toBe("currentColor");
+    expect(icon.querySelector("path").getAttribute("d")).toBe("M4 4h16");
+  });
+
+  test("a custom icon loses its script, event handlers and javascript: links", () => {
+    const icon =
+      '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" onload="alert(1)">' +
+      "<script>alert(2)</script>" +
+      '<a href="javascript:alert(3)"><path d="M4 4h16" onclick="alert(4)"/></a></svg>';
+    updateConfig({ ui: { buttons: { icons: { copy: icon } } } });
+    initializeDiagram(container);
+    const svg = btn("copy").querySelector("svg");
+    expect(svg.hasAttribute("onload")).toBe(false);
+    expect(svg.querySelector("script")).toBeNull();
+    expect(svg.querySelector("a").hasAttribute("href")).toBe(false);
+    expect(svg.querySelector("path").hasAttribute("onclick")).toBe(false);
+    expect(svg.querySelector("path").getAttribute("d")).toBe("M4 4h16");
+    expect(btn("copy").classList.contains("dv-custom-icon")).toBe(true);
+  });
+
+  test("a custom icon that does not parse falls back to the built-in icon", () => {
+    updateConfig({ ui: { buttons: { icons: { fullscreen: "<svg><path></svg>" } } } });
+    initializeDiagram(container);
+    expect(btn("fullscreen").querySelector("svg path")).not.toBeNull();
+    expect(btn("fullscreen").classList.contains("dv-custom-icon")).toBe(false);
+  });
+
   test("an icon set back to null uses the built-in icon without dv-custom-icon", () => {
     updateConfig({ ui: { buttons: { icons: { copy: CUSTOM } } } });
     updateConfig({ ui: { buttons: { icons: { copy: null } } } });

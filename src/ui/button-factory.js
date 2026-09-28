@@ -165,7 +165,7 @@ export function createMenuItem(config) {
   btn.className = `dv-menu-item ${className}`.trim();
   btn.id = id;
 
-  // Insert sanitized icon then safe text nodes
+  // Insert the built-in icon then safe text nodes
   setSVGContent(btn, icon, "prepend");
   const labelNode = document.createTextNode(" " + label);
   btn.appendChild(labelNode);

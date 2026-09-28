@@ -12,6 +12,7 @@ import {
   setSVGContent,
   getDiagramTitle,
   removeEmptyAttr,
+  sanitizeSVG,
 } from "../core/utils.js";
 import { resolveElementSecurity } from "../core/svg-clone.js";
 import { ICONS } from "../ui/icons.js";
@@ -187,18 +188,17 @@ function getButtonStyleClass() {
 }
 
 /**
- * Get icon with config override
+ * Icon and style class for one button. A custom icon goes through the
+ * strict sanitizer like a diagram, so a script or handler in it never runs,
+ * and gets dv-custom-icon so the CSS draws it as written instead of as an
+ * outline. One that does not parse falls back to the built-in icon.
  */
-function getIcon(key, defaultIcon) {
-  return state.config.ui?.buttons?.icons?.[key] || defaultIcon;
-}
-
-/**
- * Style class for one button. A custom icon also gets dv-custom-icon so the
- * CSS draws it as written instead of as an outline.
- */
-function getButtonClass(styleClass, key) {
-  return state.config.ui?.buttons?.icons?.[key] ? `${styleClass} dv-custom-icon` : styleClass;
+function getIcon(key, defaultIcon, styleClass) {
+  const custom = state.config.ui?.buttons?.icons?.[key];
+  const icon = custom && sanitizeSVG(custom, "strict");
+  return icon
+    ? { icon, styleClass: `${styleClass} dv-custom-icon` }
+    : { icon: defaultIcon, styleClass };
 }
 
 /**
@@ -353,24 +353,21 @@ export function initializeDiagram(element, precalculatedIndex = -1) {
     {
       action: "copy",
       title: "Copy to clipboard",
-      icon: getIcon("copy", ICONS.copy),
-      styleClass: getButtonClass(styleClass, "copy"),
+      ...getIcon("copy", ICONS.copy, styleClass),
       feedback: true,
       onClick: () => exportDiagram(element, "copy"),
     },
     {
       action: "download",
       title: "Download PNG",
-      icon: getIcon("download", ICONS.dl),
-      styleClass: getButtonClass(styleClass, "download"),
+      ...getIcon("download", ICONS.dl, styleClass),
       feedback: true,
       onClick: () => exportDiagram(element, "download"),
     },
     {
       action: "fullscreen",
       title: "Open fullscreen",
-      icon: getIcon("fullscreen", ICONS.fs),
-      styleClass: getButtonClass(styleClass, "fullscreen"),
+      ...getIcon("fullscreen", ICONS.fs, styleClass),
       onClick: () => openFullscreen(element),
     },
   ];
