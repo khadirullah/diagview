@@ -436,6 +436,31 @@ export function cloneSVGForModal(svg) {
  * @returns {SVGElement} Cloned SVG
  */
 /**
+ * The sanitizer settings an export of svg uses. Security: per-element
+ * override > global config, gated by allowOverrides (same resolution as the
+ * modal preset so both paths sanitize alike). The fullscreen copy sits in
+ * the viewer, so it takes the open diagram's.
+ * @param {SVGElement} svg - SVG being exported
+ * @returns {{mode: string, allowRemoteResources: boolean, warn: boolean}} Mode, remote rule, and
+ *   whether removed code is worth a warning
+ */
+export function exportSecurity(svg) {
+  const container =
+    svg.closest?.(state.config.diagramSelector || ".diagram, .mermaid, .chart") ||
+    (svg.closest?.("#diagview-modal") ? state.activeSourceElement : null);
+  const security = resolveElementSecurity(container);
+  // security.exportMode "strict" cleans every export in strict mode. Code
+  // it removes only for the file is what the site asked for, so it does
+  // not warn.
+  const mode = state.config.security?.exportMode === "strict" ? "strict" : security.mode;
+  return {
+    mode,
+    allowRemoteResources: security.allowRemoteResources,
+    warn: mode === security.mode,
+  };
+}
+
+/**
  * Clone SVG specifically for export (Asynchronous)
  * Bakes all computed styles for standalone use without locking the main thread.
  */
@@ -514,25 +539,15 @@ export function cloneSVGForExportAsync(svg, paint = null) {
 
     // ─── PHASE 2: Clone ──────────────────────────────────────────────────
     // cloneSVG applies performance.criticalFileLimit as its size guard.
-    // Security: per-element override > global config, gated by allowOverrides
-    // (same resolution as the modal preset so both paths sanitize alike).
-    // The fullscreen copy sits in the viewer, so it takes the open diagram's.
-    const container =
-      svg.closest?.(state.config.diagramSelector || ".diagram, .mermaid, .chart") ||
-      (svg.closest?.("#diagview-modal") ? state.activeSourceElement : null);
-    const security = resolveElementSecurity(container);
-    // security.exportMode "strict" cleans every export in strict mode. Code
-    // it removes only for the file is what the site asked for, so it does
-    // not warn.
-    const mode = state.config.security?.exportMode === "strict" ? "strict" : security.mode;
+    const { mode, allowRemoteResources, warn } = exportSecurity(svg);
     const clone = cloneSVG(svg, {
       preserveText: true,
       preserveStyles: false,
       preserveStyleElements: true,
       securityMode: mode,
-      allowRemoteResources: security.allowRemoteResources,
+      allowRemoteResources,
       skipIdFix: true,
-      warnRemoved: mode === security.mode,
+      warnRemoved: warn,
     });
 
     // Remove match-ids from ORIGINAL immediately (before any awaits)

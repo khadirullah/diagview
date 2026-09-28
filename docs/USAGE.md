@@ -362,7 +362,7 @@ DiagView.init({
 
 ### Fonts
 
-Exports embed the `@font-face` sources used by the diagram, including self-hosted fonts referenced by relative `url()` paths, so the file renders with the same fonts when opened elsewhere. DiagView embeds only the rules the labels need. It picks the family, style and weight the browser would pick for each label, and of those only the files whose `unicode-range` covers a character in the label. A font file that cannot be fetched is left as its original reference.
+Exports embed the `@font-face` sources used by the diagram, including self-hosted fonts referenced by relative `url()` paths, so the file renders with the same fonts when opened elsewhere. DiagView embeds only the rules the labels need. It picks the family, style and weight the browser would pick for each label, and of those only the files whose `unicode-range` covers a character in the label. A font file that cannot be fetched is left as its original reference. In `strict` mode without `allowRemoteResources`, DiagView empties that reference instead, so the file never loads a font from another server and shows the next source or the fallback font.
 
 The browser hides the rules of a stylesheet from another origin, such as Google Fonts, unless its `<link>` has `crossorigin="anonymous"`. Without it DiagView cannot embed those fonts and logs a console warning once per stylesheet. The exported file then shows the labels in another font, which can be wider and cut off the end of a label.
 

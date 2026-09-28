@@ -110,8 +110,10 @@ export function pickFontFaces(faces, svgEl) {
  * Mutates the SVG element's first/new <style> block.
  * @param {SVGSVGElement} svgEl - Export clone
  * @param {"used"|"all"|"none"} [mode] - exportFonts, "used" when missing
+ * @param {boolean} [localOnly] - Empty any font link that could not be
+ *   embedded, as strict mode keeps remote resources out of the file
  */
-export async function embedDocumentFonts(svgEl, mode) {
+export async function embedDocumentFonts(svgEl, mode, localOnly) {
   if (mode == "none" || !document.fonts) return;
 
   // Wait for all fonts to be loaded before reading metrics / before export
@@ -167,6 +169,11 @@ export async function embedDocumentFonts(svgEl, mode) {
         const dataURI = await fetchAsDataURI(rawUrl, base);
         if (dataURI) {
           result = result.replace(match, `url('${dataURI}')`);
+        } else if (localOnly) {
+          // Strict mode keeps other servers out of the file. An empty
+          // data: URL fails like the link would, so the browser moves on
+          // to the next source or the fallback font.
+          result = result.replace(match, "url(data:,)");
         }
       }
       return result;

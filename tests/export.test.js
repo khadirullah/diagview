@@ -1142,8 +1142,10 @@ describe("Export embeds self-hosted fonts referenced by relative urls", () => {
     expect(text).toMatch(/url\('data:font\/woff2;base64,[A-Za-z0-9+/=]+'\)/);
     // the pre-existing data: URL is kept untouched
     expect(text).toContain("data:font/woff2;base64,QUJD");
-    // a failed fetch leaves that url alone and does not fail the export
-    expect(text).toContain("https://cdn.example.com/z.woff2");
+    // a failed fetch does not fail the export, and strict mode empties that
+    // url so the file loads nothing from another server
+    expect(text).not.toContain("cdn.example.com");
+    expect(text).toContain("url(data:,)");
   });
 });
 

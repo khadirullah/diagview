@@ -18,7 +18,7 @@ import {
   getDiagramTitle,
 } from "../core/utils.js";
 import { embedDocumentFonts } from "./export-fonts.js";
-import { cloneSVGForExportAsync } from "../core/svg-clone.js";
+import { cloneSVGForExportAsync, exportSecurity } from "../core/svg-clone.js";
 import {
   showSuccessToast,
   showErrorToast,
@@ -485,7 +485,12 @@ async function prepareSvgForExport(svg, modalClone, transparent) {
   }
 
   // Embed fonts so text metrics match the original browser render
-  await embedDocumentFonts(exportSvg, state.config.exportFonts);
+  const { mode, allowRemoteResources } = exportSecurity(sourceSvg);
+  await embedDocumentFonts(
+    exportSvg,
+    state.config.exportFonts,
+    mode === "strict" && !allowRemoteResources,
+  );
 
   // Set explicit dimensions as ATTRIBUTES (not CSS — CSS "100%" breaks img intrinsic size)
   exportSvg.setAttribute("viewBox", `${vx} ${vy} ${vw} ${vh}`);

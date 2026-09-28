@@ -196,6 +196,28 @@ describe("embedDocumentFonts", () => {
     expect(none.querySelector("style")).toBeNull();
   });
 
+  test("strict mode empties a font link it could not embed", async () => {
+    styleEl.textContent +=
+      "\n@font-face { font-family: 'Remote'; src: url(https://fonts.example.com/r.woff2); }";
+    fetchMock.mockImplementation(async (url) => {
+      if (String(url).includes("example.com")) throw new TypeError("Failed to fetch");
+      return { ok: true, blob: async () => new Blob(["font"], { type: "font/woff2" }) };
+    });
+    const runs = [["Hello"], ["World", { family: "Remote, sans-serif" }]];
+
+    const strict = svgWith(...runs);
+    await embedDocumentFonts(strict, "used", true);
+    const css = strict.querySelector("style.dv-font-embed").textContent;
+    expect(css).not.toContain("fonts.example.com");
+    expect(css).toContain("url(data:,)");
+    expect(css).toMatch(/url\('data:font\/woff2;base64,/);
+
+    // Other modes keep the link, as they allow remote resources
+    const other = svgWith(...runs);
+    await embedDocumentFonts(other, "used");
+    expect(other.querySelector("style.dv-font-embed").textContent).toContain("fonts.example.com");
+  });
+
   test("adds nothing when the text uses no page font", async () => {
     const svg = svgWith(["Hello", { family: "Arial, sans-serif" }]);
     await embedDocumentFonts(svg);
