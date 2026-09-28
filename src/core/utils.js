@@ -222,7 +222,8 @@ const SCRIPT_PROMISES = new Map();
  *
  * @param {string} url - Script URL
  * @param {string|null} [integrity=null] - SRI hash
- * @returns {Promise<void>}
+ * @returns {Promise<void>} Rejects when the script fails to load or takes
+ *   longer than TIMING.SCRIPT_LOAD_TIMEOUT
  */
 export function loadScript(url, integrity = null) {
   if (!isBrowser()) return Promise.resolve();
@@ -257,8 +258,17 @@ export function loadScript(url, integrity = null) {
       script.crossOrigin = "anonymous";
     }
 
-    script.onload = () => resolve();
+    // A stalled download fails after a while so the caller can fall back
+    const timer = setTimeout(
+      () => reject(new Error(`Timed out loading script: ${url}`)),
+      TIMING.SCRIPT_LOAD_TIMEOUT,
+    );
+    script.onload = () => {
+      clearTimeout(timer);
+      resolve();
+    };
     script.onerror = () => {
+      clearTimeout(timer);
       let errorMsg = `Failed to load script: ${url}`;
       if (integrity) {
         errorMsg += ". This may be due to a Subresource Integrity (SRI) mismatch.";

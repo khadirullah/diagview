@@ -1,4 +1,11 @@
-import { isBrowser, fixIds, sanitizeFilename, getClientCTM } from "../src/core/utils.js";
+import { jest } from "@jest/globals";
+import {
+  isBrowser,
+  fixIds,
+  sanitizeFilename,
+  getClientCTM,
+  loadScript,
+} from "../src/core/utils.js";
 
 describe("Utils API", () => {
   test("isBrowser accurately detects JS environment", () => {
@@ -265,5 +272,33 @@ describe("getClientCTM", () => {
     const before = document.documentElement.childElementCount;
     getClientCTM(el);
     expect(document.documentElement.childElementCount).toBe(before);
+  });
+});
+
+describe("loadScript", () => {
+  afterEach(() => {
+    jest.useRealTimers();
+    document.head.innerHTML = "";
+  });
+
+  test("a download that stalls rejects after 15 seconds", async () => {
+    jest.useFakeTimers();
+    // jsdom never fetches the script, so neither load nor error fires
+    const result = loadScript("https://example.test/stalled.js");
+    let settled = false;
+    result.catch(() => {}).finally(() => (settled = true));
+    jest.advanceTimersByTime(14999);
+    await Promise.resolve();
+    expect(settled).toBe(false);
+    jest.advanceTimersByTime(1);
+    await expect(result).rejects.toThrow("Timed out loading script");
+  });
+
+  test("a script that loads in time resolves and leaves no timer", async () => {
+    jest.useFakeTimers();
+    const result = loadScript("https://example.test/quick.js");
+    document.head.querySelector('script[src="https://example.test/quick.js"]').onload();
+    await expect(result).resolves.toBeUndefined();
+    expect(jest.getTimerCount()).toBe(0);
   });
 });

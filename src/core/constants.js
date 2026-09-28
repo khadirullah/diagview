@@ -29,6 +29,7 @@ export const TIMING = {
   PREWARM_DELAY: 200,
   RESOURCE_REVOKE_DELAY: 1000,
   UI_SYNC_THROTTLE: 32,
+  SCRIPT_LOAD_TIMEOUT: 15000, // Give up on a library download that stalls
 };
 
 /**

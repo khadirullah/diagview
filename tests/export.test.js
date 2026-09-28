@@ -1596,6 +1596,26 @@ describe("onExport fires and exportDiagram resolves to true only after a success
     expect(onExport).not.toHaveBeenCalled();
   });
 
+  test("a PDF whose jsPDF download stalls falls back to PNG after the time limit", async () => {
+    // jsdom never fetches the script, so only the time limit ends the wait
+    updateConfig({ pdfLibraryUrl: "https://example.test/jspdf-stalled.js" });
+    const realTimeout = window.setTimeout;
+    const spy = jest
+      .spyOn(window, "setTimeout")
+      .mockImplementation((fn, ms, ...args) => realTimeout(fn, ms === 15000 ? 0 : ms, ...args));
+    let delays;
+    try {
+      expect(await exportDiagram(container, "pdf")).toBe(false);
+    } finally {
+      delays = spy.mock.calls.map((call) => call[1]);
+      spy.mockRestore();
+      document.querySelector('script[src="https://example.test/jspdf-stalled.js"]')?.remove();
+    }
+    expect(delays).toContain(15000);
+    expect(toastTexts().some((t) => t.includes("PDF engine unavailable"))).toBe(true);
+    expect(onExport).not.toHaveBeenCalled();
+  });
+
   test("a clipboard write that fails does not fire it", async () => {
     Object.defineProperty(navigator, "clipboard", {
       value: { write: jest.fn(() => Promise.reject(new DOMException("Bad", "DataError"))) },
