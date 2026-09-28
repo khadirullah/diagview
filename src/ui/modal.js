@@ -534,7 +534,7 @@ function _createModalTopbar(content) {
   const textSelectMobileBtn = document.createElement("button");
   textSelectMobileBtn.id = "dv-text-select-btn";
   textSelectMobileBtn.className = "dv-icon-btn dv-hide-on-search";
-  textSelectMobileBtn.setAttribute("aria-label", "Toggle text select — copy SVG node labels");
+  textSelectMobileBtn.setAttribute("aria-label", "Toggle text select to copy SVG node labels");
   textSelectMobileBtn.setAttribute("aria-pressed", "false");
   textSelectMobileBtn.setAttribute("type", "button");
   setSVGContent(textSelectMobileBtn, ICONS.textSelect);
@@ -628,7 +628,7 @@ function _createModalTopbar(content) {
   const textSelectDesktopBtn = document.createElement("button");
   textSelectDesktopBtn.id = "dv-text-select-desktop-btn";
   textSelectDesktopBtn.className = "dv-text-select-btn";
-  textSelectDesktopBtn.setAttribute("aria-label", "Toggle text select — copy SVG node labels");
+  textSelectDesktopBtn.setAttribute("aria-label", "Toggle text select to copy SVG node labels");
   textSelectDesktopBtn.setAttribute("aria-pressed", "false");
   textSelectDesktopBtn.setAttribute("type", "button");
   textSelectDesktopBtn.setAttribute("data-tooltip", "Text select — copy SVG labels  (T)");
