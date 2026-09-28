@@ -290,8 +290,8 @@ await DiagView.exportToWebP(el, { transparent: true });
 await DiagView.exportToPDF(el);
 await DiagView.copyToClipboard(el);
 
-// Generic dispatcher (used internally by the UI)
-await DiagView.exportDiagram(el, "png", { transparent: true });
+// Generic dispatcher (used internally by the UI), resolves to true once the file is saved
+const saved = await DiagView.exportDiagram(el, "png", { transparent: true });
 ```
 
 ---

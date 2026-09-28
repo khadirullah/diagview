@@ -195,8 +195,10 @@ async function exporting(): Promise<void> {
   void badMode;
 
   const opts: ExportOptions = { transparent: true, filename: "chart", silent: true };
-  expectType<Equal<ReturnType<typeof exportDiagram>, Promise<void>>>();
+  expectType<Equal<ReturnType<typeof exportDiagram>, Promise<boolean>>>();
   for (const mode of modes) await exportDiagram(el, mode);
+  const saved: boolean = await exportDiagram(el, "png");
+  void saved;
   await exportDiagram(el, "png", opts);
   await exportDiagram(el, "svg", null);
   await DiagView.exportDiagram(el, "pdf");

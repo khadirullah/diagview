@@ -1370,7 +1370,7 @@ describe("Export over performance.criticalFileLimit", () => {
   test.each(["svg", "copy-svg", "png", "jpeg", "webp", "copy", "pdf"])(
     "%s shows only the Diagram blocked notice",
     async (mode) => {
-      await expect(exportDiagram(container, mode)).resolves.toBeUndefined();
+      await expect(exportDiagram(container, mode)).resolves.toBe(false);
       const texts = toastTexts();
       expect(texts.filter((t) => t.includes("Diagram blocked"))).toHaveLength(1);
       expect(texts.some((t) => /Failed|intermediate value/.test(t))).toBe(false);
@@ -1386,7 +1386,7 @@ describe("Export over performance.criticalFileLimit", () => {
   });
 });
 
-describe("onExport fires only after a successful export", () => {
+describe("onExport fires and exportDiagram resolves to true only after a successful export", () => {
   let container, onExport, clickSpy, errorSpy;
   const toastTexts = () =>
     Array.from(document.querySelectorAll("#diagview-toast-container .diagview-toast")).map(
@@ -1446,7 +1446,7 @@ describe("onExport fires only after a successful export", () => {
   });
 
   test.each(["png", "jpeg", "webp", "svg"])("a %s download fires it once", async (mode) => {
-    await exportDiagram(container, mode, { filename: "ok" });
+    expect(await exportDiagram(container, mode, { filename: "ok" })).toBe(true);
     expect(onExport).toHaveBeenCalledTimes(1);
     expect(onExport).toHaveBeenCalledWith(mode, "ok");
   });
@@ -1458,14 +1458,16 @@ describe("onExport fires only after a successful export", () => {
     ["download", {}, "png"],
     ["gif", {}, "png"],
   ])("%s reports the format of the file it made", async (mode, extra, format) => {
-    await exportDiagram(container, mode, { filename: "ok", silent: true, ...extra });
+    expect(await exportDiagram(container, mode, { filename: "ok", silent: true, ...extra })).toBe(
+      true,
+    );
     expect(clickSpy.mock.contexts[0].download).toBe(`ok.${format}`);
     expect(onExport).toHaveBeenCalledWith(format, "ok");
   });
 
   test("Copy Image that downloads the PNG instead still fires it", async () => {
     Object.defineProperty(navigator, "clipboard", { value: undefined, configurable: true });
-    await exportDiagram(container, "copy", { filename: "ok" });
+    expect(await exportDiagram(container, "copy", { filename: "ok" })).toBe(true);
     expect(toastTexts().some((t) => t.includes("Clipboard unavailable"))).toBe(true);
     expect(onExport).toHaveBeenCalledWith("copy", "ok");
   });
@@ -1475,7 +1477,7 @@ describe("onExport fires only after a successful export", () => {
     async (mode) => {
       updateConfig({ performance: { criticalFileLimit: 10 } });
       window.jspdf = { jsPDF: jest.fn() };
-      await exportDiagram(container, mode);
+      expect(await exportDiagram(container, mode)).toBe(false);
       expect(toastTexts().some((t) => t.includes("Diagram blocked"))).toBe(true);
       expect(onExport).not.toHaveBeenCalled();
     },
@@ -1489,8 +1491,9 @@ describe("onExport fires only after a successful export", () => {
     const ready = Promise.reject(new Error("fonts broke"));
     ready.catch(() => {});
     Object.defineProperty(document, "fonts", { value: { ready }, configurable: true });
-    await exportDiagram(container, mode);
+    const result = await exportDiagram(container, mode);
     delete document.fonts;
+    expect(result).toBe(false);
     expect(toastTexts().some((t) => t.includes(notice))).toBe(true);
     expect(onExport).not.toHaveBeenCalled();
   });
@@ -1507,7 +1510,7 @@ describe("onExport fires only after a successful export", () => {
       }
     };
     try {
-      await exportDiagram(container, mode, { silent: true });
+      expect(await exportDiagram(container, mode, { silent: true })).toBe(false);
     } finally {
       global.XMLSerializer = Original;
     }
@@ -1519,7 +1522,7 @@ describe("onExport fires only after a successful export", () => {
 
   test("an image that fails to load does not fire it", async () => {
     mockImage(true);
-    await exportDiagram(container, "png");
+    expect(await exportDiagram(container, "png")).toBe(false);
     expect(toastTexts().some((t) => t.includes("Export Failed"))).toBe(true);
     expect(onExport).not.toHaveBeenCalled();
   });
@@ -1528,7 +1531,7 @@ describe("onExport fires only after a successful export", () => {
     HTMLCanvasElement.prototype.toBlob = () => {
       throw new DOMException("Tainted canvases may not be exported", "SecurityError");
     };
-    await exportDiagram(container, "png");
+    expect(await exportDiagram(container, "png")).toBe(false);
     expect(toastTexts().some((t) => t.includes("cross-origin image"))).toBe(true);
     expect(onExport).not.toHaveBeenCalled();
   });
@@ -1540,8 +1543,9 @@ describe("onExport fires only after a successful export", () => {
     const script = document.createElement("script");
     script.src = url;
     document.head.appendChild(script);
-    await exportDiagram(container, "pdf");
+    const result = await exportDiagram(container, "pdf");
     script.remove();
+    expect(result).toBe(false);
     expect(toastTexts().some((t) => t.includes("PDF engine unavailable"))).toBe(true);
     expect(onExport).not.toHaveBeenCalled();
   });
@@ -1551,8 +1555,14 @@ describe("onExport fires only after a successful export", () => {
       value: { write: jest.fn(() => Promise.reject(new DOMException("Bad", "DataError"))) },
       configurable: true,
     });
-    await exportDiagram(container, "copy");
+    expect(await exportDiagram(container, "copy")).toBe(false);
     expect(toastTexts().some((t) => t.includes("Export Failed"))).toBe(true);
+    expect(onExport).not.toHaveBeenCalled();
+  });
+
+  test("an element with no diagram resolves to false", async () => {
+    expect(await exportDiagram(document.createElement("div"), "png")).toBe(false);
+    expect(toastTexts().some((t) => t.includes("No diagram found"))).toBe(true);
     expect(onExport).not.toHaveBeenCalled();
   });
 });

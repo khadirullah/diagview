@@ -932,7 +932,9 @@ async function savePDF(sourceElement, filename, { transparent, modalClone, silen
  *   silent and modalClone. silent hides the progress and JPEG notices for png, jpeg and
  *   webp, and the hard-to-read labels warning for every mode. An SVG element here is
  *   the old third argument and works as modalClone.
- * @returns {Promise<void>} Resolves after the export and, when it succeeded, the onExport callback
+ * @returns {Promise<boolean>} Resolves to true once the file is saved or copied, or downloaded
+ *   because the clipboard was unavailable, after the onExport callback. Resolves to false
+ *   when the export failed or was blocked, or a PDF fell back to PNG.
  */
 export async function exportDiagram(sourceElement, mode, options = {}) {
   // A null third argument means no options
@@ -947,7 +949,10 @@ export async function exportDiagram(sourceElement, mode, options = {}) {
   let isTransparent = options.transparent || false;
 
   const svg = sourceElement.querySelector("svg");
-  if (!svg) return showErrorToast("No diagram found");
+  if (!svg) {
+    showErrorToast("No diagram found");
+    return false;
+  }
 
   const filename = options.filename || generateFilename(svg);
   const silent = options.silent;
@@ -1006,4 +1011,5 @@ export async function exportDiagram(sourceElement, mode, options = {}) {
       console.error("DiagView: onExport callback error:", e);
     }
   }
+  return !!ok;
 }

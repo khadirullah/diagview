@@ -16,7 +16,8 @@ import { setSVGContent } from "../core/utils.js";
  * @param {string} config.icon - SVG icon HTML
  * @param {string} config.styleClass - Additional CSS classes (optional)
  * @param {Function} config.onClick - Click handler (optional)
- * @param {boolean} config.feedback - Show success animation on click (default: false)
+ * @param {boolean} config.feedback - Show the success tick once onClick has finished,
+ *   unless it resolved to false (default: false)
  * @param {string} config.ariaLabel - Accessibility label (defaults to title)
  * @returns {HTMLButtonElement} Configured button element
  *
@@ -62,26 +63,26 @@ export function createButton(config) {
 
   // Attach click handler
   if (onClick) {
+    let successTimer = null;
     btn.addEventListener("click", async (e) => {
       e.stopPropagation();
 
-      // Show success animation if feedback enabled
-      if (feedback) {
-        btn.classList.add("success");
-        setTimeout(() => {
-          btn.classList.remove("success");
-        }, TIMING.BUTTON_SUCCESS_DURATION);
-      }
-
-      // Execute handler
+      let result;
       try {
-        await onClick(e);
+        result = await onClick(e);
       } catch (error) {
         console.error("DiagView: Button click handler error:", error);
-        // Remove success state on error
-        if (feedback) {
+        return;
+      }
+
+      // The success tick shows only once the action has worked. A handler
+      // reports a failure by resolving to false.
+      if (feedback && result !== false) {
+        clearTimeout(successTimer);
+        btn.classList.add("success");
+        successTimer = setTimeout(() => {
           btn.classList.remove("success");
-        }
+        }, TIMING.BUTTON_SUCCESS_DURATION);
       }
     });
   }
