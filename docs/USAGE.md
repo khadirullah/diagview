@@ -385,9 +385,11 @@ PDF export lazy-loads jsPDF from CDN on first use. To use a custom CDN or a loca
 ```javascript
 DiagView.init({
   pdfLibraryUrl: "/assets/jspdf.umd.min.js",
-  pdfLibraryIntegrity: null, // set to null when using a custom URL
+  pdfLibraryIntegrity: null, // optional, a custom URL without a hash already gets null
 });
 ```
+
+A custom `pdfLibraryUrl` without its own `pdfLibraryIntegrity` loads with no integrity check, so the `null` line is optional. For a file on a CDN you do not control, pass its SRI hash as `pdfLibraryIntegrity` instead.
 
 ---
 
@@ -1208,7 +1210,7 @@ DiagView.init({ highResScale: 8 });
 ```javascript
 DiagView.init({
   pdfLibraryUrl: "/assets/vendor/jspdf.umd.min.js",
-  pdfLibraryIntegrity: null,
+  pdfLibraryIntegrity: null, // optional, a custom URL without a hash already gets null
 });
 ```
 
