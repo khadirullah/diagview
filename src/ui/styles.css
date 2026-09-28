@@ -1851,7 +1851,14 @@
 }
 
 .diagview-help-content {
-  background: var(--dv-panel-bg, var(--dv-bg));
+  --dv-help-bg: var(--dv-panel-bg, var(--dv-bg));
+  /* A grey fade at the bottom edge while more rows are below. The panel
+     colour on top of it scrolls with the rows and covers it at the end. */
+  background:
+    linear-gradient(transparent, var(--dv-help-bg) 30%) center bottom / 100% 60px no-repeat local,
+    linear-gradient(transparent, rgba(128, 128, 128, 0.45)) center bottom / 100% 40px no-repeat
+      scroll,
+    var(--dv-help-bg);
   border: 1px solid var(--dv-border-color);
   border-radius: 16px;
   padding: 1.5rem;
@@ -1886,9 +1893,9 @@
   opacity: 1;
 }
 
+/* No gap, each row already has padding and a divider */
 .diagview-help-grid {
   display: grid;
-  gap: 0.75rem;
 }
 
 .diagview-help-row {
@@ -1896,7 +1903,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 0.75rem;
-  padding: 0.5rem 0;
+  padding: 0.4rem 0;
   border-bottom: 1px solid rgba(128, 128, 128, 0.35);
 }
 

@@ -296,3 +296,19 @@ describe("styles.css: notices in the viewer", () => {
     expect(bottom(ruleBody(".diagview-toast-container {"))).toBe("24px");
   });
 });
+
+describe("styles.css: shortcuts panel", () => {
+  test("rows sit close enough for all of them to fit on a laptop screen", () => {
+    expect(ruleBody(".diagview-help-grid {")).not.toMatch(/gap:/);
+    expect(ruleBody(".diagview-help-row {")).toMatch(/padding:\s*0\.4rem 0/);
+  });
+
+  test("fades the bottom edge only while more rows are below", () => {
+    const body = ruleBody(".diagview-help-content {");
+    expect(body).toMatch(/max-height:\s*80vh/);
+    expect(body).toMatch(/overflow-y:\s*auto/);
+    // The panel colour scrolls with the rows and covers the fixed fade at the end
+    expect(body).toMatch(/var\(--dv-help-bg\) 30%\)[^,]*no-repeat local,/);
+    expect(body).toMatch(/rgba\(128, 128, 128, 0\.45\)\)[^,]*no-repeat\s+scroll,/);
+  });
+});
