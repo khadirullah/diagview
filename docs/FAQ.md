@@ -68,6 +68,9 @@ A: Use `data-diagview-layout` on individual diagram containers and call `init()`
 <div class="diagram" data-diagview-layout="off">...</div>
 ```
 
+**Q: My selector matches a diagram and the box around it. Do I get two toolbars?**  
+A: No. When one match sits inside another, the outer match gets the toolbar if it holds a single diagram, since it carries `data-title` and the `data-diagview-*` settings. If it holds two or more diagrams, each inner match keeps its own toolbar and the outer one gets none. Every match still counts in the share link numbering.
+
 **Q: Can I use custom icons for the buttons?**
 
 ```javascript
@@ -159,7 +162,7 @@ A: DiagView could not embed the page font, so the exported file falls back to a 
 `exportFonts` sets which fonts go into the file. `"used"` (the default) embeds only the font files the labels use. `"all"` embeds every `@font-face` rule on the page, which can make an SVG ten times larger. `"none"` embeds no fonts. Use it when a font's licence does not allow embedding, which is common with paid fonts. The file then names the font, and viewers without it see a fallback.
 
 **Q: An image in my diagram is missing from the PNG or PDF. Why?**  
-A: The image is linked, such as `<image href="logo.png">`, and not embedded. DiagView draws the SVG as an image to make PNG, JPEG, WebP, PDF and Copy Image files, and the browser loads nothing an SVG drawn that way links to. The notice after the export says how many linked images were left out. The SVG export keeps the link. Embed the image as a base64 `data:` URL to keep it in every format. See [Linked images](USAGE.md#linked-images).
+A: The image is linked, such as `<image href="logo.png">`, and not embedded. DiagView draws the SVG as an image to make PNG, JPEG, WebP, PDF and Copy Image files, and the browser loads nothing an SVG drawn that way links to. The notice after the export says how many linked images were left out. When some labels are also hard to read, the same warning says so. The SVG export keeps the link. Embed the image as a base64 `data:` URL to keep it in every format. See [Linked images](USAGE.md#linked-images).
 
 **Q: I'm hitting the export size limit. How do I increase it?**
 
@@ -201,7 +204,9 @@ Per-element (requires `security.allowOverrides: true`, the default):
 <div class="diagram" data-diagview-sanitize="off">...</div>
 ```
 
-Add `exportMode: "strict"` to keep click handlers in fullscreen but clean every downloaded or copied file. See [Choosing a mode](USAGE.md#choosing-a-mode).
+The attribute covers the diagram's fullscreen view and every export and copy of it, from the page toolbar or the fullscreen menu.
+
+Add `exportMode: "strict"` to keep click handlers in fullscreen but clean every downloaded or copied file. It has no `data-diagview-*` attribute, so a page author cannot loosen it for one diagram. See [Choosing a mode](USAGE.md#choosing-a-mode).
 
 ```javascript
 DiagView.init({ security: { mode: "off", exportMode: "strict" } });
@@ -365,7 +370,7 @@ DiagView.init(); // initialize globally first
 DiagView.initShadowRoot(myShadowRoot); // then scan the shadow root
 ```
 
-The stylesheet is installed inside the root so the inline toolbar renders correctly, and shadow diagrams are numbered after the document's diagrams for share links.
+The stylesheet is installed inside the root so the inline toolbar renders correctly, and shadow diagrams are numbered after the document's diagrams for share links. Closing the viewer puts focus back on the button or diagram inside the shadow root that opened it.
 
 ---
 
