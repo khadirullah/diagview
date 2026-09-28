@@ -181,4 +181,30 @@ describe("styles.css: page buttons", () => {
     expect(ruleBody(".dv-custom-icon svg:not([fill]) {")).toMatch(/fill:\s*currentColor/);
     expect(css).not.toContain(".dv-btn-accent svg");
   });
+
+  // Same specificity and !important as .dv-btn-accent:hover, so order decides
+  test("the success state comes after every style's hover rule, so it shows under the pointer", () => {
+    const success = css.indexOf(".diagview-btn.success {");
+    for (const style of ["transparent", "accent", "solid", "neutral"]) {
+      const hover = css.indexOf(`.dv-btn-${style}:hover {`);
+      expect(hover).toBeGreaterThan(-1);
+      expect(success).toBeGreaterThan(hover);
+    }
+    expect(ruleBody(".diagview-btn.success {")).toMatch(/background:\s*#10b981 !important/);
+  });
+
+  test("the success check replaces the icon instead of drawing over it", () => {
+    expect(ruleBody(".diagview-btn.success svg {")).toMatch(/visibility:\s*hidden/);
+    const check = ruleBody(".diagview-btn.success::after {");
+    expect(check).toMatch(/content:\s*""/);
+    expect(check).toMatch(/border-width:/);
+    expect(check).toMatch(/transform:\s*translateY\(-1px\) rotate\(45deg\)/);
+  });
+
+  test("every checkmark keyframe keeps the check rotated while it scales", () => {
+    const start = css.indexOf("@keyframes checkmark {");
+    const steps = css.slice(start, css.indexOf("\n}", start)).match(/transform:[^;]*/g);
+    expect(steps).toHaveLength(3);
+    for (const step of steps) expect(step).toContain("rotate(45deg)");
+  });
 });

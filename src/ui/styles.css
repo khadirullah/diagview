@@ -281,41 +281,6 @@
   fill: currentColor;
 }
 
-/* Button Success State */
-.diagview-btn.success {
-  background: #10b981 !important;
-  color: white !important;
-}
-
-.diagview-btn.success::after {
-  content: "✓";
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 16px;
-  font-weight: bold;
-  animation: checkmark 0.3s ease;
-}
-
-@keyframes checkmark {
-  0% {
-    opacity: 0;
-    transform: scale(0.5);
-  }
-
-  50% {
-    opacity: 1;
-    transform: scale(1.2);
-  }
-
-  100% {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
 /* Fullscreen Modal */
 .diagview-modal {
   display: none;
@@ -1683,6 +1648,50 @@
 .dv-btn-neutral:hover {
   background: rgba(128, 128, 128, 0.25) !important;
   color: var(--dv-text-color) !important;
+}
+
+/* Success state after a copy or download. It comes after the style rules */
+/* so it also wins while the pointer is still over the button. The icon */
+/* steps aside for a check drawn with borders, so it needs no font or image. */
+.diagview-btn.success {
+  background: #10b981 !important;
+  border-color: #10b981 !important;
+  color: white !important;
+}
+
+.diagview-btn.success svg {
+  visibility: hidden;
+}
+
+.diagview-btn.success::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: 6px;
+  height: 12px;
+  border: solid currentColor;
+  border-width: 0 2px 2px 0;
+  transform: translateY(-1px) rotate(45deg);
+  animation: checkmark 0.3s ease;
+}
+
+/* Each step repeats the check's own transform, which the animation replaces */
+@keyframes checkmark {
+  0% {
+    opacity: 0;
+    transform: translateY(-1px) rotate(45deg) scale(0.5);
+  }
+
+  50% {
+    opacity: 1;
+    transform: translateY(-1px) rotate(45deg) scale(1.2);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(-1px) rotate(45deg) scale(1);
+  }
 }
 
 /* === Loading Indicator === */
