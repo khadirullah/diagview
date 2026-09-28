@@ -379,3 +379,59 @@ describe("Diagram Init: viewBox validity", () => {
     expect(container.closest(".diagview-wrapper")).toBeNull();
   });
 });
+
+describe("Diagram Init: button style and custom icons", () => {
+  const CUSTOM =
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 4h16"/></svg>';
+  let container, resetConfig, updateConfig;
+
+  beforeEach(async () => {
+    ({ resetConfig, updateConfig } = await import("../src/core/config.js"));
+    resetConfig();
+    document.body.innerHTML = "";
+    container = document.createElement("div");
+    container.className = "diagram";
+    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    svg.appendChild(document.createElementNS("http://www.w3.org/2000/svg", "rect"));
+    container.appendChild(svg);
+    document.body.appendChild(container);
+  });
+
+  afterEach(() => {
+    resetConfig();
+    document.body.innerHTML = "";
+  });
+
+  const btn = (action) => document.querySelector(`[data-action="${action}"]`);
+
+  test("a custom icon gets dv-custom-icon and a built-in one does not", () => {
+    updateConfig({ ui: { buttons: { icons: { download: CUSTOM } } } });
+    initializeDiagram(container);
+    expect(btn("download").classList.contains("dv-custom-icon")).toBe(true);
+    expect(btn("download").querySelector("svg").getAttribute("fill")).toBe("none");
+    expect(btn("copy").classList.contains("dv-custom-icon")).toBe(false);
+    expect(btn("fullscreen").classList.contains("dv-custom-icon")).toBe(false);
+  });
+
+  test("an icon set back to null uses the built-in icon without dv-custom-icon", () => {
+    updateConfig({ ui: { buttons: { icons: { copy: CUSTOM } } } });
+    updateConfig({ ui: { buttons: { icons: { copy: null } } } });
+    initializeDiagram(container);
+    expect(btn("copy").classList.contains("dv-custom-icon")).toBe(false);
+  });
+
+  for (const layout of ["header", "floating"]) {
+    for (const style of ["transparent", "accent", "solid", "neutral"]) {
+      test(`${layout} layout applies the ${style} style to every button`, () => {
+        container.dataset.diagviewLayout = layout;
+        updateConfig({ ui: { buttons: { style, icons: { fullscreen: CUSTOM } } } });
+        initializeDiagram(container);
+        for (const action of ["copy", "download", "fullscreen"]) {
+          expect(btn(action).classList.contains("diagview-btn")).toBe(true);
+          expect(btn(action).classList.contains(`dv-btn-${style}`)).toBe(true);
+        }
+        expect(btn("fullscreen").classList.contains("dv-custom-icon")).toBe(true);
+      });
+    }
+  }
+});

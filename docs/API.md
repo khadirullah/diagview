@@ -372,9 +372,9 @@ interface DiagViewConfig {
   // UI
   ui: {
     buttons: {
-      style: "transparent" | "accent" | "solid" | "neutral"; // default: 'accent'
+      style: "transparent" | "accent" | "solid" | "neutral"; // default: 'accent'; header and floating layouts alike, transparent has no border
       icons: {
-        copy: string | null; // null = built-in icon
+        copy: string | null; // null = built-in outline icon; a custom SVG draws as written, use currentColor to follow the button colour
         download: string | null;
         fullscreen: string | null;
       };

@@ -416,9 +416,9 @@ DiagView.init({
   // ── UI ───────────────────────────────────────────
   ui: {
     buttons: {
-      style: "accent", // 'transparent' | 'accent' | 'solid' | 'neutral'
+      style: "accent", // 'transparent' | 'accent' | 'solid' | 'neutral', in both header and floating layouts
       icons: {
-        copy: null, // null = built-in icon, or pass an SVG string
+        copy: null, // null = built-in icon, or an SVG string (use currentColor to follow the button colour)
         download: null,
         fullscreen: null,
       },

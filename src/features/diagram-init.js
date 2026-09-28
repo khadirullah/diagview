@@ -184,6 +184,14 @@ function getIcon(key, defaultIcon) {
 }
 
 /**
+ * Style class for one button. A custom icon also gets dv-custom-icon so the
+ * CSS draws it as written instead of as an outline.
+ */
+function getButtonClass(styleClass, key) {
+  return state.config.ui?.buttons?.icons?.[key] ? `${styleClass} dv-custom-icon` : styleClass;
+}
+
+/**
  * Read per-element data-diagview-* overrides and merge over global config.
  * Only layout is merged. Scale, sanitize and allow-remote are checked here
  * for warnings. Export reads scale and the data-diagview-watermark-*
@@ -332,7 +340,7 @@ export function initializeDiagram(element, precalculatedIndex = -1) {
       action: "copy",
       title: "Copy to clipboard",
       icon: getIcon("copy", ICONS.copy),
-      styleClass: styleClass,
+      styleClass: getButtonClass(styleClass, "copy"),
       feedback: true,
       onClick: () => exportDiagram(element, "copy"),
     },
@@ -340,7 +348,7 @@ export function initializeDiagram(element, precalculatedIndex = -1) {
       action: "download",
       title: "Download PNG",
       icon: getIcon("download", ICONS.dl),
-      styleClass: styleClass,
+      styleClass: getButtonClass(styleClass, "download"),
       feedback: true,
       onClick: () => exportDiagram(element, "download"),
     },
@@ -348,7 +356,7 @@ export function initializeDiagram(element, precalculatedIndex = -1) {
       action: "fullscreen",
       title: "Open fullscreen",
       icon: getIcon("fullscreen", ICONS.fs),
-      styleClass: styleClass,
+      styleClass: getButtonClass(styleClass, "fullscreen"),
       onClick: () => openFullscreen(element),
     },
   ];

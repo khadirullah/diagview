@@ -2,7 +2,9 @@ import { TIMING, ZOOM, LAYOUTS, BUTTON_STYLES, SELECTORS, EXPORT, COLORS } from 
 import { deepMerge, deepFreeze } from "./state-utils.js";
 
 /**
- * Button icons. Each value is SVG markup, or null for the built-in icon.
+ * Button icons. Each value is SVG markup, or null for the built-in outline
+ * icon. DiagView draws custom markup as written. Use currentColor to follow
+ * the button colour. An svg with no fill attribute is filled with it.
  * @typedef {object} DiagViewButtonIcons
  * @property {string|null} copy - Copy button icon
  * @property {string|null} download - Download button icon
@@ -11,7 +13,7 @@ import { deepMerge, deepFreeze } from "./state-utils.js";
 
 /**
  * @typedef {object} DiagViewButtonsConfig
- * @property {"transparent"|"accent"|"solid"|"neutral"} style - Button look
+ * @property {"transparent"|"accent"|"solid"|"neutral"} style - Button look in the header and floating layouts
  * @property {DiagViewButtonIcons} icons - Icon overrides
  */
 

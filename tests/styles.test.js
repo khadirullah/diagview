@@ -146,3 +146,20 @@ describe("styles.css: keyboard focus ring", () => {
     expect(body).not.toMatch(/border-radius:/);
   });
 });
+
+describe("styles.css: page buttons", () => {
+  test("the floating layout sets only the size, so ui.buttons.style decides the look", () => {
+    const body = ruleBody(".diagview-controls-floating .diagview-btn {");
+    expect(body).toMatch(/width:\s*36px/);
+    expect(body).not.toMatch(/background|border|color|box-shadow|filter|!important/);
+  });
+
+  test("built-in icons are outlines and custom icons keep their own fill", () => {
+    expect(ruleBody(".diagview-btn svg {")).not.toMatch(/fill|stroke/);
+    const outline = ruleBody(".diagview-btn:not(.dv-custom-icon) svg {");
+    expect(outline).toMatch(/fill:\s*none/);
+    expect(outline).toMatch(/stroke:\s*currentColor/);
+    expect(ruleBody(".dv-custom-icon svg:not([fill]) {")).toMatch(/fill:\s*currentColor/);
+    expect(css).not.toContain(".dv-btn-accent svg");
+  });
+});

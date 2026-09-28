@@ -166,7 +166,7 @@ await mermaid.run();
 
 ### Floating (Default)
 
-The floating layout keeps the diagram area clean. On hover, ghost buttons fade in at the bottom of the card. In fullscreen, a FAB (Floating Action Button) at the bottom-right gives access to export, share, rotate, and meeting mode.
+The floating layout keeps the diagram area clean. On hover, the buttons fade in at the bottom of the card. They use the same `ui.buttons.style` as the header layout, so see [Button style](#button-style) to change their look. In fullscreen, a FAB (Floating Action Button) at the bottom-right gives access to export, share, rotate, and meeting mode.
 
 ```javascript
 DiagView.init({ layout: "floating" });
@@ -958,9 +958,26 @@ Mermaid fixes the theme when it draws, so a later theme switch leaves the diagra
 
 ## 22. Advanced Configuration
 
+### Button style
+
+`ui.buttons.style` sets the look of the copy, download and fullscreen buttons next to each diagram. The header and floating layouts use the same styles.
+
+| Style         | Look                                                     |
+| ------------- | -------------------------------------------------------- |
+| `accent`      | Accent-coloured icon with a thin accent border (default) |
+| `solid`       | Accent background with a light or dark icon on top       |
+| `neutral`     | Grey background with an icon in the page text colour     |
+| `transparent` | Accent-coloured icon with no background and no border    |
+
+```javascript
+DiagView.init({ ui: { buttons: { style: "neutral" } } });
+```
+
+The built-in icons are outline drawings in the button colour.
+
 ### Custom button icons
 
-Any built-in icon can be replaced with a custom SVG string:
+You can replace any built-in icon with your own SVG string. DiagView draws a custom icon as written. Use `currentColor` for its fill or stroke to follow the button colour. An icon with no `fill` attribute on its `<svg>` element is filled with the button colour, so Material-style icons work as they are. The outline icon below sets `fill="none"` and a `currentColor` stroke:
 
 ```javascript
 DiagView.init({

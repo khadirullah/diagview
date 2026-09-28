@@ -225,14 +225,8 @@
 }
 
 .diagview-controls-floating .diagview-btn {
-  background: transparent !important;
-  border: none !important;
-  color: #fff !important;
   width: 36px;
   height: 36px;
-  opacity: 1;
-  box-shadow: none !important;
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
 }
 
 .diagview-controls-floating .diagview-btn:hover {
@@ -270,8 +264,21 @@
 .diagview-btn svg {
   width: 18px;
   height: 18px;
-  fill: currentColor;
   pointer-events: none;
+}
+
+/* Built-in icons are outline drawings */
+.diagview-btn:not(.dv-custom-icon) svg {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* Custom icons draw as written. One with no fill of its own takes the button colour */
+.dv-custom-icon svg:not([fill]) {
+  fill: currentColor;
 }
 
 /* Button Success State */
@@ -1640,20 +1647,10 @@
   color: var(--dv-accent) !important;
 }
 
-.dv-btn-accent svg {
-  fill: var(--dv-accent) !important;
-  stroke: var(--dv-accent) !important;
-}
-
 .dv-btn-accent:hover {
   background: color-mix(in srgb, var(--dv-accent) 10%, transparent) !important;
   color: var(--dv-accent) !important;
   border-color: var(--dv-accent) !important;
-}
-
-.dv-btn-accent:hover svg {
-  fill: var(--dv-accent) !important;
-  stroke: var(--dv-accent) !important;
 }
 
 /* Style: solid (High Contrast) */
