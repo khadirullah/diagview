@@ -13,7 +13,7 @@ Only the latest stable release receives security updates.
 
 ## SVG sanitization model
 
-DiagView processes untrusted SVG content from the DOM. The built-in sanitizer (`src/core/utils.js → sanitizeSVG`) implements a three-tier security model:
+DiagView processes untrusted SVG content from the DOM. The built-in sanitizer (`src/core/utils.js → sanitizeSVG`) implements a three-tier security model. Custom button icons from `ui.buttons.icons` always go through `strict`.
 
 ### `strict` (default)
 

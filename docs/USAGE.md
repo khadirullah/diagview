@@ -1045,7 +1045,7 @@ The built-in icons are outline drawings in the button colour.
 
 ### Custom button icons
 
-You can replace any built-in icon with your own SVG string. DiagView draws a custom icon as written. Use `currentColor` for its fill or stroke to follow the button colour. An icon with no `fill` attribute on its `<svg>` element is filled with the button colour, so Material-style icons work as they are. The outline icon below sets `fill="none"` and a `currentColor` stroke:
+You can replace any built-in icon with your own SVG string. DiagView draws a custom icon as written, after removing scripts, event handlers and `javascript:` links as strict mode does for diagrams, whatever `security.mode` is. An icon that is not valid SVG shows the built-in icon instead. Use `currentColor` for its fill or stroke to follow the button colour. An icon with no `fill` attribute on its `<svg>` element is filled with the button colour, so Material-style icons work as they are. The outline icon below sets `fill="none"` and a `currentColor` stroke:
 
 ```javascript
 DiagView.init({

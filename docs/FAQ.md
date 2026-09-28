@@ -79,7 +79,7 @@ DiagView.init({
 });
 ```
 
-Pass `null` to restore a built-in icon. DiagView draws a custom icon as written, so use `currentColor` for its fill or stroke to follow the button colour. See [Custom button icons](USAGE.md#custom-button-icons).
+Pass `null` to restore a built-in icon. DiagView draws a custom icon as written, after removing any script, event handler or `javascript:` link, so use `currentColor` for its fill or stroke to follow the button colour. See [Custom button icons](USAGE.md#custom-button-icons).
 
 ---
 
