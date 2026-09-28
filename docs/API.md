@@ -39,6 +39,8 @@ Calling `init()` more than once without an intervening `destroy()` is a no-op (l
 
 Fully tear down DiagView. Removes all DOM elements, stops observers, destroys Panzoom, forgets remembered zoom states, and resets all internal state. The configuration goes back to the defaults, the Canvas Theme to Auto and Text Colours to Original.
 
+Each diagram and its SVG get back their own classes and inline styles. DiagView removes a `style` or `class` attribute that it added and left empty from `<html>`, the diagram and its SVG, and closing the viewer does the same for `<body>`. An attribute the page wrote itself stays, even an empty one.
+
 **Signature:** `destroy(): Promise<void>`
 
 ```javascript
@@ -107,6 +109,8 @@ DiagView.init();
 DiagView.initShadowRoot(myElement.shadowRoot);
 ```
 
+Closing the viewer puts focus back on the button or diagram inside the shadow root that opened it.
+
 ---
 
 ## Export Methods
@@ -140,7 +144,7 @@ await DiagView.exportDiagram(el, "pdf");
 await DiagView.exportDiagram(el, "copy");
 ```
 
-`"copy"` puts a PNG on the clipboard and `"copy-svg"` copies the SVG markup as text. When the browser cannot copy, they download the PNG or the .svg file instead. `"png-transparent"` and `"webp-transparent"` export with a transparent background. `"download"` exports a PNG. An unknown mode exports a PNG. You may omit `options` or pass `null`. An `<svg>` element in place of `options` works as `modalClone`, which keeps code written for the older `exportDiagram(element, mode, svg)` form working. `exportDiagram()` uses `filename` when you pass one. Otherwise it names the file from the diagram's title and the local date and time, as in `checkout_sequence_2026-09-28_011554`. The title is `data-title` first, then a `<title>` directly inside the `<svg>`, then a chart title Mermaid draws, and `diagram_export` when there is none. DiagView lowercases it, turns spaces into underscores and drops every character other than letters, digits, `.`, `-` and `_`. `silent` hides the progress notice for PNG, JPEG, WebP and Copy Image, the JPEG transparency notice, and the hard-to-read labels and linked images warnings in every mode (see [Text Colours](USAGE.md#text-colours) and [Linked images](USAGE.md#linked-images)). It is the call the toolbar and the fullscreen menu use, and the only export call that fires the `onExport` callback. It fires only after the export succeeds, so a failed or blocked export does not fire it. The promise resolves to `true` when the export succeeds, after `onExport`, and to `false` when it fails or is blocked. Success and failure follow the same rules as `onExport`. The `exportTo*()` methods and `copyToClipboard()` do not fire it.
+`"copy"` puts a PNG on the clipboard and `"copy-svg"` copies the SVG markup as text. When the browser cannot copy, they download the PNG or the .svg file instead. `"png-transparent"` and `"webp-transparent"` export with a transparent background. `"download"` exports a PNG. An unknown mode exports a PNG. You may omit `options` or pass `null`. An `<svg>` element in place of `options` works as `modalClone`, which keeps code written for the older `exportDiagram(element, mode, svg)` form working. `exportDiagram()` uses `filename` when you pass one. Otherwise it names the file from the diagram's title and the local date and time, as in `checkout_sequence_2026-09-28_011554`. The title is `data-title` first, then a `<title>` directly inside the `<svg>`, then a chart title Mermaid draws, and `diagram_export` when there is none. DiagView lowercases it, turns spaces into underscores and drops every character other than letters, digits, `.`, `-` and `_`. `silent` hides the progress notice for PNG, JPEG, WebP and Copy Image, the JPEG transparency notice, and the hard-to-read labels and linked images warnings in every mode (see [Text Colours](USAGE.md#text-colours) and [Linked images](USAGE.md#linked-images)). It is the call the toolbar and the fullscreen menu use, and the only export call that fires the `onExport` callback. It fires only after the export succeeds, so a failed or blocked export does not fire it. The promise resolves to `true` when the export succeeds, after `onExport`, and to `false` when it fails or is blocked. An image or PDF export that leaves out linked images still succeeds. Its warning gives the count, and names hard-to-read labels too when the export finds both. Success and failure follow the same rules as `onExport`. The `exportTo*()` methods and `copyToClipboard()` do not fire it.
 
 ### `DiagView.exportToPNG(element, options?)`
 
@@ -187,7 +191,7 @@ Copies a PNG to the system clipboard. Requires HTTPS or localhost. If the browse
 await DiagView.copyToClipboard(el);
 ```
 
-All export methods resolve without throwing when `element` contains no `<svg>`; they show a "No diagram found" toast instead. Per-diagram `data-diagview-scale` and `data-diagview-watermark-*` attributes on the element are honoured by every export path, inline or fullscreen. On touch devices and narrow screens, `mobileScale` applies instead.
+All export methods resolve without throwing when `element` contains no `<svg>`; they show a "No diagram found" toast instead. Per-diagram `data-diagview-scale` and `data-diagview-watermark-*` attributes on the element are honoured by every export path, inline or fullscreen. On touch devices and narrow screens, `mobileScale` applies instead. Every export path also follows `data-diagview-sanitize` while `security.allowOverrides` is on, unless `security.exportMode` is `'strict'`.
 
 SVG exports and the images drawn from them embed the page fonts their labels use. Set `exportFonts` to `'all'` to embed every `@font-face` rule on the page, or to `'none'` to embed no fonts.
 
@@ -233,6 +237,8 @@ await DiagView.openFullscreen(el, { zoom: 2.5 });
 await DiagView.openFullscreen(el, { searchQuery: "database" });
 await DiagView.openFullscreen(el, { zoom: 1.5, searchQuery: "auth" });
 ```
+
+With `rememberZoom` on, a diagram that matches `diagramSelector` opens at its saved zoom, pan and rotation, even before it has scrolled into view. A `zoom` option replaces the saved view for that open.
 
 While the modal is already open or still opening, `openFullscreen()` returns without doing anything. To switch to another diagram, close first:
 
@@ -359,7 +365,7 @@ console.log(DiagView.state.searchMatches.length);
 ```typescript
 interface DiagViewConfig {
   // Selectors
-  diagramSelector: string; // default: '.diagram, .chart, [data-diagram]'
+  diagramSelector: string; // default: '.diagram, .chart, [data-diagram]'; where matches nest, each diagram gets one toolbar
 
   // Theme
   accentColor: string | null; // default: null (auto-detect)
@@ -389,7 +395,7 @@ interface DiagViewConfig {
   // Interaction
   naturalPanning: boolean; // default: false; true = arrow keys move the diagram in the arrow's direction
   rotateKeepsView: boolean; // default: false; true = rotate keeps the view (size on screen and centre), zoom % adjusts
-  rememberZoom: boolean; // default: false
+  rememberZoom: boolean; // default: false; true = each diagram reopens at its last zoom, pan and rotation, openFullscreen() included, until the page reloads or destroy() runs
   showMinimap: boolean; // default: true
   canvasGrid: "none" | "dots"; // default: 'none'; dot grid behind the fullscreen diagram
 
@@ -411,7 +417,7 @@ interface DiagViewConfig {
     mode: "strict" | "permissive" | "off"; // default: 'strict'
     allowOverrides: boolean; // default: true
     allowRemoteResources: boolean; // default: false
-    exportMode: "same" | "strict"; // default: 'same'; 'strict' cleans every export and copy in strict mode
+    exportMode: "same" | "strict"; // default: 'same'; 'strict' cleans every export and copy in strict mode; no data-diagview-* attribute
   };
   allowedImageTypes: string[]; // default: ['png', 'jpeg', 'webp', 'gif']
 
