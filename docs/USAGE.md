@@ -1218,7 +1218,11 @@ Copying the image needs the Clipboard API, which browsers only offer on HTTPS or
 
 ### Search highlights nothing
 
-Search matches text inside `<text>`, `.node`, `.cluster`, `.edgePath` and `.label` elements. Check that your SVG contains visible text nodes.
+Search reads the text of every `<text>` element and of every element with the class `node`, `cluster`, `label` or `edgePath`, HTML labels inside them included. It finds nothing in these cases:
+
+- The label is HTML in a `<foreignObject>` with none of those classes on it or around it. Add `class="label"` to the `<foreignObject>` or to a group that holds it.
+- The text is drawn as paths, as when an editor converts text to outlines, or it is part of an embedded image.
+- The query runs across a line break. Each line can be its own `<text>` element, and a `<br>` in an HTML label adds no space between the lines. Search for words from one line.
 
 ### Share link not working
 
