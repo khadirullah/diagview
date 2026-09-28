@@ -27,6 +27,29 @@ describe("styles.css: page toolbar colours", () => {
   });
 });
 
+describe("styles.css: edge for an accent that fades into the background", () => {
+  test("the focus ring gap, selected buttons, menu button and page icons use it", () => {
+    expect(ruleBody(".diagview-menu *:focus-visible {")).toContain(
+      "0 0 0 2px var(--dv-accent-edge, var(--dv-bg))",
+    );
+    expect(ruleBody(".dv-swatch-custom:has(:focus-visible) {")).toContain(
+      "var(--dv-accent-edge, var(--dv-bg))",
+    );
+    expect(ruleBody(".dv-theme-btn.active {")).toContain("inset 0 0 0 1px var(--dv-accent-edge)");
+    expect(ruleBody("\n.diagview-fab-btn {")).toContain("outline: 2px solid var(--dv-accent-edge)");
+    const icons = ruleBody(".dv-btn-accent svg {").replace(/\s+/g, " ");
+    for (const side of ["1px 0 0", "-1px 0 0", "0 1px 0", "0 -1px 0"]) {
+      expect(icons).toContain(`drop-shadow(${side} var(--dv-accent-edge))`);
+    }
+  });
+
+  test("the page toolbar takes the edge worked out for the page", () => {
+    expect(ruleBody(".diagview-wrapper,\n.diagview-error {")).toMatch(
+      /--dv-accent-edge:\s*var\(--dv-page-edge\)/,
+    );
+  });
+});
+
 describe("styles.css: menu headings and search placeholder", () => {
   test("use the muted text colour instead of opacity, so they keep 4.5:1", () => {
     const body = ruleBody(".dv-menu-lbl {");
@@ -267,7 +290,8 @@ describe("styles.css: page buttons", () => {
     expect(outline).toMatch(/fill:\s*none/);
     expect(outline).toMatch(/stroke:\s*currentColor/);
     expect(ruleBody(".dv-custom-icon svg:not([fill]) {")).toMatch(/fill:\s*currentColor/);
-    expect(css).not.toContain(".dv-btn-accent svg");
+    // The accent style may add an edge, but must not repaint the icon
+    expect(ruleBody(".dv-btn-accent svg") ?? "").not.toMatch(/fill|stroke/);
   });
 
   // Same specificity and !important as .dv-btn-accent:hover, so order decides

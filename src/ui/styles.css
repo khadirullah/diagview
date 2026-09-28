@@ -62,13 +62,14 @@
   font-family: inherit;
 }
 
-/* Premium Focus Indicators */
+/* Premium Focus Indicators. --dv-accent-edge is set only for an accent
+   that fades into the background, and fills the gap to show the ring. */
 .diagview-modal *:focus-visible,
 .diagview-wrapper *:focus-visible,
 .diagview-menu *:focus-visible {
   outline: none !important;
   box-shadow:
-    0 0 0 2px var(--dv-bg),
+    0 0 0 2px var(--dv-accent-edge, var(--dv-bg)),
     0 0 0 4px var(--dv-accent) !important;
   /* The ring follows each control's own border-radius */
   transition: box-shadow 0.2s ease;
@@ -104,6 +105,7 @@
 .diagview-error {
   --dv-bg: var(--dv-page-bg, transparent);
   --dv-text-color: var(--dv-page-text);
+  --dv-accent-edge: var(--dv-page-edge);
 }
 
 /* Diagram Container */
@@ -1025,6 +1027,9 @@
   pointer-events: auto !important;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   z-index: 2147483647;
+  /* Without --dv-accent-edge this is invalid and draws no outline */
+  outline: 2px solid var(--dv-accent-edge);
+  outline-offset: -2px;
 }
 
 .diagview-fab-btn:hover {
@@ -1336,7 +1341,8 @@
 .dv-theme-btn.active {
   background: var(--dv-accent-fill);
   color: var(--dv-on-accent);
-  border-color: transparent;
+  border-color: var(--dv-accent-edge, transparent);
+  box-shadow: inset 0 0 0 1px var(--dv-accent-edge);
 }
 
 .dv-swatches {
@@ -1397,7 +1403,7 @@
    Browsers without :has() skip this rule and show no ring. */
 .dv-swatch-custom:has(:focus-visible) {
   box-shadow:
-    0 0 0 2px var(--dv-bg),
+    0 0 0 2px var(--dv-accent-edge, var(--dv-bg)),
     0 0 0 4px var(--dv-accent);
 }
 
@@ -1706,6 +1712,16 @@
   background: color-mix(in srgb, var(--dv-accent) 10%, transparent) !important;
   color: var(--dv-accent) !important;
   border-color: var(--dv-accent) !important;
+}
+
+/* Icons drawn in an accent that fades into the page get a 1px outline in
+   the text colour. One hard shadow per side stays sharp in every browser,
+   where a blurred one smears. Without --dv-accent-edge the filter is
+   invalid and unset. */
+.dv-btn-transparent svg,
+.dv-btn-accent svg {
+  filter: drop-shadow(1px 0 0 var(--dv-accent-edge)) drop-shadow(-1px 0 0 var(--dv-accent-edge))
+    drop-shadow(0 1px 0 var(--dv-accent-edge)) drop-shadow(0 -1px 0 var(--dv-accent-edge));
 }
 
 /* Style: solid (High Contrast) */

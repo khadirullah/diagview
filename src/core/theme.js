@@ -612,6 +612,21 @@ function mutedText(text, bg) {
   return text;
 }
 
+const BUILT_IN_ACCENTS = [COLORS.ACCENT_LIGHT, COLORS.ACCENT_DARK];
+
+/**
+ * Set an edge colour for the accent when it falls under 3:1 against its
+ * background, and remove it otherwise, so a normal accent draws as before.
+ * @private
+ * @returns {boolean} Whether the accent needs the edge
+ */
+function accentEdge(root, name, accent, bg, text) {
+  const faint = !!parseColor(accent) && getContrastRatio(accent, bg) < 3;
+  if (faint) root.style.setProperty(name, text);
+  else root.style.removeProperty(name);
+  return faint;
+}
+
 /**
  * Apply theme to CSS variables
  */
@@ -633,6 +648,20 @@ export function syncTheme() {
   root.style.setProperty("--dv-accent", theme.accent);
   root.style.setProperty("--dv-on-accent", theme.onAccent);
   root.style.setProperty("--dv-accent-fill", accentFill(theme.accent));
+
+  // An accent under 3:1 against what it sits on hides the selected
+  // buttons, the focus ring and the menu button. The colour stays, and
+  // those get an edge in the text colour, in the viewer and on the page.
+  const { accent } = theme;
+  const canvasEdge = accentEdge(root, "--dv-accent-edge", accent, theme.seenBg, theme.text);
+  const pageEdge = accentEdge(root, "--dv-page-edge", accent, theme.pageBg, theme.pageText);
+  const key = "accent|" + accent;
+  if ((canvasEdge || pageEdge) && !BUILT_IN_ACCENTS.includes(accent) && !warnedContrast.has(key)) {
+    warnedContrast.add(key);
+    console.warn(
+      `DiagView: accent colour ${accent} is hard to see on the background ${canvasEdge ? theme.seenBg : theme.pageBg}, under 3:1. Selected buttons, the focus ring and the menu button get an edge in the text colour.`,
+    );
+  }
 
   // The search outline follows the canvas, never the diagram's own colours.
   // Pick whichever ring colour stands out more against the canvas.
@@ -762,6 +791,8 @@ export function teardownThemeWatchers() {
   root.style.removeProperty("--dv-accent");
   root.style.removeProperty("--dv-on-accent");
   root.style.removeProperty("--dv-accent-fill");
+  root.style.removeProperty("--dv-accent-edge");
+  root.style.removeProperty("--dv-page-edge");
   root.style.removeProperty("--dv-search-ring");
   root.style.removeProperty("--dv-toggle-track");
   removeEmptyAttr(root, "style", htmlHadStyle !== false);

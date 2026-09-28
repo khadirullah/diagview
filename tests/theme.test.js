@@ -384,6 +384,81 @@ describe("Theme Module", () => {
       }
     });
 
+    describe("an accent that fades into the background", () => {
+      const root = document.documentElement;
+      const edge = () => root.style.getPropertyValue("--dv-accent-edge");
+      const pageEdge = () => root.style.getPropertyValue("--dv-page-edge");
+      let warn;
+
+      beforeEach(() => {
+        warn = jest.spyOn(console, "warn").mockImplementation(() => {});
+      });
+
+      afterEach(() => {
+        warn.mockRestore();
+        setCanvasTheme("auto");
+      });
+
+      const accentWarnings = () =>
+        warn.mock.calls.filter(([msg]) => String(msg).includes("is hard to see"));
+
+      test("gets an edge in the text colour and one warning", () => {
+        updateConfig({ accentColor: "#fef9c3" });
+        clearThemeCache();
+        const theme = syncTheme();
+        expect(edge()).toBe(theme.text);
+        expect(pageEdge()).toBe(theme.pageText);
+        clearThemeCache();
+        syncTheme();
+        setCanvasTheme("light");
+        expect(accentWarnings()).toHaveLength(1);
+        expect(accentWarnings()[0][0]).toContain("#fef9c3");
+      });
+
+      test("on the dark canvas only, the page keeps its plain buttons", () => {
+        updateConfig({ accentColor: "#111827" });
+        const theme = setCanvasTheme("dark");
+        expect(edge()).toBe(COLORS.TEXT_DARK);
+        expect(theme.pageBg).toBe(COLORS.BG_LIGHT);
+        expect(pageEdge()).toBe("");
+        expect(accentWarnings()).toHaveLength(1);
+      });
+
+      test("a readable accent gets no edge and no warning", () => {
+        for (const accent of ["#3b82f6", "#dc2626", "#7c3aed"]) {
+          updateConfig({ accentColor: accent });
+          clearThemeCache();
+          syncTheme();
+          expect(edge()).toBe("");
+          expect(pageEdge()).toBe("");
+        }
+        // The edge goes again when the accent changes back to a readable one
+        updateConfig({ accentColor: "#fef9c3" });
+        clearThemeCache();
+        syncTheme();
+        updateConfig({ accentColor: "#3b82f6" });
+        clearThemeCache();
+        syncTheme();
+        expect(edge()).toBe("");
+        expect(pageEdge()).toBe("");
+      });
+
+      test("the built-in blue on a canvas that hides it gets the edge without a warning", () => {
+        setCanvasTheme("custom", "#3b82f6");
+        expect(edge()).not.toBe("");
+        expect(accentWarnings()).toHaveLength(0);
+      });
+
+      test("teardown removes the edge", () => {
+        updateConfig({ accentColor: "#fef9c3" });
+        clearThemeCache();
+        syncTheme();
+        teardownThemeWatchers();
+        expect(edge()).toBe("");
+        expect(pageEdge()).toBe("");
+      });
+    });
+
     test("reads --diagram-accent and ignores --primary and --accent-color", () => {
       vars["--primary"] = "#0000aa";
       vars["--accent-color"] = "#00aa00";
