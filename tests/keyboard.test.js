@@ -94,6 +94,14 @@ describe("Keyboard Shortcuts Integration", () => {
     expect(mockPanzoom.zoomIn).not.toHaveBeenCalled();
   });
 
+  test("Arrow keys inside the open menu do not pan the diagram", () => {
+    document.body.innerHTML = '<div class="diagview-menu active"><button>Zoom out</button></div>';
+    const item = document.querySelector("button");
+    item.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowDown", bubbles: true }));
+    item.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowLeft", bubbles: true }));
+    expect(mockPanzoom.pan).not.toHaveBeenCalled();
+  });
+
   test("Arrow keys pan in screen axes regardless of rotation", () => {
     // Rotation lives on an inner <g> inside the SVG, so panzoom deltas are
     // already screen-space. Any compensation here inverts the arrows.

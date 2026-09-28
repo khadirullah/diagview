@@ -149,6 +149,48 @@ describe("focus trap ignores unrendered and closed-search controls", () => {
     expect(document.activeElement).toBe(clear);
   });
 
+  test("with the menu open, Tab starts at its first item and stays in the menu", () => {
+    const panel = el("div", "dv-menu-panel", "diagview-menu active", modal);
+    panel.tabIndex = -1;
+    const zoomOut = el("button", "dv-zoomout", null, panel);
+    const png = el("button", "dv-png", null, panel);
+    const fab = document.getElementById("dv-toggle");
+
+    panel.focus(); // where opening the menu puts focus
+    pressTab();
+    expect(document.activeElement).toBe(zoomOut);
+    pressTab();
+    expect(document.activeElement).toBe(png);
+    pressTab();
+    expect(document.activeElement).toBe(fab);
+    pressTab();
+    expect(document.activeElement).toBe(zoomOut);
+    pressTab(true);
+    expect(document.activeElement).toBe(fab);
+  });
+
+  test("with the menu open, ArrowDown and ArrowUp step through its items", () => {
+    const panel = el("div", "dv-menu-panel", "diagview-menu active", modal);
+    panel.tabIndex = -1;
+    const zoomOut = el("button", "dv-zoomout", null, panel);
+    const png = el("button", "dv-png", null, panel);
+
+    const press = (key) => {
+      const ev = new KeyboardEvent("keydown", { key, bubbles: true, cancelable: true });
+      document.activeElement.dispatchEvent(ev);
+      return ev;
+    };
+    panel.focus();
+    expect(press("ArrowDown").defaultPrevented).toBe(true);
+    expect(document.activeElement).toBe(zoomOut);
+    press("ArrowDown");
+    expect(document.activeElement).toBe(png);
+    press("ArrowDown");
+    expect(document.activeElement).toBe(zoomOut); // wraps, skipping the menu button
+    press("ArrowUp");
+    expect(document.activeElement).toBe(png);
+  });
+
   test("Tab and Shift+Tab stay in the open shortcuts panel", () => {
     const help = el("div", null, "diagview-help-modal show", modal);
     const close = el("button", null, "diagview-help-close", help);

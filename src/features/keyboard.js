@@ -130,6 +130,8 @@ function handleKeyboardShortcut(e) {
   // Natural: Up moves diagram Up (-Y)
 
   if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.key)) {
+    // Inside the open ☰ menu the arrows belong to the menu, not the diagram
+    if (e.target.closest?.(".diagview-menu.active")) return;
     e.preventDefault();
 
     let dx = 0;

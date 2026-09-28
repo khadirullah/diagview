@@ -248,20 +248,26 @@ export function setupFocusTrap() {
   const trapFocus = (e) => {
     // Only trap when modal is open
     if (!state.isModalOpen) return;
-    if (e.key !== "Tab") return;
+    // In the open ☰ menu, Up and Down step through its items too
+    const menu = modal.querySelector(".diagview-menu.active");
+    const arrow = e.key === "ArrowDown" || e.key === "ArrowUp";
+    if (e.key !== "Tab" && !(arrow && menu?.contains(e.target))) return;
 
-    // The open shortcuts panel is modal too, so Tab stays on its close button
+    // The open shortcuts panel is modal too, so Tab stays on its close button.
+    // The open menu keeps Tab on its items and the button that closes it.
     const help = modal.querySelector(".diagview-help-modal.show");
     const focusableElements = help
       ? [...help.querySelectorAll("button")]
-      : getFocusableElements(modal);
+      : menu
+        ? [...getFocusableElements(menu), ...(arrow ? [] : [modal.querySelector("#dv-toggle")])]
+        : getFocusableElements(modal);
     if (focusableElements.length === 0) return;
 
     // Own every Tab step, not only the wrap-around: the browser's native
     // order still stops on controls we filtered out (e.g. the collapsed
     // mobile search input), so step through our own list instead.
     const len = focusableElements.length;
-    const dir = e.shiftKey ? -1 : 1;
+    const dir = (arrow ? e.key === "ArrowUp" : e.shiftKey) ? -1 : 1;
     const idx = focusableElements.indexOf(document.activeElement);
     // Unknown position (modal itself, or focus outside): enter at the
     // matching end so Tab lands on the first and Shift+Tab on the last.
