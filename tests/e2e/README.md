@@ -55,8 +55,10 @@ build. Set `E2E_PORT` to use a port other than 9340.
 | `verify-search-export.spec.mjs`    | 5      | SVG and PNG exports during a search with exportSearchHighlight on and off, and the viewer keeps its search after each export                                                                                                                                                              |
 | `verify-export-fonts.spec.mjs`     | 3      | SVG export embeds only the @font-face rules its labels use (family, nearest weight and style, unicode-range), labels keep their width, `exportFonts` "all" and "none"                                                                                                                     |
 | `verify-image-handler.spec.mjs`    | 3      | an image `onerror` in the diagram runs once on page load and not again for fullscreen or PNG export in strict and permissive mode, which log one warning about it, and does run again in "off" mode                                                                                       |
+| `verify-keyboard.spec.mjs`         | 4      | Down and Up on the open menu button enter the menu, the open `?` panel blocks every shortcut and its list scrolls with the arrows, `?`, Esc, Enter and Space close it, and it closes on time under a resting mouse                                                                        |
+| `verify-phone-topbar.spec.mjs`     | 5      | a query from `openFullscreen()` or a share link opens the phone search bar without the keyboard, Back clears it, desktop keeps its topbar, and a zoomed-out phone page keeps room for the search box                                                                                      |
 
-That is 172 checks per browser.
+That is 181 checks per browser.
 
 `verify-react-strictmode` loads React from unpkg and `verify-fixes` loads
 Mermaid from jsdelivr, so both need network access. Set
@@ -77,8 +79,9 @@ annotated in the spec, never deleted:
 
 - The mobile touch drag check sends touch events through the Chrome
   DevTools Protocol, so it is skipped outside Chromium.
-- The zoomed-out phone page check in `verify-theme-hint` is skipped on
-  Firefox, which cannot emulate a phone page without a viewport meta tag.
+- The zoomed-out phone page checks in `verify-theme-hint` and
+  `verify-phone-topbar` are skipped on Firefox, which cannot emulate a
+  phone page without a viewport meta tag.
 - Two draw.io Text Colours checks are marked as failing on Firefox.
   Firefox gives the undrawn `<text>` fallbacks inside a `<switch>` a
   non-zero box, so `readable-text.js` recolours them too.
@@ -89,7 +92,7 @@ remove the mark once the bug is fixed.
 ## When to run
 
 Whenever you touch pan/zoom, share, minimap, modal open/close, export,
-search, the menu buttons, the canvas theme, the theme hint, the Text
+search, the menu buttons, keyboard shortcuts, the `?` panel, the canvas theme, the theme hint, the Text
 Colours menu row, or the viewport CSS. CI runs the suites on every push to
 `main` and every pull request against it, and uploads the HTML report when
 a check fails.
