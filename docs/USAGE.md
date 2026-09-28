@@ -425,7 +425,7 @@ https://example.com/docs?dv-idx=2&dv-z=2.500&dv-cx=450&dv-cy=300&dv-r=90&dv-t=cu
 - **Keyboard:** Press `L` in fullscreen
 - **UI:** Open FAB menu → click "Share Link"
 
-Once DiagView has opened the diagram a share link points to, it removes every query parameter whose name starts with `dv-` from the address bar. A link that matches no diagram, such as `?dv-idx=99` or a lone `?dv-z=2`, goes too, 3 seconds after DiagView first read it. Other query parameters and the `#hash` stay. DiagView changes the address with `history.replaceState`, so no history entry is added.
+Once DiagView has opened the diagram a share link points to, it removes every query parameter whose name starts with `dv-` from the address bar. A link that matches no diagram, such as `?dv-idx=99` or a lone `?dv-z=2`, goes too, 3 seconds after DiagView first read it. `destroy()` cancels that wait, and a later `init()` waits the full 3 seconds again. Other query parameters and the `#hash` stay. DiagView changes the address with `history.replaceState`, so no history entry is added.
 
 Until then DiagView can try again. It also keeps the parameters while the page has no diagrams yet, and while the diagram the link points to has no `<svg>` yet. DiagView reads the link again when the page adds new elements, when you call `refresh()` and when you call `initShadowRoot()`. A diagram in a shadow root that you register within those 3 seconds still opens.
 
