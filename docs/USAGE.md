@@ -758,6 +758,8 @@ Shortcuts are disabled when the modal is closed. While you type in a text field,
 
 `Tab` also reaches the links inside the diagram, after the topbar and before the ☰ menu button, and `Enter` or `Space` follows the focused link. Chrome and Firefox draw an accent outline around it. Safari draws no outline on SVG links, so there the focused link shows no ring.
 
+A link to a part of the page, such as `#details` or a Mermaid `click` link to `#details`, closes the viewer and then scrolls the page to that part. Back then works as it does after any other link to a part of the page. A link with a `target`, or held with `Ctrl`, `Cmd` or `Shift`, is left to the browser.
+
 While the ☰ menu is open, `Tab` and `Shift+Tab` go through its items and the menu button, and `↑` and `↓` step through its items instead of panning. `←` and `→` do nothing there. `Esc` closes the menu and the arrows pan again.
 
 The `?` panel takes focus each time it opens and keeps `Tab` inside it. However it closes, focus goes back to where it was before.

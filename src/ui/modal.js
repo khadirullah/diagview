@@ -799,4 +799,26 @@ function _wireModalEvents(elements, viewport) {
 
   // Modal Close
   closeBtn.addEventListener("click", () => closeModal());
+
+  // A link to a part of this page closes the viewer, then goes there as a
+  // click on the page would. Left to the browser, the jump counted as Back.
+  viewport.addEventListener("click", async (e) => {
+    const link = e.target.closest?.("a[*|href]");
+    const hash = link?.getAttribute("href") ?? link?.getAttribute("xlink:href");
+    if (!hash?.startsWith("#") || hash === "#" || link.hasAttribute("target")) return;
+    if (e.defaultPrevented || e.ctrlKey || e.metaKey || e.shiftKey) return;
+    e.preventDefault();
+    await closeModal();
+    // Closing steps back over the viewer's history entry. Jump only once
+    // that step has landed and the browser has restored its scroll position,
+    // or the step undoes the jump.
+    if (history.state?.diagviewModal) {
+      await new Promise((resolve) => {
+        window.addEventListener("popstate", resolve, { once: true });
+        setTimeout(resolve, TIMING.CLEANUP_DELAY);
+      });
+      await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+    }
+    location.hash = hash;
+  });
 }

@@ -174,6 +174,28 @@ describe("Modal System", () => {
     expect(panzoomMock.reset).toHaveBeenCalled();
   });
 
+  test("a link to a section of the page closes the viewer and goes there", async () => {
+    const { closeModal } = await import("../src/ui/modal-controls.js");
+    const viewport = document.getElementById("diagview-modal-viewport");
+    viewport.innerHTML =
+      '<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">' +
+      '<a xlink:href="#details"><rect/></a><a xlink:href="#other" target="_blank"><rect/></a></svg>';
+    const [local, newTab] = viewport.querySelectorAll("a");
+
+    const click = new MouseEvent("click", { bubbles: true, cancelable: true });
+    local.dispatchEvent(click);
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    expect(click.defaultPrevented).toBe(true);
+    expect(closeModal).toHaveBeenCalledTimes(1);
+    expect(location.hash).toBe("#details");
+
+    // A link that opens elsewhere is left to the browser
+    newTab.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true }));
+    expect(closeModal).toHaveBeenCalledTimes(1);
+    location.hash = "";
+  });
+
   test("links that open a new tab do not expose window.opener", async () => {
     await openFullscreen(container);
     const links = [...document.querySelectorAll('a[target="_blank"]')];
