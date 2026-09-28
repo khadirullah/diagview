@@ -1944,3 +1944,70 @@ describe("The notice when the browser will not read the canvas back", () => {
     expect(downloaded).not.toContain("crossorigin");
   });
 });
+
+describe("backgroundColor transparent in formats without transparency", () => {
+  let container, fills, fillSpy;
+
+  beforeEach(() => {
+    container = document.createElement("div");
+    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    svg.setAttribute("viewBox", "0 0 100 100");
+    svg.innerHTML = '<rect width="50" height="50"/>';
+    container.appendChild(svg);
+    document.body.appendChild(container);
+    document.body.style.backgroundColor = "rgb(243, 234, 215)";
+    updateConfig({ highResScale: 1, maxPixels: 16000000, backgroundColor: "transparent" });
+    state.themeCache = null;
+
+    global.URL.createObjectURL = jest.fn().mockReturnValue("blob:mock-url");
+    global.URL.revokeObjectURL = jest.fn();
+    global.Image = jest.fn(() => {
+      const img = document.createElement("img");
+      Object.defineProperty(img, "src", {
+        set() {
+          setTimeout(() => this.onload && this.onload(), 5);
+        },
+      });
+      return img;
+    });
+    HTMLCanvasElement.prototype.toBlob = function (cb, type) {
+      cb(new Blob(["img"], { type: type || "image/png" }));
+    };
+    window.jspdf = {
+      jsPDF: class {
+        addImage() {}
+        save() {}
+      },
+    };
+    fills = [];
+    fillSpy = jest
+      .spyOn(CanvasRenderingContext2D.prototype, "fillRect")
+      .mockImplementation(function () {
+        // The 1x1 canvas that reads colours is not the export
+        if (this.canvas.width > 1) fills.push(this.fillStyle);
+      });
+  });
+
+  afterEach(() => {
+    container.remove();
+    fillSpy.mockRestore();
+    delete window.jspdf;
+    document.body.style.backgroundColor = "";
+    updateConfig({ backgroundColor: null });
+    state.themeCache = null;
+    hideToast();
+  });
+
+  test.each([
+    ["JPEG", exportToJPEG],
+    ["PDF", exportToPDF],
+  ])("a %s gets the page colour instead of black", async (_name, fn) => {
+    await fn(container, { filename: "d" });
+    expect(fills).toEqual(["#f3ead7"]);
+  });
+
+  test("a PNG keeps the see-through background", async () => {
+    await exportToPNG(container, { filename: "d" });
+    expect(fills).toEqual(["rgba(0, 0, 0, 0)"]);
+  });
+});

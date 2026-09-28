@@ -549,8 +549,14 @@ async function serializeSVGAsync(svgEl) {
  * @param {HTMLElement} sourceElement - Element containing the SVG
  * @param {SVGSVGElement|null} modalClone - Modal clone to render from, if open
  * @param {boolean} [transparent=false] - Skip the background fill
+ * @param {boolean} [opaque=false] - The format has no transparency (JPEG, PDF)
  */
-export async function renderToCanvas(sourceElement, modalClone, transparent = false) {
+export async function renderToCanvas(
+  sourceElement,
+  modalClone,
+  transparent = false,
+  opaque = false,
+) {
   const originalSvg = sourceElement.querySelector("svg");
   if (!originalSvg) throw new Error("No SVG found");
 
@@ -628,7 +634,10 @@ export async function renderToCanvas(sourceElement, modalClone, transparent = fa
   }
 
   if (!transparent) {
-    ctx.fillStyle = bg || COLORS.BG_LIGHT;
+    // JPEG and PDF drop the alpha, so a see-through colour such as
+    // "transparent" would come out black. They get the colour the viewer
+    // shows, the page under the canvas colour.
+    ctx.fillStyle = (opaque ? detectTheme().seenBg : bg) || COLORS.BG_LIGHT;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
   }
 
@@ -809,7 +818,7 @@ async function processImageExport(
 
     let canvasRef = null;
     try {
-      const drawn = await renderToCanvas(sourceElement, modalClone, transparent);
+      const drawn = await renderToCanvas(sourceElement, modalClone, transparent, isJpeg);
       const { canvas, scale, faint, linked } = drawn;
       canvasRef = canvas;
       foreign = drawn.foreign;
@@ -1010,6 +1019,7 @@ async function savePDF(sourceElement, filename, { transparent, modalClone, silen
       sourceElement,
       modalClone,
       false,
+      true,
     );
     const imgData = canvas.toDataURL("image/png");
 
