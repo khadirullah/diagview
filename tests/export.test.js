@@ -872,7 +872,7 @@ describe("Exports follow the Readable text colours", () => {
 
 describe("Warning about labels that are hard to read in the file", () => {
   const NS = "http://www.w3.org/2000/svg";
-  const WARNING = "Some labels are hard to read on this background.";
+  const WARNING = "some labels are hard to read on this background.";
   let container, svg, label, clickSpy;
 
   const place = (el, x, y, w, h) => {
@@ -934,16 +934,14 @@ describe("Warning about labels that are hard to read in the file", () => {
     hideToast();
   });
 
-  test("a PNG export on a dark canvas warns after the file is saved", async () => {
+  test("a PNG export on a dark canvas warns in one notice that also says it saved", async () => {
     const stop = recordToasts();
     await exportDiagram(container, "png");
-    const seen = stop();
+    const seen = stop().filter((t) => !t.startsWith("Processing"));
 
-    const at = seen.findIndex((t) => t.includes(WARNING));
-    expect(at).toBeGreaterThan(seen.findIndex((t) => t.includes("PNG saved")));
-    expect(seen[at]).toBe(
-      "Some labels are hard to read on this background. Turn on Readable, or pick Light, and export again.",
-    );
+    expect(seen).toEqual([
+      "1.0x PNG saved, but some labels are hard to read on this background. Turn on Readable, or pick Light, and export again.",
+    ]);
   });
 
   test.each([
@@ -960,7 +958,9 @@ describe("Warning about labels that are hard to read in the file", () => {
       const seen = stop();
       state.customCanvasColor = null;
 
-      expect(seen).toContain(`Some labels are hard to read on this background. ${advice}`);
+      expect(seen).toContain(
+        `SVG saved, but some labels are hard to read on this background. ${advice}`,
+      );
     },
   );
 
@@ -1027,7 +1027,13 @@ describe("Warning about labels that are hard to read in the file", () => {
   });
 
   test("a copy without silent warns", async () => {
-    expect(await warnings(() => exportDiagram(container, "copy"))).toBe(true);
+    const stop = recordToasts();
+    await exportDiagram(container, "copy");
+    const seen = stop().filter((t) => t.includes(WARNING));
+    expect(seen).toHaveLength(1);
+    expect(seen[0]).toMatch(
+      /^(Copied to clipboard|PNG downloaded \(Clipboard unavailable\)), but some/,
+    );
   });
 
   test("a silent copy skips the Processing toast", async () => {

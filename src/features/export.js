@@ -390,10 +390,10 @@ function linksOtherSite(svg) {
 }
 
 /**
- * Show the saved or copied notice, then the hard-to-read labels warning if
- * there is one. When linked images were left out of the file, a warning with
- * the count takes the place of the notice, and takes in the labels warning
- * too, since only one notice shows at a time. silent skips both warnings.
+ * Show the saved or copied notice. Only one notice shows at a time, so a
+ * warning about labels that are hard to read, or about linked images left
+ * out of the file, takes its place and says the file was saved too.
+ * silent skips both warnings.
  * @private
  * @param {string} message - The notice for a complete file
  * @param {object} [found] - What the export found
@@ -413,8 +413,12 @@ function showSaved(message, { linked = 0, faint = null, silent = false, kind = "
         : `${done}. Only embedded images can go into ${kind} files.`,
     );
   }
+  if (advice) {
+    return showWarningToast(
+      `${message.replace(/!$/, "")}, but some labels are hard to read on this background. ${advice}`,
+    );
+  }
   showSuccessToast(message);
-  if (advice) showWarningToast(`Some labels are hard to read on this background. ${advice}`);
 }
 
 /**
