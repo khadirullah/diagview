@@ -83,7 +83,11 @@ Pass `null` to restore a built-in icon. DiagView draws a custom icon as written,
 ## Search
 
 **Q: Why does search not highlight anything?**  
-A: Search matches text inside `.node`, `.cluster`, `.label`, `.edgePath`, and `text` elements. Ensure your SVG has actual `<text>` nodes with visible content.
+A: Search reads the text of every `<text>` element and of every element with the class `node`, `cluster`, `label` or `edgePath`, HTML labels inside them included. That covers Mermaid, Graphviz, PlantUML and draw.io. It finds nothing in these cases:
+
+- The label is HTML in a `<foreignObject>` with none of those classes on it or around it. Add `class="label"` to the `<foreignObject>` or to a group that holds it.
+- The text is drawn as paths, as when an editor converts text to outlines, or it is part of an embedded image.
+- The query runs across a line break. Each line can be its own `<text>` element, and a `<br>` in an HTML label adds no space between the lines. Search for words from one line.
 
 **Q: Can I pre-fill the search when opening fullscreen?**
 
