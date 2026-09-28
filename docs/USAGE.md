@@ -581,6 +581,8 @@ With Readable off, DiagView checks the labels before a PNG, JPEG, WebP, PDF, SVG
 
 DiagView never changes the SVG on your page, and the browser renders it as is. The security mode applies only to DiagView's own copies, which are the fullscreen view, exports and clipboard copies. DiagView cleans each copy before the browser loads anything in it, so code the mode removes never runs, not even once. Sanitize untrusted SVG yourself before you put it on the page, for example with `DiagView.utils.sanitizeSVG()`.
 
+In Safari, an image with an `onerror` handler in your page's own diagram may run that handler once more while DiagView sets up the page. Safari reloads an image when it moves into DiagView's wrapper. This is your page's own code, which already ran when the page loaded. DiagView's copies never run it.
+
 The Security modes panel on the [demo page](https://khadirullah.github.io/diagview/#security) runs one small diagram through all three modes side by side.
 
 ### Choosing a mode
