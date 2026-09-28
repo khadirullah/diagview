@@ -35,6 +35,18 @@ export function isMobileDevice() {
 }
 
 /**
+ * Remove an attribute DiagView left empty, unless the page had it before.
+ * An inline style or class that DiagView set and later cleared stays behind
+ * as style="" or class="" otherwise.
+ * @param {Element} el - Element to tidy
+ * @param {string} name - Attribute name, "style" or "class"
+ * @param {boolean} hadIt - Whether the attribute was there before DiagView touched it
+ */
+export function removeEmptyAttr(el, name, hadIt) {
+  if (!hadIt && !el.getAttribute(name)) el.removeAttribute(name);
+}
+
+/**
  * Remove DiagView-specific parameters from URL without refreshing
  * Prevents URL pollution and ensures clean bookmarks
  */

@@ -5,7 +5,7 @@
  */
 import { jest } from "@jest/globals";
 import { state, resetConfig, updateConfig } from "../src/core/config.js";
-import { closeModal } from "../src/ui/modal-controls.js";
+import { closeModal, lockBodyScroll, unlockBodyScroll } from "../src/ui/modal-controls.js";
 
 describe("closeModal re-entrancy guard", () => {
   test("concurrent closeModal calls run the teardown (and onClose) exactly once", async () => {
@@ -25,5 +25,40 @@ describe("closeModal re-entrancy guard", () => {
     expect(onClose).toHaveBeenCalledTimes(1);
     expect(state.isModalOpen).toBe(false);
     expect(state.isModalClosing).toBe(false);
+  });
+});
+
+describe("scroll lock leaves <body> as it found it", () => {
+  const body = document.body;
+
+  afterEach(() => {
+    body.removeAttribute("style");
+    state.modalCleanupFunctions.clear();
+  });
+
+  test("no empty style attribute is left on a body that had none", () => {
+    body.removeAttribute("style");
+    lockBodyScroll();
+    expect(body.style.overflow).toBe("hidden");
+
+    unlockBodyScroll();
+
+    expect(body.hasAttribute("style")).toBe(false);
+  });
+
+  test("the page's own body style is kept", () => {
+    body.setAttribute("style", "margin: 0");
+    lockBodyScroll();
+    unlockBodyScroll();
+
+    expect(body.getAttribute("style")).toBe("margin: 0px;");
+  });
+
+  test("an empty style attribute the page wrote itself is kept", () => {
+    body.setAttribute("style", "");
+    lockBodyScroll();
+    unlockBodyScroll();
+
+    expect(body.getAttribute("style")).toBe("");
   });
 });

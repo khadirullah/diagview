@@ -7,7 +7,12 @@
 import { openFullscreen } from "../ui/modal.js";
 import { exportDiagram } from "./export.js";
 import { state } from "../core/config.js";
-import { generateUniqueId, setSVGContent, getDiagramTitle } from "../core/utils.js";
+import {
+  generateUniqueId,
+  setSVGContent,
+  getDiagramTitle,
+  removeEmptyAttr,
+} from "../core/utils.js";
 import { resolveElementSecurity } from "../core/svg-clone.js";
 import { ICONS } from "../ui/icons.js";
 import { LAYOUTS, BUTTON_STYLES } from "../core/constants.js";
@@ -265,6 +270,10 @@ export function initializeDiagram(element, precalculatedIndex = -1) {
       display: svg ? svg.style.display : "",
       transition: svg ? svg.style.transition : "",
       color: svg ? svg.style.color : "",
+      // Emptied attributes are removed on teardown unless they were here
+      style: element.hasAttribute("style"),
+      svgStyle: svg?.hasAttribute("style"),
+      svgClass: svg?.hasAttribute("class"),
     },
   };
   cleanupMap.set(element, record);
@@ -434,9 +443,12 @@ export function deinitializeDiagram(element) {
       svg.style.display = prev.display;
       svg.style.transition = prev.transition;
       svg.style.color = prev.color;
+      removeEmptyAttr(svg, "style", prev.svgStyle);
+      removeEmptyAttr(svg, "class", prev.svgClass);
     }
 
     element.style.cursor = prev.cursor;
+    removeEmptyAttr(element, "style", prev.style);
 
     cleanupMap.delete(element);
   }

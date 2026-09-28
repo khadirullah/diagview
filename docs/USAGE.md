@@ -777,7 +777,7 @@ await DiagView.destroy();
 DiagView.init({ layout: "header", accentColor: "#ff6b6b" });
 ```
 
-`destroy()` returns every diagram to its pre-init state: wrappers and toolbars are removed, the `data-diagview-*` attributes DiagView added, the `dv-svg-content` class, inline styles, click handlers, error placeholders and the `--dv-*` variables on `<html>` are all cleared, in every layout and in shadow roots as well. The next `init()` therefore applies its own options to all diagrams again. `destroy()` also resets the configuration to the defaults, the Canvas Theme to Auto and Text Colours to Original.
+`destroy()` returns every diagram to its pre-init state: wrappers and toolbars are removed, the `data-diagview-*` attributes DiagView added, the `dv-svg-content` class, inline styles, click handlers, error placeholders and the `--dv-*` variables on `<html>` are all cleared, in every layout and in shadow roots as well. A `style` or `class` attribute that DiagView added and then emptied is removed, so `<html>`, `<body>`, the diagram and its SVG get their original markup back. Attributes the page wrote itself stay, even empty ones. The next `init()` therefore applies its own options to all diagrams again. `destroy()` also resets the configuration to the defaults, the Canvas Theme to Auto and Text Colours to Original.
 
 ---
 

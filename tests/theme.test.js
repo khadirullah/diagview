@@ -12,6 +12,7 @@ import {
   onAccentColor,
   noticeColors,
   getContrastRatio,
+  teardownThemeWatchers,
 } from "../src/core/theme.js";
 import { resetConfig, updateConfig } from "../src/core/config.js";
 import { COLORS } from "../src/core/constants.js";
@@ -695,5 +696,41 @@ describe("Theme Module: modern colour syntax and rejected colours", () => {
     expect(grey.bg).not.toBe("#7c7c7c");
     expect(getContrastRatio("#fff", grey.bg)).toBeGreaterThanOrEqual(4.5);
     expect(getContrastRatio("#fff", grey.bg)).toBeLessThan(4.7);
+  });
+});
+
+describe("Theme Module: the style attribute on <html> after teardown", () => {
+  const root = document.documentElement;
+
+  beforeEach(() => {
+    resetConfig();
+    teardownThemeWatchers();
+    root.removeAttribute("style");
+  });
+
+  test("no style attribute is left behind on a page that had none", () => {
+    syncTheme();
+    expect(root.style.getPropertyValue("--dv-bg")).not.toBe("");
+
+    teardownThemeWatchers();
+
+    expect(root.hasAttribute("style")).toBe(false);
+  });
+
+  test("the page's own style on <html> is kept", () => {
+    root.setAttribute("style", "scroll-behavior: smooth");
+    syncTheme();
+    teardownThemeWatchers();
+
+    expect(root.style.getPropertyValue("scroll-behavior")).toBe("smooth");
+    expect(root.style.getPropertyValue("--dv-bg")).toBe("");
+  });
+
+  test("an empty style attribute the page wrote itself is kept", () => {
+    root.setAttribute("style", "");
+    syncTheme();
+    teardownThemeWatchers();
+
+    expect(root.getAttribute("style")).toBe("");
   });
 });

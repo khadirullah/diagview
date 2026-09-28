@@ -171,6 +171,44 @@ describe("Diagram Init: deinitializeDiagram", () => {
     expect(document.body.contains(container)).toBe(true);
   });
 
+  test.each(["floating", "header", "off"])(
+    "leaves no empty style or class attribute behind in the %s layout",
+    (layout) => {
+      document.body.innerHTML = `<div class="diagram" data-diagview-layout="${layout}"><svg viewBox="0 0 10 10"><rect width="5" height="5"/></svg></div>`;
+      const container = document.querySelector(".diagram");
+      const before = container.outerHTML;
+
+      initializeDiagram(container);
+      deinitializeDiagram(container);
+
+      expect(container.outerHTML).toBe(before);
+    },
+  );
+
+  test("keeps style and class attributes the page wrote, even empty ones", () => {
+    document.body.innerHTML =
+      '<div class="diagram" style="" data-diagview-layout="off"><svg class="" style="" viewBox="0 0 10 10"><rect width="5" height="5"/></svg></div>';
+    const container = document.querySelector(".diagram");
+    const before = container.outerHTML;
+
+    initializeDiagram(container);
+    deinitializeDiagram(container);
+
+    expect(container.outerHTML).toBe(before);
+  });
+
+  test("an error placeholder leaves no empty style on the SVG", () => {
+    document.body.innerHTML = '<div class="diagram"><svg width="0" height="0"></svg></div>';
+    const container = document.querySelector(".diagram");
+    const before = container.outerHTML;
+
+    initializeDiagram(container);
+    expect(container.dataset.diagviewError).toBeDefined();
+    deinitializeDiagram(container);
+
+    expect(container.outerHTML).toBe(before);
+  });
+
   test("handles element without diagviewInit data gracefully", () => {
     const el = document.createElement("div");
     expect(() => deinitializeDiagram(el)).not.toThrow();

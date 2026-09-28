@@ -6,10 +6,14 @@
 
 import { state, runModalCleanupFunctions } from "../core/config.js";
 import { safeDestroy, clearAsyncTasks } from "../core/lifecycle.js";
+import { removeEmptyAttr } from "../core/utils.js";
 import { restoreFocus } from "./focus-manager.js";
 import { cleanupModalHistoryState, stopVisualViewportSync } from "./viewport.js";
 import { hideKeyboardHelp } from "./keyboard-help.js";
 import { hideToast } from "./toast.js";
+
+// Whether <body> had a style attribute before the scroll lock wrote to it
+let bodyHadStyle = true;
 
 /**
  * Lock body scroll (Non-destructive version)
@@ -27,6 +31,7 @@ export function lockBodyScroll() {
   htmlEl.style.scrollBehavior = "auto";
 
   // 1. Standard lock for most browsers
+  bodyHadStyle = document.body.hasAttribute("style");
   htmlEl.style.overflow = "hidden";
   document.body.style.overflow = "hidden";
 
@@ -72,6 +77,7 @@ export function unlockBodyScroll() {
   const htmlEl = document.documentElement;
   htmlEl.style.overflow = "";
   document.body.style.overflow = "";
+  removeEmptyAttr(document.body, "style", bodyHadStyle);
 
   // FIX: Use { behavior: "instant" } to restore scroll position without any
   // visible animation. This is the primary fix for the "scroll-to-top" jump:

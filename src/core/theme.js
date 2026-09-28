@@ -6,7 +6,7 @@
 
 import { state } from "./config.js";
 import { TIMING, COLORS } from "./constants.js";
-import { debounce } from "./utils.js";
+import { debounce, removeEmptyAttr } from "./utils.js";
 
 import { addManagedListener } from "./lifecycle.js";
 
@@ -318,6 +318,8 @@ function cssVarColor(varName) {
 const warnedColors = {};
 // Colour pairs already warned about for low contrast
 const warnedContrast = new Set();
+// Whether <html> had a style attribute before syncTheme() first wrote to it
+let htmlHadStyle = null;
 
 /**
  * Read a colour override from config, returning it only if it parses.
@@ -547,6 +549,7 @@ function mutedText(text, bg) {
 export function syncTheme() {
   const theme = detectTheme();
   const root = document.documentElement;
+  if (htmlHadStyle === null) htmlHadStyle = root.hasAttribute("style");
 
   // Update CSS variables
   root.style.setProperty("--dv-bg", theme.bg);
@@ -678,6 +681,8 @@ export function teardownThemeWatchers() {
   root.style.removeProperty("--dv-on-accent");
   root.style.removeProperty("--dv-search-ring");
   root.style.removeProperty("--dv-toggle-track");
+  removeEmptyAttr(root, "style", htmlHadStyle !== false);
+  htmlHadStyle = null;
 
   clearThemeCache();
 }
