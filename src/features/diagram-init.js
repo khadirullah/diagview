@@ -45,7 +45,12 @@ function isValidSvg(svg) {
   // 3. Check for specific error indicators from popular libraries (like Mermaid).
   // Only match library-specific error elements — NOT the generic ".error" class which
   // can legitimately appear on diagram content nodes (e.g., an "error handling" flowchart node).
-  const rootError = svg.classList?.contains("error") || svg.matches?.(".mermaid-error");
+  // Mermaid 10 and 11 draw a syntax error as a diagram of type "error", with
+  // an empty .error-icon, so its role description is what gives it away.
+  const rootError =
+    svg.classList?.contains("error") ||
+    svg.matches?.(".mermaid-error") ||
+    svg.getAttribute("aria-roledescription") === "error";
   const internalError = svg.querySelector(".error-icon, .mermaid-error");
 
   const errorUI = rootError ? svg : internalError;

@@ -473,3 +473,41 @@ describe("Diagram Init: button style and custom icons", () => {
     }
   }
 });
+
+describe("Diagram Init: Mermaid syntax errors", () => {
+  beforeEach(() => {
+    document.body.innerHTML = "";
+  });
+
+  afterEach(() => {
+    document.body.innerHTML = "";
+  });
+
+  // What Mermaid 10 and 11 draw for a diagram with a typo
+  const mermaidError = `<svg id="mermaid-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2412 512" role="graphics-document document" aria-roledescription="error">
+    <g><path class="error-icon" d="m411 400 1 2z"/><path class="error-icon" d="m459 427 1 2z"/>
+    <text class="error-text" x="1440" y="250">Syntax error in text</text>
+    <text class="error-text" x="1250" y="400">mermaid version 11.4.0</text></g></svg>`;
+
+  test("a Mermaid syntax error gets the error box, not a toolbar", () => {
+    const { container, svg } = mountSvg(mermaidError);
+
+    initializeDiagram(container);
+
+    expect(container.dataset.diagviewError).toBe("1");
+    expect(container.querySelector(".diagview-error-title").textContent).toBe("Syntax Error");
+    expect(container.closest(".diagview-wrapper")).toBeNull();
+    expect(svg.style.display).toBe("none");
+  });
+
+  test("a Mermaid flowchart with an error node still gets a toolbar", () => {
+    const { container } = mountSvg(
+      '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 60" aria-roledescription="flowchart-v2"><g class="node error"><rect width="80" height="40"/><text>error handling</text></g></svg>',
+    );
+
+    initializeDiagram(container);
+
+    expect(container.dataset.diagviewError).toBeUndefined();
+    expect(container.closest(".diagview-wrapper")).not.toBeNull();
+  });
+});
