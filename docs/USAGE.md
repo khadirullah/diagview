@@ -339,7 +339,7 @@ const saved = await DiagView.exportDiagram(el, "png", { transparent: false });
 
 `exportDiagram()` takes one of these modes: `png`, `jpeg`, `webp`, `svg`, `pdf`, `copy` (PNG to the clipboard), `copy-svg` (SVG markup to the clipboard), `png-transparent`, `webp-transparent` and `download` (a PNG). It uses `filename` when you pass one, and otherwise builds the name from the diagram title and a timestamp. The title comes from `data-title`, then the SVG's own `<title>`, then a Mermaid chart title (see [Header](#header)).
 
-Every export function resolves without throwing when the element contains no `<svg>`, and a "No diagram found" toast shows instead. `exportDiagram()` resolves to `true` when the export succeeded and to `false` when it failed, was blocked or found no diagram. The toolbar's copy and download buttons show their green tick only after a `true`. `copyToClipboard()` downloads the PNG when the browser denies the clipboard write (Safari does this once the click that started the export is over). `exportDiagram(el, "copy-svg")` downloads the .svg file in the same case.
+Every export function resolves without throwing when the element contains no `<svg>`, and a "No diagram found" toast shows instead. `exportDiagram()` resolves to `true` when the export succeeded and to `false` when it failed, was blocked or found no diagram. It also resolves to `false` when a PDF export falls back to PNG. The toolbar's copy and download buttons show their green tick only after a `true`. `copyToClipboard()` downloads the PNG when the browser denies the clipboard write (Safari does this once the click that started the export is over). `exportDiagram(el, "copy-svg")` downloads the .svg file in the same case.
 
 ### Options
 
