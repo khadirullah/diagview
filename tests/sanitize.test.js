@@ -396,3 +396,27 @@ describe("sanitizeSVG removed option", () => {
     expect(removed).toEqual({ scripts: 0, handlers: [], urls: 0 });
   });
 });
+
+describe("sanitizeSVG form buttons inside foreignObject", () => {
+  const button = (attrs) =>
+    wrap(`<foreignObject><button xmlns="${XHTML_NS}" ${attrs}>Approve</button></foreignObject>`);
+
+  test.each(["strict", "permissive"])("removes a javascript: formaction in %s mode", (mode) => {
+    const out = sanitizeToString(button(`formaction="javascript:window.pwned=1"`), mode);
+    expect(out).not.toContain("javascript:");
+    expect(out).toContain("Approve");
+  });
+
+  test("strict removes form, which ties the button to a form on the page", () => {
+    const out = sanitizeToString(button(`form="search" formaction="/search"`));
+    expect(out).not.toMatch(/\sform="/);
+    expect(out).toContain('formaction="/search"');
+  });
+
+  test("links keep their href", () => {
+    const out = sanitizeToString(
+      wrap(`<a xl:href="https://example.com/runbook"><text>x</text></a>`),
+    );
+    expect(out).toContain("https://example.com/runbook");
+  });
+});

@@ -367,7 +367,7 @@ function noteAnimatedCode(el, removed) {
 }
 
 /**
- * Matches dangerous URL protocols in href/src/action attributes.
+ * Matches dangerous URL protocols in href, src, action and formaction.
  * Blocks javascript:, vbscript:, and data: URIs by default.
  * Test only values passed through normalizeURLValue(); the scheme colon is
  * anchored so benign names like "javascript-guide.html" are not stripped.
@@ -610,8 +610,16 @@ export function sanitizeSVG(input, mode = "strict", options = 0) {
         continue;
       }
 
-      // Sanitize URL-bearing attributes for dangerous protocols
-      if (["href", "xlink:href", "src", "action"].includes(name)) {
+      // Strict only: form="id" ties a diagram button or field to a form on
+      // the page, so a click could submit that form
+      if (isStrict && name === "form") {
+        el.removeAttribute(attr.name);
+        continue;
+      }
+
+      // Sanitize URL-bearing attributes for dangerous protocols. formaction
+      // on a <button> or <input> replaces its form's action when clicked.
+      if (["href", "xlink:href", "src", "action", "formaction"].includes(name)) {
         const normalizedValue = normalizeURLValue(value);
         if (DANGEROUS_URL_RE.test(normalizedValue)) {
           // Allow only safe raster data URIs (PNG, JPG, etc.)
