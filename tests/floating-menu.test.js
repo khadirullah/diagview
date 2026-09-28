@@ -53,6 +53,19 @@ describe("Floating Menu UI", () => {
     });
   });
 
+  test("the menu button and Meeting Mode report their state before first use", () => {
+    createFloatingMenu(sourceElement, clonedSvg);
+    const fab = document.getElementById("dv-toggle");
+    expect(fab.getAttribute("aria-expanded")).toBe("false");
+    expect(fab.getAttribute("aria-controls")).toBe("dv-menu-panel");
+    expect(document.getElementById(fab.getAttribute("aria-controls"))).not.toBeNull();
+    expect(document.getElementById("dv-meeting").getAttribute("aria-pressed")).toBe("false");
+    expect(document.getElementById("dv-share").hasAttribute("aria-pressed")).toBe(false);
+
+    fab.click();
+    expect(fab.getAttribute("aria-expanded")).toBe("true");
+  });
+
   test("createFloatingMenu creates the FAB and panel in the DOM", () => {
     createFloatingMenu(sourceElement, clonedSvg);
 
@@ -263,6 +276,20 @@ describe("Floating Menu UI", () => {
       createFloatingMenu(sourceElement, clonedSvg);
       const input = document.querySelector(".dv-custom-color-input");
       expect(input.getAttribute("aria-label")).toBe("Custom colour");
+    });
+
+    test("theme buttons and swatches report the chosen canvas through aria-pressed", () => {
+      createFloatingMenu(sourceElement, clonedSvg);
+      const pressed = () =>
+        [...document.querySelectorAll('[data-canvas][aria-pressed="true"]')].map(
+          (el) => el.dataset.canvas,
+        );
+      expect(document.querySelectorAll("[data-canvas]:not([aria-pressed])")).toHaveLength(0);
+      expect(pressed()).toEqual(["auto"]);
+      document.querySelector('[data-canvas="#0f172a"]').click();
+      expect(pressed()).toEqual(["#0f172a"]);
+      document.querySelector('[data-canvas="dark"]').click();
+      expect(pressed()).toEqual(["dark"]);
     });
 
     test("reflects the current canvas when rebuilt or reopened", () => {

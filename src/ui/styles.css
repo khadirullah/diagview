@@ -714,20 +714,25 @@
   color: transparent;
 }
 
+/* Hidden, not only transparent, while the box is empty, so Tab skips it */
 .diagview-search-clear {
   all: unset;
   border-radius: 50%;
   cursor: pointer;
   font-size: 14px;
   opacity: 0;
+  visibility: hidden;
   padding: 4px;
   color: var(--dv-text-color);
   line-height: 1;
-  transition: opacity 0.2s;
+  transition:
+    opacity 0.2s,
+    visibility 0.2s;
 }
 
 .diagview-search-clear.show {
   opacity: 0.5;
+  visibility: visible;
 }
 
 .diagview-search-clear:hover {

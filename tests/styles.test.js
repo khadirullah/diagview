@@ -179,6 +179,11 @@ describe("styles.css: menu buttons", () => {
 });
 
 describe("styles.css: keyboard focus ring", () => {
+  test("the clear search button is hidden, not only transparent, while the box is empty", () => {
+    expect(ruleBody(".diagview-search-clear {")).toMatch(/visibility:\s*hidden/);
+    expect(ruleBody(".diagview-search-clear.show {")).toMatch(/visibility:\s*visible/);
+  });
+
   test("links in a diagram get an outline, since box-shadow does not paint on SVG", () => {
     const body = ruleBody(".diagview-wrapper svg a:focus-visible {");
     expect(body).toMatch(/outline:\s*2px solid var\(--dv-accent\) !important/);

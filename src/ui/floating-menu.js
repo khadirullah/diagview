@@ -61,6 +61,8 @@ function _createFAB(container) {
   fab.className = "diagview-fab-btn";
   fab.id = "dv-toggle";
   fab.setAttribute("aria-label", "Toggle menu");
+  fab.setAttribute("aria-expanded", "false");
+  fab.setAttribute("aria-controls", "dv-menu-panel");
   fab.style.display = "grid";
   fab.style.placeItems = "center";
   fab.style.backgroundColor = "var(--dv-accent)"; // follows accent changes while open
@@ -251,6 +253,7 @@ function _createCanvasThemeSection(menuPanel) {
       const on = el.dataset.canvas === mode || el.dataset.canvas === color;
       matched ||= on;
       el.classList.toggle("active", on);
+      el.setAttribute("aria-pressed", String(on));
     });
     customWrapper.classList.toggle("active", !!color && !matched);
   }
@@ -466,6 +469,9 @@ function _setupMenuController(elements, sourceElement, clonedSvg) {
         }
       },
     });
+    // Meeting Mode is a toggle, so it reports its state from the start
+    if (btn && def.feat === "meeting-mode")
+      btn.setAttribute("aria-pressed", String(state.meetingMode));
     if (btn) toolsContainer.appendChild(btn);
   });
 
