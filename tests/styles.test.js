@@ -19,6 +19,14 @@ function ruleBody(selector, from = 0) {
   return css.slice(open + 1, close);
 }
 
+describe("styles.css: page toolbar colours", () => {
+  test("the toolbar and error box read the page colours, not the canvas ones", () => {
+    const body = ruleBody(".diagview-wrapper,\n.diagview-error {");
+    expect(body).toMatch(/--dv-bg:\s*var\(--dv-page-bg/);
+    expect(body).toMatch(/--dv-text-color:\s*var\(--dv-page-text/);
+  });
+});
+
 describe("styles.css: menu headings and search placeholder", () => {
   test("use the muted text colour instead of opacity, so they keep 4.5:1", () => {
     const body = ruleBody(".dv-menu-lbl {");

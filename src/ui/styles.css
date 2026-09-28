@@ -98,6 +98,14 @@
   text-overflow: clip !important;
 }
 
+/* The page toolbar and error box sit on the page, so they take the page's
+   colours. The viewer canvas can be dark while the page stays white. */
+.diagview-wrapper,
+.diagview-error {
+  --dv-bg: var(--dv-page-bg, transparent);
+  --dv-text-color: var(--dv-page-text);
+}
+
 /* Diagram Container */
 .diagview-wrapper {
   display: flex;

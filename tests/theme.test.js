@@ -599,6 +599,74 @@ describe("Theme Module", () => {
       delete document.documentElement.dataset.mockText;
     });
   });
+
+  describe("page toolbar colours", () => {
+    const root = document.documentElement;
+    const osDark = () =>
+      window.matchMedia.mockImplementation((query) => ({
+        matches: query === "(prefers-color-scheme: dark)",
+        media: query,
+      }));
+
+    afterEach(() => {
+      setCanvasTheme("auto");
+      document.body.style.backgroundColor = "";
+      document.querySelector('meta[name="color-scheme"]')?.remove();
+    });
+
+    test("a page with no background keeps dark toolbar text when the OS is dark", () => {
+      osDark();
+      clearThemeCache();
+      const theme = syncTheme();
+      // The viewer follows the OS, the page toolbar what the page shows
+      expect(theme.text).toBe(COLORS.TEXT_DARK);
+      expect(theme.pageText).toBe(COLORS.TEXT_LIGHT);
+      expect(root.style.getPropertyValue("--dv-page-text")).toBe(COLORS.TEXT_LIGHT);
+      expect(root.style.getPropertyValue("--dv-page-bg")).toBe(COLORS.BG_LIGHT);
+      expect(root.style.getPropertyValue("--dv-bg")).toBe(COLORS.BG_DARK);
+    });
+
+    test("a color-scheme meta tag that allows dark counts as a dark page", () => {
+      osDark();
+      const meta = document.createElement("meta");
+      meta.name = "color-scheme";
+      meta.content = "light dark";
+      document.head.appendChild(meta);
+      clearThemeCache();
+      const theme = detectTheme();
+      expect(theme.pageBg).toBe(COLORS.BG_DARK);
+      expect(theme.pageText).toBe(COLORS.TEXT_DARK);
+    });
+
+    test("a page with a background gets the same colours as before", () => {
+      for (const [bg, dark] of [
+        ["rgb(255, 255, 255)", false],
+        ["rgb(15, 23, 42)", true],
+      ]) {
+        root.classList.toggle("dark", dark);
+        document.body.style.backgroundColor = bg;
+        clearThemeCache();
+        const theme = detectTheme();
+        expect(theme.pageBg).toBe(theme.bg);
+        expect(theme.pageText).toBe(theme.text);
+      }
+      root.classList.remove("dark");
+    });
+
+    test("a dark canvas picked in the menu leaves the page toolbar dark on a white page", () => {
+      document.body.style.backgroundColor = "#ffffff";
+      const theme = setCanvasTheme("dark");
+      expect(theme.text).toBe(COLORS.TEXT_DARK);
+      expect(theme.pageText).toBe(COLORS.TEXT_LIGHT);
+    });
+
+    test("teardown removes the page variables", () => {
+      syncTheme();
+      teardownThemeWatchers();
+      expect(root.style.getPropertyValue("--dv-page-text")).toBe("");
+      expect(root.style.getPropertyValue("--dv-page-bg")).toBe("");
+    });
+  });
 });
 
 describe("Theme Module: modern colour syntax and rejected colours", () => {

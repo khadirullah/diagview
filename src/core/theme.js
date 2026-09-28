@@ -403,9 +403,47 @@ function overPage(color, page) {
 }
 
 /**
+ * Text colour for a background. The page's or config's colour if it
+ * reaches 4.5:1, otherwise black or white. With no colour given, whichever
+ * of ours reads better, as a mid-tone background can count as dark and
+ * still need the dark text.
+ * @private
+ * @param {string} bg - Opaque background colour
+ * @param {string|null} chosen - Colour from config or the page
+ * @param {boolean} isDark - Whether the theme counts as dark
+ * @param {boolean} [warn] - Log a console warning when the colour fails
+ * @returns {string} The text colour
+ */
+function textOn(bg, chosen, isDark, warn) {
+  let text = chosen;
+  if (!text) {
+    const onLight = getContrastRatio(bg, COLORS.TEXT_LIGHT);
+    const onDark = getContrastRatio(bg, COLORS.TEXT_DARK);
+    text =
+      onLight > onDark || (onLight === onDark && !isDark) ? COLORS.TEXT_LIGHT : COLORS.TEXT_DARK;
+  }
+
+  // Ensure sufficient contrast (WCAG AA: 4.5:1)
+  const contrast = getContrastRatio(bg, text);
+  if (contrast < 4.5) {
+    const pair = bg + "|" + text;
+    if (warn && !warnedContrast.has(pair)) {
+      warnedContrast.add(pair);
+      console.warn(
+        `DiagView: Low contrast detected (${contrast.toFixed(2)}:1), using high-contrast fallback`,
+      );
+    }
+    // Fall back to black or white, whichever reads better
+    text = getContrastRatio(bg, "#000") > getContrastRatio(bg, "#fff") ? "#000000" : "#ffffff";
+  }
+  return text;
+}
+
+/**
  * Enhanced theme detection with caching and robust fallbacks
- * @returns {object} Theme object with isDark, bg, text, accent, and seenBg,
- *   the opaque colour a see-through canvas shows over the page
+ * @returns {object} Theme object with isDark, bg, text, accent, seenBg,
+ *   the opaque colour a see-through canvas shows over the page, and
+ *   pageBg and pageText, the colours the page shows and reads in
  */
 export function detectTheme() {
   if (typeof window === "undefined") {
@@ -414,6 +452,8 @@ export function detectTheme() {
       bg: COLORS.BG_LIGHT,
       seenBg: COLORS.BG_LIGHT,
       text: COLORS.TEXT_LIGHT,
+      pageBg: COLORS.BG_LIGHT,
+      pageText: COLORS.TEXT_LIGHT,
       accent: COLORS.ACCENT_LIGHT,
     };
   }
@@ -427,11 +467,17 @@ export function detectTheme() {
   let isDark = isDarkMode();
   let bg = detectBackground();
   // A page with no background shows the browser's own, which stays white
-  // unless the page opts into a dark color-scheme. The OS alone does not
-  // darken it.
+  // unless the page opts into a dark color-scheme, in CSS or with a <meta>
+  // tag. The OS alone does not darken it.
+  const scheme = getComputedStyle(document.documentElement).colorScheme;
   const painted =
     bg ||
-    (isDark && /dark/.test(getComputedStyle(document.documentElement).colorScheme)
+    (isDark &&
+    /dark/.test(
+      scheme && scheme !== "normal"
+        ? scheme
+        : document.querySelector('meta[name="color-scheme"]')?.getAttribute("content"),
+    )
       ? COLORS.BG_DARK
       : COLORS.BG_LIGHT);
   bg ||= isDark ? COLORS.BG_DARK : COLORS.BG_LIGHT;
@@ -470,43 +516,24 @@ export function detectTheme() {
   // Detect text color with multiple fallbacks.
   // Explicit config override (textColor: null = auto-detect) wins over
   // detection but still goes through the WCAG contrast guard below.
-  let text = validConfigColor("textColor") || getCSSVariable("--diagram-text", null, null, isDark);
+  let chosen =
+    validConfigColor("textColor") || getCSSVariable("--diagram-text", null, null, isDark);
 
   // Fallback to other common variable names
-  if (text === "inherit") text = getCSSVariable("--text-color", null, null, isDark);
+  if (chosen === "inherit") chosen = getCSSVariable("--text-color", null, null, isDark);
 
-  // With no colour from config or the page, the text is ours. Take
-  // whichever of the two reads better on the canvas, as a mid-tone canvas
-  // can count as dark and still need the dark text.
-  const own = !text;
-  if (own) {
-    const onLight = getContrastRatio(canvas, COLORS.TEXT_LIGHT);
-    const onDark = getContrastRatio(canvas, COLORS.TEXT_DARK);
-    text =
-      onLight > onDark || (onLight === onDark && !isDark) ? COLORS.TEXT_LIGHT : COLORS.TEXT_DARK;
-  }
+  const text = textOn(canvas, chosen, isDark, true);
 
-  // Ensure sufficient contrast (WCAG AA: 4.5:1)
-  const contrast = getContrastRatio(canvas, text);
-  if (contrast < 4.5) {
-    const pair = canvas + "|" + text;
-    if (!warnedContrast.has(pair)) {
-      warnedContrast.add(pair);
-      console.warn(
-        `DiagView: Low contrast detected (${contrast.toFixed(2)}:1), using high-contrast fallback`,
-      );
-    }
-    // Fall back to black or white, whichever reads better
-    text =
-      getContrastRatio(canvas, "#000") > getContrastRatio(canvas, "#fff") ? "#000000" : "#ffffff";
-  }
+  // The page toolbar and error box sit on the page, not the canvas, so
+  // their text is measured against what the page shows.
+  const shown = parseColor(painted) ? painted : page;
+  const pageText = textOn(shown, chosen, isDark);
 
   // Accent: config override, then --diagram-accent if it holds a real colour.
   // --primary is not read. Many sites set it near black or white, which
   // makes the accent buttons and notices hard to tell from the page.
   // The built-in blue must stand out on the page, where the diagram buttons
   // sit, and on the canvas. A dark OS alone does not make a white page dark.
-  const shown = parseColor(painted) ? painted : page;
   const worst = (c) => Math.min(getContrastRatio(shown, c), getContrastRatio(canvas, c));
   const accent =
     validConfigColor("accentColor", isColor) ||
@@ -522,6 +549,8 @@ export function detectTheme() {
     bg,
     seenBg: canvas,
     text,
+    pageBg: shown,
+    pageText,
     accent,
     onAccent: onAccentColor(accent),
     warning,
@@ -597,6 +626,9 @@ export function syncTheme() {
   // contrast when the canvas lets the page show through
   root.style.setProperty("--dv-panel-bg", theme.seenBg);
   root.style.setProperty("--dv-text-color", theme.text);
+  // The page toolbar and error box follow the page, not the canvas
+  root.style.setProperty("--dv-page-bg", theme.pageBg);
+  root.style.setProperty("--dv-page-text", theme.pageText);
   root.style.setProperty("--dv-muted-text", mutedText(theme.text, theme.seenBg));
   root.style.setProperty("--dv-accent", theme.accent);
   root.style.setProperty("--dv-on-accent", theme.onAccent);
@@ -724,6 +756,8 @@ export function teardownThemeWatchers() {
   root.style.removeProperty("--dv-bg");
   root.style.removeProperty("--dv-panel-bg");
   root.style.removeProperty("--dv-text-color");
+  root.style.removeProperty("--dv-page-bg");
+  root.style.removeProperty("--dv-page-text");
   root.style.removeProperty("--dv-muted-text");
   root.style.removeProperty("--dv-accent");
   root.style.removeProperty("--dv-on-accent");
