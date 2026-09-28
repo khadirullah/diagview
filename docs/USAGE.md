@@ -310,6 +310,12 @@ An export from the fullscreen viewer shows what the viewer shows, so during a se
 DiagView.configure({ exportSearchHighlight: false });
 ```
 
+### Linked images
+
+A diagram can hold an image in two ways. An embedded image carries its data in the SVG as a `data:` URL. A linked image points to a file, such as `<image href="logo.png">` or an `<img>` in an HTML label. The page and the SVG export show both, since the SVG file keeps the link.
+
+PNG, JPEG, WebP, PDF and Copy Image leave linked images out. DiagView draws the SVG as an image to make these files, and the browser loads nothing an SVG drawn that way links to. The export then shows a warning in place of the saved notice, for example "4.0x PNG saved, but 2 linked images were left out. Only embedded images can go into image files." The file is still saved or copied, so `exportDiagram()` resolves to `true` and `onExport` fires. With `silent: true` the plain saved notice shows instead. To keep an image in these files, embed it as a base64 `data:` URL of one of the `allowedImageTypes`.
+
 ### Programmatic export
 
 ```javascript
@@ -334,12 +340,12 @@ Every export function resolves without throwing when the element contains no `<s
 
 ### Options
 
-| Option        | Type       | Default        | Description                                                                                                                                                                                                           |
-| ------------- | ---------- | -------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `transparent` | boolean    | `false`        | Transparent background (PNG/SVG/WebP). JPEG switches to a transparent PNG; PDF keeps the background                                                                                                                   |
-| `filename`    | string     | auto-generated | Output filename without extension                                                                                                                                                                                     |
-| `modalClone`  | SVGElement | `null`         | Internal, clone from the open modal                                                                                                                                                                                   |
-| `silent`      | boolean    | `false`        | Skips the "Processing" toast and the warning shown when a transparent JPEG is saved as PNG (PNG, JPEG, WebP and Copy Image), and the hard-to-read labels warning (every format). Success and error toasts still show. |
+| Option        | Type       | Default        | Description                                                                                                                                                                                                                              |
+| ------------- | ---------- | -------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `transparent` | boolean    | `false`        | Transparent background (PNG/SVG/WebP). JPEG switches to a transparent PNG; PDF keeps the background                                                                                                                                      |
+| `filename`    | string     | auto-generated | Output filename without extension                                                                                                                                                                                                        |
+| `modalClone`  | SVGElement | `null`         | Internal, clone from the open modal                                                                                                                                                                                                      |
+| `silent`      | boolean    | `false`        | Skips the "Processing" toast and the warning shown when a transparent JPEG is saved as PNG (PNG, JPEG, WebP and Copy Image), and the hard-to-read labels and linked images warnings (every format). Success and error toasts still show. |
 
 ### Resolution
 

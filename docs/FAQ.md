@@ -154,6 +154,9 @@ A: DiagView could not embed the page font, so the exported file falls back to a 
 
 `exportFonts` sets which fonts go into the file. `"used"` (the default) embeds only the font files the labels use. `"all"` embeds every `@font-face` rule on the page, which can make an SVG ten times larger. `"none"` embeds no fonts. Use it when a font's licence does not allow embedding, which is common with paid fonts. The file then names the font, and viewers without it see a fallback.
 
+**Q: An image in my diagram is missing from the PNG or PDF. Why?**  
+A: The image is linked, such as `<image href="logo.png">`, and not embedded. DiagView draws the SVG as an image to make PNG, JPEG, WebP, PDF and Copy Image files, and the browser loads nothing an SVG drawn that way links to. The notice after the export says how many linked images were left out. The SVG export keeps the link. Embed the image as a base64 `data:` URL to keep it in every format. See [Linked images](USAGE.md#linked-images).
+
 **Q: I'm hitting the export size limit. How do I increase it?**
 
 ```javascript

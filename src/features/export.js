@@ -36,8 +36,9 @@ import {
  * Options for the export functions. Each function documents which fields it reads.
  * @typedef {object} ExportOptions
  * @property {string} [filename] - File name without extension, generated from the diagram title if empty
- * @property {boolean} [silent] - Skip the processing toast, the JPEG transparency warning and
- *   the warning about labels that are hard to read on the background
+ * @property {boolean} [silent] - Skip the processing toast, the JPEG transparency warning,
+ *   the warning about labels that are hard to read on the background and the warning about
+ *   linked images left out of the file
  * @property {boolean} [transparent] - Skip the background fill
  * @property {SVGSVGElement|null} [modalClone] - Fullscreen clone to export instead of the original SVG
  */
@@ -332,6 +333,44 @@ function warnFaint(source, silent) {
 }
 
 /**
+ * Count the images an image or PDF file will lack. The browser draws the
+ * SVG as an image and loads nothing it links to, so only data: images get in.
+ * @private
+ * @param {SVGSVGElement} svg - The copy that gets drawn
+ * @returns {number} Linked <image> elements and <img> in HTML labels
+ */
+function countLinkedImages(svg) {
+  let n = 0;
+  for (const el of svg.querySelectorAll("image, img")) {
+    const url = (
+      el.getAttribute("href") ||
+      el.getAttribute("xlink:href") ||
+      el.getAttribute("src") ||
+      ""
+    ).trim();
+    if (url && !/^data:/i.test(url)) n++;
+  }
+  return n;
+}
+
+/**
+ * Show the saved or copied notice. When linked images were left out of the
+ * file, a warning with the count takes its place, unless the export is silent.
+ * @private
+ * @param {string} message - The notice for a complete file
+ * @param {number} linked - Linked images the file lacks
+ * @param {boolean} [silent] - Skip the warning
+ * @param {string} [kind] - What the file is, for the warning
+ */
+function showSaved(message, linked, silent, kind = "image") {
+  if (!linked || silent) return showSuccessToast(message);
+  const images = linked === 1 ? "1 linked image was" : `${linked} linked images were`;
+  showWarningToast(
+    `${message.replace(/!$/, "")}, but ${images} left out. Only embedded images can go into ${kind} files.`,
+  );
+}
+
+/**
  * Prepare SVG for export.
  *  1. Clone from the modal clone when one is given (the floating menu always
  *     passes it) so the export matches what the user sees; fall back to the
@@ -561,7 +600,7 @@ export async function renderToCanvas(sourceElement, modalClone, transparent = fa
   ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
   if (blobUrl) URL.revokeObjectURL(blobUrl);
 
-  return { canvas, scale, width, height, faint };
+  return { canvas, scale, width, height, faint, linked: countLinkedImages(finalSvg) };
 }
 
 /**
@@ -724,7 +763,11 @@ async function processImageExport(
 
     let canvasRef = null;
     try {
-      const { canvas, scale, faint } = await renderToCanvas(sourceElement, modalClone, transparent);
+      const { canvas, scale, faint, linked } = await renderToCanvas(
+        sourceElement,
+        modalClone,
+        transparent,
+      );
       canvasRef = canvas;
 
       const quality = isWebP ? 0.95 : undefined;
@@ -742,7 +785,7 @@ async function processImageExport(
           const url = URL.createObjectURL(blob);
           downloadFile(url, `${filename}.${ext}`);
           setTimeout(() => URL.revokeObjectURL(url), TIMING.CLEANUP_DELAY);
-          showSuccessToast(`${label} downloaded (Clipboard unavailable)`);
+          showSaved(`${label} downloaded (Clipboard unavailable)`, linked, silent);
         };
 
         // Clipboard (PNG only usually)
@@ -751,7 +794,7 @@ async function processImageExport(
         } else {
           try {
             await navigator.clipboard.write([new ClipboardItem({ [mime]: blob })]);
-            showSuccessToast("Copied to clipboard!");
+            showSaved("Copied to clipboard!", linked, silent);
           } catch (err) {
             // Safari requires the write to happen inside the user gesture; by
             // the time the canvas has rendered that window has closed and it
@@ -766,7 +809,7 @@ async function processImageExport(
         downloadFile(downloadUrl, `${filename}.${ext}`);
         // Revoke after a short delay to ensure browser has started the download
         setTimeout(() => URL.revokeObjectURL(downloadUrl), TIMING.BUTTON_SUCCESS_DURATION);
-        showSuccessToast(`${scale.toFixed(1)}x ${label} saved`);
+        showSaved(`${scale.toFixed(1)}x ${label} saved`, linked, silent);
       }
       warnFaint(faint, silent);
       return ext;
@@ -917,14 +960,18 @@ async function savePDF(sourceElement, filename, { transparent, modalClone, silen
       showWarningToast("PDF format does not support transparency. Using background color.");
     }
 
-    const { canvas, width, height, faint } = await renderToCanvas(sourceElement, modalClone, false);
+    const { canvas, width, height, faint, linked } = await renderToCanvas(
+      sourceElement,
+      modalClone,
+      false,
+    );
     const imgData = canvas.toDataURL("image/png");
 
     const { jsPDF } = window.jspdf;
     const pdf = new jsPDF(width > height ? "l" : "p", "px", [width, height]);
     pdf.addImage(imgData, "PNG", 0, 0, width, height, undefined, "FAST");
     pdf.save(`${filename}.pdf`);
-    showSuccessToast("PDF saved");
+    showSaved("PDF saved", linked, silent, "PDF");
     warnFaint(faint, silent);
     return true;
   } catch (e) {
@@ -938,8 +985,8 @@ async function savePDF(sourceElement, filename, { transparent, modalClone, silen
  * @param {ExportMode} mode - Export format. An unknown mode exports PNG.
  * @param {ExportOptions|SVGSVGElement|null} [options={}] - Reads filename, transparent,
  *   silent and modalClone. silent hides the progress and JPEG notices for png, jpeg, webp
- *   and copy, and the hard-to-read labels warning for every mode. An SVG element here is
- *   the old third argument and works as modalClone.
+ *   and copy, and the hard-to-read labels and linked images warnings for every mode. An
+ *   SVG element here is the old third argument and works as modalClone.
  * @returns {Promise<boolean>} Resolves to true once the file is saved or copied, or downloaded
  *   because the clipboard was unavailable, after the onExport callback. Resolves to false
  *   when the export failed or was blocked, or a PDF fell back to PNG.

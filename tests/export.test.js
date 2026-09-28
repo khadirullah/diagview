@@ -1711,3 +1711,132 @@ describe("generateFilename", () => {
     );
   });
 });
+
+describe("Linked images left out of image and PDF files", () => {
+  const NS = "http://www.w3.org/2000/svg";
+  const PIXEL =
+    "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==";
+  let container, svg, onExport, clickSpy;
+
+  const image = (attr, url) => {
+    const el = document.createElementNS(NS, "image");
+    el.setAttribute("width", "10");
+    el.setAttribute("height", "10");
+    if (attr === "xlink:href") el.setAttributeNS("http://www.w3.org/1999/xlink", attr, url);
+    else el.setAttribute(attr, url);
+    svg.appendChild(el);
+  };
+  const htmlLabel = (src) => {
+    const fo = document.createElementNS(NS, "foreignObject");
+    const div = document.createElementNS("http://www.w3.org/1999/xhtml", "div");
+    const img = document.createElementNS("http://www.w3.org/1999/xhtml", "img");
+    img.setAttribute("src", src);
+    div.appendChild(img);
+    fo.appendChild(div);
+    svg.appendChild(fo);
+  };
+  const run = async (mode, options) => {
+    const stop = recordToasts();
+    const ok = await exportDiagram(container, mode, { filename: "f", ...options });
+    return { ok, seen: stop() };
+  };
+
+  beforeEach(() => {
+    container = document.createElement("div");
+    svg = document.createElementNS(NS, "svg");
+    svg.setAttribute("viewBox", "0 0 100 100");
+    container.appendChild(svg);
+    document.body.appendChild(container);
+    onExport = jest.fn();
+    updateConfig({ highResScale: 1, maxPixels: 16000000, security: { mode: "strict" }, onExport });
+    global.URL.createObjectURL = jest.fn().mockReturnValue("blob:mock-url");
+    global.URL.revokeObjectURL = jest.fn();
+    global.Image = jest.fn(() => {
+      const img = document.createElement("img");
+      Object.defineProperty(img, "src", {
+        set() {
+          setTimeout(() => this.onload && this.onload(), 5);
+        },
+      });
+      return img;
+    });
+    HTMLCanvasElement.prototype.toBlob = function (cb, type) {
+      cb(new Blob(["img"], { type: type || "image/png" }));
+    };
+    global.ClipboardItem = class {
+      constructor(items) {
+        this.items = items;
+      }
+    };
+    Object.defineProperty(navigator, "clipboard", {
+      value: { write: jest.fn(() => Promise.resolve()) },
+      configurable: true,
+    });
+    window.jspdf = { jsPDF: jest.fn(() => ({ addImage: jest.fn(), save: jest.fn() })) };
+    clickSpy = jest.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    container.remove();
+    clickSpy.mockRestore();
+    hideToast();
+    updateConfig({ onExport: null });
+    delete global.ClipboardItem;
+    delete navigator.clipboard;
+    delete window.jspdf;
+  });
+
+  test("a PNG with one linked image warns in place of the saved notice", async () => {
+    image("href", PIXEL);
+    image("href", "logo.png");
+    const { ok, seen } = await run("png");
+    expect(seen).toContain(
+      "1.0x PNG saved, but 1 linked image was left out. Only embedded images can go into image files.",
+    );
+    expect(seen).not.toContain("1.0x PNG saved");
+    expect(ok).toBe(true);
+    expect(onExport).toHaveBeenCalledWith("png", "f");
+  });
+
+  test("counts xlink:href images and images in HTML labels", async () => {
+    image("xlink:href", "https://example.com/a.png");
+    htmlLabel("b.png");
+    htmlLabel(PIXEL);
+    const { seen } = await run("webp");
+    expect(seen).toContain(
+      "1.0x WebP saved, but 2 linked images were left out. Only embedded images can go into image files.",
+    );
+  });
+
+  test.each([
+    ["copy", "Copied to clipboard, but 1 linked image was left out."],
+    [
+      "pdf",
+      "PDF saved, but 1 linked image was left out. Only embedded images can go into PDF files.",
+    ],
+  ])("%s warns too", async (mode, text) => {
+    image("href", "logo.png");
+    const { ok, seen } = await run(mode);
+    expect(seen.some((t) => t.startsWith(text))).toBe(true);
+    expect(ok).toBe(true);
+    expect(onExport).toHaveBeenCalledWith(mode, "f");
+  });
+
+  test.each([
+    ["an SVG export", "svg", {}, "SVG saved"],
+    ["a silent export", "png", { silent: true }, "1.0x PNG saved"],
+  ])("%s keeps the plain notice", async (_name, mode, options, notice) => {
+    image("href", "logo.png");
+    const { ok, seen } = await run(mode, options);
+    expect(seen).toContain(notice);
+    expect(seen.some((t) => t.includes("linked image"))).toBe(false);
+    expect(ok).toBe(true);
+  });
+
+  test("embedded images alone keep the plain notice", async () => {
+    image("href", PIXEL);
+    htmlLabel(PIXEL);
+    const { seen } = await run("png");
+    expect(seen).toContain("1.0x PNG saved");
+  });
+});
