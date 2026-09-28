@@ -280,7 +280,7 @@ sanitizeSVG(
 ```typescript
 interface SanitizeOptions {
   maxChars?: number; // Block input longer than this (Nodes are measured by their serialized length)
-  allowRemoteResources?: boolean; // Allow external CSS/fonts
+  allowRemoteResources?: boolean; // Keep external CSS/fonts in strict mode (permissive and off always keep them)
   allowedImageTypes?: string[]; // Allowed data: URI image types
   removed?: RemovedCode; // Filled in with the code the sanitizer removed
 }

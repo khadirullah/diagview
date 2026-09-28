@@ -229,7 +229,7 @@ Any diagram can override the global configuration using `data-diagview-*` attrib
 | `data-diagview-layout`              | `header` \| `floating` \| `off`     | Layout for this diagram only                         |
 | `data-diagview-scale`               | `1` to `10`                         | Export resolution for this diagram only              |
 | `data-diagview-sanitize`            | `strict` \| `permissive` \| `off`   | SVG sanitization mode                                |
-| `data-diagview-allow-remote`        | `true` \| `false`                   | Allow remote CSS/fonts in SVG                        |
+| `data-diagview-allow-remote`        | `true` \| `false`                   | Keep remote CSS and fonts under `strict`             |
 | `data-diagview-watermark`           | `true` \| `false`                   | Turn the watermark on or off for this diagram        |
 | `data-diagview-watermark-text`      | Any string                          | Custom brand text (e.g. your name)                   |
 | `data-diagview-watermark-style`     | `corner` \| `background` \| `both`  | Style override for this diagram                      |
@@ -464,7 +464,7 @@ DiagView.init({
   security: {
     mode: "strict", // 'strict' | 'permissive' | 'off'
     allowOverrides: true, // Allow data-diagview-sanitize per element
-    allowRemoteResources: false, // Allow @import / url() to external URLs
+    allowRemoteResources: false, // true = strict keeps @import and remote url(); permissive and off always keep them
     exportMode: "same", // 'same' | 'strict' ('strict' cleans every export and copy)
   },
   allowedImageTypes: ["png", "jpeg", "webp", "gif"],

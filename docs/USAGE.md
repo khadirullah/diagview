@@ -238,7 +238,7 @@ Set any of the following `data-diagview-*` attributes directly on a diagram cont
 | `data-diagview-layout`              | `header \| floating \| off`        | Layout for this diagram                       |
 | `data-diagview-scale`               | Integer `1` to `10`                | Export `highResScale` for this diagram        |
 | `data-diagview-sanitize`            | `strict` \| `permissive` \| `off`  | SVG sanitization mode                         |
-| `data-diagview-allow-remote`        | `true` \| `false`                  | Allow remote CSS/fonts in SVG                 |
+| `data-diagview-allow-remote`        | `true` \| `false`                  | Keep remote CSS and fonts under `strict`      |
 | `data-diagview-watermark`           | `true` \| `false`                  | Turn the watermark on or off for this diagram |
 | `data-diagview-watermark-text`      | Any string                         | Custom watermark text                         |
 | `data-diagview-watermark-style`     | `corner` \| `background` \| `both` | Style override for this diagram               |
@@ -675,7 +675,7 @@ A mistyped mode logs a warning. An unknown `security.mode` uses `strict`. An unk
 
 ### Allowing remote resources
 
-By default, `@import` and external `url()` in SVG `<style>` blocks are blocked in strict mode. To allow them (e.g. for Google Fonts embedded in a diagram):
+By default, `@import` and external `url()` in SVG `<style>` blocks are blocked in strict mode. `permissive` and `off` never remove them, whatever this option says. To allow them in strict mode (e.g. for Google Fonts embedded in a diagram):
 
 ```javascript
 DiagView.init({ security: { allowRemoteResources: true } });
