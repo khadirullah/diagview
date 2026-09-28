@@ -39,7 +39,7 @@ Calling `init()` more than once without an intervening `destroy()` is a no-op (l
 
 Fully tear down DiagView. Removes all DOM elements, stops observers, destroys Panzoom, forgets remembered zoom states, and resets all internal state. The configuration goes back to the defaults, the Canvas Theme to Auto and Text Colours to Original.
 
-Each diagram and its SVG get back their own classes and inline styles. DiagView removes a `style` or `class` attribute that it added and left empty from `<html>`, the diagram and its SVG, and closing the viewer does the same for `<body>`. An attribute the page wrote itself stays, even an empty one.
+Each diagram and its SVG get back their own classes and inline styles. DiagView removes the `data-diagview-*` attributes it added, the `--dv-*` variables on `<html>`, and the `tabindex="-1"` it gives a diagram to hold focus after the viewer closes. A `tabindex` the page set itself stays. DiagView removes a `style` or `class` attribute that it added and left empty from `<html>`, the diagram and its SVG, and closing the viewer does the same for `<body>`, also when `destroy()` closes it. An attribute the page wrote itself stays, even an empty one. The `diagview-canvas-hint-shown` key in `localStorage` stays, so the theme hint does not come back. See [Teardown and reinitialize](USAGE.md#teardown-and-reinitialize).
 
 **Signature:** `destroy(): Promise<void>`
 
