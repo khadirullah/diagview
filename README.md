@@ -40,7 +40,7 @@
 | 🎨 **Auto-Theming**          | Detects Tailwind, Bootstrap, and system dark/light mode automatically                  |
 | 🔍 **Node Search**           | Instant search that outlines matching nodes and fades the rest                         |
 | 🖼️ **Canvas Themes**         | Auto, light, dark or custom canvas; Readable mode for faint labels                     |
-| 📤 **Multi-Format Export**   | PNG, SVG, PDF, JPEG, WebP — with transparent background option                         |
+| 📤 **Multi-Format Export**   | PNG, SVG, PDF, JPEG and WebP, with a transparent background option                     |
 | 📋 **Clipboard Copy**        | Copy diagrams directly to the clipboard                                                |
 | ⌨️ **Keyboard Shortcuts**    | Full keyboard navigation (zoom, pan, search, share, rotate)                            |
 | 📱 **Mobile Optimized**      | Pinch-to-zoom, double-tap to reset, Visual Viewport sync for stability                 |
@@ -129,7 +129,7 @@ await mermaid.run();
 DiagView.init({ layout: "header" }); // your options apply
 ```
 
-Styles are injected automatically at runtime — no CSS import is required. The raw stylesheet is also exported for advanced setups (inspecting the rules, building theme overrides, or processing it through your build pipeline):
+DiagView injects its styles at runtime, so you don't need to import any CSS. The raw stylesheet is also exported for advanced setups (inspecting the rules, building theme overrides, or processing it through your build pipeline):
 
 ```javascript
 import "diagview/style"; // optional: resolves dist/diagview.css
@@ -139,7 +139,7 @@ import "diagview/style"; // optional: resolves dist/diagview.css
 
 ## 🚀 Quick Start
 
-### Step 1 — Wrap your SVG
+### Step 1. Wrap your SVG
 
 DiagView matches any element that contains an `<svg>` tag. By default it targets `.diagram`, `.chart`, and `[data-diagram]`:
 
@@ -151,18 +151,18 @@ DiagView matches any element that contains an `<svg>` tag. By default it targets
 </div>
 ```
 
-### Step 2 — Initialize
+### Step 2. Initialize
 
 ```javascript
 DiagView.init({
   layout: "floating", // 'header' | 'floating' | 'off'
   accentColor: "#3b82f6", // optional brand color
-  highResScale: 4, // export resolution (1–10)
+  highResScale: 4, // export resolution (1 to 10)
   showKeyboardHelp: true, // allow the ? shortcuts panel
 });
 ```
 
-### Step 3 — Done 🎉
+### Step 3. Done 🎉
 
 DiagView automatically:
 
@@ -195,7 +195,7 @@ DiagView.init({ layout: "header" });
 
 ### Off (Click-to-open)
 
-No controls are rendered on the diagram card. The diagram itself is the trigger — clicking it opens the fullscreen viewer. Perfect for tight layouts and embeds.
+DiagView adds no controls to the diagram card. Clicking the diagram itself opens the fullscreen viewer. This suits tight layouts and embeds.
 
 ```javascript
 DiagView.init({ layout: "off" });
@@ -227,7 +227,7 @@ Any diagram can override the global configuration using `data-diagview-*` attrib
 | Attribute                           | Values                              | Description                                          |
 | ----------------------------------- | ----------------------------------- | ---------------------------------------------------- |
 | `data-diagview-layout`              | `header` \| `floating` \| `off`     | Layout for this diagram only                         |
-| `data-diagview-scale`               | `1`–`10`                            | Export resolution for this diagram only              |
+| `data-diagview-scale`               | `1` to `10`                         | Export resolution for this diagram only              |
 | `data-diagview-sanitize`            | `strict` \| `permissive` \| `off`   | SVG sanitization mode                                |
 | `data-diagview-allow-remote`        | `true` \| `false`                   | Allow remote CSS/fonts in SVG                        |
 | `data-diagview-watermark`           | `true` \| `false`                   | Turn the watermark on or off for this diagram        |
@@ -235,7 +235,7 @@ Any diagram can override the global configuration using `data-diagview-*` attrib
 | `data-diagview-watermark-style`     | `corner` \| `background` \| `both`  | Style override for this diagram                      |
 | `data-diagview-watermark-pos`       | `top-left` \| `...` \| `four-sides` | Position override for this diagram                   |
 | `data-diagview-watermark-placement` | `diagram` \| `margin`               | Corner and side text on the diagram or in the margin |
-| `data-diagview-watermark-opacity`   | `0`–`1`                             | Transparency override for this diagram               |
+| `data-diagview-watermark-opacity`   | `0` to `1`                          | Transparency override for this diagram               |
 | `data-title`                        | Any string                          | Title in the header label and in export file names   |
 
 > **Security note:** `data-diagview-sanitize="off"` and `data-diagview-allow-remote="true"` only work when `security.allowOverrides` is `true` in the global config (the default). Use these only with SVGs from fully trusted sources. [Choosing a mode](docs/USAGE.md#choosing-a-mode) lists what each mode removes and which one to use.
@@ -249,7 +249,7 @@ All shortcuts are active when the fullscreen modal is open. They pause while you
 | Key              | Action                                                               |
 | ---------------- | -------------------------------------------------------------------- |
 | `Esc`            | Close fullscreen (keyboard help, search and the ☰ menu close first) |
-| `Space` / `0`    | Reset zoom — fit diagram to screen                                   |
+| `Space` / `0`    | Reset zoom and fit the diagram to the screen                         |
 | `+` / `=`        | Zoom in                                                              |
 | `-` / `_`        | Zoom out                                                             |
 | `↑` `↓` `←` `→`  | Pan diagram                                                          |
@@ -439,14 +439,14 @@ DiagView.init({
   canvasGrid: "none", // 'none' | 'dots' (dot grid behind the fullscreen diagram)
 
   // ── Zoom / Pan ───────────────────────────────────
-  maxZoomScale: 25, // Upper zoom limit (1–50)
-  minZoomScale: 0.05, // Lower zoom limit (0.01–1)
+  maxZoomScale: 25, // Upper zoom limit (1 to 50)
+  minZoomScale: 0.05, // Lower zoom limit (0.01 to 1)
   zoomAnimationDuration: 200, // ms
   panAnimationDuration: 200, // ms
 
   // ── Export ───────────────────────────────────────
-  highResScale: 4, // Desktop export multiplier (1–10)
-  mobileScale: 2, // Mobile export multiplier (1–5)
+  highResScale: 4, // Desktop export multiplier (1 to 10)
+  mobileScale: 2, // Mobile export multiplier (1 to 5)
   maxPixels: 16777216, // Safety cap (default 16MP = 4096×4096)
   exportSearchHighlight: true, // false = exports during a search skip its dimming and outline
   exportFonts: "used", // 'used' | 'all' | 'none' (page fonts embedded in exports)
@@ -477,11 +477,11 @@ DiagView.init({
   // otherwise the script loads without an integrity check.
 
   // ── Callbacks ────────────────────────────────────
-  onOpen: null, // () => void — modal opened
-  onClose: null, // () => void — modal closed
-  onExport: null, // (format, filename) => void — export succeeded
-  onZoomChange: null, // (scale) => void — zoom level changed
-  onError: null, // (error) => void — SVG validation failed
+  onOpen: null, // () => void, runs after the viewer opens
+  onClose: null, // () => void, runs after the viewer closes
+  onExport: null, // (format, filename) => void, runs after a successful export
+  onZoomChange: null, // (scale) => void, runs when the zoom level changes
+  onError: null, // (error) => void, runs when SVG validation fails
 
   // ── Watermark (Silent Branding) ──────────────────
   watermark: {
@@ -569,9 +569,9 @@ MIT © [Khadirullah Mohammad](https://github.com/khadirullah)
 
 ## 🙏 Credits
 
-- [Panzoom](https://github.com/timmywil/panzoom) — zoom/pan physics
-- [jsPDF](https://github.com/parallax/jsPDF) — PDF export (lazy-loaded)
-- [Lucide Icons](https://lucide.dev) — icon design inspiration
+- [Panzoom](https://github.com/timmywil/panzoom) for the zoom and pan physics
+- [jsPDF](https://github.com/parallax/jsPDF) for PDF export, loaded on first use
+- [Lucide Icons](https://lucide.dev), which inspired the icon design
 
 ---
 
