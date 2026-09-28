@@ -335,6 +335,41 @@
                 <p class="card-note">Click to open the 2,500 node grid.</p>
             </div>
 
+            <!-- Remember zoom: this page sets rememberZoom: true -->
+            <div class="card">
+                <div class="card-header">
+                    <h3>Remember zoom</h3>
+                    <span class="tag">Mermaid</span>
+                </div>
+                <div class="mermaid" data-title="Remember Zoom">
+                    flowchart LR
+                    A[Open] --> B[Zoom and pan]
+                    B --> C[Close]
+                    C --> D[Open again]
+                    D -. same view .-> B
+                </div>
+                <p class="card-note">This page sets <code>rememberZoom: true</code>. Open this diagram, zoom, pan or
+                    rotate, then close it. Open it again and it comes back the same way. A page reload starts
+                    fresh.</p>
+            </div>
+
+            <!-- Meeting mode and share links: keys M and L in fullscreen -->
+            <div class="card">
+                <div class="card-header">
+                    <h3>Meeting mode and share links</h3>
+                    <span class="tag">Mermaid</span>
+                </div>
+                <div class="mermaid" data-title="Meeting Mode and Share Links">
+                    flowchart LR
+                    P[You, sharing your screen] -->|M| L((Laser dot))
+                    P -->|L| U[Share link]
+                    U --> T[Your team opens the same view]
+                </div>
+                <p class="card-note">In fullscreen, press <kbd>M</kbd> for a red dot that follows your pointer, and
+                    the cursor hides. Press <kbd>L</kbd> to copy a link that opens this diagram at the same zoom,
+                    position and rotation. Both are also in the ☰ menu.</p>
+            </div>
+
             <!-- Security: an SVG with an inline event handler -->
             <div class="card wide security">
                 <div class="card-header">
