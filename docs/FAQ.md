@@ -127,7 +127,7 @@ await DiagView.exportToPNG(document.querySelector(".diagram"));
 Per-diagram `data-diagview-scale` and watermark attributes on the element are honoured. If the element contains no `<svg>`, the call resolves and shows a "No diagram found" toast.
 
 **Q: PDF export shows "PDF engine unavailable" and falls back to PNG. Why?**  
-A: jsPDF failed to load from CDN. Check the network tab for a blocked request. If behind a CSP, host jsPDF locally:
+A: jsPDF failed to load from the CDN, or took more than 15 seconds. Check the network tab for a blocked request. If behind a CSP, host jsPDF locally:
 
 ```javascript
 DiagView.init({

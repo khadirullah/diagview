@@ -395,6 +395,8 @@ DiagView.init({
 
 A custom `pdfLibraryUrl` without its own `pdfLibraryIntegrity` loads with no integrity check, so the `null` line is optional. For a file on a CDN you do not control, pass its SRI hash as `pdfLibraryIntegrity` instead.
 
+If jsPDF has not loaded after 15 seconds, the export falls back to PNG with the "PDF engine unavailable" notice. A jsPDF page is at most 14400 pt on a side, so a diagram wider or taller than about 10800 px, margin included, is scaled down to fit and keeps its shape.
+
 ---
 
 ## 8. Share links
@@ -1218,7 +1220,7 @@ DiagView.init({ highResScale: 8 });
 
 ### PDF export not working
 
-- Check the network tab to see whether jsPDF loaded from the CDN
+- Check the network tab to see whether jsPDF loaded from the CDN. A download that takes longer than 15 seconds counts as failed
 - If behind a CSP, host jsPDF locally and point to it:
 
 ```javascript
