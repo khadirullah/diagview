@@ -401,6 +401,8 @@ await mermaid.run();
 DiagView.init({ diagramSelector: ".mermaid" });
 ```
 
+When the selector matches both a diagram and a wrapper around it, for example `.mermaid, .diagram` with a `.mermaid` inside a `.diagram`, each diagram still gets one toolbar. A wrapper around a single diagram keeps the toolbar, so its `data-title` and `data-diagview-*` settings apply. A wrapper around two or more diagrams gets none, and each inner diagram keeps its own.
+
 ---
 
 ## ⚙️ Configuration
