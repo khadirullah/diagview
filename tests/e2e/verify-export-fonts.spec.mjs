@@ -52,8 +52,18 @@ async function exportSvg() {
 
 /** Open the exported SVG on its own and read its fonts and label widths */
 async function renderExport(markup) {
+  // Chromium's headless shell rounds glyph advances to device pixels, so a
+  // label's length depends on the scale it is drawn at. Draw the export at
+  // the page's scale.
+  const scale = await page.evaluate(() => document.querySelector("svg").getScreenCTM().a);
   const view = await page.context().newPage();
   await view.setContent(`<!doctype html><body style="margin:0">${markup}</body>`);
+  await view.evaluate((k) => {
+    const svg = document.querySelector("svg");
+    const box = svg.viewBox.baseVal;
+    svg.style.width = `${box.width * k}px`;
+    svg.style.height = `${box.height * k}px`;
+  }, scale);
   await view.evaluate(() => document.fonts.ready);
   const faces = await view.evaluate(() =>
     [...document.styleSheets]
