@@ -8,6 +8,7 @@ import { state } from "../core/config.js";
 import { TIMING, COLORS } from "../core/constants.js";
 import { detectTheme, noticeColors } from "../core/theme.js";
 import { setSVGContent } from "../core/utils.js";
+import { addModalListener } from "../core/lifecycle.js";
 import { ICONS } from "./icons.js";
 
 /**
@@ -221,6 +222,31 @@ export function showErrorToast(message, details = null) {
  */
 export function showInfoToast(message, duration = null) {
   return showToast(message, "info", duration, "info");
+}
+
+/** Removers for the listeners that close the first-time theme hint */
+let hintListeners = [];
+
+/**
+ * Show the first-time theme hint as a callout above the menu button. The
+ * first press or wheel on the diagram closes it, like opening the menu does.
+ * @param {string} message - Text to show, a newline starts the second line
+ * @param {HTMLElement} viewport - The viewer's diagram area
+ */
+export function showMenuHint(message, viewport) {
+  showInfoToast(message, 6000).classList.add("diagview-toast-menu-hint");
+  hintListeners = ["pointerdown", "wheel"].map((type) =>
+    addModalListener(viewport, type, closeMenuHint, { capture: true, passive: true }),
+  );
+}
+
+/**
+ * Close the first-time theme hint and remove the listeners that close it
+ */
+export function closeMenuHint() {
+  document.querySelector(".diagview-toast-menu-hint")?.remove();
+  hintListeners.forEach((remove) => remove());
+  hintListeners = [];
 }
 
 /**

@@ -22,7 +22,7 @@ import { setupModalFocusManagement, saveFocus, setInitialFocus } from "./focus-m
 import { closeModal, lockBodyScroll } from "./modal-controls.js";
 import { createFloatingMenu } from "./floating-menu.js";
 import { pushModalHistoryState, startVisualViewportSync } from "./viewport.js";
-import { showInfoToast } from "./toast.js";
+import { showMenuHint } from "./toast.js";
 import { keysUsed } from "../features/keyboard.js";
 import { syncCanvasGrid, updateCanvasGrid } from "./canvas-grid.js";
 
@@ -160,7 +160,7 @@ function _prepareViewportContent(originalSvg, viewport) {
  * Handles modal visibility, body scroll-locking, and history state.
  * @private
  */
-function _activateModalUI(modal) {
+function _activateModalUI(modal, viewport) {
   // 0. Sync UI elements to visual viewport BEFORE locking body
   // Handles pinch-zoomed browsers by force-resetting scale.
   startVisualViewportSync();
@@ -190,12 +190,11 @@ function _activateModalUI(modal) {
     try {
       if (state.isStorageAvailable && !localStorage.getItem("diagview-canvas-hint-shown")) {
         localStorage.setItem("diagview-canvas-hint-shown", "true");
-        const hint = showInfoToast(
+        // A callout above the menu button. Working with the diagram closes it.
+        showMenuHint(
           "Having visibility issues?\nChange the canvas theme from the menu ☰",
-          6000,
+          viewport,
         );
-        // Styled as a callout above the menu button so it never covers it
-        hint?.classList.add("diagview-toast-menu-hint");
       }
     } catch (_e) {
       // Ignore storage errors
@@ -456,7 +455,7 @@ export async function openFullscreen(element, options = {}) {
     }
 
     // Phase 2: UI Activation
-    _activateModalUI(modal);
+    _activateModalUI(modal, viewport);
 
     // RE-CENTER: Now that the modal is visible (classList 'open' applied),
     // the browser can accurately calculate BBox for diagrams that extend

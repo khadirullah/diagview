@@ -1,5 +1,5 @@
 import { jest } from "@jest/globals";
-import { state, resetConfig, updateConfig } from "../src/core/config.js";
+import { state, resetConfig, updateConfig, runModalCleanupFunctions } from "../src/core/config.js";
 import { clearThemeCache } from "../src/core/theme.js";
 import {
   showToast,
@@ -8,6 +8,8 @@ import {
   showInfoToast,
   showProgressToast,
   showWarningToast,
+  showMenuHint,
+  closeMenuHint,
 } from "../src/ui/toast.js";
 import { ICONS } from "../src/ui/icons.js";
 
@@ -262,5 +264,48 @@ describe("Toast Notification System", () => {
       expect(container().parentNode).toBe(document.body);
       expect(container().textContent).toContain("After");
     });
+  });
+});
+
+describe("First-time theme hint", () => {
+  let viewport;
+  const hint = () => document.querySelector(".diagview-toast-menu-hint");
+
+  beforeEach(() => {
+    resetConfig();
+    document.body.innerHTML = "";
+    viewport = document.body.appendChild(document.createElement("div"));
+    showMenuHint("Having visibility issues?\nChange the canvas theme from the menu ☰", viewport);
+  });
+
+  afterEach(() => runModalCleanupFunctions());
+
+  test("shows as the callout above the menu button", () => {
+    expect(hint()).not.toBeNull();
+    expect(hint().classList.contains("diagview-toast-info")).toBe(true);
+  });
+
+  test.each(["pointerdown", "wheel"])("a %s on the diagram closes it", (type) => {
+    viewport.dispatchEvent(new Event(type, { bubbles: true }));
+    expect(hint()).toBeNull();
+  });
+
+  test("closing it removes the listeners that close it", () => {
+    const listeners = state.modalCleanupFunctions.size;
+    closeMenuHint();
+    expect(hint()).toBeNull();
+    expect(state.modalCleanupFunctions.size).toBe(listeners - 2);
+
+    // A later notice is not closed by a press on the diagram
+    const later = showInfoToast("Copied");
+    viewport.dispatchEvent(new Event("pointerdown"));
+    expect(later.isConnected).toBe(true);
+  });
+
+  test("closing the viewer removes the listeners too", () => {
+    const remove = jest.spyOn(viewport, "removeEventListener");
+    runModalCleanupFunctions();
+    expect(remove.mock.calls.map((c) => c[0]).sort()).toEqual(["pointerdown", "wheel"]);
+    remove.mockRestore();
   });
 });

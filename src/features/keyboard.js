@@ -9,6 +9,7 @@ import { PAN, TIMING } from "../core/constants.js";
 import { shouldHandleKeyboardEvent, isInputFocused } from "../ui/focus-manager.js";
 import { closeModal } from "../ui/modal-controls.js";
 import { toggleKeyboardHelp, isHelpVisible, hideKeyboardHelp } from "../ui/keyboard-help.js";
+import { closeMenuHint } from "../ui/toast.js";
 
 /** Whether a key was pressed outside a text field during this page visit */
 export let keysUsed = false;
@@ -105,6 +106,7 @@ function handleKeyboardShortcut(e) {
 
   // Handle zoom shortcuts
   if (["+", "=", "-", "_", "0", " "].includes(e.key)) {
+    closeMenuHint(); // the reader is working with the diagram
     switch (e.key) {
       case "+":
       case "=":
@@ -154,6 +156,7 @@ function handleKeyboardShortcut(e) {
     // In the open ☰ menu and on its button the arrows belong to the menu
     if (e.target.closest?.(".diagview-menu.active, #dv-toggle.open")) return;
     e.preventDefault();
+    closeMenuHint();
 
     let dx = 0;
     let dy = 0;

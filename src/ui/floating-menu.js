@@ -11,6 +11,7 @@ import { sanitizeSVG } from "../core/utils.js";
 import { exportDiagram } from "../features/export.js";
 import { ICONS } from "./icons.js";
 import { createMenuItem } from "./button-factory.js";
+import { closeMenuHint } from "./toast.js";
 import { BRANDING } from "../core/constants.js";
 
 /**
@@ -412,7 +413,7 @@ function _setupMenuController(elements, sourceElement, clonedSvg) {
     if (isOpen) {
       markCanvas(); // the canvas may have changed since the menu was built
       // The first-time theme hint points at this button and would cover the menu
-      document.querySelector(".diagview-toast-menu-hint")?.remove();
+      closeMenuHint();
       requestAnimationFrame(() => {
         if (isOpen) menuPanel.focus();
       });

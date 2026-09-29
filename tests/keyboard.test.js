@@ -81,6 +81,13 @@ describe("Keyboard Shortcuts Integration", () => {
     expect(mockPanzoom.reset).toHaveBeenCalledTimes(2);
   });
 
+  test.each(["ArrowRight", "+", "-", "0"])("%s closes the first-time theme hint", (key) => {
+    const hint = document.body.appendChild(document.createElement("div"));
+    hint.className = "diagview-toast diagview-toast-menu-hint";
+    window.dispatchEvent(new KeyboardEvent("keydown", { key }));
+    expect(hint.isConnected).toBe(false);
+  });
+
   test("Arrow keys trigger panning", () => {
     const event = new KeyboardEvent("keydown", { key: "ArrowRight" });
     window.dispatchEvent(event);

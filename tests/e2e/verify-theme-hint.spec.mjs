@@ -116,3 +116,39 @@ test("hint keeps two lines on a 320px wide phone", async ({ browser, browserName
   expect(m.width).toBe(320);
   expectAboveButton(m);
 });
+
+// The hint closes as soon as the reader works with the diagram
+const hintCount = (page) => page.locator(".diagview-toast-menu-hint").count();
+
+async function diagramCentre(page) {
+  const box = await page.locator("#diagview-modal-viewport").boundingBox();
+  return { x: box.x + box.width / 2, y: box.y + box.height / 2 };
+}
+
+test("a drag on the diagram closes the hint", async ({ browser }) => {
+  const page = await openWithHint(browser, {}, false);
+  expect(await hintCount(page)).toBe(1);
+  const { x, y } = await diagramCentre(page);
+  await page.mouse.move(x, y);
+  await page.mouse.down();
+  await page.mouse.move(x + 60, y + 30, { steps: 4 });
+  await page.mouse.up();
+  expect(await hintCount(page)).toBe(0);
+});
+
+test("a wheel on the diagram closes the hint", async ({ browser }) => {
+  const page = await openWithHint(browser, {}, false);
+  expect(await hintCount(page)).toBe(1);
+  const { x, y } = await diagramCentre(page);
+  await page.mouse.move(x, y);
+  await page.mouse.wheel(0, -120);
+  await expect(page.locator(".diagview-toast-menu-hint")).toHaveCount(0);
+});
+
+test("a tap on the diagram closes the hint on a phone", async ({ browser, browserName }) => {
+  const page = await openWithHint(browser, phone(browserName), true);
+  expect(await hintCount(page)).toBe(1);
+  const { x, y } = await diagramCentre(page);
+  await page.touchscreen.tap(x, y);
+  await expect(page.locator(".diagview-toast-menu-hint")).toHaveCount(0);
+});
