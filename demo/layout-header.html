@@ -520,19 +520,22 @@
                         <span class="file">app.js</span>
                         <button class="copy-btn" type="button" data-copy>Copy</button>
                     </div>
-<pre><code><span class="c">// Works with Mermaid.js. Render first, then init</span>
+<pre><code><span class="c">// With Mermaid, render it first</span>
 <span class="kw">await</span> mermaid.run();
 
 <span class="kw">DiagView</span>.init({
-  diagramSelector: <span class="v">'.mermaid, .diagram'</span>,
-  layout:          <span class="v">'header'</span>,
+  diagramSelector:
+    <span class="v">'.mermaid, .diagram'</span>,
+  layout: <span class="v">'header'</span>,
   showKeyboardHelp: <span class="b">true</span>,
-  highResScale:    <span class="b">4</span>
+  highResScale: <span class="b">4</span>
 });
 
-<span class="c">// Per-element layout override</span>
-&lt;<span class="t">div</span> <span class="a">class</span>=<span class="v">"mermaid"</span>
-     <span class="a">data-diagview-layout</span>=<span class="v">"header"</span>&gt;
+<span class="c">&lt;!-- Or set it for one diagram --&gt;</span>
+&lt;<span class="t">div</span>
+  <span class="a">class</span>=<span class="v">"mermaid"</span>
+  <span class="a">data-diagview-layout</span>=<span class="v">"header"</span>
+&gt;
   graph TD; A--&gt;B;
 &lt;/<span class="t">div</span>&gt;</code></pre>
                 </div>

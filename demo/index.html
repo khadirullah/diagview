@@ -913,14 +913,21 @@
                             <span class="file">index.html</span>
                             <button class="copy-btn" type="button" data-copy>Copy</button>
                         </div>
-<pre><code><span class="c">&lt;!-- 1. Required Dependencies --&gt;</span>
-&lt;<span class="t">script</span> <span class="a">src</span>=<span class="v">"https://cdn.jsdelivr.net/npm/@panzoom/panzoom@4.5.1/dist/panzoom.min.js"</span>&gt;&lt;/<span class="t">script</span>&gt;
+<pre><code><span class="c">&lt;!-- 1. Required dependency --&gt;</span>
+&lt;<span class="t">script</span>
+  <span class="a">src</span>=<span class="v url">"https://cdn.jsdelivr.net/<wbr>npm/<wbr>@panzoom/<wbr>panzoom@4.5.1/<wbr>dist/<wbr>panzoom.min.js"</span>
+&gt;&lt;/<span class="t">script</span>&gt;
 
-<span class="c">&lt;!-- Option A: Basic Usage (Auto-initializes) --&gt;</span>
-&lt;<span class="t">script</span> <span class="a">src</span>=<span class="v">"https://unpkg.com/diagview@1.0.12/dist/diagview.umd.min.js"</span>&gt;&lt;/<span class="t">script</span>&gt;
+<span class="c">&lt;!-- Option A: starts on its own --&gt;</span>
+&lt;<span class="t">script</span>
+  <span class="a">src</span>=<span class="v url">"https://unpkg.com/<wbr>diagview@1.0.12/<wbr>dist/<wbr>diagview.umd.min.js"</span>
+&gt;&lt;/<span class="t">script</span>&gt;
 
-<span class="c">&lt;!-- Option B: Custom Configuration --&gt;</span>
-&lt;<span class="t">script</span> <span class="a">src</span>=<span class="v">"https://unpkg.com/diagview@1.0.12/dist/diagview.umd.min.js"</span> <span class="a">data-diagview-no-auto-init</span>&gt;&lt;/<span class="t">script</span>&gt;
+<span class="c">&lt;!-- Option B: your own options --&gt;</span>
+&lt;<span class="t">script</span>
+  <span class="a">src</span>=<span class="v url">"https://unpkg.com/<wbr>diagview@1.0.12/<wbr>dist/<wbr>diagview.umd.min.js"</span>
+  <span class="a">data-diagview-no-auto-init</span>
+&gt;&lt;/<span class="t">script</span>&gt;
 &lt;<span class="t">script</span>&gt;
   <span class="kw">DiagView</span>.init({
     layout: <span class="v">'floating'</span>,

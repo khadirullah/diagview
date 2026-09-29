@@ -1124,6 +1124,17 @@ kbd {
   .stage .diagview-viewport > * {
     padding: 14px;
   }
+  /* The code samples keep one attribute or option per line. This size
+     fits those lines on a 390 px phone. */
+  .code pre {
+    padding: 16px;
+    font-size: 0.78rem;
+  }
+  /* A CDN address is longer than the screen, so it wraps inside the box
+     after a slash (the <wbr> marks). Copy still gets the whole line. */
+  .code pre .url {
+    white-space: pre-wrap;
+  }
 }
 
 /* Small phones: the header row has room for the toggles only when the
@@ -1140,6 +1151,14 @@ kbd {
     overflow: hidden;
     clip: rect(0 0 0 0);
     white-space: nowrap;
+  }
+}
+
+/* The longest code lines still fit a 320 px phone, at 11.2 px */
+@media (max-width: 360px) {
+  .code pre {
+    padding: 12px;
+    font-size: 0.7rem;
   }
 }
 

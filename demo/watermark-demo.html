@@ -400,7 +400,8 @@
                             <button class="copy-btn" type="button" data-copy>Copy</button>
                         </div>
 <pre><code><span class="kw">DiagView</span>.init({
-  diagramSelector: <span class="v">'.mermaid, .diagram'</span>,
+  diagramSelector:
+    <span class="v">'.mermaid, .diagram'</span>,
   layout: <span class="v">'header'</span>,
   watermark: {
     enabled: <span class="b">false</span>,
@@ -412,11 +413,13 @@
   }
 });
 
-<span class="c">// Turn it on for one diagram</span>
-&lt;<span class="t">div</span> <span class="a">class</span>=<span class="v">"diagram"</span>
+<span class="c">&lt;!-- Turn it on for one diagram --&gt;</span>
+&lt;<span class="t">div</span>
+  <span class="a">class</span>=<span class="v">"diagram"</span>
   <span class="a">data-diagview-watermark</span>=<span class="v">"true"</span>
   <span class="a">data-diagview-watermark-style</span>=<span class="v">"both"</span>
-  <span class="a">data-diagview-watermark-pos</span>=<span class="v">"four-sides"</span>&gt;</code></pre>
+  <span class="a">data-diagview-watermark-pos</span>=<span class="v">"four-sides"</span>
+&gt;</code></pre>
                     </div>
                 </div>
                 <div class="next">

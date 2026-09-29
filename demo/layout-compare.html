@@ -330,23 +330,29 @@
                         <button class="copy-btn" type="button" data-copy>Copy</button>
                     </div>
 <pre><code>&lt;<span class="t">script</span>&gt;
-  <span class="c">// One global init, no layout given</span>
+  <span class="c">// One init, no layout given</span>
   <span class="kw">DiagView</span>.init();
 &lt;/<span class="t">script</span>&gt;
 
-<span class="c">&lt;!-- Each element sets its own layout with a data attribute --&gt;</span>
-&lt;<span class="t">div</span> <span class="a">class</span>=<span class="v">"diagram"</span>
-     <span class="a">data-diagview-layout</span>=<span class="v">"floating"</span>&gt;
+<span class="c">&lt;!-- Each diagram picks a layout --&gt;</span>
+&lt;<span class="t">div</span>
+  <span class="a">class</span>=<span class="v">"diagram"</span>
+  <span class="a">data-diagview-layout</span>=<span class="v">"floating"</span>
+&gt;
   &lt;<span class="t">svg</span>&gt;...&lt;/<span class="t">svg</span>&gt;
 &lt;/<span class="t">div</span>&gt;
 
-&lt;<span class="t">div</span> <span class="a">class</span>=<span class="v">"diagram"</span>
-     <span class="a">data-diagview-layout</span>=<span class="v">"header"</span>&gt;
+&lt;<span class="t">div</span>
+  <span class="a">class</span>=<span class="v">"diagram"</span>
+  <span class="a">data-diagview-layout</span>=<span class="v">"header"</span>
+&gt;
   &lt;<span class="t">svg</span>&gt;...&lt;/<span class="t">svg</span>&gt;
 &lt;/<span class="t">div</span>&gt;
 
-&lt;<span class="t">div</span> <span class="a">class</span>=<span class="v">"diagram"</span>
-     <span class="a">data-diagview-layout</span>=<span class="v">"off"</span>&gt;
+&lt;<span class="t">div</span>
+  <span class="a">class</span>=<span class="v">"diagram"</span>
+  <span class="a">data-diagview-layout</span>=<span class="v">"off"</span>
+&gt;
   &lt;<span class="t">svg</span>&gt;...&lt;/<span class="t">svg</span>&gt;
 &lt;/<span class="t">div</span>&gt;</code></pre>
                 </div>

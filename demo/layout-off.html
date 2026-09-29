@@ -301,18 +301,27 @@
                         <span class="file">app.js</span>
                         <button class="copy-btn" type="button" data-copy>Copy</button>
                     </div>
-<pre><code><span class="c">// Off mode, no toolbar DOM, click to open</span>
+<pre><code><span class="c">// Off mode. A click opens it.</span>
 <span class="kw">DiagView</span>.init({
   diagramSelector: <span class="v">'.diagram'</span>,
   layout:          <span class="v">'off'</span>
 });
 
-<span class="c">// Mix layouts on the same page (v1.0.5+)</span>
-&lt;<span class="t">div</span> <span class="a">class</span>=<span class="v">"diagram"</span> <span class="a">data-diagview-layout</span>=<span class="v">"off"</span>&gt;
-  &lt;<span class="t">svg</span>&gt;...&lt;/<span class="t">svg</span>&gt;   <span class="c">// no toolbar</span>
+<span class="c">&lt;!-- Mix layouts (v1.0.5+) --&gt;</span>
+&lt;<span class="t">div</span>
+  <span class="a">class</span>=<span class="v">"diagram"</span>
+  <span class="a">data-diagview-layout</span>=<span class="v">"off"</span>
+&gt;
+  <span class="c">&lt;!-- no toolbar --&gt;</span>
+  &lt;<span class="t">svg</span>&gt;...&lt;/<span class="t">svg</span>&gt;
 &lt;/<span class="t">div</span>&gt;
-&lt;<span class="t">div</span> <span class="a">class</span>=<span class="v">"diagram"</span> <span class="a">data-diagview-layout</span>=<span class="v">"floating"</span>&gt;
-  &lt;<span class="t">svg</span>&gt;...&lt;/<span class="t">svg</span>&gt;   <span class="c">// buttons on hover</span>
+
+&lt;<span class="t">div</span>
+  <span class="a">class</span>=<span class="v">"diagram"</span>
+  <span class="a">data-diagview-layout</span>=<span class="v">"floating"</span>
+&gt;
+  <span class="c">&lt;!-- buttons on hover --&gt;</span>
+  &lt;<span class="t">svg</span>&gt;...&lt;/<span class="t">svg</span>&gt;
 &lt;/<span class="t">div</span>&gt;</code></pre>
                 </div>
                 <div class="next">

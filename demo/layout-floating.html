@@ -581,24 +581,36 @@
                         <span class="file">index.html</span>
                         <button class="copy-btn" type="button" data-copy>Copy</button>
                     </div>
-<pre><code><span class="c">// 1. CDN, drop into any HTML page. Panzoom does the zoom and pan, so load it first.</span>
-&lt;<span class="t">script</span> <span class="a">src</span>=<span class="v">"https://cdn.jsdelivr.net/npm/@panzoom/panzoom@4.5.1/dist/panzoom.min.js"</span>&gt;&lt;/<span class="t">script</span>&gt;
-&lt;<span class="t">script</span> <span class="a">src</span>=<span class="v">"https://unpkg.com/diagview@1.0.12/dist/diagview.umd.js"</span>&gt;&lt;/<span class="t">script</span>&gt;
+<pre><code><span class="c">&lt;!-- 1. CDN. Panzoom goes first --&gt;</span>
+&lt;<span class="t">script</span>
+  <span class="a">src</span>=<span class="v url">"https://cdn.jsdelivr.net/<wbr>npm/<wbr>@panzoom/<wbr>panzoom@4.5.1/<wbr>dist/<wbr>panzoom.min.js"</span>
+&gt;&lt;/<span class="t">script</span>&gt;
+&lt;<span class="t">script</span>
+  <span class="a">src</span>=<span class="v url">"https://unpkg.com/<wbr>diagview@1.0.12/<wbr>dist/<wbr>diagview.umd.js"</span>
+&gt;&lt;/<span class="t">script</span>&gt;
 
-<span class="c">// 2. Init with floating buttons</span>
-<span class="kw">DiagView</span>.init({
-  diagramSelector:  <span class="v">'.diagram'</span>,
-  layout:           <span class="v">'floating'</span>,
-  showKeyboardHelp: <span class="b">true</span>,
-  showBranding:     <span class="b">true</span>
-});
+<span class="c">&lt;!-- 2. Floating buttons --&gt;</span>
+&lt;<span class="t">script</span>&gt;
+  <span class="kw">DiagView</span>.init({
+    diagramSelector:  <span class="v">'.diagram'</span>,
+    layout:           <span class="v">'floating'</span>,
+    showKeyboardHelp: <span class="b">true</span>,
+    showBranding:     <span class="b">true</span>
+  });
+&lt;/<span class="t">script</span>&gt;
 
-<span class="c">/* 3. Blue controls, from a CSS variable */</span>
-:root { --diagram-accent: <span class="v">#3b82f6</span>; }
+<span class="c">&lt;!-- 3. Blue controls in CSS --&gt;</span>
+&lt;<span class="t">style</span>&gt;
+  :root {
+    --diagram-accent: <span class="v">#3b82f6</span>;
+  }
+&lt;/<span class="t">style</span>&gt;
 
-<span class="c">// 4. Or set layout per-element via HTML</span>
-&lt;<span class="t">div</span> <span class="a">class</span>=<span class="v">"diagram"</span>
-     <span class="a">data-diagview-layout</span>=<span class="v">"floating"</span>&gt;
+<span class="c">&lt;!-- 4. A layout for one diagram --&gt;</span>
+&lt;<span class="t">div</span>
+  <span class="a">class</span>=<span class="v">"diagram"</span>
+  <span class="a">data-diagview-layout</span>=<span class="v">"floating"</span>
+&gt;
   &lt;<span class="t">svg</span>&gt;...&lt;/<span class="t">svg</span>&gt;
 &lt;/<span class="t">div</span>&gt;</code></pre>
                 </div>
