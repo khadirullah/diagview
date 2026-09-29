@@ -325,6 +325,32 @@ describe("Minimap geometry (viewBox origin, rotation fit, resize)", () => {
     expect(img.getAttribute("height")).toBe("500");
   });
 
+  // jsdom has no SVG lengths, so give the page SVG the ones a browser would
+  const setSize = (svg, w, h, unitType = 1) => {
+    svg.removeAttribute("viewBox");
+    Object.defineProperty(svg, "width", { value: { baseVal: { value: w, unitType } } });
+    Object.defineProperty(svg, "height", { value: { baseVal: { value: h, unitType } } });
+  };
+
+  test("an SVG with no viewBox gets a thumbnail box of its own width and height", () => {
+    setSize(state.activeSourceElement.querySelector("svg"), 260, 180);
+    const { clone, viewport } = makeScene();
+    updateMinimap(clone, viewport, panzoom);
+
+    expect(state.minimapSvg.getAttribute("viewBox")).toBe("0 0 260 180");
+    const img = state.minimapSvg.querySelector("image");
+    expect(img.getAttribute("width")).toBe("260");
+    expect(img.getAttribute("height")).toBe("180");
+  });
+
+  test("a percentage size keeps the viewer's box", () => {
+    setSize(state.activeSourceElement.querySelector("svg"), 100, 100, 2);
+    const { clone, viewport } = makeScene();
+    updateMinimap(clone, viewport, panzoom);
+
+    expect(state.minimapSvg.getAttribute("viewBox")).toBe("0 0 750 500");
+  });
+
   test("clicking the thumbnail centre centres diagram point (325, 240)", () => {
     const { clone, viewport } = makeScene();
     updateMinimap(clone, viewport, panzoom);

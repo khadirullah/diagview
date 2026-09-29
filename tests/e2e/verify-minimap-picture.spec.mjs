@@ -103,6 +103,7 @@ const mapped = (r) =>
 const CASES = [
   { id: "shifted", red: { x: 85, y: 250, w: 110, h: 50 } },
   { id: "negative", red: { x: 540, y: 200, w: 100, h: 80 } },
+  { id: "sized", red: { x: 180, y: 70, w: 70, h: 40 } },
 ];
 
 for (const { id, red } of CASES) {

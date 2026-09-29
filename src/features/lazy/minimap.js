@@ -105,6 +105,9 @@ function buildSnapshot(source, shown) {
   return { markup, usesColour: markup !== base };
 }
 
+// SVGLength.SVG_LENGTHTYPE_PERCENTAGE
+const LENGTH_PERCENTAGE = 2;
+
 const toDataUrl = (markup) => "data:image/svg+xml;charset=utf-8," + encodeURIComponent(markup);
 
 /**
@@ -306,8 +309,12 @@ export function updateMinimap(clone, viewport, panzoom) {
     const srcVb = originalSvg.viewBox?.baseVal;
     const vbX = srcVb?.x || 0;
     const vbY = srcVb?.y || 0;
-    const vbW = srcVb?.width || d.width;
-    const vbH = srcVb?.height || d.height;
+    // Without a viewBox the snapshot draws at the SVG's own width and height,
+    // one unit to a pixel, so those set the box. A percentage size has no
+    // fixed size to draw at, and falls back to the viewer's box.
+    const ownSize = (len) => (len && len.unitType !== LENGTH_PERCENTAGE ? len.value : 0);
+    const vbW = srcVb?.width || ownSize(originalSvg.width?.baseVal) || d.width;
+    const vbH = srcVb?.height || ownSize(originalSvg.height?.baseVal) || d.height;
     if (!state.minimapSvg.getAttribute("viewBox") && vbW && vbH) {
       state.minimapSvg.setAttribute("viewBox", `${vbX} ${vbY} ${vbW} ${vbH}`);
       // The snapshot fills that same box, so it starts at the origin too
