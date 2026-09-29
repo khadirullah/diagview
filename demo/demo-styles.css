@@ -940,6 +940,12 @@ kbd {
   background: color-mix(in srgb, var(--surface) 92%, transparent);
   border-bottom: 1px solid var(--line);
 }
+/* Floating buttons sit on the canvas with no bar behind them, so they
+   get no bar line either */
+.card .diagview-controls-floating,
+.stage .diagview-controls-floating {
+  border-bottom: 0;
+}
 /* The library dims the title to 60%, too faint on the white bar */
 .card .diagview-label,
 .stage .diagview-label {
