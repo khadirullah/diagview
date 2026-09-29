@@ -308,15 +308,41 @@ export function initializeDiagram(element, precalculatedIndex = -1) {
   const layout = elementConfig.layout;
   const isOff = layout === LAYOUTS.OFF;
   const isFloating = layout === LAYOUTS.FLOATING;
+  const title = getDiagramTitle(svg, element);
 
-  // If layout is "off", just make clickable to open fullscreen
+  // If layout is "off", the diagram itself opens fullscreen on a click, or
+  // on Enter or Space once Tab reaches it
   if (isOff) {
     element.style.cursor = "pointer";
     const openHandler = () => openFullscreen(element);
+    // Only a key on the diagram itself. Enter on a link inside follows it.
+    const keyHandler = (e) => {
+      if (e.target === element && (e.key === "Enter" || e.key === " ")) {
+        e.preventDefault();
+        openHandler();
+      }
+    };
     element.addEventListener("click", openHandler);
+    element.addEventListener("keydown", keyHandler);
+
+    // A button must not hold links, so a diagram with its own links is a
+    // group, and Tab still reaches them. Attributes the page set stay.
+    const group = element.querySelector("a[*|href],button,input,select,textarea,[tabindex]");
+    const added = Object.entries({
+      tabindex: 0,
+      role: group ? "group" : "button",
+      "aria-label": group
+        ? `${title || "Diagram"}, press Enter to open fullscreen`
+        : `Open ${title || "diagram"} in fullscreen`,
+    }).filter(([name]) => !element.hasAttribute(name));
+    added.forEach(([name, value]) => element.setAttribute(name, value));
 
     // Store cleanup for this specific element (no wrapper in 'off' layout)
-    record.fn = () => element.removeEventListener("click", openHandler);
+    record.fn = () => {
+      element.removeEventListener("click", openHandler);
+      element.removeEventListener("keydown", keyHandler);
+      added.forEach(([name]) => element.removeAttribute(name));
+    };
 
     // Apply minimal SVG styling
     if (svg) {
@@ -326,7 +352,6 @@ export function initializeDiagram(element, precalculatedIndex = -1) {
     return;
   }
 
-  const title = getDiagramTitle(element.querySelector("svg"), element);
   const styleClass = getButtonStyleClass();
 
   // Create wrapper structure

@@ -607,3 +607,128 @@ describe("Diagram Init: onError", () => {
     );
   });
 });
+
+describe("Diagram Init: keyboard access with layout off", () => {
+  const RECT = '<svg viewBox="0 0 10 10"><rect width="5" height="5"/></svg>';
+  let openFullscreen;
+
+  const setup = (attrs = "", inner = RECT, layout = "off") => {
+    document.body.innerHTML = `<div class="diagram" data-diagview-layout="${layout}" ${attrs}>${inner}</div>`;
+    const el = document.querySelector(".diagram");
+    initializeDiagram(el);
+    return el;
+  };
+
+  const press = (target, key) => {
+    const e = new KeyboardEvent("keydown", { key, bubbles: true, cancelable: true });
+    target.dispatchEvent(e);
+    return e;
+  };
+
+  beforeEach(async () => {
+    ({ openFullscreen } = await import("../src/ui/modal.js"));
+    document.body.innerHTML = "";
+    jest.clearAllMocks();
+  });
+
+  test("a titled diagram is a button in the tab order named after its title", () => {
+    const el = setup('data-title="Order flow"');
+    expect(el.getAttribute("tabindex")).toBe("0");
+    expect(el.getAttribute("role")).toBe("button");
+    expect(el.getAttribute("aria-label")).toBe("Open Order flow in fullscreen");
+  });
+
+  test("the SVG's own <title> names it too", () => {
+    const el = setup("", '<svg viewBox="0 0 10 10"><title>Login</title><rect/></svg>');
+    expect(el.getAttribute("aria-label")).toBe("Open Login in fullscreen");
+  });
+
+  test("a diagram without a title gets a plain name", () => {
+    expect(setup().getAttribute("aria-label")).toBe("Open diagram in fullscreen");
+  });
+
+  test.each([
+    ['data-title="Checkout"', "Checkout, press Enter to open fullscreen"],
+    ["", "Diagram, press Enter to open fullscreen"],
+  ])("a diagram with links inside is a group (%s)", (attrs, label) => {
+    const el = setup(
+      attrs,
+      '<svg viewBox="0 0 10 10"><a xlink:href="#one"><rect width="5" height="5"/></a></svg>',
+    );
+    expect(el.getAttribute("role")).toBe("group");
+    expect(el.getAttribute("aria-label")).toBe(label);
+    expect(el.getAttribute("tabindex")).toBe("0");
+  });
+
+  test("keeps the tabindex, role and label the page set, also after destroy", () => {
+    const attrs = 'tabindex="-1" role="figure" aria-label="Sales chart"';
+    const el = setup(attrs);
+    expect(el.getAttribute("tabindex")).toBe("-1");
+    expect(el.getAttribute("role")).toBe("figure");
+    expect(el.getAttribute("aria-label")).toBe("Sales chart");
+
+    deinitializeDiagram(el);
+    expect(el.getAttribute("tabindex")).toBe("-1");
+    expect(el.getAttribute("role")).toBe("figure");
+    expect(el.getAttribute("aria-label")).toBe("Sales chart");
+  });
+
+  test("adds only what the page left out", () => {
+    const el = setup('tabindex="0" data-title="Flow"');
+    expect(el.getAttribute("role")).toBe("button");
+    deinitializeDiagram(el);
+    expect(el.getAttribute("tabindex")).toBe("0");
+    expect(el.hasAttribute("role")).toBe(false);
+    expect(el.hasAttribute("aria-label")).toBe(false);
+  });
+
+  test.each(["Enter", " "])("%p on the diagram opens it and stops the page scrolling", (key) => {
+    const el = setup();
+    const e = press(el, key);
+    expect(openFullscreen).toHaveBeenCalledWith(el);
+    expect(e.defaultPrevented).toBe(true);
+  });
+
+  test("other keys do nothing", () => {
+    const el = setup();
+    const e = press(el, "a");
+    expect(openFullscreen).not.toHaveBeenCalled();
+    expect(e.defaultPrevented).toBe(false);
+  });
+
+  test("Enter on a link inside the diagram follows the link", () => {
+    const el = setup(
+      "",
+      '<svg viewBox="0 0 10 10"><a href="#one"><rect width="5" height="5"/></a></svg>',
+    );
+    const e = press(el.querySelector("a"), "Enter");
+    expect(openFullscreen).not.toHaveBeenCalled();
+    expect(e.defaultPrevented).toBe(false);
+  });
+
+  test("a click still opens it", () => {
+    const el = setup();
+    el.click();
+    expect(openFullscreen).toHaveBeenCalledWith(el);
+  });
+
+  test("destroy leaves the element as it was and stops listening", () => {
+    document.body.innerHTML = `<div class="diagram" data-diagview-layout="off" data-title="Flow">${RECT}</div>`;
+    const el = document.querySelector(".diagram");
+    const before = el.outerHTML;
+    initializeDiagram(el);
+    deinitializeDiagram(el);
+
+    expect(el.outerHTML).toBe(before);
+    press(el, "Enter");
+    el.click();
+    expect(openFullscreen).not.toHaveBeenCalled();
+  });
+
+  test("the header layout gets none of it", () => {
+    const el = setup('data-title="Flow"', RECT, "header");
+    expect(el.hasAttribute("tabindex")).toBe(false);
+    expect(el.hasAttribute("role")).toBe(false);
+    expect(el.hasAttribute("aria-label")).toBe(false);
+  });
+});
