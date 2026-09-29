@@ -412,6 +412,9 @@ function _setupMenuController(elements, sourceElement, clonedSvg) {
 
     if (isOpen) {
       markCanvas(); // the canvas may have changed since the menu was built
+      // The menu is taller than most screens, so it opens at the top again
+      // rather than where it was last scrolled
+      menuPanel.scrollTop = 0;
       // The first-time theme hint points at this button and would cover the menu
       closeMenuHint();
       requestAnimationFrame(() => {

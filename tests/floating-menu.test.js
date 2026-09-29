@@ -112,6 +112,19 @@ describe("Floating Menu UI", () => {
     expect(panel.classList.contains("active")).toBe(false);
   });
 
+  test("the menu opens at the top, not where it was last scrolled", () => {
+    createFloatingMenu(sourceElement, clonedSvg);
+    const toggle = document.getElementById("dv-toggle");
+    const panel = document.getElementById("dv-menu-panel");
+
+    toggle.click();
+    panel.scrollTop = 150;
+    toggle.click();
+    toggle.click();
+
+    expect(panel.scrollTop).toBe(0);
+  });
+
   test("opening the menu closes the first-time theme hint that points at it", () => {
     createFloatingMenu(sourceElement, clonedSvg);
     const hint = document.createElement("div");

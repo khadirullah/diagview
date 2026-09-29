@@ -129,3 +129,21 @@ test("the menu button keeps its round corners after Escape closes the menu", asy
   // Chrome and Safari show the focus ring here, and it must still be drawn
   if (fab.visible) expect(fab.ring).not.toBe("none");
 });
+
+const panel = () => page.locator("#dv-menu-panel");
+
+test("the menu opens at the top after it was scrolled and closed", async () => {
+  await page.click("#dv-toggle");
+  await page.waitForTimeout(400);
+  const scrolled = await page.evaluate(() => {
+    const m = document.getElementById("dv-menu-panel");
+    m.scrollTop = m.scrollHeight;
+    return m.scrollTop;
+  });
+  expect(scrolled).toBeGreaterThan(0);
+  await page.click("#dv-toggle");
+  await page.waitForTimeout(400);
+  await page.click("#dv-toggle");
+  await page.waitForTimeout(400);
+  expect(await panel().evaluate((m) => m.scrollTop)).toBe(0);
+});
