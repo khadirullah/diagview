@@ -96,6 +96,17 @@ describe("styles.css: menu footer", () => {
   });
 });
 
+describe("styles.css: menu dividers", () => {
+  test("one line between two sections and above the footer, none after the last", () => {
+    const body = ruleBody(".dv-menu-sec + .dv-menu-sec,\n.dv-menu-footer {");
+    expect(body).toMatch(/border-top:/);
+    expect(body).toMatch(/margin-top:/);
+    // No second line under a section, so a hidden footer leaves nothing behind
+    expect(css).not.toMatch(/\.dv-menu-sec\s*\{[^}]*border-bottom/);
+    expect(ruleBody("\n.dv-menu-footer {")).not.toMatch(/border-top|margin-top/);
+  });
+});
+
 describe("styles.css: zoom buttons", () => {
   test("hover on the accent fill, like the other accent buttons, so white keeps 4.5:1", () => {
     const body = ruleBody(".dv-zoom button:hover {");

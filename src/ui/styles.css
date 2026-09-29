@@ -640,9 +640,7 @@
 
 /* Branding Footer - Menu Panel (Mobile/Desktop) */
 .dv-menu-footer {
-  margin-top: 12px;
-  padding: 12px 0 4px 0;
-  border-top: 1px solid rgba(128, 128, 128, 0.1);
+  padding-bottom: 4px;
   text-align: center;
   font-size: 12px;
   font-weight: 500;
@@ -1129,10 +1127,13 @@
   overscroll-behavior: contain;
 }
 
-.dv-menu-sec {
-  margin-bottom: 0.75rem;
-  padding-bottom: 0.75rem;
-  border-bottom: 1px solid rgba(128, 128, 128, 0.15);
+/* One line between two blocks and none after the last, so a hidden footer
+   leaves no line behind. The menu's 4px gap plus 8px matches the 12px below. */
+.dv-menu-sec + .dv-menu-sec,
+.dv-menu-footer {
+  margin-top: 0.5rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid rgba(128, 128, 128, 0.15);
 }
 
 .dv-menu-lbl {
