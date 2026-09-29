@@ -43,7 +43,7 @@ Complete guide from basic setup to advanced integration patterns.
 <script src="https://cdn.jsdelivr.net/npm/@panzoom/panzoom@4.5.1/dist/panzoom.min.js"></script>
 
 <!-- DiagView (latest stable) -->
-<script src="https://cdn.jsdelivr.net/npm/diagview@1.0.12/dist/diagview.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/diagview@1.1.0/dist/diagview.umd.min.js"></script>
 <!-- Or for auto-updates within v1: diagview@1 -->
 ```
 
@@ -1178,7 +1178,7 @@ DiagView.refresh();
 ### Version check
 
 ```javascript
-console.log(DiagView.version); // e.g. "1.0.12"
+console.log(DiagView.version); // e.g. "1.1.0"
 ```
 
 ---

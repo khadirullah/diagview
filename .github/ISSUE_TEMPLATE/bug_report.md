@@ -28,7 +28,7 @@ If applicable, add screenshots to help explain your problem.
 - OS: [e.g. Windows, macOS, Linux]
 - Browser [e.g. chrome, safari]
 - Version [e.g. 22]
-- DiagView version (`DiagView.version`) [e.g. 1.0.12]
+- DiagView version (`DiagView.version`) [e.g. 1.1.0]
 
 **Additional context**
 Add any other context about the problem here.

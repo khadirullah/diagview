@@ -317,7 +317,7 @@ Input over `maxChars` is blocked with a console error: a string returns `""`, a 
 The current library version string.
 
 ```javascript
-console.log(DiagView.version); // e.g. "1.0.12"
+console.log(DiagView.version); // e.g. "1.1.0"
 ```
 
 ---
