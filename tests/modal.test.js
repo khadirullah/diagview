@@ -45,6 +45,7 @@ jest.unstable_mockModule("../src/ui/focus-manager.js", () => ({
   saveFocus: jest.fn(),
   setInitialFocus: jest.fn(),
 }));
+jest.unstable_mockModule("../src/features/keyboard.js", () => ({ keysUsed: false }));
 jest.unstable_mockModule("../src/ui/floating-menu.js", () => ({
   createFloatingMenu: jest.fn(),
 }));

@@ -141,6 +141,17 @@ describe("styles.css: topbar shortcut hint", () => {
     expect(ruleBody(".dv-no-help .diagview-shortcut-hint {")).toMatch(/display:\s*none/);
   });
 
+  test("touch-only screens hide the hint and the menu's key badges until a key is used", () => {
+    const at = css.indexOf("@media (hover: none) and (pointer: coarse) {");
+    expect(at).toBeGreaterThan(-1);
+    const body = css.slice(at, css.indexOf("}\n}", at));
+    expect(body).toContain(".diagview-modal:not(.dv-keys) .dv-menu-item kbd,");
+    expect(body).toContain(".diagview-modal:not(.dv-keys) .diagview-shortcut-hint {");
+    expect(body).toMatch(/display:\s*none/);
+    // After the wide-screen rule that shows the hint, so it wins there too
+    expect(at).toBeGreaterThan(css.indexOf(".diagview-shortcut-hint {\n    display: flex;"));
+  });
+
   test("hint text uses the muted colour instead of opacity, so it keeps 4.5:1", () => {
     const body = ruleBody(".diagview-shortcut-hint {");
     expect(body).toContain("color: var(--dv-muted-text");

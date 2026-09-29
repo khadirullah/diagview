@@ -23,6 +23,7 @@ import { closeModal, lockBodyScroll } from "./modal-controls.js";
 import { createFloatingMenu } from "./floating-menu.js";
 import { pushModalHistoryState, startVisualViewportSync } from "./viewport.js";
 import { showInfoToast } from "./toast.js";
+import { keysUsed } from "../features/keyboard.js";
 import { syncCanvasGrid, updateCanvasGrid } from "./canvas-grid.js";
 
 /** Debounce for persisting zoom state on high-frequency panzoomchange (ms) */
@@ -56,6 +57,8 @@ export function createModal() {
   const modal = document.createElement("div");
   modal.id = "diagview-modal";
   modal.className = "diagview-modal";
+  // A new modal after destroy() and init() keeps the key badges shown
+  if (keysUsed) modal.classList.add("dv-keys");
   modal.setAttribute("role", "dialog");
   modal.setAttribute("aria-modal", "true");
   modal.setAttribute("aria-label", "Diagram viewer");

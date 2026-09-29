@@ -10,10 +10,27 @@ import { shouldHandleKeyboardEvent, isInputFocused } from "../ui/focus-manager.j
 import { closeModal } from "../ui/modal-controls.js";
 import { toggleKeyboardHelp, isHelpVisible, hideKeyboardHelp } from "../ui/keyboard-help.js";
 
+/** Whether a key was pressed outside a text field during this page visit */
+export let keysUsed = false;
+
 /**
  * Handle keyboard shortcuts
  */
 function handleKeyboardShortcut(e) {
+  // On-screen keyboards only type into text fields, so any other key press
+  // means a real keyboard. Touch screens show the key badges from then on.
+  const t = !keysUsed && e.composedPath()[0];
+  if (
+    t &&
+    !e.isComposing &&
+    !/^(Unidentified|Process)$/.test(e.key) &&
+    !t.isContentEditable &&
+    !/^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName)
+  ) {
+    keysUsed = true;
+    document.getElementById("diagview-modal")?.classList.add("dv-keys");
+  }
+
   // Smart Escape Handling
   if (e.key === "Escape") {
     // If help modal is open, close it first

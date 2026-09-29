@@ -830,6 +830,15 @@
   display: none;
 }
 
+/* Touch-only screens have no keys to press, so the key badges wait for the
+   first key press outside a text field. That means a keyboard is plugged in. */
+@media (hover: none) and (pointer: coarse) {
+  .diagview-modal:not(.dv-keys) .dv-menu-item kbd,
+  .diagview-modal:not(.dv-keys) .diagview-shortcut-hint {
+    display: none;
+  }
+}
+
 /* Set by viewport.js when a page laid out at desktop width is shown zoomed
    out on a phone. The topbar then has a phone's width, so the extras make
    way for the search box. */
