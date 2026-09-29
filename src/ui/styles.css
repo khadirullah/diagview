@@ -1080,9 +1080,9 @@
   width: min(260px, calc(100vw - 80px));
   max-height: min(70vh, calc(100vh - 120px));
   border-radius: 20px;
-  box-shadow:
-    0 24px 48px -12px rgba(0, 0, 0, 0.25),
-    0 0 0 1px rgba(255, 255, 255, 0.05) inset;
+  --dv-menu-shadow:
+    0 24px 48px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.05) inset;
+  box-shadow: var(--dv-menu-shadow);
   padding: 12px;
   display: flex;
   flex-direction: column;
@@ -1134,6 +1134,12 @@
   -webkit-overflow-scrolling: touch;
   touch-action: pan-y;
   overscroll-behavior: contain;
+}
+
+/* The panel takes focus so the keys work inside it. It is not a control,
+   so a key press keeps its shadow rather than drawing a ring around it. */
+.diagview-modal .diagview-menu:focus-visible {
+  box-shadow: var(--dv-menu-shadow) !important;
 }
 
 /* One line between two blocks and none after the last, so a hidden footer

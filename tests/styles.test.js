@@ -305,6 +305,13 @@ describe("styles.css: keyboard focus ring", () => {
     expect(css).not.toMatch(/\.dv-swatch-custom:focus-within/);
   });
 
+  test("the menu panel keeps its shadow instead of a ring when it has focus", () => {
+    expect(ruleBody("\n.diagview-menu {")).toMatch(/box-shadow:\s*var\(--dv-menu-shadow\)/);
+    expect(ruleBody(".diagview-modal .diagview-menu:focus-visible {")).toMatch(
+      /box-shadow:\s*var\(--dv-menu-shadow\) !important/,
+    );
+  });
+
   test("keeps each control's own corners instead of its parent's", () => {
     const body = ruleBody(".diagview-menu *:focus-visible {");
     expect(body).toMatch(/box-shadow:/);

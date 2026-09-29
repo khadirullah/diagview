@@ -147,3 +147,19 @@ test("the menu opens at the top after it was scrolled and closed", async () => {
   await page.waitForTimeout(400);
   expect(await panel().evaluate((m) => m.scrollTop)).toBe(0);
 });
+
+test("a key press draws no ring around the open menu panel", async () => {
+  await page.keyboard.press("Shift");
+  await page.waitForTimeout(300);
+  const state = await panel().evaluate((m) => ({
+    focused: document.activeElement === m,
+    ring: /0px 0px 0px 4px/.test(getComputedStyle(m).boxShadow),
+  }));
+  expect(state).toEqual({ focused: true, ring: false });
+  // The first control still gets its ring
+  await page.keyboard.press("Tab");
+  await page.waitForTimeout(400);
+  expect(await page.evaluate(() => getComputedStyle(document.activeElement).boxShadow)).toMatch(
+    /0px 0px 0px 4px/,
+  );
+});
