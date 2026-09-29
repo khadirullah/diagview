@@ -638,7 +638,7 @@ originalParent.removeChild(diagram)
             /* ── Two diagrams so "Replace" is visibly different ──
                Boxes are a light tint of one colour. Text uses currentColor, so it
                follows the page theme inline and the viewer theme in fullscreen. */
-            function flow(title, c, hint) {
+            function flow(title, c) {
                 var id = 'ar-' + title.replace(/\W/g, '');
                 return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 220" role="img" aria-label="' + title + '">'
                     + '<defs><marker id="' + id + '" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="' + c + '"/></marker></defs>'
@@ -649,14 +649,13 @@ originalParent.removeChild(diagram)
                             + '<text x="' + (x + 60) + '" y="120" text-anchor="middle" font-family="sans-serif" font-size="14" font-weight="600" fill="currentColor">' + label + '</text>'
                             + (i < 3 ? '<line x1="' + (x + 120) + '" y1="115" x2="' + (x + 158) + '" y2="115" stroke="' + c + '" stroke-width="2" marker-end="url(#' + id + ')"/>' : '');
                     }).join('')
-                    + '<text x="320" y="190" text-anchor="middle" font-family="sans-serif" font-size="12" fill="currentColor" fill-opacity="0.6">' + (hint || 'click a toolbar button or press the diagram to open fullscreen') + '</text>'
                     + '</svg>';
             }
             var DIAGRAMS = {
                 A: flow('Diagram A, pipeline', '#4f7fc4'),
                 B: flow('Diagram B, release', '#3f9a78')
             };
-            var STEALTH = flow('Stealth (layout off), click me', '#c08a3e', 'no toolbar, click the diagram to open fullscreen');
+            var STEALTH = flow('Layout off, click me', '#c08a3e');
 
             /* ── Components ── */
             // One place owns init()/destroy() for the whole tree, exactly like an app
@@ -772,7 +771,8 @@ originalParent.removeChild(diagram)
                             mounted[0]
                                 ? h(Viewer, { layout: layout, which: which[0], unsafe: unsafe[0], key: unsafe[0] ? 'u' : 's' })
                                 : h('p', { className: 'unmounted-msg' }, 'Viewer unmounted. The DiagView wrapper went away with the container.')
-                        )
+                        ),
+                        mounted[0] ? h('p', { className: 'card-note' }, 'Click or tap the diagram to open it fullscreen. The toolbar buttons work too.') : null
                     );
                 }
 
@@ -804,7 +804,8 @@ originalParent.removeChild(diagram)
                         viewerCard('header', 'header-card'),
                         h('div', { className: 'card third', id: 'off-card' },
                             h('div', { className: 'card-header' }, h('h3', null, 'Off layout, diagram as root'), h('span', { className: 'tag' }, 'always mounted')),
-                            h(Stealth)
+                            h(Stealth),
+                            h('p', { className: 'card-note' }, 'No toolbar here. Click or tap the diagram to open it fullscreen.')
                         )
                     ),
                     mounted[0] ? h(DiagViewLifecycle, { onAttach: setAttached }) : null

@@ -138,6 +138,13 @@
             }
         }
 
+        /* Touch screens have no ? key to press */
+        @media (hover: none) {
+            .stage-caption .kbd-hint {
+                display: none;
+            }
+        }
+
         .hero .kbd-panel {
             margin-top: clamp(40px, 6vw, 64px);
         }
@@ -666,8 +673,8 @@
                             <div class="mermaid hero-dia" id="heroDiagram" data-title="How DiagView works"></div>
                         </div>
                         <figcaption class="stage-caption">
-                            <span>This diagram is live. Click it to open fullscreen.</span>
-                            <span>Press <kbd>?</kbd> inside for every shortcut</span>
+                            <span>This diagram is live. Click or tap it to open fullscreen.</span>
+                            <span class="kbd-hint">Press <kbd>?</kbd> inside for every shortcut</span>
                         </figcaption>
                     </figure>
                 </div>
