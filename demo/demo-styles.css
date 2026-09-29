@@ -827,8 +827,10 @@ kbd {
 .grid {
   display: grid;
   grid-template-columns: repeat(6, minmax(0, 1fr));
-  gap: 20px;
+  column-gap: 20px;
   counter-reset: fig;
+  /* The cards space the rows with their bottom margin, see below */
+  margin-bottom: -20px;
 }
 .grid > .card {
   grid-column: span 3;
@@ -850,6 +852,27 @@ kbd {
   border-radius: var(--r);
   background: var(--surface);
   overflow: hidden;
+}
+
+/* Cards in one row share its row lines, so the header and caption
+   dividers line up even when one title or caption runs longer. A card
+   with no caption gives its diagram the caption row too. */
+.grid > .card {
+  display: grid;
+  grid-template-rows: subgrid;
+  grid-row: span 3;
+  row-gap: 0;
+  /* A row gap on the grid would add to the diagram row in Firefox, which
+     spreads the gap difference over a subgrid's inner rows */
+  margin-bottom: 20px;
+}
+/* A content-visibility: auto wrapper in a subgrid row keeps its 500px
+   placeholder height in Safari, even on screen */
+.grid > .card .diagview-wrapper {
+  content-visibility: visible;
+}
+.grid > .card > :nth-child(2):last-child {
+  grid-row: span 2;
 }
 
 .card-header {
@@ -880,7 +903,10 @@ kbd {
   align-self: start;
 }
 
+/* Positioned so it paints over the diagram wrapper, which is positioned
+   too. Otherwise the wrapper can cover the top line by a pixel. */
 .card-note {
+  position: relative;
   padding: 10px 16px 12px;
   border-top: 1px solid var(--line);
   font-size: 0.85rem;
@@ -913,6 +939,12 @@ kbd {
 .stress-test svg {
   max-width: 100%;
   height: auto;
+}
+/* An SVG with only a viewBox shrinks to nothing in a subgrid row in
+   Safari. Other browsers already draw it at full width. */
+.diagram svg:not([width]),
+.chart svg:not([width]) {
+  width: 100%;
 }
 .stress-test svg {
   width: auto;

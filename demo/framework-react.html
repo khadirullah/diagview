@@ -156,6 +156,13 @@
             color: var(--bad);
         }
 
+        /* When a card crashes, its message takes the diagram and caption
+           rows. Header and caption rows stay as tall as their text, so any
+           extra height goes to the diagrams instead of the captions. */
+        .rx-cards {
+            grid-auto-rows: minmax(min-content, 0) auto minmax(min-content, 0);
+        }
+
         /* The three viewer cards */
         .rx-cards > .card {
             --stage-h: 220px;
