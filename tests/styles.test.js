@@ -410,6 +410,16 @@ describe("styles.css: notices in the viewer", () => {
     expect(bottom(body)).toBe(bottom(ruleBody(".diagview-toast-menu-hint {")));
   });
 
+  test("the theme hint breaks its message where the text has a newline", () => {
+    expect(ruleBody(".diagview-toast-menu-hint {")).toMatch(/white-space:\s*pre-line/);
+  });
+
+  test("the theme hint gets smaller text on a 320px phone, so each line still fits", () => {
+    const start = css.indexOf("@media (max-width: 340px) {");
+    expect(start).toBeGreaterThan(-1);
+    expect(ruleBody(".diagview-toast-menu-hint {", start)).toMatch(/font-size:\s*12px/);
+  });
+
   test("outside the viewer they stay at the bottom", () => {
     expect(bottom(ruleBody(".diagview-toast-container {"))).toBe("24px");
   });

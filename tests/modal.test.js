@@ -272,8 +272,9 @@ describe("Modal System", () => {
     await openFullscreen(container);
     expect(localStorage.getItem("diagview-canvas-hint-shown")).toBe("true");
     const hint = document.querySelector(".diagview-toast");
+    // Two sentences on two lines. The info icon marks it as a hint.
     expect(hint.textContent).toBe(
-      "Hint: Having visibility issues? Change canvas theme from the menu ☰",
+      "Having visibility issues?\nChange the canvas theme from the menu ☰",
     );
     expect(hint.classList.contains("diagview-toast-menu-hint")).toBe(true);
   });

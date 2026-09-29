@@ -1,5 +1,6 @@
 // The first-time theme hint sits above the menu button, right edges in
-// line, and stays on screen. On a phone page without a viewport meta tag
+// line, and stays on screen. Its two sentences take one line each, also on
+// a 320px wide phone. On a phone page without a viewport meta tag
 // the page is laid out 980px wide and zoomed out, and the hint and the
 // button are counter-scaled to stay at their design size.
 import { test, expect } from "@playwright/test";
@@ -35,6 +36,12 @@ async function openWithHint(browser, options, meta) {
 
 const measure = (page) =>
   page.evaluate(() => {
+    // Lines of text, told apart by the bottom edge of each text box
+    const textLines = (el) => {
+      const range = document.createRange();
+      range.selectNodeContents(el.lastChild);
+      return new Set([...range.getClientRects()].map((r) => Math.round(r.bottom))).size;
+    };
     const rect = (el) => {
       const r = el.getBoundingClientRect();
       return { left: r.left, right: r.right, top: r.top, bottom: r.bottom };
@@ -51,6 +58,8 @@ const measure = (page) =>
       ),
       hint: hint && rect(hint),
       fab: rect(fab),
+      text: hint?.textContent,
+      lines: hint && textLines(hint),
     };
   });
 
@@ -61,6 +70,8 @@ function expectAboveButton(m) {
   expect(m.hint.top).toBeGreaterThanOrEqual(0);
   expect(Math.abs(m.hint.right - m.fab.right)).toBeLessThan(1.5);
   expect(m.hint.bottom).toBeLessThan(m.fab.top);
+  expect(m.text).toBe("Having visibility issues?\nChange the canvas theme from the menu ☰");
+  expect(m.lines, "one line per sentence").toBe(2);
 }
 
 test.afterAll(async ({ browser }) => {
@@ -93,6 +104,15 @@ test("hint sits above the menu button on desktop", async ({ browser }) => {
   const page = await openWithHint(browser, {}, false);
   const m = await measure(page);
   expectAboveButton(m);
-  // At most 360px wide on a wide screen
-  expect(m.hint.right - m.hint.left).toBeLessThanOrEqual(360.5);
+  // Two short lines instead of one long one, so it stays narrow
+  expect(m.hint.right - m.hint.left).toBeLessThanOrEqual(330);
+  expect(m.hint.bottom - m.hint.top).toBeLessThanOrEqual(66);
+});
+
+test("hint keeps two lines on a 320px wide phone", async ({ browser, browserName }) => {
+  const small = { ...phone(browserName), viewport: { width: 320, height: 640 } };
+  const page = await openWithHint(browser, small, true);
+  const m = await measure(page);
+  expect(m.width).toBe(320);
+  expectAboveButton(m);
 });
