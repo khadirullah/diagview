@@ -51,7 +51,7 @@ build. Set `E2E_PORT` to use a port other than 9340.
 | `verify-menu-buttons.spec.mjs`        | 6      | hover on the Canvas Theme and Text Colours buttons on light, dark and custom canvases, round menu button and swatches under keyboard focus                                                                                                                                                                |
 | `verify-minimap-colour.spec.mjs`      | 4      | minimap redraws `currentColor` parts after a canvas swatch or an Auto mode page theme change, indicator and click still work, other diagrams keep their image                                                                                                                                             |
 | `verify-share-page-zoom.spec.mjs`     | 6      | share link restore at 0 and 90 degrees, minimap indicator, rotateKeepsView and search outline behind a matched label, all on a zoomed-out phone page                                                                                                                                                      |
-| `verify-theme-hint.spec.mjs`          | 3      | first-time theme hint sits above the menu button on desktop and on phone pages with and without a viewport meta tag                                                                                                                                                                                       |
+| `verify-theme-hint.spec.mjs`          | 7      | first-time theme hint sits above the menu button on desktop and on phone pages with and without a viewport meta tag, shows its two sentences on two lines also on a 320px phone, and closes on a drag, a wheel or a tap on the diagram                                                                    |
 | `verify-search-export.spec.mjs`       | 5      | SVG and PNG exports during a search with exportSearchHighlight on and off, and the viewer keeps its search after each export                                                                                                                                                                              |
 | `verify-export-fonts.spec.mjs`        | 3      | SVG export embeds only the @font-face rules its labels use (family, nearest weight and style, unicode-range), labels keep their width, `exportFonts` "all" and "none"                                                                                                                                     |
 | `verify-image-handler.spec.mjs`       | 3      | an image `onerror` in the diagram runs once on page load and not again for fullscreen or PNG export in strict and permissive mode, which log one warning about it, and does run again in "off" mode                                                                                                       |
@@ -60,8 +60,9 @@ build. Set `E2E_PORT` to use a port other than 9340.
 | `verify-section-links.spec.mjs`       | 3      | a `#` link in the viewer lands on the page's copy of a diagram node, scrolls to a page section, and scrolls again when the address already names it                                                                                                                                                       |
 | `verify-reset-duration.spec.mjs`      | 6      | double click and the reset after a window resize take `zoomAnimationDuration` by default, at 0 and at 700                                                                                                                                                                                                 |
 | `verify-off-layout-keyboard.spec.mjs` | 6      | a diagram with layout "off" is in the tab order with an accent ring, Enter and Space open the viewer without scrolling the page, Esc and the close button return focus without a ring after a click, and Enter on a link inside it follows the link                                                       |
+| `verify-key-badges.spec.mjs`          | 3      | a touch phone hides the menu's key badges until a key press shows them, typing into the search box keeps them hidden, and a desktop shows them and the shortcut hint from the start                                                                                                                       |
 
-That is 200 checks per browser.
+That is 207 checks per browser.
 
 `verify-react-strictmode` loads React from unpkg and `verify-fixes` loads
 Mermaid from jsdelivr, so both need network access. Set
@@ -95,8 +96,8 @@ remove the mark once the bug is fixed.
 ## When to run
 
 Whenever you touch pan/zoom, share, minimap, modal open/close, export,
-search, the menu buttons, keyboard shortcuts, layout "off" diagrams, the
-`?` panel, the canvas theme, the theme hint, the Text Colours menu row, or
-the viewport CSS. CI runs the suites on every push to
-`main` and every pull request against it, and uploads the HTML report when
-a check fails.
+search, the menu buttons, keyboard shortcuts, the key badges, layout "off"
+diagrams, the `?` panel, the canvas theme, the theme hint, the Text Colours
+menu row, or the viewport CSS. CI runs the suites on every push to `main`
+and every pull request against it, and uploads the HTML report when a check
+fails.
