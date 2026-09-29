@@ -339,6 +339,25 @@
                 justify-content: center;
             }
 
+            /* One readout per row, label left and value right, so each
+               label stays on one line */
+            .rx-status {
+                grid-template-columns: minmax(0, 1fr);
+            }
+
+            .rx-status > div {
+                flex-direction: row;
+                align-items: baseline;
+                justify-content: space-between;
+                gap: 12px;
+                padding: 10px 16px;
+            }
+
+            .rx-status > div + div {
+                border-left: 0;
+                border-top: 1px solid var(--line);
+            }
+
             .rx-cards > .card {
                 --stage-h: 200px;
             }
