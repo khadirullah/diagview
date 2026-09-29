@@ -343,12 +343,34 @@ describe("Minimap geometry (viewBox origin, rotation fit, resize)", () => {
     expect(img.getAttribute("height")).toBe("180");
   });
 
-  test("a percentage size keeps the viewer's box", () => {
+  test("a percentage size shows the drawing's outline, and the snapshot gets that box", () => {
+    const svg = state.activeSourceElement.querySelector("svg");
+    svg.setAttribute("width", "100%");
+    svg.setAttribute("height", "400");
+    setSize(svg, 100, 400, 2);
+    svg.getBBox = () => ({ x: 100, y: 20, width: 400, height: 360 });
+    const { clone, viewport } = makeScene();
+    updateMinimap(clone, viewport, panzoom);
+
+    // The outline plus 5% of its long side on every edge, as the viewer pads it
+    expect(state.minimapSvg.getAttribute("viewBox")).toBe("80 0 440 400");
+    const img = state.minimapSvg.querySelector("image");
+    const markup = decodeURIComponent(img.getAttribute("href").split(",")[1]);
+    const root = markup.match(/^<svg\b[^>]*>/)[0];
+    expect(root).toContain('viewBox="80 0 440 400" width="440" height="400"');
+    expect(root).not.toContain("100%");
+    expect(svg.getAttribute("width")).toBe("100%");
+    expect(svg.hasAttribute("viewBox")).toBe(false);
+  });
+
+  test("a percentage size keeps the viewer's box when the drawing cannot be measured", () => {
+    const warn = jest.spyOn(console, "warn").mockImplementation(() => {});
     setSize(state.activeSourceElement.querySelector("svg"), 100, 100, 2);
     const { clone, viewport } = makeScene();
     updateMinimap(clone, viewport, panzoom);
 
     expect(state.minimapSvg.getAttribute("viewBox")).toBe("0 0 750 500");
+    warn.mockRestore();
   });
 
   test("clicking the thumbnail centre centres diagram point (325, 240)", () => {

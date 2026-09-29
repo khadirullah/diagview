@@ -6,7 +6,7 @@
 
 import { state } from "../../core/config.js";
 import { addModalListener } from "../../core/lifecycle.js";
-import { getClientCTM } from "../../core/utils.js";
+import { getClientCTM, getRobustDimensions } from "../../core/utils.js";
 
 // Stores the cleanup fn for the minimap click and window resize handlers so
 // they can be removed on modal close without duplicating handlers across frames
@@ -96,17 +96,58 @@ export function withCurrentColor(markup, source, shown) {
  * the viewer's currentColor resolved.
  * @param {Element} source - The page SVG
  * @param {Element} shown - The SVG the fullscreen view draws
+ * @param {{x: number, y: number, w: number, h: number}|null} [box] - A viewBox
+ *   and size for a snapshot of an SVG that has no box of its own
  * @returns {{ markup: string, usesColour: boolean }} The markup, and whether
  *   it baked in currentColor
  */
-function buildSnapshot(source, shown) {
-  const base = withPageVariables(new XMLSerializer().serializeToString(source), source);
+function buildSnapshot(source, shown, box) {
+  let raw = new XMLSerializer().serializeToString(source);
+  if (box) {
+    // XMLSerializer escapes ">" in attribute values, so the first ">" ends the root tag
+    raw = raw.replace(/^<svg\b[^>]*>/, (tag) =>
+      tag
+        .replace(/\s(?:width|height|viewBox)="[^"]*"/g, "")
+        .replace(
+          /^<svg/,
+          `<svg viewBox="${box.x} ${box.y} ${box.w} ${box.h}" width="${box.w}" height="${box.h}"`,
+        ),
+    );
+  }
+  const base = withPageVariables(raw, source);
   const markup = withCurrentColor(base, source, shown);
   return { markup, usesColour: markup !== base };
 }
 
 // SVGLength.SVG_LENGTHTYPE_PERCENTAGE
 const LENGTH_PERCENTAGE = 2;
+
+const ownSize = (len) => (len && len.unitType !== LENGTH_PERCENTAGE ? len.value : 0);
+
+/**
+ * The part of the page SVG the minimap shows, in the SVG's own units. A
+ * viewBox sets it. Without one the SVG draws one unit to a pixel from 0 0,
+ * so an absolute width and height set it. A percentage or missing size has
+ * no fixed box, so the minimap shows the drawing's outline with the viewer's
+ * padding, and the snapshot is given that box.
+ * @param {SVGSVGElement} svg - The page SVG
+ * @param {{width: number, height: number}} fallback - The viewer's box
+ * @returns {{x: number, y: number, w: number, h: number, own: boolean}} own
+ *   is false when the snapshot needs the box written into it
+ */
+function snapshotBox(svg, fallback) {
+  const vb = svg.viewBox?.baseVal;
+  if (vb?.width && vb?.height) return { x: vb.x, y: vb.y, w: vb.width, h: vb.height, own: true };
+  const w = ownSize(svg.width?.baseVal);
+  const h = ownSize(svg.height?.baseVal);
+  if (w && h) return { x: 0, y: 0, w, h, own: true };
+  const ink = getRobustDimensions(svg);
+  if (ink.src === "bbox") {
+    const pad = Math.max(ink.w, ink.h) * 0.05;
+    return { x: ink.x - pad, y: ink.y - pad, w: ink.w + pad * 2, h: ink.h + pad * 2, own: false };
+  }
+  return { x: 0, y: 0, w: fallback.width, h: fallback.height, own: true };
+}
 
 const toDataUrl = (markup) => "data:image/svg+xml;charset=utf-8," + encodeURIComponent(markup);
 
@@ -134,7 +175,7 @@ export function refreshMinimapColour() {
       Promise.all(easing.map((t) => t.finished)).then(draw, draw);
       return;
     }
-    const { markup } = buildSnapshot(snap.source, snap.shown);
+    const { markup } = buildSnapshot(snap.source, snap.shown, snap.box);
     if (markup === snap.markup) return;
     snap.markup = markup;
     snap.img.setAttribute("href", toDataUrl(markup));
@@ -294,11 +335,21 @@ export function updateMinimap(clone, viewport, panzoom) {
 
     // BUG-16 Fix: Use a Data URL snapshot to avoid mutating the original SVG's ID.
     // This ensures isolation and prevents breaking host-page CSS/JS.
-    const { markup, usesColour } = buildSnapshot(originalSvg, clone);
+    // Use the ORIGINAL SVG's box: the snapshot is of the unrotated page SVG,
+    // while the live clone's viewBox may already be rewritten to rotated
+    // bounds by rotate.js (axis-swapped at 90°/270°).
+    // Keep the viewBox ORIGIN too: Mermaid sequence/gitGraph/mindmap output
+    // starts at negative x/y, and a "0 0 W H" thumbnail shifts click-to-navigate
+    // and the indicator by exactly (x, y).
+    const found = snapshotBox(originalSvg, d);
+    const box = found.own ? null : found;
+    const { markup, usesColour } = buildSnapshot(originalSvg, clone, box);
 
     const imgEl = document.createElementNS("http://www.w3.org/2000/svg", "image");
     imgEl.setAttribute("href", toDataUrl(markup));
-    _colourSnapshot = usesColour ? { source: originalSvg, shown: clone, img: imgEl, markup } : null;
+    _colourSnapshot = usesColour
+      ? { source: originalSvg, shown: clone, img: imgEl, markup, box }
+      : null;
     imgEl.setAttribute("x", "0");
     imgEl.setAttribute("y", "0");
     imgEl.setAttribute("width", "100%");
@@ -310,21 +361,7 @@ export function updateMinimap(clone, viewport, panzoom) {
     state.minimapSvg.style.cssText =
       "max-width:100%; max-height:100%; width:auto; height:auto; display:block;";
 
-    // Use the ORIGINAL SVG's viewBox: the snapshot is of the unrotated page
-    // SVG, while the live clone's viewBox may already be rewritten to rotated
-    // bounds by rotate.js (axis-swapped at 90°/270°).
-    // Keep the viewBox ORIGIN too: Mermaid sequence/gitGraph/mindmap output
-    // starts at negative x/y, and a "0 0 W H" thumbnail shifts click-to-navigate
-    // and the indicator by exactly (x, y).
-    const srcVb = originalSvg.viewBox?.baseVal;
-    const vbX = srcVb?.x || 0;
-    const vbY = srcVb?.y || 0;
-    // Without a viewBox the snapshot draws at the SVG's own width and height,
-    // one unit to a pixel, so those set the box. A percentage size has no
-    // fixed size to draw at, and falls back to the viewer's box.
-    const ownSize = (len) => (len && len.unitType !== LENGTH_PERCENTAGE ? len.value : 0);
-    const vbW = srcVb?.width || ownSize(originalSvg.width?.baseVal) || d.width;
-    const vbH = srcVb?.height || ownSize(originalSvg.height?.baseVal) || d.height;
+    const { x: vbX, y: vbY, w: vbW, h: vbH } = found;
     if (!state.minimapSvg.getAttribute("viewBox") && vbW && vbH) {
       state.minimapSvg.setAttribute("viewBox", `${vbX} ${vbY} ${vbW} ${vbH}`);
       // The snapshot fills that same box, so it starts at the origin too

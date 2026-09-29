@@ -497,6 +497,8 @@ A thumbnail of the diagram appears in the bottom-left corner of the fullscreen v
 - Supports **click-to-navigate**. Clicking any region of the minimap pans the diagram to that area
 - Is hidden on viewports 768 px wide or narrower
 
+The minimap shows the diagram's `viewBox`. An SVG with no `viewBox` shows its `width` and `height`. When those are percentages or missing, it shows everything the SVG draws, with the same padding as the fullscreen view.
+
 ```javascript
 DiagView.init({ showMinimap: true }); // enabled by default
 DiagView.init({ showMinimap: false }); // disable
