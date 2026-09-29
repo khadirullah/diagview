@@ -787,6 +787,8 @@ The `?` panel takes focus each time it opens and keeps `Tab` inside it. While it
 DiagView.init({ showKeyboardHelp: true, helpTimeout: 0 });
 ```
 
+On a touch-only screen, such as a phone or a tablet without a mouse, the ☰ menu leaves out its key badges and the topbar leaves out the hint. A key press outside a text field means a keyboard is plugged in, so the first one shows both for the rest of the page visit. The on-screen keyboard only types into text fields, so it does not count. A laptop with a touch screen and a mouse shows them from the start.
+
 The hint shows in the topbar on screens 640 px wide or wider. A phone page without a viewport meta tag is laid out wider than the phone's screen, so there the topbar leaves out the hint, the zoom percentage and the DiagView name to give the search box room. To hide it and keep the `?` panel, add this rule to your stylesheet:
 
 ```css

@@ -262,7 +262,7 @@ All shortcuts are active when the fullscreen viewer is open, except while the `?
 | `?`                              | Show or hide this help                                                  |
 | `Ctrl` / `Cmd` / `Alt` + any key | Left to the browser, so its own shortcuts such as `Ctrl`+`F` still work |
 
-`Tab` also stops on links inside the diagram, and `Enter` or `Space` follows the focused link. On the page, `Tab` stops on a diagram with the `off` layout, `Enter` or `Space` opens it, and `Esc` puts focus back on it. A double click on the canvas, or a double tap on a touch screen, resets the view as `0` does. The `?` panel keeps `Tab` inside it, holds back the other shortcuts and gives focus back when it closes. With `showKeyboardHelp: false` the panel is off and the topbar drops its "Press ? for shortcuts" hint. [Keyboard shortcuts](docs/USAGE.md#17-keyboard-shortcuts) in the usage guide has the details.
+`Tab` also stops on links inside the diagram, and `Enter` or `Space` follows the focused link. On the page, `Tab` stops on a diagram with the `off` layout, `Enter` or `Space` opens it, and `Esc` puts focus back on it. A double click on the canvas, or a double tap on a touch screen, resets the view as `0` does. The `?` panel keeps `Tab` inside it, holds back the other shortcuts and gives focus back when it closes. With `showKeyboardHelp: false` the panel is off and the topbar drops its "Press ? for shortcuts" hint. On a phone or tablet with no mouse, the menu's key badges and that hint wait for the first key press, so they show once a keyboard is plugged in. [Keyboard shortcuts](docs/USAGE.md#17-keyboard-shortcuts) in the usage guide has the details.
 
 ---
 

@@ -256,6 +256,9 @@ A: No. DiagView sanitizes a copy of the SVG for the viewer and for each export, 
 **Q: Controls drift when I pinch-zoom in the browser.**  
 A: This is handled automatically. When the modal opens, DiagView syncs its controls to the visual viewport and keeps them aligned while the page is pinch-zoomed. No option is required; if you still see drift, please open an issue with the device and browser version.
 
+**Q: Why does the menu show no L, R and M key badges on my phone?**  
+A: A touch-only screen has no keys to press, so the ☰ menu leaves out its key badges and the topbar leaves out "Press ? for shortcuts". Plug in a keyboard and press any key outside a text field, and both show for the rest of the page visit. See [Keyboard shortcuts](USAGE.md#17-keyboard-shortcuts).
+
 **Q: The minimap doesn't appear on my phone.**  
 A: The minimap is intentionally hidden on viewports 768 px wide or narrower to preserve screen real estate.
 
