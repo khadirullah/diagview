@@ -587,17 +587,56 @@ describe("Export Functionality", () => {
       },
     );
 
-    test('"margin" keeps the text size and fits it inside the margin', async () => {
+    test('"margin" keeps 2.5% of the long side and fits it inside the margin', async () => {
       const fontSize = (markup) => parseFloat(markup.match(/font-size="([\d.]+)px"/)[1]);
       for (const width of [100, 600, 2000]) {
         svg.setAttribute("viewBox", `0 0 ${width} 100`);
         svg.setAttribute("width", String(width));
-        const diagram = await exportWith({ position: "bottom-right" });
         const markup = await exportWith({ position: "bottom-right", placement: "margin" });
         const pad = -Number(markup.match(/viewBox="(-?[\d.]+)/)[1]);
-        expect(fontSize(markup)).toBe(fontSize(diagram));
+        expect(fontSize(markup)).toBeCloseTo(width * 0.025);
         expect(fontSize(markup)).toBeLessThanOrEqual(pad * 0.6);
         expect(marks(markup)[0]).toMatchObject({ x: width, y: 100 + pad / 2 });
+      }
+    });
+
+    test("corner marks on a long or tall diagram stay in their corner and apart", async () => {
+      const size = (markup) =>
+        [...markup.matchAll(/font-size="([\d.]+)px"/g)].map((m) => parseFloat(m[1]));
+      for (const [w, h] of [
+        [4000, 200],
+        [200, 3000],
+      ]) {
+        svg.setAttribute("viewBox", `0 0 ${w} ${h}`);
+        svg.setAttribute("width", String(w));
+        svg.setAttribute("height", String(h));
+        const short = Math.min(w, h);
+
+        // One corner: the baseline and the text above it stay on the diagram
+        for (const position of ["top-left", "bottom-right"]) {
+          const markup = await exportWith({ position });
+          const [f] = size(markup);
+          const [m] = marks(markup);
+          expect(f).toBeLessThanOrEqual(short / 3 + 1e-9);
+          expect(m.y - f).toBeGreaterThanOrEqual(0);
+          expect(m.y).toBeLessThanOrEqual(h);
+        }
+
+        // Four sides: the marks on opposite sides are a full text height apart
+        const markup = await exportWith({ position: "four-sides" });
+        const f = Math.max(...size(markup));
+        const [top, bottom, left, right] = marks(markup);
+        expect(f).toBeLessThanOrEqual(short / 5 + 1e-9);
+        expect(bottom.y - f - top.y).toBeGreaterThanOrEqual(f - 1e-9);
+        expect(right.x - f - left.x).toBeGreaterThanOrEqual(f - 1e-9);
+      }
+    });
+
+    test("corner marks on a normal diagram keep 2.5% of the long side", async () => {
+      svg.setAttribute("viewBox", "0 0 800 600");
+      for (const position of ["top-left", "four-sides"]) {
+        const markup = await exportWith({ position });
+        expect(markup).toContain('font-size="20px"');
       }
     });
 

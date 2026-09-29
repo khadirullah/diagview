@@ -292,6 +292,11 @@ function injectWatermark(svg, d, sourceSvg = null, pad = 0) {
     const maxDim = Math.max(d.w, d.h);
     let fontSize = maxDim * 0.025; // Always small relative to diagram
     if (inMargin) fontSize = Math.min(fontSize, pad * 0.6);
+    // On a long or tall diagram that size does not fit across the short
+    // side, so a corner mark left its corner and the four-sides marks ran
+    // into each other. Shrink it until each mark and its inset fit, with
+    // the marks on opposite sides clear of each other.
+    else fontSize = Math.min(fontSize, Math.min(d.w, d.h) / (pos === "four-sides" ? 5 : 3));
     const margin = fontSize;
     const inset = inMargin ? 0 : margin;
     const sideOpacity = style === "both" ? opacity * 0.8 : opacity;

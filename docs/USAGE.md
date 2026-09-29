@@ -1355,7 +1355,7 @@ With the `corner` or `both` style, `position: "four-sides"` places your text on 
 
 `placement` decides where the small corner and side text goes. It applies to the `corner` style, to the small text of `both`, and to `four-sides`.
 
-- `"diagram"` (the default) draws the text on the diagram, just inside its edge. Nobody can crop it off without cutting into the diagram. It can cover a shape that sits close to the edge.
+- `"diagram"` (the default) draws the text on the diagram, just inside its edge. Nobody can crop it off without cutting into the diagram. It can cover a shape that sits close to the edge. On a long or tall diagram the text gets smaller, so each mark stays in its corner and the four-sides marks stay apart.
 - `"margin"` draws the text in the blank margin that every export adds around the diagram. It never covers a shape. A crop to the diagram's edge removes it.
 
 Pick `"margin"` when a clean diagram matters more than a mark that is hard to remove. In the margin, corner text lines up with the diagram's left or right edge, and four-sides text sits in the middle of each side.
