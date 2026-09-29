@@ -84,10 +84,11 @@
 
 /* A diagram with layout "off" is in the tab order, so it gets a ring.
    One in a toolbar wrapper is left as it was. A faint accent gives way to
-   the page edge colour, so the ring still shows. */
+   the page edge colour, so the ring still shows. The ring is drawn inside
+   the diagram's box, so a card that clips its content does not hide it. */
 [data-diagview-init]:not(.diagview-viewport > *):focus-visible {
   outline: 2px solid var(--dv-page-edge, var(--dv-accent));
-  outline-offset: 4px;
+  outline-offset: -2px;
 }
 
 /* Specific override for Search Input (Wrapper handles the focus style) */

@@ -58,6 +58,32 @@ test("Tab stops on the diagram and shows a ring in the accent colour", async () 
   });
 });
 
+test("the ring is drawn inside the diagram's box, so a card that clips it still shows it", async () => {
+  const box = await page.evaluate(() => {
+    const r = document.getElementById("titled").getBoundingClientRect();
+    return { x: r.left, y: r.top, width: r.width, height: r.height };
+  });
+  const png = await page.screenshot({ clip: box });
+  const edges = await page.evaluate(
+    async (src) => {
+      const img = new Image();
+      img.src = src;
+      await img.decode();
+      const c = document.createElement("canvas");
+      c.width = img.width;
+      c.height = img.height;
+      const g = c.getContext("2d");
+      g.drawImage(img, 0, 0);
+      const at = (x, y) => [...g.getImageData(x, y, 1, 1).data.slice(0, 3)].join(",");
+      const [w, h] = [c.width, c.height];
+      // One device pixel in from each edge, halfway along it
+      return [at(w >> 1, 1), at(w >> 1, h - 2), at(1, h >> 1), at(w - 2, h >> 1)];
+    },
+    `data:image/png;base64,${png.toString("base64")}`,
+  );
+  expect(edges).toEqual(Array(4).fill("59,130,246"));
+});
+
 test("Enter opens the viewer", async () => {
   await page.keyboard.press("Enter");
   await page.waitForSelector("#diagview-modal.open");

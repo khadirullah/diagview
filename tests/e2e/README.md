@@ -60,10 +60,10 @@ build. Set `E2E_PORT` to use a port other than 9340.
 | `verify-phone-topbar.spec.mjs`        | 5      | a query from `openFullscreen()` or a share link opens the phone search bar without the keyboard, Back clears it, desktop keeps its topbar, and a zoomed-out phone page keeps room for the search box                                                                                                      |
 | `verify-section-links.spec.mjs`       | 3      | a `#` link in the viewer lands on the page's copy of a diagram node, scrolls to a page section, and scrolls again when the address already names it                                                                                                                                                       |
 | `verify-reset-duration.spec.mjs`      | 6      | double click and the reset after a window resize take `zoomAnimationDuration` by default, at 0 and at 700                                                                                                                                                                                                 |
-| `verify-off-layout-keyboard.spec.mjs` | 6      | a diagram with layout "off" is in the tab order with an accent ring, Enter and Space open the viewer without scrolling the page, Esc and the close button return focus without a ring after a click, and Enter on a link inside it follows the link                                                       |
+| `verify-off-layout-keyboard.spec.mjs` | 7      | a diagram with layout "off" is in the tab order with an accent ring drawn inside its box, Enter and Space open the viewer without scrolling the page, Esc and the close button return focus without a ring after a click, and Enter on a link inside it follows the link                                  |
 | `verify-key-badges.spec.mjs`          | 3      | a touch phone hides the menu's key badges until a key press shows them, typing into the search box keeps them hidden, and a desktop shows them and the shortcut hint from the start                                                                                                                       |
 
-That is 218 checks per browser.
+That is 219 checks per browser.
 
 `verify-react-strictmode` loads React from unpkg and `verify-fixes` loads
 Mermaid from jsdelivr, so both need network access. Set

@@ -58,6 +58,12 @@ describe("styles.css: edge for an accent that fades into the background", () => 
     );
   });
 
+  test("the focus ring on a layout off diagram is drawn inside its box", () => {
+    expect(ruleBody("[data-diagview-init]:not(.diagview-viewport > *):focus-visible {")).toContain(
+      "outline-offset: -2px",
+    );
+  });
+
   test("the page toolbar takes the edge worked out for the page", () => {
     expect(ruleBody(".diagview-wrapper,\n.diagview-error {")).toMatch(
       /--dv-accent-edge:\s*var\(--dv-page-edge\)/,
