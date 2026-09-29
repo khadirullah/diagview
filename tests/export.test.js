@@ -233,6 +233,31 @@ describe("Export Functionality", () => {
     expect(markup).not.toContain("GLOBALMARK");
   });
 
+  test("an SVG file's viewBox is the same whole size as its width and height", async () => {
+    // Mermaid-like fractional bounds
+    svg.setAttribute("viewBox", "-8 -8 516.3 216.7");
+    let downloaded = "";
+    const click = jest.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(function () {
+      downloaded = this.href;
+    });
+    try {
+      await exportToSVG(container, { filename: "size" });
+    } finally {
+      click.mockRestore();
+    }
+    const markup = decodeURIComponent(
+      downloaded.replace(/^data:image\/svg\+xml;charset=utf-8,/, ""),
+    );
+    const root = new DOMParser().parseFromString(markup, "text/html").querySelector("svg");
+    const [x, y, w, h] = root.getAttribute("viewBox").split(" ").map(Number);
+    expect(w).toBe(Number(root.getAttribute("width")));
+    expect(h).toBe(Number(root.getAttribute("height")));
+    expect(Number.isInteger(w) && Number.isInteger(h)).toBe(true);
+    // The drawing stays centred in the grown view
+    expect(x + w / 2).toBeCloseTo(-8 + 516.3 / 2, 6);
+    expect(y + h / 2).toBeCloseTo(-8 + 216.7 / 2, 6);
+  });
+
   describe("watermark values DiagView does not know", () => {
     let warn, click, downloaded;
     beforeEach(() => {

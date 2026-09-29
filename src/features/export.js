@@ -455,12 +455,15 @@ async function prepareSvgForExport(svg, modalClone, transparent) {
   const zoomCushion = Math.max(d.w, d.h) * 0.05;
   const padding = Math.max(EXPORT.SVG_EXPORT_PADDING / 2, zoomCushion);
 
-  const vx = d.x - padding;
-  const vy = d.y - padding;
-  const vw = d.w + padding * 2;
-  const vh = d.h + padding * 2;
-  const width = vw;
-  const height = vh;
+  // The file is a whole number of pixels, so the view grows to match on
+  // each side. A fractional view in a rounded size left a sliver along one
+  // edge outside the background.
+  const width = Math.ceil(d.w + padding * 2);
+  const height = Math.ceil(d.h + padding * 2);
+  const vx = d.x - (width - d.w) / 2;
+  const vy = d.y - (height - d.h) / 2;
+  const vw = width;
+  const vh = height;
 
   // CRITICAL FIX: Use sourceSvg (modalClone if in fullscreen)
   // With Readable on, a file with a background gets the colours Readable
