@@ -1063,6 +1063,14 @@ kbd {
   .cols > :nth-child(n + 3) {
     border-top: 1px solid var(--line);
   }
+  /* Rows now have a line between them, so the space under the text
+     above a line matches the space over the title below it */
+  .cols > * {
+    padding-bottom: 21px;
+  }
+  .shortcuts dl:last-child {
+    margin-bottom: 0;
+  }
   .section-head,
   .page-hero .wrap {
     grid-template-columns: minmax(0, 1fr);
@@ -1100,8 +1108,10 @@ kbd {
   .cols {
     --n: 1 !important;
   }
+  /* The gap under the text above a divider matches the gap over the
+     title below it */
   .cols > * {
-    padding: 20px 0 4px !important;
+    padding: 20px 0 18px !important;
     border-left: 0 !important;
   }
   .cols > * + * {
