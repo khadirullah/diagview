@@ -314,6 +314,17 @@ describe("Minimap geometry (viewBox origin, rotation fit, resize)", () => {
     expect(state.minimapSvg.getAttribute("viewBox")).toBe("-50 -10 750 500");
   });
 
+  test("the snapshot fills the thumbnail viewBox from its origin", () => {
+    const { clone, viewport } = makeScene();
+    updateMinimap(clone, viewport, panzoom);
+
+    const img = state.minimapSvg.querySelector("image");
+    expect(img.getAttribute("x")).toBe("-50");
+    expect(img.getAttribute("y")).toBe("-10");
+    expect(img.getAttribute("width")).toBe("750");
+    expect(img.getAttribute("height")).toBe("500");
+  });
+
   test("clicking the thumbnail centre centres diagram point (325, 240)", () => {
     const { clone, viewport } = makeScene();
     updateMinimap(clone, viewport, panzoom);

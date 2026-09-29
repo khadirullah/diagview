@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>DiagView minimap picture</title>
+<style>body{font-family:sans-serif;margin:24px;background:#fff;color:#1e293b} .diagram{width:640px;margin:12px 0}</style>
+</head>
+<body>
+<!-- viewBox starts right of and below 0 0, like a hand-cropped drawing -->
+<div class="diagram" id="shifted">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="65 5 370 310">
+  <rect x="200" y="120" width="100" height="40" fill="#cbd5e1"/>
+  <rect x="85" y="250" width="110" height="50" fill="#ff0000"/>
+</svg>
+</div>
+
+<!-- viewBox starts left of and above 0 0, like Mermaid output -->
+<div class="diagram" id="negative">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-50 -10 700 300">
+  <rect x="0" y="20" width="120" height="60" fill="#cbd5e1"/>
+  <rect x="540" y="200" width="100" height="80" fill="#ff0000"/>
+</svg>
+</div>
+
+<script src="../../../node_modules/@panzoom/panzoom/dist/panzoom.min.js"></script>
+<script src="../../../dist/diagview.umd.js"></script>
+<script>
+  DiagView.init({ showMinimap: true, rememberZoom: false, animateOpen: false });
+</script>
+</body>
+</html>

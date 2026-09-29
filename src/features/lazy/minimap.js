@@ -310,6 +310,11 @@ export function updateMinimap(clone, viewport, panzoom) {
     const vbH = srcVb?.height || d.height;
     if (!state.minimapSvg.getAttribute("viewBox") && vbW && vbH) {
       state.minimapSvg.setAttribute("viewBox", `${vbX} ${vbY} ${vbW} ${vbH}`);
+      // The snapshot fills that same box, so it starts at the origin too
+      imgEl.setAttribute("x", String(vbX));
+      imgEl.setAttribute("y", String(vbY));
+      imgEl.setAttribute("width", String(vbW));
+      imgEl.setAttribute("height", String(vbH));
     }
     state.minimapSvg.setAttribute("preserveAspectRatio", "xMidYMid meet");
     state.minimapSvg.removeAttribute("width");
