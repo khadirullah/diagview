@@ -680,7 +680,7 @@ originalParent.removeChild(diagram)
             }
 
             function Stealth() {
-                // layout "off" attaches only a click handler and never re-parents, so the
+                // layout "off" adds only click and key handlers and never re-parents, so the
                 // diagram element may safely be the component root.
                 return h('div', {
                     className: 'diagram',
