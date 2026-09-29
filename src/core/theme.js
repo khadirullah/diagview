@@ -591,10 +591,11 @@ export function syncReadable(bg) {
 
 /**
  * The text colour faded toward the canvas, as far as 30%, while it still
- * reaches 4.5:1. For secondary text such as the menu headings and the
- * search placeholder. The search box lays a faint grey wash over the
- * canvas, so the colour must pass on that too. On a canvas where the text
- * only just passes it stays at full strength.
+ * reaches 4.5:1. For secondary text such as the menu headings, the
+ * search placeholder and the header title on the page. The search box and
+ * the header bar lay a faint grey wash over the background, so the colour
+ * must pass on that too. On a canvas where the text only just passes it
+ * stays at full strength.
  * @param {string} text - Text colour
  * @param {string} bg - Opaque canvas colour
  * @returns {string} The muted colour
@@ -644,6 +645,8 @@ export function syncTheme() {
   // The page toolbar and error box follow the page, not the canvas
   root.style.setProperty("--dv-page-bg", theme.pageBg);
   root.style.setProperty("--dv-page-text", theme.pageText);
+  // The header title, faded toward the page as far as it keeps 4.5:1
+  root.style.setProperty("--dv-page-muted", mutedText(theme.pageText, theme.pageBg));
   root.style.setProperty("--dv-muted-text", mutedText(theme.text, theme.seenBg));
   root.style.setProperty("--dv-accent", theme.accent);
   root.style.setProperty("--dv-on-accent", theme.onAccent);
@@ -787,6 +790,7 @@ export function teardownThemeWatchers() {
   root.style.removeProperty("--dv-text-color");
   root.style.removeProperty("--dv-page-bg");
   root.style.removeProperty("--dv-page-text");
+  root.style.removeProperty("--dv-page-muted");
   root.style.removeProperty("--dv-muted-text");
   root.style.removeProperty("--dv-accent");
   root.style.removeProperty("--dv-on-accent");

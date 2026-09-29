@@ -24,6 +24,15 @@ describe("styles.css: page toolbar colours", () => {
     const body = ruleBody(".diagview-wrapper,\n.diagview-error {");
     expect(body).toMatch(/--dv-bg:\s*var\(--dv-page-bg/);
     expect(body).toMatch(/--dv-text-color:\s*var\(--dv-page-text/);
+    expect(body).toMatch(/--dv-muted-text:\s*var\(--dv-page-muted\)/);
+  });
+
+  test("the header title and error message use the muted colour instead of opacity", () => {
+    for (const sel of ["\n.diagview-label {", ".diagview-error-message {"]) {
+      const body = ruleBody(sel);
+      expect(body).toContain("color: var(--dv-muted-text, var(--dv-text-color))");
+      expect(body).not.toMatch(/opacity\s*:/);
+    }
   });
 });
 

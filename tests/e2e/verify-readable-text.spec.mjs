@@ -680,6 +680,60 @@ test("old normalizeSvgTextContrast is gone from the build", async () => {
   expect(mentions).toBe(0);
 });
 
+// The header title sits on the page, over the header bar's faint wash
+for (const colorScheme of ["light", "dark"]) {
+  test(`header title on a white page reaches ${MIN_RATIO}:1 with a ${colorScheme} OS`, async ({
+    browser,
+  }) => {
+    const p = await newPage(browser, { colorScheme });
+    try {
+      await p.goto(fixtureFile("readable-text.html"));
+      await p.evaluate(() =>
+        document.documentElement.setAttribute("data-diagview-no-auto-init", ""),
+      );
+      await p.addScriptTag({ path: DIST });
+      await p.evaluate(() => DiagView.init({ layout: "header" }));
+      await p.waitForSelector(".diagview-label");
+      const got = await p.evaluate(() => {
+        const ctx = document.createElement("canvas").getContext("2d", { willReadFrequently: true });
+        const rgba = (c) => {
+          ctx.clearRect(0, 0, 1, 1);
+          ctx.fillStyle = c;
+          ctx.fillRect(0, 0, 1, 1);
+          const d = ctx.getImageData(0, 0, 1, 1).data;
+          return [d[0], d[1], d[2], d[3] / 255];
+        };
+        const over = (fg, bg) => fg.slice(0, 3).map((v, i) => v * fg[3] + bg[i] * (1 - fg[3]));
+        const lum = (c) =>
+          c
+            .map((v) => {
+              v /= 255;
+              return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4;
+            })
+            .reduce((sum, v, i) => sum + v * [0.2126, 0.7152, 0.0722][i], 0);
+        const ratio = (a, b) => {
+          const [hi, lo] = [lum(a), lum(b)].sort((x, y) => y - x);
+          return (hi + 0.05) / (lo + 0.05);
+        };
+        const label = document.querySelector(".diagview-label");
+        const page = over(rgba(getComputedStyle(document.body).backgroundColor), [255, 255, 255]);
+        const bar = over(rgba(getComputedStyle(label.parentElement).backgroundColor), page);
+        const style = getComputedStyle(label);
+        const fg = rgba(style.color);
+        // Opacity fades the colour the same way alpha does
+        fg[3] *= Number(style.opacity);
+        return {
+          colour: `${style.color} at opacity ${style.opacity}`,
+          ratio: Math.min(ratio(over(fg, bar), bar), ratio(over(fg, page), page)),
+        };
+      });
+      expect(got.ratio, `title ${got.colour}`).toBeGreaterThanOrEqual(MIN_RATIO);
+    } finally {
+      await p.context().close();
+    }
+  });
+}
+
 test("no console errors or page errors", async () => {
   // Leave the page in Original first, as a reader would
   await openModal("seq");

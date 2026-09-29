@@ -735,11 +735,50 @@ describe("Theme Module", () => {
       expect(theme.pageText).toBe(COLORS.TEXT_LIGHT);
     });
 
+    test("--dv-page-muted fades the page text and keeps 4.5:1 on the page and header bar", () => {
+      const muted = () => root.style.getPropertyValue("--dv-page-muted");
+      // White, black, a mid grey where only black passes, and two coloured pages
+      for (const bg of ["#ffffff", "#000000", "#808080", "#fef9c3", "#1d4ed8"]) {
+        document.body.style.backgroundColor = bg;
+        clearThemeCache();
+        const theme = syncTheme();
+        expect(getContrastRatio(muted(), bg)).toBeGreaterThanOrEqual(4.5);
+        // The header bar lays a faint grey wash over the page
+        const bar = bg.match(/\w\w/g).map((h) => Math.round(parseInt(h, 16) * 0.88 + 128 * 0.12));
+        expect(getContrastRatio(muted(), `rgb(${bar.join(", ")})`)).toBeGreaterThanOrEqual(4.5);
+        // It still reads as muted where there is room
+        if (bg === "#ffffff" || bg === "#000000") expect(muted()).not.toBe(theme.pageText);
+      }
+    });
+
+    test("--dv-page-muted follows the page, not the canvas or the OS", () => {
+      osDark();
+      clearThemeCache();
+      const theme = syncTheme();
+      // A page with no background shows white, so the title stays dark
+      expect(theme.pageBg).toBe(COLORS.BG_LIGHT);
+      const muted = root.style.getPropertyValue("--dv-page-muted");
+      expect(getContrastRatio(muted, COLORS.BG_LIGHT)).toBeGreaterThanOrEqual(4.5);
+      expect(getContrastRatio(muted, COLORS.TEXT_LIGHT)).toBeLessThan(3);
+      // A dark canvas picked in the menu leaves it alone
+      setCanvasTheme("dark");
+      expect(root.style.getPropertyValue("--dv-page-muted")).toBe(muted);
+      // A page that turns dark gets a light title
+      document.body.style.backgroundColor = COLORS.BG_DARK;
+      clearThemeCache();
+      syncTheme();
+      const dark = root.style.getPropertyValue("--dv-page-muted");
+      expect(getContrastRatio(dark, COLORS.BG_DARK)).toBeGreaterThanOrEqual(4.5);
+      expect(getContrastRatio(dark, COLORS.TEXT_DARK)).toBeLessThan(3);
+    });
+
     test("teardown removes the page variables", () => {
       syncTheme();
+      expect(root.style.getPropertyValue("--dv-page-muted")).not.toBe("");
       teardownThemeWatchers();
       expect(root.style.getPropertyValue("--dv-page-text")).toBe("");
       expect(root.style.getPropertyValue("--dv-page-bg")).toBe("");
+      expect(root.style.getPropertyValue("--dv-page-muted")).toBe("");
     });
   });
 });
