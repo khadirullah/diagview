@@ -175,7 +175,7 @@ DiagView.init({ layout: "floating" });
 
 ### Header
 
-A toolbar sits above each diagram. On desktop it fades in when you hover the diagram or tab into it; on touch screens it is always visible. It shows the diagram's title (from `data-title` or the SVG `<title>` element) on the left, and action buttons on the right. A long title wraps onto a second line. A title too long even for two lines ends in "...", and resting the mouse on it shows the whole title.
+A toolbar sits above each diagram. On desktop it fades in when you hover the diagram or tab into it; on touch screens it is always visible. It shows the diagram's title (from `data-title` or the SVG `<title>` element) on the left, and action buttons on the right. The title is a muted shade of the page text that keeps 4.5:1 against the page (see [Theming](#13-theming)). A long title wraps onto a second line. A title too long even for two lines ends in "...", and resting the mouse on it shows the whole title.
 
 ```javascript
 DiagView.init({ layout: "header" });
@@ -537,7 +537,7 @@ Text and icons on the accent are white while white reaches 3:1 against it, the m
 
 An accent under 3:1 against the canvas or the page, such as `#fef9c3` on white, would hide the selected Auto and Original buttons, the focus ring, the menu button and the page toolbar icons. DiagView keeps the colour and gives those a thin edge in the text colour, and it logs one console warning per colour. The edge colour sits in `--dv-accent-edge` for the viewer and `--dv-page-edge` for the page. A readable accent gets no edge.
 
-The toolbar above each diagram and the error box sit on the page, so their text follows the page's background, not the canvas. A white page on a computer in dark mode keeps dark toolbar text. `textColor` and `--diagram-text` still apply, while `backgroundColor` and the canvas buttons change only the viewer. DiagView stores the page colours in `--dv-page-bg` and `--dv-page-text`.
+The toolbar above each diagram and the error box sit on the page, so their text follows the page's background, not the canvas. A white page on a computer in dark mode keeps dark toolbar text. `textColor` and `--diagram-text` still apply, while `backgroundColor` and the canvas buttons change only the viewer. DiagView stores the page colours in `--dv-page-bg` and `--dv-page-text`. The header title and the error box message use a muted shade of the page text, stored in `--dv-page-muted`. DiagView works it out the same way as `--dv-muted-text` below, against the page and the header bar, so it keeps 4.5:1 on any page.
 
 DiagView checks the page again when the `class`, `data-theme` or `style` attribute of `<html>` or `<body>` changes, so an accent picker that sets these variables applies at once. It also watches `data-bs-theme` on `<html>`. An `accentColor` from `init()` stays in place through those changes. To change it later, call `DiagView.configure({ accentColor })`.
 
