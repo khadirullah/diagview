@@ -72,6 +72,10 @@ describe("styles.css: menu headings and search placeholder", () => {
     expect(body).not.toMatch(/opacity\s*:/);
   });
 
+  test("menu headings are 11px, big enough to read at a glance", () => {
+    expect(ruleBody(".dv-menu-lbl {")).toMatch(/font-size:\s*0\.6875rem/);
+  });
+
   test("the search placeholder uses it too, at full opacity in every browser", () => {
     const body = ruleBody(".diagview-search-input::placeholder {");
     expect(body).toContain("var(--dv-muted-text");
