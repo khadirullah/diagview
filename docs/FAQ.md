@@ -60,6 +60,8 @@ DiagView.init({ showBranding: false });
 DiagView.configure({ showBranding: false });
 ```
 
+This hides the name in the topbar and the "DiagView by" line at the foot of the ☰ menu. The menu then ends with its Tools section, with no divider under it.
+
 **Q: How do I mix layouts on one page?**  
 A: Use `data-diagview-layout` on individual diagram containers and call `init()` without specifying a global layout (or set a sensible default):
 
