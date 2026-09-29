@@ -100,9 +100,10 @@
         }
 
         /* Long attribute names break instead of widening the page on a phone.
-           Short ones still move to the next line whole. */
+           Short ones still move to the next line whole. The code sample keeps
+           its lines. */
         @media (max-width: 400px) {
-            .options code,
+            .options :not(pre) > code,
             .cols code {
                 display: inline-block;
                 max-width: 100%;
