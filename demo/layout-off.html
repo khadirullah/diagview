@@ -40,6 +40,13 @@
             --diagram-accent: #3b82f6;
         }
 
+        /* The org chart is drawn in the top half of its 600 x 400 canvas.
+           Moving it down a quarter of its height puts the drawing in the
+           middle of the card. */
+        .org-chart > svg {
+            translate: 0 25%;
+        }
+
         .next {
             display: flex;
             flex-wrap: wrap;
@@ -116,7 +123,7 @@
                     <h3>Company structure</h3>
                     <span class="tag">Chart</span>
                 </div>
-                <div class="chart" data-title="Global Org Chart">
+                <div class="chart org-chart" data-title="Global Org Chart">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 400">
                         <defs>
                             <style>
