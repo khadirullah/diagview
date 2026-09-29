@@ -500,7 +500,7 @@ p {
 /* Small mono caption: "Fig. 1.2", "layout: header" */
 .fig {
   font-family: var(--mono);
-  font-size: 0.68rem;
+  font-size: 0.72rem;
   font-weight: 500;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -695,7 +695,7 @@ kbd {
 .spec dt {
   padding-right: 24px;
   font-family: var(--mono);
-  font-size: 0.68rem;
+  font-size: 0.72rem;
   line-height: 1.6rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -864,7 +864,7 @@ kbd {
   content: "Fig. " var(--fig-chapter, "1") "." counter(fig);
   grid-column: 1 / -1;
   font-family: var(--mono);
-  font-size: 0.68rem;
+  font-size: 0.72rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--muted);
@@ -1123,6 +1123,10 @@ kbd {
 /* Small phones: the header row has room for the toggles only when the
    DiagView on/off button drops its first word. Screen readers still get it. */
 @media (max-width: 400px) {
+  /* A narrower label gap keeps the longest option names on one line */
+  .spec dt {
+    padding-right: 16px;
+  }
   .toggle-btn .lbl {
     position: absolute;
     width: 1px;
