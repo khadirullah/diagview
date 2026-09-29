@@ -977,10 +977,16 @@ kbd {
 }
 .stage-top {
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
-  gap: 12px;
+  gap: 4px 12px;
   padding: 9px 14px;
   border-bottom: 1px solid var(--line);
+}
+/* Each caption stays whole. On a small phone the second one moves to
+   its own line. */
+.stage-top .fig {
+  white-space: nowrap;
 }
 
 /* Hand-written SVGs that draw lines in mid grey picked for a white page */
