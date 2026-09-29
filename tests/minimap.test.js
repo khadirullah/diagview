@@ -438,6 +438,27 @@ describe("Minimap geometry (viewBox origin, rotation fit, resize)", () => {
     }
   });
 
+  test("settle timer shows the minimap once an animated zoom grows past the viewport", () => {
+    jest.useFakeTimers();
+    try {
+      let cloneRect = rect(0, 0, 1000, 600);
+      const { clone, viewport } = makeScene();
+      clone.getBoundingClientRect = () => cloneRect;
+      updateMinimap(clone, viewport, panzoom);
+      expect(minimap.classList.contains("show")).toBe(false);
+
+      // One zoom step: panzoomchange fires as the animation starts, while
+      // the diagram still fits. Once it settles the diagram is 1.42 times
+      // the viewport.
+      cloneRect = rect(-210, -126, 1420, 852);
+      jest.advanceTimersByTime(400);
+      expect(minimap.classList.contains("show")).toBe(true);
+      expect(state.minimapSvg.querySelector("image")).not.toBeNull();
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
   test("window resize re-evaluates the minimap until cleanup", () => {
     jest.useFakeTimers();
     try {

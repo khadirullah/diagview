@@ -149,3 +149,25 @@ for (const { id, red } of CASES) {
     expect(Math.abs(off.y), `y off by ${off.y.toFixed(2)} minimap px`).toBeLessThan(1.5);
   });
 }
+
+test("one zoom step that takes the diagram past the viewport shows the minimap", async () => {
+  await page.evaluate(async () => {
+    const dv = DiagView.default;
+    if (dv.state.isModalOpen) dv.closeModal();
+    await new Promise((r) => setTimeout(r, 900));
+    dv.openFullscreen(document.getElementById("shifted"));
+  });
+  await page.waitForTimeout(800);
+  await expect(page.locator("#diagview-minimap.show")).toHaveCount(0);
+
+  // The "+" key zooms with an animation
+  await page.keyboard.press("+");
+  await page.waitForTimeout(800);
+  const past = await page.evaluate(() => {
+    const s = document.querySelector("#diagview-modal-viewport svg").getBoundingClientRect();
+    const v = document.getElementById("diagview-modal-viewport").getBoundingClientRect();
+    return s.width > v.width * 1.05 || s.height > v.height * 1.05;
+  });
+  expect(past).toBe(true);
+  await expect(page.locator("#diagview-minimap.show")).toHaveCount(1);
+});

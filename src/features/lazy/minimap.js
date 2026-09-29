@@ -243,7 +243,17 @@ export function updateMinimap(clone, viewport, panzoom) {
     minimap.style.cursor = "crosshair";
   }
 
-  if (!needsMinimap) return;
+  if (!needsMinimap) {
+    // An animated zoom reports its change as it starts, while the diagram is
+    // still its old size. Look again once it settles, so the zoom step that
+    // takes the diagram past the viewport shows the minimap.
+    if (_indicatorSettleTimer) clearTimeout(_indicatorSettleTimer);
+    _indicatorSettleTimer = setTimeout(() => {
+      _indicatorSettleTimer = null;
+      if (state.isModalOpen && diagramExceedsViewport()) updateMinimap(clone, viewport, panzoom);
+    }, 350);
+    return;
+  }
 
   // Get intrinsic SVG dimensions for minimap scale calculation.
   // Prefer viewBox (SVG's own coordinate system, zoom-independent).
