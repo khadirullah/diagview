@@ -1151,6 +1151,13 @@
   border-top: 1px solid rgba(128, 128, 128, 0.15);
 }
 
+/* A tool row has 10px of padding under its label for the hover fill, so
+   the line above the footer moves up to sit as far from the last label as
+   the other lines do from their blocks. The fill still ends 4px above it. */
+.dv-menu-sec:has(.dv-menu-item) + .dv-menu-footer {
+  margin-top: -2px;
+}
+
 .dv-menu-lbl {
   display: flex;
   align-items: center;

@@ -109,6 +109,12 @@ describe("styles.css: menu dividers", () => {
     expect(css).not.toMatch(/\.dv-menu-sec\s*\{[^}]*border-bottom/);
     expect(ruleBody("\n.dv-menu-footer {")).not.toMatch(/border-top|margin-top/);
   });
+
+  test("the footer line sits closer under the tool rows, which pad their own labels", () => {
+    expect(ruleBody(".dv-menu-sec:has(.dv-menu-item) + .dv-menu-footer {")).toMatch(
+      /margin-top:\s*-2px/,
+    );
+  });
 });
 
 describe("styles.css: zoom buttons", () => {

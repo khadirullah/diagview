@@ -163,3 +163,28 @@ test("a key press draws no ring around the open menu panel", async () => {
     /0px 0px 0px 4px/,
   );
 });
+
+test("the footer line sits about as far under the tools as the other lines do", async () => {
+  await panel().evaluate((m) => (m.scrollTop = m.scrollHeight));
+  const gaps = await page.evaluate(() => {
+    const top = (el) => el.getBoundingClientRect().top;
+    const bottom = (el) => el.getBoundingClientRect().bottom;
+    const label = document.createRange();
+    label.selectNodeContents(document.getElementById("dv-meeting"));
+    const footer = document.querySelector(".dv-menu-footer");
+    const tools = footer.previousElementSibling;
+    const copyImage = [...document.querySelectorAll(".dv-exp button")].pop();
+    return {
+      export: Math.round(top(tools) - bottom(copyImage)),
+      footer: Math.round(
+        top(footer) - Math.max(...[...label.getClientRects()].map((r) => r.bottom)),
+      ),
+      fill: Math.round(top(footer) - bottom(document.getElementById("dv-meeting"))),
+    };
+  });
+  expect(gaps.export).toBe(12);
+  expect(gaps.footer).toBeGreaterThanOrEqual(12);
+  expect(gaps.footer).toBeLessThanOrEqual(18);
+  // The hover fill of the last row does not touch the line
+  expect(gaps.fill).toBeGreaterThanOrEqual(3);
+});
