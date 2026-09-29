@@ -173,8 +173,8 @@
         <div class="wrap grid" style="--fig-chapter: '1'">
             <div class="card wide stress">
                 <div class="card-header">
-                    <h3 id="test-title">2,500 Node Performance Grid</h3>
-                    <span class="tag" id="test-badge">2.5k Nodes</span>
+                    <h3 id="test-title">Performance grid</h3>
+                    <span class="tag" id="test-badge">2,500 nodes</span>
                 </div>
                 <div class="stress-test" data-title="Performance Grid">
                     <svg id="stress-svg" width="3000" height="3000" viewBox="0 0 3000 3000"
@@ -272,8 +272,7 @@
             }
 
             // Update UI
-            document.getElementById('test-title').textContent = `${total.toLocaleString()} Node Performance Grid`;
-            document.getElementById('test-badge').textContent = total >= 1000 ? `${(total/1000).toFixed(1)}k Nodes` : `${total} Nodes`;
+            document.getElementById('test-badge').textContent = `${total.toLocaleString()} nodes`;
         }
 
         const dvInit = () => DiagView.init({
