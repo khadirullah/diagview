@@ -498,27 +498,40 @@ test.describe("destroy/init race", () => {
 });
 
 test.describe("notices", () => {
-  // Where the newest toast with this text sits and whether it is on screen
-  const lastToast = async (text) => {
+  // Where the newest toast with this text sits and whether it is on screen,
+  // null before it shows. Off screen, why says what hides it.
+  const toastPlace = (t) => {
+    const n = [...document.querySelectorAll(".diagview-toast")]
+      .reverse()
+      .find((x) => x.textContent.includes(t));
+    if (!n) return null;
+    const r = n.getBoundingClientRect();
+    const onScreen =
+      n.checkVisibility({ checkOpacity: true }) &&
+      r.width > 0 &&
+      r.height > 0 &&
+      r.top >= 0 &&
+      r.bottom <= innerHeight;
+    const place = { inViewer: !!n.closest("#diagview-modal"), onScreen };
+    if (!onScreen) {
+      const f = (v) => v.toFixed(1);
+      place.why =
+        `opacity ${getComputedStyle(n).opacity}, visible ${n.checkVisibility()}, ` +
+        `${f(r.width)}x${f(r.height)} from ${f(r.top)} to ${f(r.bottom)} of ${innerHeight}`;
+    }
+    return place;
+  };
+  // A toast fades in over 0.3s, which a slow machine can stretch, and stays
+  // 2.5s. So wait for it, then give it up to 2s to reach its place.
+  const expectToast = async (text, place) => {
     await page.waitForFunction(
       (t) =>
         [...document.querySelectorAll(".diagview-toast")].some((n) => n.textContent.includes(t)),
       text,
     );
-    await page.waitForTimeout(400);
-    return page.evaluate((t) => {
-      const n = [...document.querySelectorAll(".diagview-toast")]
-        .reverse()
-        .find((x) => x.textContent.includes(t));
-      const r = n.getBoundingClientRect();
-      const onScreen =
-        n.checkVisibility({ checkOpacity: true }) &&
-        r.width > 0 &&
-        r.height > 0 &&
-        r.top >= 0 &&
-        r.bottom <= innerHeight;
-      return { inViewer: !!n.closest("#diagview-modal"), onScreen };
-    }, text);
+    await expect
+      .poll(() => page.evaluate(toastPlace, text), { timeout: 2000, intervals: [100] })
+      .toEqual(place);
   };
   const clearToasts = () =>
     page.evaluate(() => document.getElementById("diagview-toast-container")?.remove());
@@ -528,17 +541,18 @@ test.describe("notices", () => {
     const copyBtn = page.locator('[data-action="copy"]').first();
     await copyBtn.scrollIntoViewIfNeeded();
     await copyBtn.click({ force: true });
-    const inline = await lastToast("Copied");
-    expect(inline).toEqual({ inViewer: false, onScreen: true });
+    await expectToast("Copied", { inViewer: false, onScreen: true });
   });
 
   test("notice shows inside the viewer while fullscreen is open", async () => {
     await openIndex(0);
-    await clearToasts();
-    await page.evaluate(() => DiagView.exportDiagram(DiagView.state.activeSourceElement, "svg"));
-    const inside = await lastToast("SVG saved");
-    await closeModal();
-    expect(inside).toEqual({ inViewer: true, onScreen: true });
+    try {
+      await clearToasts();
+      await page.evaluate(() => DiagView.exportDiagram(DiagView.state.activeSourceElement, "svg"));
+      await expectToast("SVG saved", { inViewer: true, onScreen: true });
+    } finally {
+      await closeModal();
+    }
   });
 
   test("notice shows on the page again after fullscreen closes", async () => {
@@ -546,8 +560,7 @@ test.describe("notices", () => {
     await page.evaluate(() =>
       DiagView.exportDiagram(document.querySelector(".diagram, .mermaid"), "svg"),
     );
-    const after = await lastToast("SVG saved");
-    expect(after).toEqual({ inViewer: false, onScreen: true });
+    await expectToast("SVG saved", { inViewer: false, onScreen: true });
   });
 });
 
