@@ -741,10 +741,6 @@
   opacity: 1;
 }
 
-.diagview-search-input:focus::placeholder {
-  color: transparent;
-}
-
 /* Hidden, not only transparent, while the box is empty, so Tab skips it */
 .diagview-search-clear {
   all: unset;

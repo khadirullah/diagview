@@ -87,6 +87,10 @@ describe("styles.css: menu headings and search placeholder", () => {
     expect(body).toContain("var(--dv-muted-text");
     expect(body).toMatch(/opacity:\s*1/);
   });
+
+  test("the search placeholder stays while the box has focus", () => {
+    expect(css).not.toMatch(/:focus::placeholder/);
+  });
 });
 
 describe("styles.css: menu footer", () => {
