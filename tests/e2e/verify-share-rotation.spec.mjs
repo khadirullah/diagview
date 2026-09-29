@@ -124,3 +124,33 @@ test("unrotated share still exact", async ({ browser }) => {
   expect(Math.abs(r2.x - Number(q2.get("dv-cx"))), detail).toBeLessThan(2);
   expect(Math.abs(r2.y - Number(q2.get("dv-cy"))), detail).toBeLessThan(2);
 });
+
+test("a share link at zoom 10 lands within a pixel of the sender's view", async ({ browser }) => {
+  const sender = await newPage(browser);
+  await sender.goto(REPRO);
+  await sender.waitForTimeout(300);
+  await sender.evaluate(() => DiagView.default.openFullscreen(document.getElementById("diag")));
+  await sender.waitForTimeout(800);
+  await sender.evaluate(() => {
+    const pz = DiagView.default.state.activePanzoom;
+    pz.zoom(10, { animate: false });
+    pz.pan(-37.3, -21.7, { animate: false });
+  });
+  await sender.waitForTimeout(300);
+  const sent = await rootCenter(sender);
+  const pxPerUnit = await sender.evaluate(
+    () => document.querySelector("#diagview-modal-viewport svg").getScreenCTM().a,
+  );
+  await sender.evaluate(() => document.getElementById("dv-share").click());
+  await sender.waitForTimeout(500);
+  const link = new URL(await sender.evaluate(() => window.__copied)).searchParams;
+  const receiver = await newPage(browser);
+  await receiver.goto(REPRO + "?" + link.toString());
+  await receiver.waitForTimeout(2000);
+  const got = await rootCenter(receiver);
+  const off = Math.hypot(got.x - sent.x, got.y - sent.y) * pxPerUnit;
+  expect(
+    off,
+    `sent (${sent.x}, ${sent.y}), link (${link.get("dv-cx")}, ${link.get("dv-cy")})`,
+  ).toBeLessThan(1);
+});

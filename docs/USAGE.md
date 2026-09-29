@@ -407,21 +407,21 @@ Share the exact zoom level and pan position with anyone. The generated URL is th
 
 ### URL parameters
 
-| Parameter | Description                                                               |
-| --------- | ------------------------------------------------------------------------- |
-| `dv-idx`  | Diagram index on the page (zero-based)                                    |
-| `dv-z`    | Zoom scale (3 decimal places)                                             |
-| `dv-cx`   | X coordinate at the viewport center, in the SVG's units after rotation    |
-| `dv-cy`   | Y coordinate at the viewport center, in the SVG's units after rotation    |
-| `dv-r`    | Rotation angle (90, 180 or 270), left out at 0                            |
-| `dv-q`    | Active search query                                                       |
-| `dv-t`    | Canvas theme mode (`light`, `dark`, `custom`), left out in Auto mode      |
-| `dv-c`    | Custom canvas background hex value (without `#`), only with `dv-t=custom` |
+| Parameter | Description                                                                                              |
+| --------- | -------------------------------------------------------------------------------------------------------- |
+| `dv-idx`  | Diagram index on the page (zero-based)                                                                   |
+| `dv-z`    | Zoom scale (3 decimal places)                                                                            |
+| `dv-cx`   | X coordinate at the viewport center, in the SVG's units after rotation, with the decimals the zoom needs |
+| `dv-cy`   | Y coordinate at the viewport center, in the SVG's units after rotation, with the decimals the zoom needs |
+| `dv-r`    | Rotation angle (90, 180 or 270), left out at 0                                                           |
+| `dv-q`    | Active search query                                                                                      |
+| `dv-t`    | Canvas theme mode (`light`, `dark`, `custom`), left out in Auto mode                                     |
+| `dv-c`    | Custom canvas background hex value (without `#`), only with `dv-t=custom`                                |
 
 ### Example URL
 
 ```
-https://example.com/docs?dv-idx=2&dv-z=2.500&dv-cx=450&dv-cy=300&dv-r=90&dv-t=custom&dv-c=0b0f19&dv-q=auth
+https://example.com/docs?dv-idx=2&dv-z=2.500&dv-cx=450.3&dv-cy=299.8&dv-r=90&dv-t=custom&dv-c=0b0f19&dv-q=auth
 ```
 
 ### Activation

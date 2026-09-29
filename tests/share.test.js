@@ -87,6 +87,30 @@ describe("Share System", () => {
     expect(link).toContain("dv-cy=500");
   });
 
+  test("generateShareLink keeps enough decimals for a quarter pixel on screen", () => {
+    // 10 screen pixels to a unit: two decimals
+    const at = (scale) =>
+      svg.getScreenCTM.mockReturnValue({
+        a: scale,
+        b: 0,
+        c: 0,
+        d: scale,
+        e: 0,
+        f: 0,
+        inverse: () => ({ a: 1 / scale, b: 0, c: 0, d: 1 / scale, e: 12.3456, f: 7.891 }),
+      });
+    at(10);
+    let link = new URL(generateShareLink(0));
+    expect(link.searchParams.get("dv-cx")).toBe("62.35");
+    expect(link.searchParams.get("dv-cy")).toBe("57.89");
+
+    // A unit smaller than a pixel needs no decimals
+    at(0.1);
+    link = new URL(generateShareLink(0));
+    expect(link.searchParams.get("dv-cx")).toBe("5012");
+    expect(link.searchParams.get("dv-cy")).toBe("5008");
+  });
+
   test("generateShareLink includes search query", () => {
     document.getElementById("diagview-search").value = "test-query";
     const link = generateShareLink(0);
@@ -133,6 +157,16 @@ describe("Share System", () => {
     expect(shareState.cy).toBe(200);
     expect(shareState.rotation).toBe(90);
     expect(shareState.query).toBe("foo");
+  });
+
+  test("restoreViewFromURL keeps the decimals of the centre", () => {
+    window.location = new URL("http://localhost/test?dv-idx=0&dv-cx=62.35&dv-cy=-7.5");
+    const diagram = { id: "diag1" };
+    restoreViewFromURL([diagram]);
+
+    const shareState = getPendingShareState(diagram);
+    expect(shareState.cx).toBe(62.35);
+    expect(shareState.cy).toBe(-7.5);
   });
 
   test("applyRestoredViewState applies zoom and rotation", async () => {

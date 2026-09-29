@@ -83,7 +83,8 @@ function getViewportCenterInSVGCoords(viewport, svg) {
     const pt = makeSVGPoint(svg, centerX, centerY);
     const svgPt = pt.matrixTransform(ctm.inverse());
 
-    return { x: svgPt.x, y: svgPt.y };
+    // Screen pixels per diagram unit at the current zoom, rotation included
+    return { x: svgPt.x, y: svgPt.y, pxPerUnit: Math.hypot(ctm.a, ctm.b) };
   } catch (e) {
     console.error("DiagView: Geometry mapping failed", e);
     return null;
@@ -162,8 +163,11 @@ export function generateShareLink(diagramIndex) {
 
   url.searchParams.set("dv-idx", diagramIndex);
   url.searchParams.set("dv-z", scale.toFixed(3));
-  url.searchParams.set("dv-cx", Math.round(svgCenter.x));
-  url.searchParams.set("dv-cy", Math.round(svgCenter.y));
+  // Enough decimals that rounding moves the centre less than a quarter pixel
+  // on screen. A diagram drawn in small units, or zoomed far in, needs more.
+  const places = Math.min(6, Math.max(0, Math.ceil(Math.log10(svgCenter.pxPerUnit * 4))));
+  url.searchParams.set("dv-cx", String(Number(svgCenter.x.toFixed(places))));
+  url.searchParams.set("dv-cy", String(Number(svgCenter.y.toFixed(places))));
   if (rotation !== 0) url.searchParams.set("dv-r", rotation);
 
   // Add canvas theme parameters if customized
@@ -250,8 +254,8 @@ export function restoreViewFromURL(diagrams) {
     // Clamp all numeric params to safe ranges before trusting them.
     // Prevents crafted URLs from passing extreme values to panzoom/DOM ops.
     const rawScale = params.get("dv-z") ? parseFloat(params.get("dv-z")) : null;
-    const rawCx = params.get("dv-cx") ? parseInt(params.get("dv-cx"), 10) : null;
-    const rawCy = params.get("dv-cy") ? parseInt(params.get("dv-cy"), 10) : null;
+    const rawCx = params.get("dv-cx") ? parseFloat(params.get("dv-cx")) : null;
+    const rawCy = params.get("dv-cy") ? parseFloat(params.get("dv-cy")) : null;
     const rawX = params.get("dv-x") ? parseInt(params.get("dv-x"), 10) : null;
     const rawY = params.get("dv-y") ? parseInt(params.get("dv-y"), 10) : null;
     const rawRot = params.get("dv-r") ? parseInt(params.get("dv-r"), 10) : null;
