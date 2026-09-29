@@ -1,8 +1,8 @@
 // The first-time theme hint sits above the menu button, right edges in
-// line, and stays on screen. Its two sentences take one line each, also on
-// a 320px wide phone. On a phone page without a viewport meta tag
-// the page is laid out 980px wide and zoomed out, and the hint and the
-// button are counter-scaled to stay at their design size.
+// line, and stays on screen. Its two sentences take one line each in a font
+// with Arial's widths, also on a 320px wide phone. On a phone page without
+// a viewport meta tag the page is laid out 980px wide and zoomed out, and
+// the hint and the button are counter-scaled to stay at their design size.
 import { test, expect } from "@playwright/test";
 import { REPRO, newPage } from "./helpers.mjs";
 
@@ -28,6 +28,13 @@ async function openWithHint(browser, options, meta) {
     });
   }
   await page.goto(REPRO + (meta ? "?meta" : ""));
+  // The hint uses the system font. On Linux that is often DejaVu Sans, a
+  // desktop font 12% wider than phone fonts. Liberation Sans has Arial's
+  // widths and comes with Playwright's Linux dependencies.
+  await page.addStyleTag({
+    content:
+      '.diagview-toast.diagview-toast-menu-hint { font-family: "Liberation Sans", sans-serif }',
+  });
   await page.waitForTimeout(300);
   await page.evaluate(() => DiagView.default.openFullscreen(document.getElementById("diag")));
   await page.waitForTimeout(800);
