@@ -206,7 +206,9 @@ Export file names use the same order, then a chart title Mermaid draws on the di
 
 ### Off
 
-No controls are injected. Clicking the diagram opens the fullscreen viewer. The cursor changes to `pointer` as the only affordance.
+No controls are injected. Clicking the diagram opens the fullscreen viewer, and the cursor changes to `pointer` over it.
+
+`Tab` stops on the diagram, which then shows an outline in the accent colour. `Enter` or `Space` opens the viewer, and `Space` does not scroll the page. Closing the viewer puts focus back on the diagram. A mouse click or a tap shows no outline. Screen readers announce the diagram as a button. With `data-title="Order flow"`, or an SVG `<title>` of "Order flow", its name is "Open Order flow in fullscreen". Without a title it is "Open diagram in fullscreen". A diagram with its own links, such as Mermaid `click` links, is a group named "Order flow, press Enter to open fullscreen" instead, since a button must not hold links. `Tab` goes on to each link. `Enter` on a link follows it. DiagView keeps a `tabindex`, `role` or `aria-label` you set on the element.
 
 ```javascript
 DiagView.init({ layout: "off" });
@@ -765,7 +767,7 @@ The table lists the keys in the order of the `?` help panel.
 | `?`                                    | Show or hide this help                      | Does nothing while you type in a text field, so `?` can go into a search. Needs `showKeyboardHelp: true`                                                                                                                    |
 | `Ctrl`, `Cmd` or `Alt` + any other key | Ignored                                     | DiagView leaves the key to the browser, so shortcuts such as `Ctrl+F` keep working. `Esc` still works with a modifier held                                                                                                  |
 
-Shortcuts are disabled when the modal is closed. While you type in a text field, such as the search box, all shortcuts except `Esc` are suspended. When a button, link or the colour picker has focus, `Space` and `Enter` press it. A focused checkbox ticks with `Space` only, as the browser does nothing for `Enter` there. Every other shortcut still works on these controls. After `Esc` closes the ☰ menu, focus stays on the menu button, so `F` opens search straight away.
+Shortcuts are disabled when the modal is closed. On the page, `Tab` stops on a diagram with `layout: "off"`, and `Enter` or `Space` opens it. [Off](#off) has the details. While you type in a text field, such as the search box, all shortcuts except `Esc` are suspended. When a button, link or the colour picker has focus, `Space` and `Enter` press it. A focused checkbox ticks with `Space` only, as the browser does nothing for `Enter` there. Every other shortcut still works on these controls. After `Esc` closes the ☰ menu, focus stays on the menu button, so `F` opens search straight away.
 
 A double click on the canvas resets the view, as `0` does. On a touch screen a double tap does the same, with the second tap within 300 ms of the first. Lifting the last finger of a pinch does not count as a tap. Neither works while text select mode is on.
 
@@ -833,7 +835,7 @@ await DiagView.destroy();
 DiagView.init({ layout: "header", accentColor: "#ff6b6b" });
 ```
 
-`destroy()` returns every diagram to its pre-init state: wrappers and toolbars are removed, the `data-diagview-*` attributes DiagView added, the `dv-svg-content` class, inline styles, click handlers, error placeholders and the `--dv-*` variables on `<html>` are all cleared, in every layout and in shadow roots as well. If nothing had focus when the viewer opened, closing it focuses the diagram and gives it `tabindex="-1"` until focus leaves. `destroy()` removes that too. A `tabindex` the page set itself stays. A `style` or `class` attribute that DiagView added and then emptied is removed, so `<html>`, `<body>`, the diagram and its SVG get their original markup back. This holds when `destroy()` runs with the viewer open as well. Attributes the page wrote itself stay, even empty ones. The one trace left is the `diagview-canvas-hint-shown` key in `localStorage`, so the theme hint does not show again after the next `init()`. The next `init()` therefore applies its own options to all diagrams again. `destroy()` also resets the configuration to the defaults, the Canvas Theme to Auto and Text Colours to Original.
+`destroy()` returns every diagram to its pre-init state: wrappers and toolbars are removed, the `data-diagview-*` attributes DiagView added, the `dv-svg-content` class, inline styles, click handlers, error placeholders and the `--dv-*` variables on `<html>` are all cleared, in every layout and in shadow roots as well. If nothing had focus when the viewer opened, closing it focuses the diagram and gives it `tabindex="-1"` until focus leaves. `destroy()` removes that too, and the `tabindex`, `role` and `aria-label` a diagram with `layout: "off"` gets. A `tabindex`, `role` or `aria-label` the page set itself stays. A `style` or `class` attribute that DiagView added and then emptied is removed, so `<html>`, `<body>`, the diagram and its SVG get their original markup back. This holds when `destroy()` runs with the viewer open as well. Attributes the page wrote itself stay, even empty ones. The one trace left is the `diagview-canvas-hint-shown` key in `localStorage`, so the theme hint does not show again after the next `init()`. The next `init()` therefore applies its own options to all diagrams again. `destroy()` also resets the configuration to the defaults, the Canvas Theme to Auto and Text Colours to Original.
 
 ---
 
@@ -878,7 +880,7 @@ Live example: [React 18 + StrictMode demo](https://khadirullah.github.io/diagvie
 >
 > Do not re-render the diagram element itself with new content once DiagView has initialized it. Render a new one (inside the container) or call `DiagView.refresh()` after replacing the SVG.
 >
-> If you would rather DiagView never touch the DOM around your element, use `layout: "off"`. It leaves the element where it is and adds only a click handler, a pointer cursor, the `data-diagview-init`, `data-diagview-id` and `data-diagview-index` attributes, and the `dv-svg-content` class and a `filter` transition on the SVG. `destroy()` removes them again. Fullscreen, zoom, search, minimap and export all still work; only the inline toolbar is dropped. Closing the viewer puts focus back on the diagram. Pair it with `DiagView.openFullscreen(el)` / `DiagView.exportDiagram(el, ...)` from your own buttons if you need them.
+> If you would rather DiagView never touch the DOM around your element, use `layout: "off"`. It leaves the element where it is and adds only a click and a key handler, a pointer cursor, `tabindex="0"`, a `role` and an `aria-label` when the element has none, the `data-diagview-init`, `data-diagview-id` and `data-diagview-index` attributes, and the `dv-svg-content` class and a `filter` transition on the SVG. `destroy()` removes them again. Fullscreen, zoom, search, minimap and export all still work; only the inline toolbar is dropped. Closing the viewer puts focus back on the diagram. Pair it with `DiagView.openFullscreen(el)` / `DiagView.exportDiagram(el, ...)` from your own buttons if you need them.
 >
 > **React StrictMode / hot reload:** the development-only destroy-then-init sequence is handled by `init()` itself, which queues behind an in-flight `destroy()`. You do not need to await either call in an effect.
 >
