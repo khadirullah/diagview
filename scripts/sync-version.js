@@ -1,4 +1,9 @@
+#!/usr/bin/env node
 import fs from 'fs';
+import { fileURLToPath } from 'url';
+
+// Paths below are relative to the repo root, so the script runs from any folder
+process.chdir(fileURLToPath(new URL('..', import.meta.url)));
 
 const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
 const version = pkg.version;

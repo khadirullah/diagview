@@ -181,7 +181,7 @@ The `version:sync` script updates version strings in:
 npm run version:sync
 ```
 
-This is called automatically as part of `npm run build`.
+This is called automatically as part of `npm run build`. The script also runs on its own from any folder, as `./scripts/sync-version.js` from the repo root or `./sync-version.js` inside `scripts/`. It reads the version from `package.json` and prints each file it changes.
 
 ### Release
 
