@@ -6,7 +6,7 @@ on:
 
 permissions:
   contents: read
-  id-token: write # required for npm provenance attestations
+  id-token: write # npm trusted publishing signs in with this token, and provenance needs it too
 
 jobs:
   publish:
@@ -28,6 +28,6 @@ jobs:
       - name: Build Bundle
         run: npm run build
       - name: Publish Package
+        # No npm token. npm trusts this workflow file for diagview, set up
+        # under the package's Trusted publisher settings on npmjs.com.
         run: npm publish --provenance --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

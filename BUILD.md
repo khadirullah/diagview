@@ -201,7 +201,7 @@ This will:
 4. Push to GitHub
 5. Create a GitHub Release
 
-> **Note:** `release-it` does not publish to npm (`npm.publish` is `false` in `.release-it.json`). The `publish.yml` workflow publishes to npm when the GitHub Release is published.
+> **Note:** `release-it` does not publish to npm (`npm.publish` is `false` in `.release-it.json`). The `publish.yml` workflow publishes to npm when the GitHub Release is published. It signs in through npm trusted publishing, so the repository holds no npm token. The trusted publisher on npmjs.com names `khadirullah/diagview` and `publish.yml`, so renaming the workflow file breaks publishing until the setting is updated.
 
 ---
 
