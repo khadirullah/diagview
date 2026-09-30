@@ -10,7 +10,7 @@
 
 ![DiagView Demo](media/demo.gif)
 
-> **[Live Demo →](https://khadirullah.github.io/diagview/)**
+> **[Live Demo →](https://khadirullah.github.io/diagview/)** · **[Video Walkthrough (2:31) →](https://www.youtube.com/watch?v=0XemdL7n3ao)**
 
 ---
 
@@ -513,6 +513,8 @@ DiagView.init({
 Experience all features including Search, Export, and Meeting Mode in our interactive playground:
 
 **[Explore the Live Demo →](https://khadirullah.github.io/diagview/)**
+
+The [2:31 video walkthrough](https://www.youtube.com/watch?v=0XemdL7n3ao) shows every feature, with narration and English subtitles.
 
 ---
 
