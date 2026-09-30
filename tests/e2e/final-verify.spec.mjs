@@ -29,21 +29,38 @@ test.afterAll(async ({ browser }) => {
 test.describe("desktop", () => {
   test("drag pans 1:1 with cursor", async () => {
     await page.evaluate(() => DiagView.default.state.activePanzoom.zoom(3, { animate: false }));
-    await page.waitForTimeout(200);
-    const c0 = await centerInSVG(page);
-    const unitsPerPx = await page.evaluate(() => {
+    // Measure once the zoom shows on screen, when the SVG's scale holds for
+    // three frames. A fixed wait was too short for WebKit on a slow machine,
+    // and a drag measured against the old scale moved a third of the way.
+    await page.waitForFunction(async () => {
       const svg = document.getElementById("diagview-modal-viewport").querySelector("svg");
-      return 1 / svg.getScreenCTM().a; // SVG units per screen px
+      const a = svg.getScreenCTM().a;
+      for (let i = 0; i < 3; i++) {
+        await new Promise(requestAnimationFrame);
+        if (svg.getScreenCTM().a !== a) return false;
+      }
+      return true;
     });
+    const c0 = await centerInSVG(page);
+    // SVG units per screen px
+    const svgUnitsPerPx = () =>
+      page.evaluate(() => {
+        const svg = document.getElementById("diagview-modal-viewport").querySelector("svg");
+        return 1 / svg.getScreenCTM().a;
+      });
+    const unitsPerPx = await svgUnitsPerPx();
     await page.mouse.move(640, 400);
     await page.mouse.down();
     await page.mouse.move(740, 460, { steps: 8 });
     await page.mouse.up();
     await page.waitForTimeout(300);
     const c1 = await centerInSVG(page);
+    const unitsAfter = await svgUnitsPerPx();
     const expDX = -100 * unitsPerPx;
     const expDY = -60 * unitsPerPx;
-    const detail = `moved (${(c1.x - c0.x).toFixed(1)}, ${(c1.y - c0.y).toFixed(1)}) svg-units, expected (${expDX.toFixed(1)}, ${expDY.toFixed(1)})`;
+    const detail =
+      `moved (${(c1.x - c0.x).toFixed(1)}, ${(c1.y - c0.y).toFixed(1)}) svg-units, expected (${expDX.toFixed(1)}, ${expDY.toFixed(1)}), ` +
+      `${(1 / unitsPerPx).toFixed(3)} px per unit before the drag and ${(1 / unitsAfter).toFixed(3)} after`;
     expect(Math.abs(c1.x - c0.x - expDX), detail).toBeLessThan(2);
     expect(Math.abs(c1.y - c0.y - expDY), detail).toBeLessThan(2);
   });
