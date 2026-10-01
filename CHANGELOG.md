@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 
 ---
 
+## [Unreleased]
+
+### Changed
+
+- **Demo Link Preview Image.** Links to the demo showed the square artwork from v1.0.5, and chat apps cropped it or shrank it. The pages now use a 1200x630 card with the DiagView logo and "Fullscreen viewer for Mermaid and SVG diagrams", served from diagview.khadirullah.com without a redirect. The name and tagline fit the middle square that WhatsApp shows as a small thumbnail. Each page also gives the image size and alt text, its own `og:url` and a large Twitter card.
+
+---
+
 ## [1.1.0] - 2026-09-30
 
 ### Added
