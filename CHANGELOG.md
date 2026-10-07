@@ -8,9 +8,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 
 ## [Unreleased]
 
+### Added
+
+- **Video Walkthrough on the Demo Page.** The demo home page has a "See it in action" section between the hero and the layouts with the 2:31 walkthrough from YouTube. It shows the video's thumbnail and a play button, and loads the player from youtube-nocookie.com only when the button is pressed, so visitors who never play it download no YouTube scripts and get no YouTube cookies. Without JavaScript, or with a modifier key or middle click, the thumbnail opens the video on YouTube. So does a copy of the page opened from disk, because YouTube refuses to play an embed without the page address and shows error 153.
+
 ### Changed
 
 - **Demo Link Preview Image.** Links to the demo showed the square artwork from v1.0.5, and chat apps cropped it or shrank it. The pages now use a 1200x630 card with the DiagView logo and "Fullscreen viewer for Mermaid and SVG diagrams", served from diagview.khadirullah.com without a redirect. The name and tagline fit the middle square that WhatsApp shows as a small thumbnail. Each page also gives the image size and alt text, its own `og:url` and a large Twitter card.
+
+### Fixed
+
+- **Demo Nav Links.** Layouts, Features, Quick start and FAQ in the demo's top bar jumped to the empty space above each section, so the end of the section before it showed under the bar. The heading now lands just under the bar on desktop and on phones.
 
 ---
 
