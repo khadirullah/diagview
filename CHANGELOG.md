@@ -19,6 +19,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 ### Fixed
 
 - **Demo Nav Links.** Layouts, Features, Quick start and FAQ in the demo's top bar jumped to the empty space above each section, so the end of the section before it showed under the bar. The heading now lands just under the bar on desktop and on phones.
+- **Double Line Under the Floating Toolbar.** The floating toolbar drew the line that the header layout puts under its title, so a hovered card in the floating layout showed two lines at the bottom, about 5px apart. The toolbar now draws no line and the card keeps its own edge. The header layout is unchanged. To bring the line back, add `.diagview-wrapper .diagview-controls-floating { border-bottom: 1px solid var(--dv-border-color); }` to the page.
 
 ---
 
