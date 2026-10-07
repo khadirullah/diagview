@@ -154,6 +154,78 @@
             margin-top: clamp(40px, 6vw, 64px);
         }
 
+        /* ── Video: a thumbnail until play is pressed ── */
+        .video {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .video-play,
+        .video iframe {
+            display: block;
+            width: 100%;
+            aspect-ratio: 16 / 9;
+            border: 0;
+        }
+
+        .video-play {
+            position: relative;
+            background: #000;
+        }
+
+        .video-play img {
+            display: block;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .video-play-btn {
+            position: absolute;
+            inset: 0;
+            display: grid;
+            place-items: center;
+            width: 72px;
+            height: 72px;
+            margin: auto;
+            border-radius: 50%;
+            background: var(--accent);
+            color: #fff;
+            box-shadow: 0 6px 24px rgb(0 0 0 / .35);
+            transition: transform .2s ease;
+        }
+
+        .video-play-btn svg {
+            width: 30px;
+            height: 30px;
+            margin-left: 4px;
+            fill: currentColor;
+        }
+
+        .video-play:hover .video-play-btn,
+        .video-play:focus-visible .video-play-btn {
+            transform: scale(1.08);
+        }
+
+        .video-play:focus-visible {
+            outline: 3px solid var(--accent);
+            outline-offset: -3px;
+        }
+
+        /* On a phone the button would cover the title in the thumbnail */
+        @media (max-width: 600px) {
+            .video-play-btn {
+                width: 56px;
+                height: 56px;
+            }
+
+            .video-play-btn svg {
+                width: 24px;
+                height: 24px;
+                margin-left: 3px;
+            }
+        }
+
         /* ── Layout modes: one picture each ── */
         .modes {
             display: grid;
@@ -704,6 +776,34 @@
             </div>
         </section>
 
+        <section class="section" id="video">
+            <div class="wrap">
+                <div class="section-head">
+                    <h2>See it in action</h2>
+                    <p>Every feature in two and a half minutes, with narration and subtitles.</p>
+                </div>
+
+                <figure class="video">
+                    <div class="stage">
+                        <div class="stage-top"><span class="fig"><b>Video</b> Walkthrough</span><span
+                                class="fig">2:31</span></div>
+                        <a class="video-play" id="videoPlay" href="https://www.youtube.com/watch?v=0XemdL7n3ao"
+                            target="_blank" rel="noopener"
+                            aria-label="Play the DiagView walkthrough video, 2 minutes 31 seconds">
+                            <img src="images/video-thumb.jpg" width="1280" height="720" loading="lazy"
+                                decoding="async" alt="">
+                            <span class="video-play-btn" aria-hidden="true"><svg viewBox="0 0 24 24">
+                                    <path d="M8 5.5v13l11-6.5Z" />
+                                </svg></span>
+                        </a>
+                    </div>
+                    <figcaption class="stage-caption">
+                        <span>The player loads from YouTube when you press play.</span>
+                    </figcaption>
+                </figure>
+            </div>
+        </section>
+
         <section class="section" id="layouts">
             <div class="wrap">
                 <div class="section-head">
@@ -1005,6 +1105,28 @@
             <span>DiagView <span data-version></span></span>
         </div>
     </footer>
+
+    <script>
+        // The YouTube player loads only after a click, so visitors who never
+        // play the video do not download YouTube's scripts. A click with a
+        // modifier key, or a middle click, opens YouTube as a normal link.
+        // YouTube refuses to play without the page address in the Referer
+        // header (error 153). A page opened from disk has no address to send,
+        // so there the click opens YouTube too.
+        document.getElementById('videoPlay').addEventListener('click', function (e) {
+            if (e.button !== 0 || e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) return;
+            if (location.protocol === 'file:') return;
+            e.preventDefault();
+            var player = document.createElement('iframe');
+            player.src = 'https://www.youtube-nocookie.com/embed/0XemdL7n3ao?autoplay=1&rel=0';
+            player.title = 'DiagView: fullscreen viewer for Mermaid and SVG diagrams';
+            player.allow = 'autoplay; encrypted-media; picture-in-picture; fullscreen';
+            player.referrerPolicy = 'strict-origin-when-cross-origin';
+            player.allowFullscreen = true;
+            this.replaceWith(player);
+            player.focus();
+        });
+    </script>
 
     <script>
         // Security modes: one sample SVG run through the real sanitizer in each
