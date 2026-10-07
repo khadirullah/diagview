@@ -243,6 +243,8 @@
   margin-bottom: 4px;
   width: 100% !important;
   background: transparent !important;
+  /* The header layout's separator would sit just above the card's own edge */
+  border-bottom: none;
   padding: 0 !important;
   display: flex;
   gap: 12px;

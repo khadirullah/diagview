@@ -62,8 +62,9 @@ build. Set `E2E_PORT` to use a port other than 9340.
 | `verify-reset-duration.spec.mjs`      | 6      | double click and the reset after a window resize take `zoomAnimationDuration` by default, at 0 and at 700                                                                                                                                                                                                 |
 | `verify-off-layout-keyboard.spec.mjs` | 7      | a diagram with layout "off" is in the tab order with an accent ring drawn inside its box, Enter and Space open the viewer without scrolling the page, Esc and the close button return focus without a ring after a click, and Enter on a link inside it follows the link                                  |
 | `verify-key-badges.spec.mjs`          | 3      | a touch phone hides the menu's key badges until a key press shows them, typing into the search box keeps them hidden, and a desktop shows them and the shortcut hint from the start                                                                                                                       |
+| `verify-floating-toolbar.spec.mjs`    | 2      | a hovered floating card shows one bottom edge with no toolbar line above it, and the header toolbar keeps its line under the title                                                                                                                                                                        |
 
-That is 221 checks per browser.
+That is 223 checks per browser.
 
 `verify-react-strictmode` loads React from unpkg and `verify-fixes` loads
 Mermaid from jsdelivr, so both need network access. Set

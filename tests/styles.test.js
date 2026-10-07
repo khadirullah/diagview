@@ -36,6 +36,13 @@ describe("styles.css: page toolbar colours", () => {
   });
 });
 
+describe("styles.css: floating toolbar", () => {
+  test("draws no separator line, so the card shows a single bottom edge", () => {
+    expect(ruleBody("\n.diagview-controls {")).toContain("border-bottom: 1px solid");
+    expect(ruleBody("\n.diagview-controls-floating {")).toMatch(/border-bottom:\s*none/);
+  });
+});
+
 describe("styles.css: edge for an accent that fades into the background", () => {
   test("the focus ring gap, selected buttons, menu button and page icons use it", () => {
     expect(ruleBody(".diagview-menu *:focus-visible {")).toContain(
