@@ -707,7 +707,10 @@ kbd {
 
 /* ── Sections ─────────────────────────────────────────────── */
 .section {
-  padding-top: clamp(64px, 9vw, 112px);
+  --section-pad: clamp(64px, 9vw, 112px);
+  padding-top: var(--section-pad);
+  /* A nav link jumps to the heading, not to the empty space above it */
+  scroll-margin-top: calc(-1 * var(--section-pad));
 }
 
 .section-head {
