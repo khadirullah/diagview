@@ -41,6 +41,16 @@ describe("styles.css: floating toolbar", () => {
     expect(ruleBody("\n.diagview-controls {")).toContain("border-bottom: 1px solid");
     expect(ruleBody("\n.diagview-controls-floating {")).toMatch(/border-bottom:\s*none/);
   });
+
+  test("on touch screens it rests where hover puts it on a desktop", () => {
+    const touch = css.indexOf("@media (hover: none) or (pointer: coarse) {");
+    const sel = ".diagview-wrapper .diagview-controls-floating {";
+    const at = css.indexOf(sel, touch);
+    expect(touch).toBeGreaterThan(-1);
+    expect(at).toBeGreaterThan(touch);
+    expect(at).toBeLessThan(css.indexOf("\n}", touch));
+    expect(ruleBody(sel, touch)).toMatch(/transform:\s*none/);
+  });
 });
 
 describe("styles.css: edge for an accent that fades into the background", () => {
@@ -350,7 +360,7 @@ describe("styles.css: page buttons", () => {
   });
 
   test("the floating row leaves room below for the focus ring and keeps the card's height", () => {
-    const body = ruleBody(".diagview-controls-floating {");
+    const body = ruleBody("\n.diagview-controls-floating {");
     expect(body).toMatch(/margin-top:\s*6px/);
     expect(body).toMatch(/margin-bottom:\s*4px/);
   });

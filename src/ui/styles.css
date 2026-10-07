@@ -233,6 +233,11 @@
     opacity: 1 !important;
     pointer-events: auto !important;
   }
+
+  /* Already in place, so no hover offset to slide back from */
+  .diagview-wrapper .diagview-controls-floating {
+    transform: none;
+  }
 }
 
 /* Floating Layout (Low-Centered Static) */
