@@ -1,8 +1,9 @@
 // Diagrams on the page show at their own size, centred in the card, and
-// shrink only when the card is narrower. A wrapper between the diagram
-// element and its SVG does not change that size, and a caption sits under
-// the diagram. A page rule can still make every diagram, or chosen ones,
-// fill the card, and fullscreen ignores that rule.
+// shrink only when the card is narrower. A tall diagram keeps its own
+// height. A wrapper between the diagram element and its SVG does not change
+// that size, and a caption sits under the diagram. A page rule can still
+// make every diagram, or chosen ones, fill the card, --dv-max-height caps
+// the height, and fullscreen ignores both.
 //
 // Runs offline: the page is file:// and the Mermaid diagram is static
 // Mermaid output, so no Mermaid is loaded. DV_DIST=/path/to/diagview.umd.js
@@ -21,6 +22,7 @@ const DIAGRAMS = {
   wide: { width: 1000, height: 200 },
   viewbox: { width: Infinity, height: 240 / 520 },
   figure: { width: 520, height: 240 },
+  tall: { width: 415, height: 2192 },
 };
 const IDS = Object.keys(DIAGRAMS);
 
@@ -28,6 +30,14 @@ const IDS = Object.keys(DIAGRAMS);
 const FULL_WIDTH =
   ".diagview-wrapper .diagview-viewport svg { width: 100% !important; max-width: 100% !important; }";
 const BIG = ".diagview-viewport .big svg { width: 100% !important; max-width: 100% !important; }";
+// The height cap a page can bring back, set on the page, a card, a viewport
+// or the diagram element
+const CAPS = {
+  root: ":root { --dv-max-height: 80vh; }",
+  diagram: "#tall { --dv-max-height: 80vh; }",
+  wrapper: ".diagview-wrapper { --dv-max-height: 80vh; }",
+  viewport: ".diagview-viewport { --dv-max-height: 80vh; }",
+};
 
 const phone = (browserName) => ({
   viewport: { width: 390, height: 844 },
@@ -194,12 +204,10 @@ test("on a phone every diagram fits the card width", async ({ browser, browserNa
 test("a full-width page rule makes every diagram fill the card", async ({ browser }) => {
   const rulePage = await load(browser, { css: FULL_WIDTH });
   const ruleSizes = await measure(rulePage);
-  // A diagram stretched to the card stops growing taller at 80% of the window
-  const maxHeight = 0.8 * (await rulePage.evaluate(() => innerHeight));
   for (const id of IDS) {
     const s = ruleSizes[id];
     near(s.width, s.card, `${id} width`);
-    near(s.height, Math.min(expectedHeight(id, s.width), maxHeight), `${id} height`);
+    near(s.height, expectedHeight(id, s.width), `${id} height`);
   }
 });
 
@@ -216,11 +224,85 @@ test("fullscreen shows a diagram at the same size with or without the page rule"
   browser,
 }) => {
   const rulePage = await load(browser, { css: FULL_WIDTH });
-  for (const id of ["mermaid", "fixed", "figure"]) {
+  for (const id of ["mermaid", "fixed", "figure", "tall"]) {
     const plain = await fullscreenSize(page, id);
     const ruled = await fullscreenSize(rulePage, id);
     expect(plain.width, `${id} fullscreen width`).toBeGreaterThan(0);
     near(ruled.width, plain.width, `${id} fullscreen width`);
     near(ruled.height, plain.height, `${id} fullscreen height`);
+  }
+});
+
+test("a tall diagram keeps its own height, and fullscreen still fits it to the screen", async () => {
+  const s = sizes.tall;
+  near(s.width, DIAGRAMS.tall.width, "tall width");
+  near(s.height, DIAGRAMS.tall.height, "tall height");
+  const { innerWidth, innerHeight } = await page.evaluate(() => ({ innerWidth, innerHeight }));
+  expect(s.height, "tall height against the window").toBeGreaterThan(innerHeight);
+  // The drawing, not the SVG box, which spans the viewer
+  await page.evaluate(() => DiagView.openFullscreen(document.getElementById("tall")));
+  const drawing = page.locator("#diagview-modal .diagview-rotator > svg g.root");
+  await expect(drawing).toBeVisible();
+  await page.waitForTimeout(500);
+  const full = await drawing.boundingBox();
+  await page.evaluate(() => DiagView.closeModal());
+  await expect(drawing).toHaveCount(0);
+  expect(full.y, "tall fullscreen top").toBeGreaterThanOrEqual(0);
+  expect(full.y + full.height, "tall fullscreen bottom").toBeLessThanOrEqual(innerHeight);
+  expect(full.width, "tall fullscreen width").toBeLessThanOrEqual(innerWidth);
+  // Fitted to the screen height, not left at a sliver
+  expect(full.height, "tall fullscreen height").toBeGreaterThan(innerHeight / 2);
+});
+
+test("--dv-max-height on the page, a card, a viewport or a diagram caps the height", async ({
+  browser,
+}) => {
+  for (const [where, css] of Object.entries(CAPS)) {
+    const capPage = await load(browser, { css });
+    const capSizes = await measure(capPage);
+    const maxHeight = 0.8 * (await capPage.evaluate(() => innerHeight));
+    near(capSizes.tall.height, maxHeight, `${where}: tall height`);
+    near(
+      capSizes.tall.width,
+      expectedWidth("tall", maxHeight * (415 / 2192)),
+      `${where}: tall width`,
+    );
+    // A diagram shorter than the cap keeps its own size
+    near(capSizes.fixed.height, DIAGRAMS.fixed.height, `${where}: fixed height`);
+    // Fullscreen ignores the cap
+    const plain = await fullscreenSize(page, "tall");
+    const capped = await fullscreenSize(capPage, "tall");
+    near(capped.height, plain.height, `${where}: tall fullscreen height`);
+    await capPage.context().close();
+  }
+});
+
+test("--dv-max-height caps a diagram in a shadow root too", async ({ browser }) => {
+  // Set on the page, it reaches into the shadow root. Set in the shadow
+  // root's own style, it applies there.
+  for (const [where, outer, inner] of [
+    ["page", CAPS.root, ""],
+    ["shadow root", "", CAPS.wrapper],
+  ]) {
+    const shadowPage = await load(browser, { css: outer });
+    const height = await shadowPage.evaluate(async (inner) => {
+      const host = document.createElement("div");
+      document.body.prepend(host);
+      const root = host.attachShadow({ mode: "open" });
+      const svg = document
+        .querySelector("#tall svg")
+        .outerHTML.replace("mermaid-tall", "shadow-tall");
+      root.innerHTML = `<style>${inner}</style><pre class="mermaid">${svg}</pre>`;
+      DiagView.initShadowRoot(root);
+      const el = root.querySelector(".mermaid");
+      for (let i = 0; i < 50 && !el.dataset.diagviewInit; i++) {
+        await new Promise((r) => setTimeout(r, 100));
+      }
+      if (!el.closest(".diagview-viewport")) return -1;
+      return el.querySelector("svg").getBoundingClientRect().height;
+    }, inner);
+    const maxHeight = 0.8 * (await shadowPage.evaluate(() => innerHeight));
+    near(height, maxHeight, `${where}: tall height in a shadow root`);
+    await shadowPage.context().close();
   }
 });

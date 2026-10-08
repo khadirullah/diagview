@@ -96,7 +96,7 @@ A: In the floating and header layouts DiagView shows each diagram at its own siz
 }
 ```
 
-Keep `.diagview-wrapper` in the selector, or DiagView's own rule wins. See [Diagram size](USAGE.md#diagram-size) for chosen diagrams only and for shadow roots.
+Keep `.diagview-wrapper` in the selector, or DiagView's own rule wins. A tall diagram that fills the card grows taller too. Add `:root { --dv-max-height: 80vh; }` to stop it at 80% of the window. See [Diagram size](USAGE.md#diagram-size) for chosen diagrams only and for shadow roots.
 
 ---
 

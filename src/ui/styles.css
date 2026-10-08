@@ -171,7 +171,9 @@
   width: auto !important;
   height: auto !important;
   max-width: 100%;
-  max-height: 80vh !important;
+  /* No height cap, so a tall diagram keeps the scale it has with layout
+     "off". A page can set --dv-max-height, such as 80vh, to bring one back. */
+  max-height: var(--dv-max-height, none) !important;
   display: block;
   margin-inline: auto;
   transition: transform 0.2s ease;

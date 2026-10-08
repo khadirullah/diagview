@@ -218,7 +218,7 @@ This is the most performant layout for dense pages with many diagrams.
 
 ### Diagram size
 
-In the floating and header layouts a diagram shows at its own size, centred in the card. A diagram wider than the card shrinks to fit, and its height stops at 80% of the window. The markup does not change this. A `<pre class="mermaid">` on its own, the same `<pre>` inside a `<div class="diagram">`, and an `<svg>` in a `<figure>` with a caption all keep the width their tool drew, and the caption sits under the diagram. The caption keeps the page's own alignment, so add `figcaption { text-align: center; }` to the page to centre it under the diagram. An SVG with only a `viewBox` has no size of its own, so it fills the card. The fullscreen viewer fits every diagram to the screen either way. With `layout: "off"` DiagView adds no wrapper around the diagram, so the page's own CSS sets its size.
+In the floating and header layouts a diagram shows at its own size, centred in the card. A diagram wider than the card shrinks to fit. A tall diagram keeps its own height, as it does with `layout: "off"`, and the page scrolls past it. The markup does not change this. A `<pre class="mermaid">` on its own, the same `<pre>` inside a `<div class="diagram">`, and an `<svg>` in a `<figure>` with a caption all keep the width their tool drew, and the caption sits under the diagram. The caption keeps the page's own alignment, so add `figcaption { text-align: center; }` to the page to centre it under the diagram. An SVG with only a `viewBox` has no size of its own, so it fills the card. The fullscreen viewer fits every diagram to the screen either way. With `layout: "off"` DiagView adds no wrapper around the diagram, so the page's own CSS sets its size.
 
 To make every diagram fill the card, as earlier versions did, add this rule to the page:
 
@@ -231,7 +231,17 @@ To make every diagram fill the card, as earlier versions did, add this rule to t
 
 DiagView adds its stylesheet at the end of `<head>` when it starts, after the page's own CSS, so keep `.diagview-wrapper` in the selector. The shorter `.diagview-viewport svg` loses to DiagView's `width` rule. To enlarge only some diagrams, put a class such as `big` on the diagram element and use `.diagview-viewport .big svg` as the selector.
 
-For a diagram in a shadow root, put the rule in a `<style>` inside that root. CSS on the page does not reach into a shadow root, and `initShadowRoot()` installs DiagView's stylesheet there.
+To cap the height, set `--dv-max-height` on the page. A diagram taller than the cap shrinks until it fits, and a shorter one keeps its size. `80vh` is the cap earlier versions used:
+
+```css
+:root {
+  --dv-max-height: 80vh;
+}
+```
+
+Set it on one diagram element instead of `:root` to cap only that diagram. A tall diagram that fills the card through the rule above grows taller still, so pair that rule with the cap. The fullscreen viewer ignores both.
+
+For a diagram in a shadow root, put the rule in a `<style>` inside that root. CSS on the page does not reach into a shadow root, and `initShadowRoot()` installs DiagView's stylesheet there. `--dv-max-height` on the page's `:root` is the exception. CSS variables inherit into a shadow root, so it caps those diagrams too.
 
 ---
 

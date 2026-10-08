@@ -63,9 +63,9 @@ build. Set `E2E_PORT` to use a port other than 9340.
 | `verify-off-layout-keyboard.spec.mjs` | 7      | a diagram with layout "off" is in the tab order with an accent ring drawn inside its box, Enter and Space open the viewer without scrolling the page, Esc and the close button return focus without a ring after a click, and Enter on a link inside it follows the link                                  |
 | `verify-key-badges.spec.mjs`          | 3      | a touch phone hides the menu's key badges until a key press shows them, typing into the search box keeps them hidden, and a desktop shows them and the shortcut hint from the start                                                                                                                       |
 | `verify-floating-toolbar.spec.mjs`    | 3      | a hovered floating card shows one bottom edge with no toolbar line above it, the header toolbar keeps its line under the title, and a touch screen shows the floating toolbar where a desktop hover puts it                                                                                               |
-| `verify-diagram-size.spec.mjs`        | 9      | diagrams show at their own width, centred in the card, a Mermaid diagram inside a wrapper keeps that size, a wide or viewBox-only SVG fills the card, a caption sits under its diagram, every diagram fits a phone card, a page rule widens all or chosen diagrams, and fullscreen ignores that rule      |
+| `verify-diagram-size.spec.mjs`        | 12     | diagrams keep their own size, centred, inside any wrapper, a wide or viewBox-only SVG fills the card, a tall one keeps its height, a caption sits under it, a phone card fits each, a page rule widens all or some, `--dv-max-height` caps the height, also in a shadow root, and fullscreen ignores both |
 
-That is 241 checks per browser.
+That is 244 checks per browser.
 
 `verify-react-strictmode` loads React from unpkg and `verify-fixes` loads
 Mermaid from jsdelivr, so both need network access. Set

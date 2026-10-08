@@ -74,6 +74,12 @@ describe("styles.css: diagram size on the page", () => {
     expect(body).toMatch(/max-width:\s*100%;/);
     expect(body).not.toMatch(/max-width:[^;]*!important/);
   });
+
+  test("a tall diagram keeps its own height unless the page sets --dv-max-height", () => {
+    const body = ruleBody("\n.diagview-viewport svg {");
+    expect(body).toMatch(/max-height:\s*var\(--dv-max-height, none\) !important;/);
+    expect(body).not.toMatch(/max-height:\s*\d/);
+  });
 });
 
 describe("styles.css: edge for an accent that fades into the background", () => {
