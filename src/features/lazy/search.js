@@ -51,6 +51,14 @@ function unmark(el, cls) {
 }
 
 /**
+ * Lower case with each run of spaces and line breaks as one space, so
+ * "first release" finds a label drawn as "First   release"
+ */
+function normalise(text) {
+  return (text || "").toLowerCase().replace(/\s+/g, " ").trim();
+}
+
+/**
  * Initialize or retrieve search cache
  * O(N) read operation, done once per diagram instance (or refresh)
  */
@@ -81,12 +89,21 @@ function getSearchCandidates(clone) {
       if (!el || seen.has(el) || el.matches(sel) || el.querySelector(sel)) continue;
       seen.add(el);
     }
+    // A group title sits at the top of its frame, not inside a shape
+    const beside = sw || el.classList.contains("cluster-label");
     cache.push({
       el: el,
-      text: (el.textContent || "").toLowerCase(),
+      text: normalise(el.textContent),
       // What to measure for the shape under a plain-SVG label
-      box: el.localName === "text" ? el : sw && labelBox(el),
+      box: el.localName === "text" ? el : beside && labelBox(el),
     });
+  }
+
+  // HTML labels outside every group above, such as Mermaid's event
+  // modeling boxes. One that holds a candidate is already searched.
+  for (const fo of clone.querySelectorAll("foreignObject")) {
+    if (seen.has(fo) || fo.closest(sel) || fo.querySelector(sel) || undrawnSwitch(fo)) continue;
+    cache.push({ el: fo, text: normalise(fo.textContent), box: labelBox(fo) });
   }
 
   state.searchCache.set(clone, cache);
@@ -158,7 +175,8 @@ function getShapeBoxes(clone, m) {
 
 /**
  * A plain SVG draws a label as a <text> next to its shape, not inside it,
- * and draw.io does the same with its HTML labels. Return the smallest
+ * and draw.io does the same with its HTML labels. So do Mermaid's composite
+ * state titles and event modeling labels. Return the smallest
  * filled shape under the label's centre, so the match can outline it and
  * keep it undimmed. Mermaid nodes never get here: their outermost candidate
  * is the group that already holds the shape.
@@ -225,7 +243,7 @@ export function performSearch(clone, query) {
   if (state.searchRafId) cancelAnimationFrame(state.searchRafId);
 
   // If query is empty (or whitespace only), clear everything immediately
-  const lq = (query || "").toLowerCase().trim();
+  const lq = normalise(query);
   if (!lq || !clone) {
     if (clone) {
       clearHighlights(clone);

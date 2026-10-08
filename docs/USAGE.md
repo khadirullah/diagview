@@ -257,7 +257,7 @@ Set any of the following `data-diagview-*` attributes directly on a diagram cont
 
 ## 6. Search
 
-Search is available inside the fullscreen viewer. It highlights all nodes whose text content contains the search query (case-insensitive). Everything outside a match drops to 15% opacity at once, including edges, arrowheads and labels. A matching node stays at full strength with its own colours and label, and its shape gets a 3px outline. In a plain hand-drawn SVG, a matching `<text>` also outlines the smallest filled shape under it. draw.io keeps a `<text>` copy of each label that the browser never draws. Search matches the HTML label on screen instead and outlines the box under it.
+Search is available inside the fullscreen viewer. It highlights all nodes whose text content contains the search query. Case does not matter, and each run of spaces and line breaks counts as one space. The title of a composite state in a Mermaid state diagram matches on its own, and so does an HTML label in no node, such as a box in a Mermaid event modeling diagram. A matched title outlines the frame of its state, unless that frame covers most of the diagram, and a matched event modeling label outlines its box. Everything outside a match drops to 15% opacity at once, including edges, arrowheads and labels. A matching node stays at full strength with its own colours and label, and its shape gets a 3px outline. In a plain hand-drawn SVG, a matching `<text>` also outlines the smallest filled shape under it. draw.io keeps a `<text>` copy of each label that the browser never draws. Search matches the HTML label on screen instead and outlines the box under it.
 
 ### Outline colour
 
@@ -1246,9 +1246,8 @@ Copying the image needs the Clipboard API, which browsers only offer on HTTPS or
 
 ### Search highlights nothing
 
-Search reads the text of every `<text>` element and of every element with the class `node`, `cluster`, `label` or `edgePath`, HTML labels inside them included. It finds nothing in these cases:
+Search reads the text of every `<text>` element and of every element with the class `node`, `cluster`, `cluster-label`, `label` or `edgePath`, HTML labels inside them included. It also reads every HTML label in a `<foreignObject>` outside those. It finds nothing in these cases:
 
-- The label is HTML in a `<foreignObject>` with none of those classes on it or around it. Add `class="label"` to the `<foreignObject>` or to a group that holds it.
 - The text is drawn as paths, as when an editor converts text to outlines, or it is part of an embedded image.
 - The query runs across a line break. Each line can be its own `<text>` element, and a `<br>` in an HTML label adds no space between the lines. Search for words from one line.
 - Panzoom did not load. Search starts only when zoom and pan do. See [Zoom/pan not working in fullscreen](#zoompan-not-working-in-fullscreen).

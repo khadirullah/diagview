@@ -1,5 +1,6 @@
 // PNG export of large diagrams with <foreignObject> labels, and the search
-// highlight on Mermaid-shaped, hand-drawn and draw.io SVGs.
+// highlight on Mermaid-shaped, hand-drawn and draw.io SVGs and on Mermaid 12
+// state, event modeling and timeline SVGs.
 //
 // Runs offline: the page is file://, the large diagram is generated in the
 // page and no Mermaid is loaded. DV_DIST=/path/to/diagview.umd.js tests
@@ -318,6 +319,131 @@ test.describe("draw.io search", () => {
   });
 
   test("draw.io: clearing the search restores the markup exactly", async () => {
+    await search("");
+    const after = await page.evaluate(() => window.__clone().outerHTML);
+    expect(after === before, "markup changed after clearing").toBe(true);
+  });
+});
+
+test.describe("Mermaid state title search", () => {
+  let s;
+  let before;
+  test("state diagram: a composite state title matches once and the frame of its state is outlined", async () => {
+    await openModal("state");
+    await canvasTheme("Light");
+    before = await page.evaluate(() => window.__clone().outerHTML);
+    await search("Running");
+    s = await page.evaluate(() => {
+      const svg = window.__clone();
+      const frame = svg.querySelector(".statediagram-cluster rect.outer");
+      return {
+        status: document.getElementById("diagview-search-status").textContent,
+        title: window.__eff(svg.querySelector(".cluster-label .nodeLabel")),
+        marked: frame.classList.contains("dv-search-match"),
+        stroke: getComputedStyle(frame).stroke,
+        others: [...svg.querySelectorAll(".node .nodeLabel")].map((l) => window.__eff(l)),
+      };
+    });
+    expect(s.status).toBe("1 match found");
+    expect({ title: s.title, marked: s.marked, stroke: s.stroke }).toEqual({
+      title: 1,
+      marked: true,
+      stroke: RING_LIGHT,
+    });
+  });
+
+  test("state diagram: the other state labels are dimmed", async () => {
+    const detail = `labels ${s.others.join("/")}`;
+    expect(s.others.length, detail).toBe(3);
+    expect(
+      s.others.every((o) => o <= 0.2),
+      detail,
+    ).toBe(true);
+  });
+
+  test("state diagram: clearing the search restores the markup exactly", async () => {
+    await search("");
+    const after = await page.evaluate(() => window.__clone().outerHTML);
+    expect(after === before, "markup changed after clearing").toBe(true);
+  });
+});
+
+test.describe("Mermaid event modeling search", () => {
+  let e;
+  let before;
+  test("event modeling: a box label matches and its box is outlined", async () => {
+    await openModal("eventmodel");
+    await canvasTheme("Light");
+    before = await page.evaluate(() => window.__clone().outerHTML);
+    await search("AddItem");
+    e = await page.evaluate(() => {
+      const svg = window.__clone();
+      const [hit, miss] = svg.querySelectorAll(".em-box");
+      return {
+        status: document.getElementById("diagview-search-status").textContent,
+        label: window.__eff(hit.querySelector("b")),
+        marked: hit.querySelector("rect").classList.contains("dv-search-match"),
+        stroke: getComputedStyle(hit.querySelector("rect")).stroke,
+        missLabel: window.__eff(miss.querySelector("b")),
+        missBox: window.__eff(miss.querySelector("rect")),
+        lanes: [...svg.querySelectorAll(".em-swimlane text")].map((t) => window.__eff(t)),
+      };
+    });
+    expect(e.status).toBe("1 match found");
+    expect({ label: e.label, marked: e.marked, stroke: e.stroke }).toEqual({
+      label: 1,
+      marked: true,
+      stroke: RING_LIGHT,
+    });
+  });
+
+  test("event modeling: the other box, its label and the lane titles are dimmed", async () => {
+    const detail = `label ${e.missLabel}, box ${e.missBox}, lanes ${e.lanes.join("/")}`;
+    expect(e.missLabel, detail).toBeLessThanOrEqual(0.2);
+    expect(e.missBox, detail).toBeLessThanOrEqual(0.2);
+    expect(e.lanes.length, detail).toBe(2);
+    expect(
+      e.lanes.every((o) => o <= 0.2),
+      detail,
+    ).toBe(true);
+  });
+
+  test("event modeling: clearing the search restores the markup exactly", async () => {
+    await search("");
+    const after = await page.evaluate(() => window.__clone().outerHTML);
+    expect(after === before, "markup changed after clearing").toBe(true);
+  });
+});
+
+test.describe("Mermaid timeline search", () => {
+  let before;
+  test("timeline: a query with one space finds an event drawn with several", async () => {
+    await openModal("timeline");
+    await canvasTheme("Light");
+    before = await page.evaluate(() => window.__clone().outerHTML);
+    await search("first release");
+    const t = await page.evaluate(() => {
+      const svg = window.__clone();
+      const [hit, miss] = [...svg.querySelectorAll(".eventWrapper")];
+      return {
+        status: document.getElementById("diagview-search-status").textContent,
+        drawn: hit.querySelector("tspan").textContent,
+        label: window.__eff(hit.querySelector("text")),
+        box: hit.querySelector("path.node-bkg").classList.contains("dv-search-match"),
+        other: window.__eff(miss.querySelector("text")),
+      };
+    });
+    const detail = `drawn "${t.drawn}", other event ${t.other}`;
+    expect(t.drawn, detail).toBe("First   release");
+    expect({ status: t.status, label: t.label, box: t.box }, detail).toEqual({
+      status: "1 match found",
+      label: 1,
+      box: true,
+    });
+    expect(t.other, detail).toBeLessThanOrEqual(0.2);
+  });
+
+  test("timeline: clearing the search restores the markup exactly", async () => {
     await search("");
     const after = await page.evaluate(() => window.__clone().outerHTML);
     expect(after === before, "markup changed after clearing").toBe(true);

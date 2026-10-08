@@ -96,7 +96,7 @@ export const COLORS = {
  */
 export const SELECTORS = {
   DIAGRAM: ".diagram, .chart, [data-diagram]",
-  SEARCH_NODES: ".node, .cluster, .edgePath, .label, text",
+  SEARCH_NODES: ".node, .cluster, .cluster-label, .edgePath, .label, text",
 };
 
 /**

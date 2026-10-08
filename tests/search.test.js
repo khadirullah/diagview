@@ -177,6 +177,23 @@ describe("Search: performSearch", () => {
     expect(status.textContent).toBe("1 match found");
   });
 
+  test("spaces and line breaks count as one space in labels and query", () => {
+    // Mermaid timelines draw an event as one text with tspans that keep the
+    // source's runs of spaces
+    const node = document.createElementNS("http://www.w3.org/2000/svg", "g");
+    node.classList.add("node");
+    const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+    text.textContent = "First   release\n  of the app";
+    node.appendChild(text);
+    svg.appendChild(node);
+
+    for (const query of ["first release", "First    release ", "release of"]) {
+      performSearch(svg, query);
+      flushRaf();
+      expect(state.searchMatches).toEqual([node]);
+    }
+  });
+
   test("whitespace-only query clears instead of matching everything", () => {
     const status = document.createElement("div");
     status.id = "diagview-search-status";
@@ -549,6 +566,77 @@ describe("Search: shapes behind plain SVG text", () => {
     expect(state.searchMatches).toEqual([html]);
     expect(fo.classList.contains("dv-search-match")).toBe(false);
     expect(status.textContent).toBe("1 match found");
+  });
+
+  // An HTML label as Mermaid draws it: a foreignObject holding a div
+  function addHtmlLabel(parent, x, y, text) {
+    const fo = place(add("foreignObject", {}, parent), x, y, 80, 24);
+    const div = place(fo.appendChild(document.createElement("div")), x, y, 80, 24);
+    div.textContent = text;
+    return fo;
+  }
+
+  test("a composite state title matches and marks the frame around the state", () => {
+    // Mermaid state diagrams draw a composite state as an outer frame, an
+    // inner box under the title, and the title in g.cluster-label, in a
+    // group with no node or cluster class
+    const group = add("g", { class: "statediagram-state statediagram-cluster" });
+    const outer = place(add("rect", { class: "outer", fill: "#fff" }, group), 100, 100, 400, 300);
+    const title = add("g", { class: "cluster-label" }, group);
+    addHtmlLabel(title, 260, 103, "Running");
+    const inner = place(add("rect", { class: "inner", fill: "#fff" }, group), 100, 130, 400, 270);
+
+    performSearch(svg, "running");
+    flushRaf();
+
+    expect(state.searchMatches).toEqual([title]);
+    expect(marked()).toEqual([outer, title]);
+    expect(inner.classList.contains("dv-search-match")).toBe(false);
+    expect(status.textContent).toBe("1 match found");
+  });
+
+  test("an HTML label in no searched group matches with the box under it", () => {
+    // Mermaid event modeling: g.em-box > rect + foreignObject
+    const group = add("g", { class: "em-box" });
+    const box = place(add("rect", { fill: "#ffd8a8" }, group), 100, 100, 160, 80);
+    const fo = addHtmlLabel(group, 140, 128, "Order placed");
+    addHtmlLabel(add("g", { class: "em-box" }), 400, 128, "Order shipped");
+    const drawn = svg.outerHTML;
+
+    performSearch(svg, "placed");
+    flushRaf();
+
+    expect(state.searchMatches).toEqual([fo]);
+    expect(marked()).toEqual([box, fo]);
+    expect(status.textContent).toBe("1 match found");
+
+    performSearch(svg, "");
+    expect(svg.outerHTML).toBe(drawn);
+  });
+
+  test("an HTML label inside a node counts once", () => {
+    const node = add("g", { class: "node" });
+    place(add("rect", {}, node), 100, 100, 200, 80);
+    const fo = addHtmlLabel(node, 150, 128, "Deploy");
+
+    performSearch(svg, "deploy");
+    flushRaf();
+
+    expect(state.searchMatches).toEqual([node]);
+    expect(fo.classList.contains("dv-search-match")).toBe(false);
+  });
+
+  test("an HTML label that holds a searched element counts once", () => {
+    const fo = addHtmlLabel(add("g"), 150, 128, "");
+    const span = fo.firstChild.appendChild(document.createElement("span"));
+    span.className = "label";
+    span.textContent = "Deploy";
+
+    performSearch(svg, "deploy");
+    flushRaf();
+
+    expect(state.searchMatches).toEqual([span]);
+    expect(fo.classList.contains("dv-search-match")).toBe(false);
   });
 
   // Graphviz and PlantUML shapes and text often have no class at all, and

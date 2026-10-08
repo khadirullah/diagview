@@ -91,9 +91,8 @@ Pass `null` to restore a built-in icon. DiagView draws a custom icon as written,
 ## Search
 
 **Q: Why does search not highlight anything?**  
-A: Search reads the text of every `<text>` element and of every element with the class `node`, `cluster`, `label` or `edgePath`, HTML labels inside them included. That covers Mermaid, Graphviz, PlantUML and draw.io. It finds nothing in these cases:
+A: Search reads the text of every `<text>` element and of every element with the class `node`, `cluster`, `cluster-label`, `label` or `edgePath`, HTML labels inside them included. It also reads every HTML label in a `<foreignObject>` outside those. That covers Mermaid, Graphviz, PlantUML and draw.io. It finds nothing in these cases:
 
-- The label is HTML in a `<foreignObject>` with none of those classes on it or around it. Add `class="label"` to the `<foreignObject>` or to a group that holds it.
 - The text is drawn as paths, as when an editor converts text to outlines, or it is part of an embedded image.
 - The query runs across a line break. Each line can be its own `<text>` element, and a `<br>` in an HTML label adds no space between the lines. Search for words from one line.
 - Panzoom did not load. Search starts only when zoom and pan do. See [Zoom/pan not working in fullscreen](USAGE.md#zoompan-not-working-in-fullscreen).
@@ -105,7 +104,7 @@ DiagView.openFullscreen(element, { searchQuery: "my term" });
 ```
 
 **Q: Is search case-sensitive?**  
-A: No. All queries and node text are lowercased before comparison.
+A: No. All queries and node text are lowercased before comparison. Each run of spaces and line breaks also counts as one space, so `first release` finds a label drawn as `First   release`.
 
 **Q: Does search work on draw.io diagrams?**  
 A: Yes. draw.io keeps a `<text>` copy of each label that the browser never draws. Search matches the HTML label you see and outlines the box under it.
