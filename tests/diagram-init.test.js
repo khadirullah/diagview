@@ -589,6 +589,98 @@ describe("Diagram Init: Mermaid syntax errors", () => {
   });
 });
 
+describe("Diagram Init: the reason Mermaid gives", () => {
+  afterEach(() => {
+    document.body.innerHTML = "";
+  });
+
+  // What Mermaid 12 draws for a flowchart with a missing }: the parser
+  // message follows the headline and the version, wrapped over lines
+  const mermaid12Error = (...lines) =>
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2412 724" aria-roledescription="error"><g><path class="error-icon" d="m411 400 1 2z"/>
+    <text class="error-text">Syntax error in text</text>
+    <text class="error-text">mermaid version 12.1.0</text>
+    ${lines.map((line) => `<text class="error-text">${line}</text>`).join("")}</g></svg>`;
+
+  test("the error box shows Mermaid 12's parser message under the headline", () => {
+    const { container } = mountSvg(
+      mermaid12Error(
+        "Parse error on line 3: ...A[Start] --&gt; B{oops ----------------------^",
+        "Expecting 'SQE', 'PE',",
+        "'TAGSTART', got '1'",
+      ),
+    );
+
+    initializeDiagram(container);
+
+    expect(container.querySelector(".diagview-error-title").textContent).toBe("Syntax Error");
+    expect(container.querySelector(".diagview-error-message").textContent).toBe(
+      "There's a syntax error in the diagram code.",
+    );
+    expect(container.querySelector(".diagview-error-detail").textContent).toBe(
+      "Parse error on line 3: ...A[Start] --> B{oops Expecting 'SQE', 'PE', 'TAGSTART', got '1'",
+    );
+  });
+
+  test("Mermaid 10 and 11 give no reason, so the box has no detail line", () => {
+    const { container } = mountSvg(mermaid12Error().replace("12.1.0", "11.17.2"));
+
+    initializeDiagram(container);
+
+    expect(container.dataset.diagviewError).toBe("1");
+    expect(container.querySelector(".diagview-error-detail")).toBeNull();
+  });
+
+  test("diagram code in the reason stays text", () => {
+    const { container } = mountSvg(
+      mermaid12Error("Parse error on line 2: B{&lt;img src=x onerror=alert(1)&gt;&lt;b&gt;x"),
+    );
+
+    initializeDiagram(container);
+
+    const detail = container.querySelector(".diagview-error-detail");
+    expect(detail.textContent).toBe("Parse error on line 2: B{<img src=x onerror=alert(1)><b>x");
+    expect(detail.children).toHaveLength(0);
+    expect(container.querySelector(".diagview-error img, .diagview-error b")).toBeNull();
+  });
+
+  test("a long reason is cut at 300 characters", () => {
+    const { container } = mountSvg(mermaid12Error(`Expecting ${"'TOKEN', ".repeat(80)}`));
+
+    initializeDiagram(container);
+
+    const text = container.querySelector(".diagview-error-detail").textContent;
+    expect(text).toHaveLength(300);
+    expect(text.endsWith("\u2026")).toBe(true);
+  });
+
+  test("screen readers skip the icon and read the words", () => {
+    const { container } = mountSvg(mermaid12Error("No diagram type detected"));
+
+    initializeDiagram(container);
+
+    const icon = container.querySelector(".diagview-error-icon");
+    expect(icon.getAttribute("aria-hidden")).toBe("true");
+    expect(container.querySelector(".diagview-error").textContent).toBe(
+      "Syntax ErrorThere's a syntax error in the diagram code.No diagram type detected",
+    );
+  });
+
+  test("onError gets the reason after the message", async () => {
+    const { resetConfig, updateConfig } = await import("../src/core/config.js");
+    const onError = jest.fn();
+    updateConfig({ onError });
+    try {
+      initializeDiagram(mountSvg(mermaid12Error("Lexer error on line 2")).container);
+    } finally {
+      resetConfig();
+    }
+    expect(onError.mock.calls[0][0].message).toBe(
+      "DiagView: Syntax Error, There's a syntax error in the diagram code. Lexer error on line 2",
+    );
+  });
+});
+
 describe("Diagram Init: onError", () => {
   test("onError gets the title and the message joined by a comma", async () => {
     const { resetConfig, updateConfig } = await import("../src/core/config.js");

@@ -28,11 +28,23 @@ describe("styles.css: page toolbar colours", () => {
   });
 
   test("the header title and error message use the muted colour instead of opacity", () => {
-    for (const sel of ["\n.diagview-label {", ".diagview-error-message {"]) {
+    for (const sel of [
+      "\n.diagview-label {",
+      ".diagview-error-message {",
+      ".diagview-error-detail {",
+    ]) {
       const body = ruleBody(sel);
       expect(body).toContain("color: var(--dv-muted-text, var(--dv-text-color))");
       expect(body).not.toMatch(/opacity\s*:/);
     }
+  });
+});
+
+describe("styles.css: error box", () => {
+  test('wraps its lines inside a <pre class="mermaid">', () => {
+    const body = ruleBody("\n.diagview-error {", css.indexOf("=== Error Boundary"));
+    expect(body).toMatch(/white-space:\s*normal/);
+    expect(body).toMatch(/overflow-wrap:\s*anywhere/);
   });
 });
 

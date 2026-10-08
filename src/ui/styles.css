@@ -1931,6 +1931,9 @@
   border: 1px dashed var(--dv-border-color);
   border-radius: 12px;
   min-height: 120px;
+  /* A <pre class="mermaid"> keeps its lines whole, so wrap them here */
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 
 .diagview-error-icon {
@@ -1951,6 +1954,15 @@
   font-size: 0.875rem;
   color: var(--dv-muted-text, var(--dv-text-color));
   max-width: 300px;
+}
+
+/* Mermaid's parser message, which quotes the diagram code */
+.diagview-error-detail {
+  margin-top: 0.75rem;
+  max-width: 36rem;
+  font-family: ui-monospace, monospace;
+  font-size: 0.8125rem;
+  color: var(--dv-muted-text, var(--dv-text-color));
 }
 
 /* === Keyboard Help Modal === */

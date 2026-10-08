@@ -102,6 +102,31 @@ function isValidSvg(svg) {
   return true;
 }
 
+/** Longest reason the error box shows, in characters */
+const MAX_REASON = 300;
+
+/**
+ * The parser message Mermaid 12 writes into its error picture, under the
+ * "Syntax error in text" headline and the version line. Mermaid 10 and 11
+ * draw only those two lines, so they give an empty string. Read as text,
+ * never as markup, since it quotes the diagram code.
+ * @param {SVGSVGElement|null} svg - The SVG that failed validation
+ * @returns {string} The reason on one line, or ""
+ */
+function readErrorReason(svg) {
+  const lines = Array.from(svg?.querySelectorAll("text.error-text") || [], (t) =>
+    (t.textContent || "").trim(),
+  ).filter((line) => line && !/^(syntax error in text|mermaid version\b)/i.test(line));
+  const reason = lines
+    .join(" ")
+    // The run of dashes ending in ^ points at a column on the line above. It
+    // only lines up in Mermaid's own monospace layout.
+    .replace(/\s*-{3,}\^/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+  return reason.length > MAX_REASON ? `${reason.slice(0, MAX_REASON - 1).trimEnd()}\u2026` : reason;
+}
+
 /**
  * Show error boundary UI for broken diagrams
  * @returns {HTMLElement} The error UI element that was appended
@@ -117,6 +142,7 @@ function showErrorBoundary(element, svg) {
   // Detect specific error type
   let errorTitle = "Diagram Error";
   let errorMessage = "This diagram could not be rendered properly.";
+  const reason = readErrorReason(svg);
 
   if (!svg) {
     errorTitle = "No Diagram Found";
@@ -142,6 +168,8 @@ function showErrorBoundary(element, svg) {
   // Round caps draw the zero-length path under the "!" as a dot
   iconSvg.setAttribute("stroke-linecap", "round");
   iconSvg.setAttribute("stroke-linejoin", "round");
+  // The title says the same in words
+  iconSvg.setAttribute("aria-hidden", "true");
   setSVGContent(iconSvg, '<circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/>');
 
   const titleDiv = document.createElement("div");
@@ -156,6 +184,13 @@ function showErrorBoundary(element, svg) {
   errorDiv.appendChild(titleDiv);
   errorDiv.appendChild(msgDiv);
 
+  if (reason) {
+    const detailDiv = document.createElement("div");
+    detailDiv.className = "diagview-error-detail";
+    detailDiv.textContent = reason;
+    errorDiv.appendChild(detailDiv);
+  }
+
   // Replace content or append
   if (svg) {
     svg.style.display = "none";
@@ -165,7 +200,8 @@ function showErrorBoundary(element, svg) {
   // Fire onError callback if configured (A2: was documented but never called)
   if (state.config.onError) {
     try {
-      state.config.onError(new Error(`DiagView: ${errorTitle}, ${errorMessage}`));
+      const detail = reason ? ` ${reason}` : "";
+      state.config.onError(new Error(`DiagView: ${errorTitle}, ${errorMessage}${detail}`));
     } catch (e) {
       console.error("DiagView: onError callback threw:", e);
     }

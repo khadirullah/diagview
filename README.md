@@ -430,6 +430,8 @@ DiagView.init({ diagramSelector: ".mermaid" });
 
 When Mermaid draws a diagram again in the same element, as a live editor does, DiagView checks the new SVG by itself. A fixed syntax error gets its toolbar back, and a new one shows the error placeholder.
 
+With Mermaid 12 the error placeholder also shows Mermaid's parser message, such as "Parse error on line 3". Mermaid 10 and 11 keep that message out of the SVG, so there the placeholder shows only its title, "Syntax Error", and the sentence "There's a syntax error in the diagram code."
+
 When the selector matches both a diagram and a wrapper around it, for example `.mermaid, .diagram` with a `.mermaid` inside a `.diagram`, each diagram still gets one toolbar. A wrapper around a single diagram keeps the toolbar, so its `data-title` and `data-diagview-*` settings apply, and the `data-title` names its export files. A wrapper around two or more diagrams gets none, and each inner diagram keeps its own.
 
 ---

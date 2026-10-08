@@ -65,9 +65,9 @@ build. Set `E2E_PORT` to use a port other than 9340.
 | `verify-floating-toolbar.spec.mjs`    | 5      | a hovered floating card shows one bottom edge with no toolbar line above it, the header toolbar keeps its line under the title, a touch screen shows the floating toolbar where a desktop hover puts it with 44px buttons in one row on a 320px phone, and a desktop keeps 36px and 34px                  |
 | `verify-diagram-size.spec.mjs`        | 15     | diagrams keep their own size, centred in any wrapper, wide or viewBox-only SVGs fill a card, tall ones keep their height, a short one's card hugs it over the floating toolbar, captions sit under, phones fit all, a page rule widens all or some, `--dv-max-height` caps height, fullscreen ignores it  |
 | `verify-search-lines.spec.mjs`        | 11     | a phrase across a line break finds Mermaid 12 and 11 HTML labels with `<br>`, Mermaid 12 plain SVG rows, a wrapped timeline event, a sequence note and message drawn as one text per line, and Graphviz node and edge labels, while one-line labels match as before and the joined lines do not           |
-| `verify-mermaid-errors.spec.mjs`      | 5      | a Mermaid 12, 11 and 10 diagram fixed in place gets its toolbar without `refresh()`, a working diagram that breaks shows the error box and recovers, also while the viewer is open, and `destroy()` and `init()` after that leave one toolbar                                                             |
+| `verify-mermaid-errors.spec.mjs`      | 9      | the error box shows Mermaid 12's parser message, 11 and 10 give none, the box fits a phone inside `<pre>`, a Mermaid 12, 11 or 10 diagram fixed in place gets its toolbar, one that breaks shows the error box, also in the viewer, and `destroy()` and `init()` leave one toolbar                        |
 
-That is 265 checks per browser.
+That is 269 checks per browser.
 
 `verify-react-strictmode` loads React from unpkg, and `verify-fixes` and
 `verify-mermaid-errors` load Mermaid from jsdelivr, so these three need

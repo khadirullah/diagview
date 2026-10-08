@@ -894,7 +894,8 @@ DiagView.init({
 
   onError: (error) => {
     console.error("SVG validation failed:", error.message);
-    // error.message is "DiagView: " followed by the placeholder title and a short reason
+    // error.message is "DiagView: " followed by the placeholder title and a short
+    // reason, then Mermaid's parser message when Mermaid 12 gives one
   },
 });
 ```
@@ -1247,6 +1248,8 @@ DiagView shows a placeholder titled "Syntax Error", "Parse Error" or "Diagram Er
 - has text but no shapes, and the text contains "error" or "failed"
 
 A container without an `<svg>` gets no placeholder. DiagView leaves it alone and sets it up once an `<svg>` appears in it.
+
+Mermaid 12 writes its parser message into the error picture it draws, such as "Parse error on line 3: ...A[Start] --> B{Check Expecting 'SQE', ..., got '1'". The placeholder shows that message on a third line, in a monospace font, and `onError` gets it at the end of `error.message`. DiagView reads it as text, so code in it never runs, and cuts it at 300 characters. It leaves out the line of dashes ending in `^`, which only points at the right column in Mermaid's own picture. Mermaid 10 and 11 draw only "Syntax error in text" and their version, so with them the placeholder shows its title and the short sentence only. To show the message from Mermaid 10 or 11, catch the error that `mermaid.run()` or `mermaid.parse()` throws and show `error.message` on your page.
 
 Fix the diagram and draw it again in the same element, for example with `mermaid.run()`. DiagView sees the new SVG, removes the placeholder and sets the diagram up with its toolbar. If you change the SVG some other way, `DiagView.refresh()` checks it again at once. See [Drawing a diagram again](#drawing-a-diagram-again).
 

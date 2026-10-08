@@ -1,4 +1,5 @@
-// A Mermaid diagram with a syntax error shows DiagView's error box. When
+// A Mermaid diagram with a syntax error shows DiagView's error box, with
+// the parser message when Mermaid 12 draws it into its error picture. When
 // the page renders the fixed code into the same element, as a live editor
 // or hot reload does, the diagram gets its toolbar without a refresh().
 // A working diagram that the page renders again with an error gives up its
@@ -17,16 +18,17 @@ const FIXED = "flowchart TD\n  A[Start] --> B{Check}\n  B --> C[Done]\n";
 
 /**
  * Open the fixture with Mermaid `version` and set DiagView up. With `start`
- * Mermaid renders the broken code itself on load, otherwise render() does.
+ * Mermaid renders the broken code itself on load, otherwise render() does,
+ * through mermaid.run() with `suppressErrors`.
  */
-async function load(browser, version, { start = false, options = {} } = {}) {
+async function load(browser, version, { start = false, suppressErrors = true, options = {} } = {}) {
   const page = await newPage(browser, options);
   const errors = [];
   page.on("pageerror", (e) => errors.push(String(e.message)));
   await page.goto(`${fixtureFile("mermaid-errors.html")}?v=${version}${start ? "&start=1" : ""}`);
   await page.waitForFunction(() => window.mermaid);
   if (start) await page.waitForSelector("#live svg");
-  else await page.evaluate((code) => window.render(code), BROKEN);
+  else await page.evaluate(([code, quiet]) => window.render(code, quiet), [BROKEN, suppressErrors]);
   await page.evaluate(() => {
     localStorage.setItem("diagview-canvas-hint-shown", "true");
     document.documentElement.setAttribute("data-diagview-no-auto-init", "");
@@ -144,5 +146,76 @@ test("a diagram that breaks while the viewer is open", async ({ browser }) => {
   expect(await look(page)).toMatchObject(ERROR_STATE);
 
   expect(errors).toEqual([]);
+  await page.context().close();
+});
+
+// How each page lets Mermaid draw the broken code
+const WAYS = {
+  startOnLoad: { start: true },
+  "mermaid.run()": { suppressErrors: false },
+  "mermaid.run() with suppressErrors": { suppressErrors: true },
+};
+
+/** Text of the error box, line by line */
+const errorBox = (page) =>
+  page.evaluate(() => {
+    const box = document.querySelector("#live .diagview-error");
+    return {
+      title: box.querySelector(".diagview-error-title").textContent,
+      detail: box.querySelector(".diagview-error-detail")?.textContent ?? null,
+      iconHidden: box.querySelector(".diagview-error-icon").getAttribute("aria-hidden"),
+    };
+  });
+
+for (const version of ["12", "11", "10"]) {
+  test(`Mermaid ${version}: the error box says what Mermaid says`, async ({ browser }) => {
+    for (const [way, opts] of Object.entries(WAYS)) {
+      const { page, errors } = await load(browser, version, opts);
+      const box = await errorBox(page);
+      expect(box.title, way).toBe("Syntax Error");
+      expect(box.iconHidden, way).toBe("true");
+      if (version === "12") {
+        // The parser message without the caret line that only lines up in
+        // Mermaid's own picture
+        expect(box.detail, way).toMatch(
+          /^Parse error on line 3: \.\.\.\[Start\] --> B\{Check Expecting /,
+        );
+        expect(box.detail, way).not.toContain("^");
+      } else {
+        // Mermaid 10 and 11 keep the message out of the picture
+        expect(box.detail, way).toBeNull();
+      }
+      expect(errors, way).toEqual([]);
+      await page.context().close();
+    }
+  });
+}
+
+test('the error box fits a phone, also inside <pre class="mermaid">', async ({
+  browser,
+  browserName,
+}) => {
+  const { page } = await load(browser, "12", {
+    options: {
+      viewport: { width: 390, height: 844 },
+      deviceScaleFactor: 3,
+      // Firefox has no mobile emulation
+      ...(browserName === "firefox" ? {} : { isMobile: true }),
+      hasTouch: true,
+    },
+  });
+  const fit = await page.evaluate(() => {
+    const box = document.querySelector("#live .diagview-error");
+    const right = Math.max(
+      ...[...box.children].map((child) => child.getBoundingClientRect().right),
+    );
+    return {
+      host: document.getElementById("live").tagName,
+      overflow: box.scrollWidth - box.clientWidth,
+      inside: right <= box.getBoundingClientRect().right,
+      page: document.documentElement.scrollWidth <= window.innerWidth,
+    };
+  });
+  expect(fit).toEqual({ host: "PRE", overflow: 0, inside: true, page: true });
   await page.context().close();
 });

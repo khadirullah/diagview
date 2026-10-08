@@ -86,6 +86,9 @@ DiagView.init({
 
 Pass `null` to restore a built-in icon. DiagView draws a custom icon as written, after removing any script, event handler or `javascript:` link, so use `currentColor` for its fill or stroke to follow the button colour. See [Custom button icons](USAGE.md#custom-button-icons).
 
+**Q: The error placeholder says "Syntax Error" but not what is wrong. Can it?**  
+A: With Mermaid 12 it does. Mermaid 12 puts its parser message into the error picture, and the placeholder shows it under the title, cut at 300 characters. Mermaid 10 and 11 draw only "Syntax error in text" and their version, so there is no message for DiagView to read. Catch the error from `mermaid.run()` or `mermaid.parse()` to show it yourself. See [Error placeholder instead of a diagram](USAGE.md#error-placeholder-instead-of-a-diagram).
+
 **Q: How do I make a diagram fill the card?**  
 A: In the floating and header layouts DiagView shows each diagram at its own size, centred in the card and never wider than it. To make every diagram fill the card, add this CSS:
 
