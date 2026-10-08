@@ -159,16 +159,21 @@
 
 .diagview-viewport > * {
   width: 100% !important;
-  display: flex;
-  justify-content: center;
+  /* Block, not flex. A wrapper between this element and its SVG, such as a
+     <pre class="mermaid"> inside a .diagram, then spans the card instead of
+     shrinking around the SVG, and a caption sits under the diagram. */
+  display: block;
 }
 
 .diagview-viewport svg {
-  width: 100% !important;
+  /* The SVG's own size, centred and never wider than the card. max-width is
+     not !important, so Mermaid's inline max-width keeps its size too. */
+  width: auto !important;
   height: auto !important;
-  max-width: 100% !important;
+  max-width: 100%;
   max-height: 80vh !important;
   display: block;
+  margin-inline: auto;
   transition: transform 0.2s ease;
   background: transparent !important;
 }

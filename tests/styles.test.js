@@ -53,6 +53,29 @@ describe("styles.css: floating toolbar", () => {
   });
 });
 
+describe("styles.css: diagram size on the page", () => {
+  test("the diagram element is a block, so a wrapper inside it spans the card", () => {
+    const body = ruleBody("\n.diagview-viewport > * {");
+    expect(body).toMatch(/display:\s*block/);
+    expect(body).not.toMatch(/display:\s*flex/);
+    expect(body).not.toMatch(/justify-content/);
+  });
+
+  test("the SVG keeps its own size, centred and capped at the card width", () => {
+    const body = ruleBody("\n.diagview-viewport svg {");
+    expect(body).toMatch(/width:\s*auto !important/);
+    expect(body).toMatch(/margin-inline:\s*auto/);
+    expect(body).not.toMatch(/(^|[^-])width:\s*100%/);
+  });
+
+  test("Mermaid's inline max-width still applies", () => {
+    // An inline style beats any stylesheet rule that is not !important
+    const body = ruleBody("\n.diagview-viewport svg {");
+    expect(body).toMatch(/max-width:\s*100%;/);
+    expect(body).not.toMatch(/max-width:[^;]*!important/);
+  });
+});
+
 describe("styles.css: edge for an accent that fades into the background", () => {
   test("the focus ring gap, selected buttons, menu button and page icons use it", () => {
     expect(ruleBody(".diagview-menu *:focus-visible {")).toContain(

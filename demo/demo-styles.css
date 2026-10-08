@@ -1004,7 +1004,9 @@ kbd {
 }
 .card .diagview-viewport svg,
 .stage .diagview-viewport svg {
+  /* Fill the stage, past Mermaid's inline max-width too */
   width: 100% !important;
+  max-width: 100% !important;
   height: 100% !important;
   max-height: none !important;
 }

@@ -201,6 +201,23 @@ DiagView adds no controls to the diagram card. Clicking the diagram itself opens
 DiagView.init({ layout: "off" });
 ```
 
+### Diagram size
+
+In the floating and header layouts a diagram shows at its own size, centred in the card. A diagram wider than the card shrinks to fit, and its height stops at 80% of the window. The markup does not change this. A `<pre class="mermaid">` on its own, the same `<pre>` inside a `<div class="diagram">`, and an `<svg>` in a `<figure>` with a caption all keep the width their tool drew, and the caption sits under the diagram. The caption keeps the page's own alignment, so add `figcaption { text-align: center; }` to the page to centre it under the diagram. An SVG with only a `viewBox` has no size of its own, so it fills the card. The fullscreen viewer fits every diagram to the screen either way. With `layout: "off"` DiagView adds no wrapper around the diagram, so the page's own CSS sets its size.
+
+To make every diagram fill the card, as earlier versions did, add this rule to the page:
+
+```css
+.diagview-wrapper .diagview-viewport svg {
+  width: 100% !important;
+  max-width: 100% !important;
+}
+```
+
+DiagView adds its stylesheet at the end of `<head>` when it starts, after the page's own CSS, so keep `.diagview-wrapper` in the selector. The shorter `.diagview-viewport svg` loses to DiagView's `width` rule. To enlarge only some diagrams, put a class such as `big` on the diagram element and use `.diagview-viewport .big svg` as the selector.
+
+For a diagram in a shadow root, put the rule in a `<style>` inside that root. CSS on the page does not reach into a shadow root, and `initShadowRoot()` installs DiagView's stylesheet there.
+
 ---
 
 ## 🎛️ Per-Diagram Overrides

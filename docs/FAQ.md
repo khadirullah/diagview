@@ -86,6 +86,18 @@ DiagView.init({
 
 Pass `null` to restore a built-in icon. DiagView draws a custom icon as written, after removing any script, event handler or `javascript:` link, so use `currentColor` for its fill or stroke to follow the button colour. See [Custom button icons](USAGE.md#custom-button-icons).
 
+**Q: How do I make a diagram fill the card?**  
+A: In the floating and header layouts DiagView shows each diagram at its own size, centred in the card and never wider than it. To make every diagram fill the card, add this CSS:
+
+```css
+.diagview-wrapper .diagview-viewport svg {
+  width: 100% !important;
+  max-width: 100% !important;
+}
+```
+
+Keep `.diagview-wrapper` in the selector, or DiagView's own rule wins. See [Diagram size](USAGE.md#diagram-size) for chosen diagrams only and for shadow roots.
+
 ---
 
 ## Search
