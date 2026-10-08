@@ -855,7 +855,7 @@ DiagView.refresh();
 
 > **Note:** DiagView also uses a `MutationObserver` to detect and initialize newly added diagrams automatically (with a 100 ms debounce). `refresh()` skips that debounce. Either way, DiagView initializes each diagram once it comes within 200 px of the viewport.
 
-`refresh()` also re-checks diagrams that hit the error boundary (the error placeholder). Replace the broken SVG with a valid one and call `refresh()`; the placeholder is removed and the diagram is initialized normally.
+`refresh()` also checks again every diagram that is already set up. A diagram in the error placeholder whose SVG is now valid gets its toolbar. The `MutationObserver` does the same on its own when a new SVG arrives in a diagram, so a page that draws a diagram again in the same element needs no `refresh()` (see [Drawing a diagram again](#drawing-a-diagram-again)).
 
 ### Teardown and reinitialize
 
@@ -909,7 +909,7 @@ Live example: [React 18 + StrictMode demo](https://khadirullah.github.io/diagvie
 
 > **The one rule:** keep the diagram element (the one matching `diagramSelector`) nested inside a container that your component renders and owns. With the `floating` and `header` layouts DiagView moves the diagram element into a wrapper so it can place the toolbar next to it. Your framework still believes the element sits where it rendered it, so if it later removes that exact element (unmount, conditional render, key change) the browser throws `NotFoundError: The node to be removed is not a child of this node`. Removing the outer container instead is always safe, because the wrapper is inside it and goes away with it.
 >
-> Do not re-render the diagram element itself with new content once DiagView has initialized it. Render a new one (inside the container) or call `DiagView.refresh()` after replacing the SVG.
+> Drawing a new SVG inside the diagram element is fine. DiagView sees the new SVG and sets the diagram up again, as [Drawing a diagram again](#drawing-a-diagram-again) explains. What breaks is the framework replacing the diagram element itself.
 >
 > If you would rather DiagView never touch the DOM around your element, use `layout: "off"`. It leaves the element where it is and adds only a click and a key handler, a pointer cursor, `tabindex="0"`, a `role` and an `aria-label` when the element has none, the `data-diagview-init`, `data-diagview-id` and `data-diagview-index` attributes, and the `dv-svg-content` class and a `filter` transition on the SVG. `destroy()` removes them again. Fullscreen, zoom, search, minimap and export all still work; only the inline toolbar is dropped. Closing the viewer puts focus back on the diagram. Pair it with `DiagView.openFullscreen(el)` / `DiagView.exportDiagram(el, ...)` from your own buttons if you need them.
 >
@@ -1059,6 +1059,24 @@ mermaid.initialize({
 ```
 
 Mermaid fixes the theme when it draws, so a later theme switch leaves the diagrams as they were. To follow the switch, draw them again as shown in the [FAQ](FAQ.md#theming).
+
+### Drawing a diagram again
+
+A live editor, a docs site with hot reload or a framework component may draw a diagram again in the same element:
+
+```javascript
+el.removeAttribute("data-processed");
+el.textContent = code;
+await mermaid.run({ nodes: [el] });
+```
+
+DiagView notices the new SVG within 100 ms and checks it again:
+
+- A diagram that showed the error placeholder and now draws without errors gets its toolbar. A new error gets a new placeholder, and `onError` runs again.
+- A working diagram that now holds an error gives up its toolbar for the placeholder. If the viewer is open on it, the viewer keeps the diagram it opened with until you close it.
+- A working diagram that gets another valid SVG keeps its toolbar. The buttons act on the SVG the element holds when you press them.
+
+Shapes that a script adds inside a working diagram's SVG, as an animated chart does, do not count as a new SVG. Diagrams inside a shadow root are not watched, so call `initShadowRoot()` on the root again after you draw them.
 
 ---
 
@@ -1230,7 +1248,7 @@ DiagView shows a placeholder titled "Syntax Error", "Parse Error" or "Diagram Er
 
 A container without an `<svg>` gets no placeholder. DiagView leaves it alone and sets it up once an `<svg>` appears in it.
 
-Fix the SVG in place and call `DiagView.refresh()`; the placeholder is removed and the diagram is initialized normally.
+Fix the diagram and draw it again in the same element, for example with `mermaid.run()`. DiagView sees the new SVG, removes the placeholder and sets the diagram up with its toolbar. If you change the SVG some other way, `DiagView.refresh()` checks it again at once. See [Drawing a diagram again](#drawing-a-diagram-again).
 
 ### "Already initialized" warning and my options are ignored
 

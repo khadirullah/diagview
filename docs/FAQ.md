@@ -289,6 +289,9 @@ A: With the `floating` or `header` layout, DiagView moves the diagram element in
 **Q: In development, DiagView stops working after the first render (React StrictMode / hot reload).**  
 A: `init()` queues behind an in-flight `destroy()`, which is the sequence StrictMode produces, so the `useEffect` cleanup-then-setup cycle needs no special handling. Call `destroy()` in the cleanup and `init()` in the effect body, as shown in [USAGE](USAGE.md#20-framework-integration).
 
+**Q: My editor draws the diagram again as I type. Does the toolbar follow?**  
+A: Yes. When a new SVG arrives in a diagram element, DiagView checks it again. A diagram that had a syntax error and now draws gets its toolbar, and one that breaks shows the error placeholder instead of its toolbar. A working diagram that gets another valid SVG keeps its toolbar. No `refresh()` is needed. See [Drawing a diagram again](USAGE.md#drawing-a-diagram-again).
+
 **Q: The whole diagram disappears when my component unmounts. Is DiagView removing it?**  
 A: No. Unmounting is your framework deleting the component and every DOM node it rendered, the diagram included; that is what unmount means in every layout, `off` too. DiagView's toolbar leaves only because the diagram it was attached to is gone. Call `destroy()` in the cleanup so DiagView releases its handlers. If you want the diagram to stay and only the viewer to go, keep the component mounted and call `destroy()` on its own; the diagram is put back where your framework left it as plain SVG, and `init()` enhances it again. The [React demo](https://khadirullah.github.io/diagview/framework-react.html) has "Unmount" and "Detach" buttons that show the two side by side.
 

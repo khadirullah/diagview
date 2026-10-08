@@ -499,20 +499,42 @@ export function deinitializeAllDiagrams() {
 }
 
 /**
- * Give an error-boundary diagram another chance: if its SVG has been replaced
- * with a valid one since, drop the error UI and the init flag so the normal
- * initialization path can pick it up again.
- * @param {HTMLElement} element - Diagram container marked data-diagview-error
- * @returns {boolean} True if the element was released for re-initialization
+ * The diagram's own SVG, skipping the icon in DiagView's error box
+ * @param {Element} element - Diagram container
+ * @returns {SVGSVGElement|undefined} The SVG, if there is one
  */
-export function recoverErrorDiagram(element) {
-  if (!element?.dataset.diagviewError) return false;
-
-  // Skip the icon inside our own error UI
-  const svg = Array.from(element.querySelectorAll("svg")).find(
+function findDiagramSvg(element) {
+  return Array.from(element.querySelectorAll("svg")).find(
     (candidate) => !candidate.closest(".diagview-error"),
   );
-  if (!svg || !isValidSvg(svg)) return false;
+}
+
+/**
+ * Check a diagram that is already set up again, after the page changed what
+ * is inside it, as a live editor or hot reload does when it renders the
+ * same element again. Two cases release the element so the caller sets it
+ * up from scratch:
+ * - it shows the error box, and its SVG is now valid or has been replaced,
+ *   so the next setup draws the diagram or an error box for the new SVG
+ * - it works, and its SVG has been replaced with one that fails validation,
+ *   so the toolbar gives way to the error box
+ * A working diagram whose SVG is replaced with another valid one keeps its
+ * toolbar, as the buttons act on whatever SVG the element holds.
+ * @param {HTMLElement} element - Diagram container with data-diagview-init
+ * @returns {boolean} True if the element was released for re-initialization
+ */
+export function recheckDiagram(element) {
+  const record = cleanupMap.get(element);
+  if (!record) return false;
+
+  const svg = findDiagramSvg(element);
+  if (!svg) return false;
+
+  const replaced = svg !== record.svg;
+  const release = element.dataset.diagviewError
+    ? replaced || isValidSvg(svg)
+    : replaced && !isValidSvg(svg);
+  if (!release) return false;
 
   deinitializeDiagram(element);
   return true;

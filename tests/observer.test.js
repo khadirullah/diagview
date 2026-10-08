@@ -11,7 +11,7 @@ jest.unstable_mockModule("../src/features/diagram-init.js", () => ({
     el.dataset.diagviewInit = "true";
   }),
   deinitializeDiagram: jest.fn(),
-  recoverErrorDiagram: jest.fn(() => false),
+  recheckDiagram: jest.fn(() => false),
 }));
 
 jest.unstable_mockModule("../src/ui/modal.js", () => ({
@@ -28,7 +28,8 @@ jest.unstable_mockModule("../src/features/lazy/share.js", () => ({
 const { state, resetConfig, updateConfig } = await import("../src/core/config.js");
 const { observeDiagrams, stopObserving, refreshDiagrams, resetShareLinkCheck } =
   await import("../src/core/observer.js");
-const { initializeDiagram, deinitializeDiagram } = await import("../src/features/diagram-init.js");
+const { initializeDiagram, deinitializeDiagram, recheckDiagram } =
+  await import("../src/features/diagram-init.js");
 const { openFullscreen } = await import("../src/ui/modal.js");
 
 describe("Observer Module", () => {
@@ -105,6 +106,52 @@ describe("Observer Module", () => {
     await wait(200);
 
     expect(initializeDiagram).toHaveBeenCalledWith(div, 0);
+  });
+
+  test("a new SVG in a set-up container has it checked again", async () => {
+    const div = document.createElement("div");
+    div.className = "diagram";
+    div.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg"><rect width="1" height="1"/></svg>';
+    document.body.appendChild(div);
+    observeDiagrams();
+    expect(div.dataset.diagviewInit).toBe("true");
+
+    div.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg"><circle r="1"/></svg>';
+    await wait(200);
+
+    expect(recheckDiagram).toHaveBeenCalledWith(div);
+  });
+
+  test("shapes added inside a working diagram's SVG do not queue it", async () => {
+    const div = document.createElement("div");
+    div.className = "diagram";
+    div.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg"><g></g></svg>';
+    document.body.appendChild(div);
+    observeDiagrams();
+
+    // An animated chart adding nodes all the time
+    div
+      .querySelector("g")
+      .appendChild(document.createElementNS("http://www.w3.org/2000/svg", "rect"));
+    await wait(200);
+
+    expect(recheckDiagram).not.toHaveBeenCalled();
+  });
+
+  test("any change inside a container in the error box has it checked again", async () => {
+    const div = document.createElement("div");
+    div.className = "diagram";
+    div.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg"><g></g></svg>';
+    document.body.appendChild(div);
+    observeDiagrams();
+    div.dataset.diagviewError = "1";
+
+    div
+      .querySelector("g")
+      .appendChild(document.createElementNS("http://www.w3.org/2000/svg", "rect"));
+    await wait(200);
+
+    expect(recheckDiagram).toHaveBeenCalledWith(div);
   });
 
   test("stopObserving disconnects the observer", () => {

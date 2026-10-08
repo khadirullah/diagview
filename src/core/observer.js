@@ -10,7 +10,7 @@ import { debounce, safeQuerySelectorAll, stripDiagViewParams } from "./utils.js"
 import {
   initializeDiagram,
   deinitializeDiagram,
-  recoverErrorDiagram,
+  recheckDiagram,
 } from "../features/diagram-init.js";
 import { createModal, openFullscreen } from "../ui/modal.js";
 import { restoreViewFromURL } from "../features/lazy/share.js";
@@ -196,10 +196,10 @@ export function processDiagrams(root = document) {
   const skipped = skipNestedDiagrams(diagrams, selector);
 
   diagrams.forEach((diagram) => {
-    // A diagram that hit the error boundary keeps its init flag; if its SVG
-    // has since been replaced with a valid one, release it so it can be
-    // initialized like a new diagram (refresh() after replacing the SVG).
-    if (diagram.dataset.diagviewError) recoverErrorDiagram(diagram);
+    // A diagram that is set up keeps its init flag. When its content has
+    // changed since, from a fix in the editor or a new render, it may be
+    // released here and then set up below like a new diagram.
+    if (diagram.dataset.diagviewInit) recheckDiagram(diagram);
 
     // Cache the global index early to assist lazy initialization and share
     // links. Skipped diagrams keep theirs, so link numbers never shift.
@@ -280,14 +280,22 @@ export function observeDiagrams() {
 
         // The node may be the SVG (or a fragment) arriving inside a container
         // that already existed but was skipped for having no SVG yet. Queue
-        // that container too, otherwise it is never initialized.
+        // that container too, otherwise it is never initialized. A container
+        // that is set up is queued when a new SVG arrives in it, or on any
+        // change while it shows the error box, so it is checked again.
         let container = null;
         try {
           container = node.parentElement?.closest(selector) ?? null;
         } catch (_e) {
           container = null;
         }
-        if (container && !container.dataset.diagviewInit) {
+        if (
+          container &&
+          (!container.dataset.diagviewInit ||
+            container.dataset.diagviewError ||
+            node.localName === "svg" ||
+            node.querySelector?.("svg"))
+        ) {
           state.nodesToProcess.add(container);
         }
       }

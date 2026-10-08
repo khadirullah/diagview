@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DiagView Mermaid errors</title>
+<style>body{font-family:sans-serif;margin:0 auto;padding:16px;max-width:760px;background:#fff;color:#1e293b}</style>
+<script>
+  // ?v=12 picks the Mermaid major version. ?start=1 leaves startOnLoad on, so
+  // Mermaid renders the page itself on load. Without it the test renders
+  // through render(), the way a live editor does.
+  const params = new URLSearchParams(location.search);
+  const script = document.createElement("script");
+  script.src = `https://cdn.jsdelivr.net/npm/mermaid@${params.get("v") || "12"}/dist/mermaid.min.js`;
+  script.onload = () => {
+    if (!params.get("start")) mermaid.initialize({ startOnLoad: false });
+  };
+  document.head.append(script);
+
+  /** Render new code into the diagram element, as a live editor does */
+  window.render = async (code, suppressErrors = true) => {
+    const el = document.getElementById("live");
+    el.removeAttribute("data-processed");
+    el.textContent = code;
+    try {
+      await mermaid.run({ nodes: [el], suppressErrors });
+    } catch (e) {
+      window.__thrown = String(e?.message ?? e);
+    }
+  };
+</script>
+</head>
+<body>
+<!--
+  One Mermaid diagram inside a container the page owns. It starts with a
+  syntax error, so DiagView shows its error box until the code is fixed.
+-->
+<div class="card">
+<pre class="mermaid" id="live">flowchart TD
+  A[Start] --> B{Check
+</pre>
+</div>
+<script src="../../../node_modules/@panzoom/panzoom/dist/panzoom.min.js"></script>
+</body>
+</html>

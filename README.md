@@ -428,6 +428,8 @@ await mermaid.run();
 DiagView.init({ diagramSelector: ".mermaid" });
 ```
 
+When Mermaid draws a diagram again in the same element, as a live editor does, DiagView checks the new SVG by itself. A fixed syntax error gets its toolbar back, and a new one shows the error placeholder.
+
 When the selector matches both a diagram and a wrapper around it, for example `.mermaid, .diagram` with a `.mermaid` inside a `.diagram`, each diagram still gets one toolbar. A wrapper around a single diagram keeps the toolbar, so its `data-title` and `data-diagview-*` settings apply, and the `data-title` names its export files. A wrapper around two or more diagrams gets none, and each inner diagram keeps its own.
 
 ---

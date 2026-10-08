@@ -385,6 +385,183 @@ describe("refresh() recovers error-boundary diagrams", () => {
   });
 });
 
+describe("diagrams the page renders again in place", () => {
+  // What Mermaid 10 and 11 draw for a diagram with a typo
+  const ERROR_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2412 512" aria-roledescription="error"><g><path class="error-icon" d="m411 400 1 2z"/><text class="error-text">Syntax error in text</text><text class="error-text">mermaid version 11.4.0</text></g></svg>`;
+  const OTHER_SVG =
+    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><circle cx="5" cy="5" r="4"/></svg>';
+  let warnSpy;
+  let onError;
+
+  // Let the MutationObserver see the change, then run its debounce
+  const settle = async () => {
+    await Promise.resolve();
+    jest.advanceTimersByTime(150);
+  };
+
+  beforeEach(() => {
+    document.body.innerHTML = "";
+    document.head.innerHTML = "";
+    warnSpy = jest.spyOn(console, "warn").mockImplementation(() => {});
+    onError = jest.fn();
+  });
+
+  afterEach(async () => {
+    await DiagView.destroy();
+    jest.runAllTimers();
+    warnSpy.mockRestore();
+  });
+
+  const start = (svg, layout = "header") => {
+    document.body.innerHTML = `<main><pre class="diagram">${svg}</pre></main>`;
+    DiagView.init({ layout, onError });
+    return document.querySelector(".diagram");
+  };
+
+  test("a fixed diagram gets its toolbar without refresh()", async () => {
+    const el = start(ERROR_SVG);
+    expect(el.dataset.diagviewError).toBe("1");
+
+    // A live editor renders the corrected code into the same element
+    el.innerHTML = SVG;
+    await settle();
+
+    expect(el.dataset.diagviewError).toBeUndefined();
+    expect(el.querySelector(".diagview-error")).toBeNull();
+    expect(el.closest(".diagview-wrapper")).not.toBeNull();
+    expect(el.querySelector("svg").style.display).toBe("");
+    expect(document.querySelectorAll(".diagview-wrapper")).toHaveLength(1);
+    expect(onError).toHaveBeenCalledTimes(1);
+  });
+
+  test("source text first and the SVG later still recovers", async () => {
+    const el = start(ERROR_SVG);
+
+    el.textContent = "flowchart TD\n  A --> B";
+    await settle();
+    expect(el.dataset.diagviewError).toBe("1");
+
+    el.innerHTML = `<div id="dmermaid-1">${SVG}</div>`;
+    await settle();
+
+    expect(el.dataset.diagviewError).toBeUndefined();
+    expect(el.closest(".diagview-wrapper")).not.toBeNull();
+  });
+
+  test("an SVG fixed in place recovers too", async () => {
+    document.body.innerHTML = `<main><div class="diagram"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 10"></svg></div></main>`;
+    DiagView.init({ layout: "header", onError });
+    const el = document.querySelector(".diagram");
+    expect(el.dataset.diagviewError).toBe("1");
+
+    el.querySelector("svg").innerHTML = '<rect width="5" height="5"/>';
+    await settle();
+
+    expect(el.dataset.diagviewError).toBeUndefined();
+    expect(el.closest(".diagview-wrapper")).not.toBeNull();
+  });
+
+  test("a new error replaces the old error box instead of showing Mermaid's", async () => {
+    const el = start(ERROR_SVG);
+
+    el.innerHTML = ERROR_SVG;
+    await settle();
+
+    const svg = el.querySelector("svg:not(.diagview-error-icon)");
+    expect(el.dataset.diagviewError).toBe("1");
+    expect(el.querySelectorAll(".diagview-error")).toHaveLength(1);
+    expect(svg.style.display).toBe("none");
+    expect(onError).toHaveBeenCalledTimes(2);
+
+    // DiagView's own error box arriving does not start another round
+    await settle();
+    jest.runAllTimers();
+    expect(onError).toHaveBeenCalledTimes(2);
+    expect(el.querySelectorAll(".diagview-error")).toHaveLength(1);
+  });
+
+  test("a working diagram that turns into an error loses its toolbar, and gets it back", async () => {
+    const el = start(SVG);
+    expect(el.closest(".diagview-wrapper")).not.toBeNull();
+
+    el.innerHTML = ERROR_SVG;
+    await settle();
+
+    expect(document.querySelector(".diagview-wrapper")).toBeNull();
+    expect(el.parentElement.tagName).toBe("MAIN");
+    expect(el.dataset.diagviewError).toBe("1");
+    expect(el.querySelector(".diagview-error")).not.toBeNull();
+
+    el.innerHTML = SVG;
+    await settle();
+
+    expect(el.dataset.diagviewError).toBeUndefined();
+    expect(document.querySelectorAll(".diagview-wrapper")).toHaveLength(1);
+    expect(el.closest(".diagview-wrapper")).not.toBeNull();
+  });
+
+  test("a working diagram that gets another valid SVG keeps its toolbar", async () => {
+    const el = start(SVG);
+    const wrapper = el.closest(".diagview-wrapper");
+
+    el.innerHTML = OTHER_SVG;
+    await settle();
+
+    expect(el.closest(".diagview-wrapper")).toBe(wrapper);
+    expect(document.querySelectorAll(".diagview-wrapper")).toHaveLength(1);
+    expect(el.dataset.diagviewError).toBeUndefined();
+  });
+
+  test("layout off: an error drops the click target and a fix brings it back", async () => {
+    const el = start(SVG, "off");
+    expect(el.getAttribute("role")).toBe("button");
+
+    el.innerHTML = ERROR_SVG;
+    await settle();
+    expect(el.hasAttribute("role")).toBe(false);
+    expect(el.hasAttribute("tabindex")).toBe(false);
+    expect(el.dataset.diagviewError).toBe("1");
+
+    el.innerHTML = SVG;
+    await settle();
+    expect(el.getAttribute("role")).toBe("button");
+    expect(el.dataset.diagviewError).toBeUndefined();
+  });
+
+  test("a shadow root diagram recovers when initShadowRoot() runs again", () => {
+    const host = document.createElement("div");
+    document.body.appendChild(host);
+    const shadow = host.attachShadow({ mode: "open" });
+    shadow.innerHTML = `<div class="diagram">${ERROR_SVG}</div>`;
+    const el = shadow.querySelector(".diagram");
+    DiagView.init({ layout: "header" });
+    DiagView.initShadowRoot(shadow);
+    expect(el.dataset.diagviewError).toBe("1");
+
+    el.innerHTML = SVG;
+    DiagView.initShadowRoot(shadow);
+
+    expect(el.dataset.diagviewError).toBeUndefined();
+    expect(el.closest(".diagview-wrapper")).not.toBeNull();
+  });
+
+  test("destroy() after a recovery leaves the plain element", async () => {
+    const el = start(ERROR_SVG);
+    el.innerHTML = SVG;
+    await settle();
+
+    await DiagView.destroy();
+    expect(el.parentElement.tagName).toBe("MAIN");
+    expect(Object.keys(el.dataset)).toEqual([]);
+    expect(el.querySelector("svg").hasAttribute("style")).toBe(false);
+    expect(el.querySelector("svg").hasAttribute("class")).toBe(false);
+
+    // A later init() sets it up once
+    DiagView.init({ layout: "header" });
+    expect(document.querySelectorAll(".diagview-wrapper")).toHaveLength(1);
+  });
+});
+
 describe("teardown safety and diagramSelector validation", () => {
   let warnSpy;
   let errorSpy;
