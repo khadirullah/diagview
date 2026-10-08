@@ -1020,22 +1020,21 @@ export class AppComponent implements OnInit, OnDestroy {
 ## 21. Mermaid integration
 
 ```html
-<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@panzoom/panzoom@4.5.1/dist/panzoom.min.js"></script>
 <script
   src="https://cdn.jsdelivr.net/npm/diagview@1/dist/diagview.umd.min.js"
   data-diagview-no-auto-init
 ></script>
-```
+<script type="module">
+  import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@12/dist/mermaid.esm.min.mjs";
 
-```javascript
-mermaid.initialize({ startOnLoad: false, theme: "default" });
-
-document.addEventListener("DOMContentLoaded", async () => {
+  mermaid.initialize({ startOnLoad: false, theme: "default" });
   await mermaid.run(); // must finish before DiagView scans
   DiagView.init({ diagramSelector: ".mermaid, .diagram" });
-});
+</script>
 ```
+
+A module script runs after the page has parsed, so it needs no `DOMContentLoaded` handler.
 
 When one match sits inside another, such as a `.mermaid` inside a `.diagram`, only one of them gets a toolbar. If the outer element holds a single diagram, the outer one gets it, along with its `data-title` and `data-diagview-*` settings. That `data-title` names the export files too. If it holds two or more, each inner diagram gets its own toolbar and the outer element gets none. DiagView counts the `<svg>` elements inside to decide. `refresh()` and diagrams added later follow the same rule. A match without a toolbar keeps its place in the numbering, so share links (`dv-idx`) still open the same diagrams.
 
