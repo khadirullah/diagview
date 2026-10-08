@@ -20,6 +20,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 - **Cards Fit Short Diagrams.** Every card in the floating and header layouts was at least 200px tall, so a one-line diagram sat in the middle of a mostly empty box. The card now fits the diagram plus its padding. The error box keeps its own minimum height.
 - **Less Padding Around Diagrams on Phones.** Below 640px the card has 12px of padding above and below the diagram instead of 24px, so a short diagram takes less of a small screen. Desktop cards keep 24px.
 - **Bigger Toolbar Buttons on Touch Screens.** The copy, download and fullscreen buttons on the page were 36px in the floating layout and 34px in the header layout, smaller than a fingertip. Touch screens now show them at 44px in both layouts, still in one row on a 320px phone. Desktop sizes do not change.
+- **Mermaid Example Uses Mermaid 12.** The Mermaid example in the usage guide imports mermaid@12 as an ES module instead of loading mermaid@10 with a script tag. A module script runs after the page has parsed, so the example no longer waits for `DOMContentLoaded`.
 
 ### Fixed
 
