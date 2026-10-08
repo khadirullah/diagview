@@ -80,6 +80,13 @@ describe("styles.css: diagram size on the page", () => {
     expect(body).toMatch(/max-height:\s*var\(--dv-max-height, none\) !important;/);
     expect(body).not.toMatch(/max-height:\s*\d/);
   });
+
+  test("the card hugs a short diagram, and the error box keeps its own minimum", () => {
+    expect(ruleBody("\n.diagview-viewport {")).not.toMatch(/min-height/);
+    expect(ruleBody("/* === Error Boundary === */\n.diagview-error {")).toMatch(
+      /min-height:\s*120px/,
+    );
+  });
 });
 
 describe("styles.css: edge for an accent that fades into the background", () => {

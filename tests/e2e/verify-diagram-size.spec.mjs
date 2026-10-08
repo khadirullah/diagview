@@ -1,6 +1,6 @@
 // Diagrams on the page show at their own size, centred in the card, and
 // shrink only when the card is narrower. A tall diagram keeps its own
-// height. A wrapper between the diagram element and its SVG does not change
+// height, and the card around a short one hugs it. A wrapper between the diagram element and its SVG does not change
 // that size, and a caption sits under the diagram. A page rule can still
 // make every diagram, or chosen ones, fill the card, --dv-max-height caps
 // the height, and fullscreen ignores both.
@@ -23,6 +23,7 @@ const DIAGRAMS = {
   viewbox: { width: Infinity, height: 240 / 520 },
   figure: { width: 520, height: 240 },
   tall: { width: 415, height: 2192 },
+  short: { width: 400, height: 51 },
 };
 const IDS = Object.keys(DIAGRAMS);
 
@@ -145,7 +146,7 @@ test.afterAll(async ({ browser }) => {
 });
 
 test("each diagram shows at its own width, centred in its card", async () => {
-  for (const id of ["mermaid", "nested", "fixed", "figure"]) {
+  for (const id of ["mermaid", "nested", "fixed", "figure", "short"]) {
     const s = sizes[id];
     near(s.width, DIAGRAMS[id].width, `${id} width`);
     near(s.leftGap, s.rightGap, `${id} left gap against right gap`);
@@ -305,4 +306,54 @@ test("--dv-max-height caps a diagram in a shadow root too", async ({ browser }) 
     near(height, maxHeight, `${where}: tall height in a shadow root`);
     await shadowPage.context().close();
   }
+});
+
+/** Diagram, card padding box and toolbar of one diagram, in page pixels */
+const cardParts = (page, id) =>
+  page.evaluate((id) => {
+    const el = document.getElementById(id);
+    const card = el.closest(".diagview-viewport");
+    const cs = getComputedStyle(card);
+    const bar = card.closest(".diagview-wrapper").querySelector(".diagview-controls");
+    return {
+      svg: el.querySelector("svg").getBoundingClientRect().toJSON(),
+      card: card.getBoundingClientRect().toJSON(),
+      padding: parseFloat(cs.paddingTop) + parseFloat(cs.paddingBottom),
+      bar: bar.getBoundingClientRect().toJSON(),
+    };
+  }, id);
+
+test("the card around a short diagram hugs it", async () => {
+  const { svg, card, padding } = await cardParts(page, "short");
+  near(svg.height, DIAGRAMS.short.height, "short height");
+  near(card.height, svg.height + padding, "short card height");
+});
+
+test("the floating toolbar sits under a short diagram, on hover and on a touch screen", async ({
+  browser,
+  browserName,
+}) => {
+  // The card takes its real height only once it is on screen, which moves
+  // it, so scroll it into view again before the mouse goes over it
+  await page.locator("#short").scrollIntoViewIfNeeded();
+  await page.evaluate(
+    () => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))),
+  );
+  await page.locator("#short").scrollIntoViewIfNeeded();
+  const bar = page.locator(".diagview-wrapper:has(#short) .diagview-controls");
+  // Headless WebKit now and then drops :hover with the mouse at rest
+  await expect(async () => {
+    await page.locator(".diagview-wrapper:has(#short)").hover();
+    await expect(bar).toHaveCSS("opacity", "1", { timeout: 1000 });
+  }).toPass();
+  const hovered = await cardParts(page, "short");
+  expect(hovered.bar.top, "toolbar top on hover").toBeGreaterThanOrEqual(hovered.card.bottom - 1);
+
+  const phonePage = await load(browser, { options: phone(browserName) });
+  await phonePage.locator("#short").scrollIntoViewIfNeeded();
+  const touch = await cardParts(phonePage, "short");
+  expect(touch.bar.top, "toolbar top on a touch screen").toBeGreaterThanOrEqual(
+    touch.card.bottom - 1,
+  );
+  near(touch.card.height, touch.svg.height + touch.padding, "short card height on a phone");
 });

@@ -149,8 +149,9 @@
   align-items: center;
   cursor: zoom-in;
   overflow: hidden;
+  /* No minimum height, so the card hugs a short diagram. A failed diagram
+     gets the error box, which has its own minimum, and no card. */
   padding: 24px;
-  min-height: 200px;
   border-radius: 8px;
   user-select: none;
   background: rgba(128, 128, 128, 0.02);
