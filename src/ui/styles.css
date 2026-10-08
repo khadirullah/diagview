@@ -158,6 +158,13 @@
   contain: layout style;
 }
 
+/* A phone card gives the diagram more of its narrow width */
+@media (max-width: 639px) {
+  .diagview-viewport {
+    padding: 12px;
+  }
+}
+
 .diagview-viewport > * {
   width: 100% !important;
   /* Block, not flex. A wrapper between this element and its SVG, such as a

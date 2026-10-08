@@ -194,8 +194,8 @@ test("on a phone every diagram fits the card width", async ({ browser, browserNa
   const phoneSizes = await measure(phonePage);
   for (const id of IDS) {
     const s = phoneSizes[id];
-    // The card is narrower than every diagram
-    expect(s.card, `${id} card`).toBeLessThan(DIAGRAMS.fixed.width);
+    // The card is narrower than most diagrams
+    expect(s.card, `${id} card`).toBeLessThan(DIAGRAMS.mermaid.width);
     near(s.width, expectedWidth(id, s.card), `${id} width`);
     near(s.height, expectedHeight(id, s.width), `${id} height`);
     near(s.leftGap, s.rightGap, `${id} left gap against right gap`);
@@ -356,4 +356,18 @@ test("the floating toolbar sits under a short diagram, on hover and on a touch s
     touch.card.bottom - 1,
   );
   near(touch.card.height, touch.svg.height + touch.padding, "short card height on a phone");
+});
+
+test("a phone card has 12px of padding around the diagram, a desktop card 24px", async ({
+  browser,
+  browserName,
+}) => {
+  const desktop = await cardParts(page, "fixed");
+  near(desktop.padding, 48, "desktop top and bottom padding");
+  const phonePage = await load(browser, { options: phone(browserName) });
+  const parts = await cardParts(phonePage, "fixed");
+  near(parts.padding, 24, "phone top and bottom padding");
+  // The 311px diagram now fits a 390px phone at its own size
+  near(parts.svg.width, DIAGRAMS.fixed.width, "fixed width on a phone");
+  near(parts.svg.left - parts.card.left, parts.card.right - parts.svg.right, "fixed centred");
 });

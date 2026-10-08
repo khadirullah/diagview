@@ -87,6 +87,12 @@ describe("styles.css: diagram size on the page", () => {
       /min-height:\s*120px/,
     );
   });
+  test("a phone card has half the padding of a desktop one", () => {
+    expect(ruleBody("\n.diagview-viewport {")).toMatch(/padding:\s*24px;/);
+    const phone = css.indexOf("@media (max-width: 639px) {\n  .diagview-viewport {");
+    expect(phone).toBeGreaterThan(-1);
+    expect(ruleBody(".diagview-viewport {", phone)).toMatch(/padding:\s*12px;/);
+  });
 });
 
 describe("styles.css: edge for an accent that fades into the background", () => {
