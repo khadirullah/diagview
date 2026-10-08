@@ -226,6 +226,136 @@ describe("Search: performSearch", () => {
   });
 });
 
+describe("Search: phrases across line breaks", () => {
+  let svg;
+  let status;
+  let rafCallbacks;
+
+  beforeEach(() => {
+    resetConfig();
+    document.body.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg"></svg>
+      <div id="diagview-search-status"></div>`;
+    svg = document.querySelector("svg");
+    status = document.getElementById("diagview-search-status");
+    state.searchMatches = [];
+    rafCallbacks = [];
+    jest.spyOn(window, "requestAnimationFrame").mockImplementation((cb) => {
+      rafCallbacks.push(cb);
+      return rafCallbacks.length;
+    });
+    jest.spyOn(window, "cancelAnimationFrame").mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    document.body.innerHTML = "";
+    state.searchMatches = [];
+    jest.restoreAllMocks();
+  });
+
+  function search(query) {
+    performSearch(svg, query);
+    rafCallbacks.splice(0).forEach((cb) => cb());
+    return status.textContent;
+  }
+
+  test("a <br> in an HTML label counts as a space", () => {
+    // Mermaid 11 and 12 flowchart node with "Firewall<br>UFW"
+    svg.innerHTML = `<g class="node" id="fw"><rect></rect><g class="label"><foreignObject>
+      <div><span class="nodeLabel"><p>Firewall<br>UFW</p></span></div>
+      </foreignObject></g></g>`;
+    const node = svg.querySelector("#fw");
+
+    expect(search("firewall ufw")).toBe("1 match found");
+    expect(state.searchMatches).toEqual([node]);
+    expect(search("Firewall UFW")).toBe("1 match found");
+    expect(search("firewall")).toBe("1 match found");
+    expect(search("ufw")).toBe("1 match found");
+    // The lines no longer run together
+    expect(search("firewallufw")).toBe("No matches found");
+  });
+
+  test("block elements in an HTML label count as spaces, inline ones do not", () => {
+    // draw.io writes each line of a label as a div
+    svg.innerHTML = `<g class="label"><foreignObject><div>
+      <div>Message</div><div>queue</div><ul><li>one</li><li>two</li></ul>
+      <span>Hel</span><b>lo</b> <i>wor</i>ld</div></foreignObject></g>`;
+
+    expect(search("message queue")).toBe("1 match found");
+    expect(search("queue one two")).toBe("1 match found");
+    expect(search("hello world")).toBe("1 match found");
+  });
+
+  test("Mermaid plain-SVG rows count as lines, a bold word in a row does not", () => {
+    // flowchart with htmlLabels false: one tspan.row per line, words inside
+    svg.innerHTML = `<g class="node"><g class="label"><text y="-10.1">
+      <tspan class="text-outer-tspan row" x="0" y="-0.1em" dy="1.1em"><tspan class="text-inner-tspan">Firewall</tspan></tspan><tspan class="text-outer-tspan row" x="0" y="1em" dy="1.1em"><tspan class="text-inner-tspan">UFW</tspan></tspan>
+      </text></g></g>
+      <g class="node"><text><tspan class="text-outer-tspan row" x="0" y="-0.1em" dy="1.1em"><tspan class="text-inner-tspan">Hel</tspan><tspan class="text-inner-tspan" font-weight="bold">lo</tspan></tspan></text></g>`;
+
+    expect(search("firewall ufw")).toBe("1 match found");
+    expect(search("firewallufw")).toBe("No matches found");
+    expect(search("hello")).toBe("1 match found");
+    expect(search("hel lo")).toBe("No matches found");
+  });
+
+  test("a tspan with its own x and dy starts a line, one that only styles a word does not", () => {
+    // Mermaid timeline event wrapped over lines, and hand-written markup
+    svg.innerHTML = `<text><tspan x="0" dy="1em">A   rather   long   event</tspan><tspan x="0" dy="1.1em">text   that   wraps</tspan></text>
+      <text>Hel<tspan font-weight="bold">lo</tspan></text>
+      <text>E = mc<tspan dy="-5" font-size="8">2</tspan></text>
+      <text><tspan x="10" y="20">Sp</tspan><tspan x="28" y="20" font-weight="bold">lit</tspan></text>
+      <text><tspan x="10" y="40">Next</tspan><tspan x="10" y="56">line</tspan></text>`;
+
+    expect(search("event text")).toBe("1 match found");
+    expect(search("eventtext")).toBe("No matches found");
+    expect(search("hello")).toBe("1 match found");
+    expect(search("mc2")).toBe("1 match found");
+    // Runs that share a y sit on one line
+    expect(search("split")).toBe("1 match found");
+    expect(search("next line")).toBe("1 match found");
+  });
+
+  test("a label drawn as one <text> per line matches across the lines and counts once", () => {
+    // Mermaid sequence note "Firewall<br>UFW": one text per line in a group
+    svg.innerHTML = `<g><rect class="note"></rect>
+      <text x="175" y="149" class="noteText" text-anchor="middle" style="font-size: 16px">Firewall</text>
+      <text x="175" y="166" class="noteText" text-anchor="middle" style="font-size: 16px">UFW</text></g>
+      <text x="175" y="230" class="noteText" text-anchor="middle" style="font-size: 16px">Gateway</text>`;
+    const [first, second, far] = svg.querySelectorAll("text");
+
+    expect(search("firewall ufw")).toBe("1 match found");
+    expect(state.searchMatches).toEqual([first, second]);
+    // Either line keeps the whole label undimmed
+    expect(search("ufw")).toBe("1 match found");
+    expect(state.searchMatches).toEqual([first, second]);
+    // A text further down is a label of its own
+    expect(search("ufw gateway")).toBe("No matches found");
+    expect(search("gateway")).toBe("1 match found");
+    expect(state.searchMatches).toEqual([far]);
+    search("");
+    expect(svg.querySelectorAll(".dv-search-match").length).toBe(0);
+  });
+
+  test("texts at another x or with another class stay apart", () => {
+    svg.innerHTML = `<text x="10" y="20" style="font-size: 16px">Name</text>
+      <text x="50" y="36" style="font-size: 16px">Owner</text>
+      <text x="50" y="52" class="a" style="font-size: 16px">Team</text>
+      <text x="50" y="68" class="b" style="font-size: 16px">Lead</text>`;
+
+    expect(search("name owner")).toBe("No matches found");
+    expect(search("owner team")).toBe("No matches found");
+    expect(search("team lead")).toBe("No matches found");
+  });
+
+  test("lines of a Graphviz node match across the break", () => {
+    svg.innerHTML = `<g class="node"><title>fw</title><polygon></polygon>
+      <text x="40" y="20">Firewall</text><text x="40" y="36">UFW</text></g>`;
+
+    expect(search("firewall ufw")).toBe("1 match found");
+    expect(state.searchMatches).toEqual([svg.querySelector(".node")]);
+  });
+});
+
 describe("Search: clearSearch", () => {
   beforeEach(() => {
     resetConfig();

@@ -58,6 +58,67 @@ function normalise(text) {
   return (text || "").toLowerCase().replace(/\s+/g, " ").trim();
 }
 
+const SVG_NS = "http://www.w3.org/2000/svg";
+
+/** HTML elements that start a line of their own */
+const BLOCK = /^(br|div|p|li|[uo]l|d[dlt]|h\d|pre|blockquote|table|t[rdh]|(fig)?caption)$/;
+
+/**
+ * Whether a tspan starts a new line. Mermaid draws each line of a plain-SVG
+ * label as a tspan.row. Other tools move a tspan to the next line with a y
+ * of its own, or with an x and a dy. A tspan that only styles a word keeps
+ * to its line, and so does a run that shares the y of the one before it.
+ */
+function startsLine(t) {
+  if (t.classList.contains("row")) return true;
+  const y = t.getAttribute("y");
+  if (y === null) return t.hasAttribute("x") && !!parseFloat(t.getAttribute("dy"));
+  for (let p = t.previousElementSibling; p; p = p.previousElementSibling) {
+    if (p.hasAttribute("y")) return p.getAttribute("y") !== y;
+  }
+  return true;
+}
+
+/**
+ * The text of a label with a space between its lines. textContent runs
+ * them together, so "Firewall<br>UFW" would read "FirewallUFW" and the
+ * query "firewall ufw" would miss it. A block or an SVG element stands on
+ * lines of its own. A tspan that starts a line ends where the next line
+ * starts, so only a space before it.
+ */
+function labelText(el) {
+  let out = "";
+  for (const n of el.childNodes) {
+    if (n.nodeType === 3 || n.nodeType === 4) out += n.data;
+    if (n.nodeType !== 1) continue;
+    const name = n.localName;
+    const span = name === "tspan";
+    const inline =
+      n.namespaceURI === SVG_NS
+        ? name === "a" || name === "textPath" || (span && !startsLine(n))
+        : !BLOCK.test(name);
+    out += (inline ? "" : " ") + labelText(n) + (inline || span ? "" : " ");
+  }
+  return out;
+}
+
+/**
+ * Whether the <text> next is the next line of the <text> prev. Mermaid
+ * draws each line of a sequence note or message as its own <text>, and so
+ * do Graphviz and PlantUML. Such lines share x, class and anchor, and each
+ * sits less than one and a half lines under the one before.
+ */
+function nextLine(prev, next) {
+  if (next?.localName !== "text" || prev.localName !== "text") return false;
+  for (const a of ["x", "class", "text-anchor", "transform"]) {
+    if (prev.getAttribute(a) !== next.getAttribute(a)) return false;
+  }
+  if (prev.getAttribute("x") === null) return false;
+  const gap = parseFloat(next.getAttribute("y")) - parseFloat(prev.getAttribute("y"));
+  const size = parseFloat(getComputedStyle(prev).fontSize) || 16;
+  return gap > 0 && gap <= size * 1.5;
+}
+
 /**
  * Initialize or retrieve search cache
  * O(N) read operation, done once per diagram instance (or refresh)
@@ -91,9 +152,20 @@ function getSearchCandidates(clone) {
     }
     // A group title sits at the top of its frame, not inside a shape
     const beside = sw || el.classList.contains("cluster-label");
+    const last = cache[cache.length - 1];
+    const lastLine = last?.lines[last.lines.length - 1];
+    // The next line of the label before it belongs to that label
+    if (lastLine && lastLine === el.previousElementSibling && nextLine(lastLine, el)) {
+      last.lines.push(el);
+      last.text = normalise(`${last.text} ${labelText(el)}`);
+      continue;
+    }
     cache.push({
       el: el,
-      text: normalise(el.textContent),
+      // Every element that draws the label. A label drawn as one <text>
+      // per line has more than one.
+      lines: [el],
+      text: normalise(labelText(el)),
       // What to measure for the shape under a plain-SVG label
       box: el.localName === "text" ? el : beside && labelBox(el),
     });
@@ -103,7 +175,7 @@ function getSearchCandidates(clone) {
   // modeling boxes. One that holds a candidate is already searched.
   for (const fo of clone.querySelectorAll("foreignObject")) {
     if (seen.has(fo) || fo.closest(sel) || fo.querySelector(sel) || undrawnSwitch(fo)) continue;
-    cache.push({ el: fo, text: normalise(fo.textContent), box: labelBox(fo) });
+    cache.push({ el: fo, lines: [fo], text: normalise(labelText(fo)), box: labelBox(fo) });
   }
 
   state.searchCache.set(clone, cache);
@@ -264,19 +336,26 @@ export function performSearch(clone, query) {
 
     const shapes = new Set();
 
-    // Single loop for O(1) DOM updates utilizing CSS fading architecture
+    // Single loop for O(1) DOM updates utilizing CSS fading architecture.
+    // A label drawn as several <text> lines marks each line and counts once.
+    let count = 0;
     for (let i = 0; i < candidates.length; i++) {
       const item = candidates[i];
       const isMatch = item.text.includes(lq);
-      const isSearchMatch = item.el.classList.contains("dv-search-match");
 
+      for (const el of item.lines) {
+        const isSearchMatch = el.classList.contains("dv-search-match");
+        if (isMatch) {
+          if (!isSearchMatch) mark(el, "dv-search-match");
+          newMatches.push(el);
+        } else if (isSearchMatch) {
+          unmark(el, "dv-search-match");
+        }
+      }
       if (isMatch) {
-        if (!isSearchMatch) mark(item.el, "dv-search-match");
-        newMatches.push(item.el);
+        count++;
         const shape = findShapeForText(clone, item);
         if (shape) shapes.add(shape);
-      } else {
-        if (isSearchMatch) unmark(item.el, "dv-search-match");
       }
     }
 
@@ -292,9 +371,7 @@ export function performSearch(clone, query) {
     const statusEl = document.getElementById("diagview-search-status");
     if (statusEl) {
       statusEl.textContent =
-        newMatches.length > 0
-          ? `${newMatches.length} match${newMatches.length === 1 ? "" : "es"} found`
-          : "No matches found";
+        count > 0 ? `${count} match${count === 1 ? "" : "es"} found` : "No matches found";
     }
   });
 }

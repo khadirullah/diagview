@@ -106,7 +106,8 @@ Keep `.diagview-wrapper` in the selector, or DiagView's own rule wins. A tall di
 A: Search reads the text of every `<text>` element and of every element with the class `node`, `cluster`, `cluster-label`, `label` or `edgePath`, HTML labels inside them included. It also reads every HTML label in a `<foreignObject>` outside those. That covers Mermaid, Graphviz, PlantUML and draw.io. It finds nothing in these cases:
 
 - The text is drawn as paths, as when an editor converts text to outlines, or it is part of an embedded image.
-- The query runs across a line break. Each line can be its own `<text>` element, and a `<br>` in an HTML label adds no space between the lines. Search for words from one line.
+- The query runs across two lines that DiagView reads as two labels. Lines drawn as separate `<text>` elements join only when they share `x`, class and anchor and sit one line apart. Search for words from one line.
+- The query skips the space between two lines, as in `firewallufw` for `Firewall<br>UFW`. Type the space.
 - Panzoom did not load. Search starts only when zoom and pan do. See [Zoom/pan not working in fullscreen](USAGE.md#zoompan-not-working-in-fullscreen).
 
 **Q: Can I pre-fill the search when opening fullscreen?**
@@ -116,7 +117,7 @@ DiagView.openFullscreen(element, { searchQuery: "my term" });
 ```
 
 **Q: Is search case-sensitive?**  
-A: No. All queries and node text are lowercased before comparison. Each run of spaces and line breaks also counts as one space, so `first release` finds a label drawn as `First   release`.
+A: No. All queries and node text are lowercased before comparison. Each run of spaces and line breaks also counts as one space, so `first release` finds a label drawn as `First   release`. A break between two lines of a label counts as a space too, so `firewall ufw` finds `Firewall<br>UFW`, and `firewallufw` does not. See [Search](USAGE.md#6-search) for how DiagView tells a new line from a styled word.
 
 **Q: Does search work on draw.io diagrams?**  
 A: Yes. draw.io keeps a `<text>` copy of each label that the browser never draws. Search matches the HTML label you see and outlines the box under it.
