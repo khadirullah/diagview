@@ -401,6 +401,17 @@ describe("styles.css: page buttons", () => {
     expect(body).not.toMatch(/background|border|color|box-shadow|filter|!important/);
   });
 
+  test("touch screens get 44px buttons in both layouts, after the floating size", () => {
+    const floating = css.indexOf(".diagview-controls-floating .diagview-btn {");
+    const touch = css.indexOf("@media (hover: none) or (pointer: coarse) {", floating);
+    const sel = ".diagview-controls .diagview-btn {";
+    expect(touch).toBeGreaterThan(floating);
+    expect(css.indexOf(sel, touch)).toBeLessThan(css.indexOf("\n}", touch));
+    const body = ruleBody(sel, touch);
+    expect(body).toMatch(/width:\s*44px/);
+    expect(body).toMatch(/height:\s*44px/);
+  });
+
   test("the floating row leaves room below for the focus ring and keeps the card's height", () => {
     const body = ruleBody("\n.diagview-controls-floating {");
     expect(body).toMatch(/margin-top:\s*6px/);

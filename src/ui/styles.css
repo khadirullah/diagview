@@ -293,6 +293,14 @@
   height: 36px;
 }
 
+/* A finger needs 44px to hit a button reliably */
+@media (hover: none) or (pointer: coarse) {
+  .diagview-controls .diagview-btn {
+    width: 44px;
+    height: 44px;
+  }
+}
+
 .diagview-controls-floating .diagview-btn:hover {
   border-radius: 50%;
 }

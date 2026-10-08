@@ -167,7 +167,7 @@ await mermaid.run();
 
 ### Floating (default)
 
-The floating layout keeps the diagram area clean. On hover, the buttons fade in at the bottom of the card. They use the same `ui.buttons.style` as the header layout, so see [Button style](#button-style) to change their look. In fullscreen, a FAB (Floating Action Button) at the bottom-right gives access to export, share, rotate, and meeting mode.
+The floating layout keeps the diagram area clean. On hover, the buttons fade in at the bottom of the card. On touch screens they are always shown and grow from 36px to 44px, so a finger hits them. They use the same `ui.buttons.style` as the header layout, so see [Button style](#button-style) to change their look. In fullscreen, a FAB (Floating Action Button) at the bottom-right gives access to export, share, rotate, and meeting mode.
 
 ```javascript
 DiagView.init({ layout: "floating" });
@@ -175,7 +175,7 @@ DiagView.init({ layout: "floating" });
 
 ### Header
 
-A toolbar sits above each diagram. On desktop it fades in when you hover the diagram or tab into it; on touch screens it is always visible. It shows the diagram's title (from `data-title` or the SVG `<title>` element) on the left, and action buttons on the right. The title is a muted shade of the page text that keeps 4.5:1 against the page (see [Theming](#13-theming)). A long title wraps onto a second line. A title too long even for two lines ends in "...", and resting the mouse on it shows the whole title.
+A toolbar sits above each diagram. On desktop it fades in when you hover the diagram or tab into it; on touch screens it is always visible, and its buttons grow from 34px to 44px. It shows the diagram's title (from `data-title` or the SVG `<title>` element) on the left, and action buttons on the right. The title is a muted shade of the page text that keeps 4.5:1 against the page (see [Theming](#13-theming)). A long title wraps onto a second line. A title too long even for two lines ends in "...", and resting the mouse on it shows the whole title.
 
 ```javascript
 DiagView.init({ layout: "header" });

@@ -179,7 +179,7 @@ In every layout, the fullscreen viewer is the same and has a menu button at the 
 
 ### Floating (Default)
 
-The copy, download and fullscreen buttons sit below the diagram, without a title. With a mouse or trackpad they appear on hover or keyboard focus. On touch screens they are always shown.
+The copy, download and fullscreen buttons sit below the diagram, without a title. With a mouse or trackpad they appear on hover or keyboard focus. On touch screens they are always shown, at 44px so a finger hits them.
 
 ```javascript
 DiagView.init({ layout: "floating" });
@@ -187,7 +187,7 @@ DiagView.init({ layout: "floating" });
 
 ### Header
 
-A full-width toolbar with the diagram title sits above the diagram. With a mouse or trackpad it appears when the pointer is over the diagram or keyboard focus is inside it. On touch screens it is always shown.
+A full-width toolbar with the diagram title sits above the diagram. With a mouse or trackpad it appears when the pointer is over the diagram or keyboard focus is inside it. On touch screens it is always shown, with 44px buttons.
 
 ```javascript
 DiagView.init({ layout: "header" });
