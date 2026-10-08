@@ -264,6 +264,92 @@ describe("Diagram Init: deinitializeDiagram", () => {
   });
 });
 
+describe("Diagram Init: an svg the selector matches itself", () => {
+  const BARE =
+    '<p id="before">Before</p><svg class="diagram flow" id="chart" data-x="1" style="outline: 0px;" viewBox="0 0 10 10" width="10" height="10"><title>Flow</title><rect width="5" height="5"/></svg><p id="after">After</p>';
+
+  beforeEach(() => {
+    document.body.innerHTML = `<main id="page">${BARE}</main>`;
+    jest.clearAllMocks();
+  });
+
+  test.each(["floating", "header"])(
+    "the %s layout wraps the svg in a card where it stood",
+    (layout) => {
+      const svg = document.getElementById("chart");
+      svg.dataset.diagviewLayout = layout;
+
+      initializeDiagram(svg);
+
+      const wrapper = svg.closest(".diagview-wrapper");
+      expect(svg.parentElement.className).toBe("diagview-viewport");
+      expect(wrapper.parentElement.id).toBe("page");
+      expect(wrapper.previousElementSibling.id).toBe("before");
+      expect(wrapper.nextElementSibling.id).toBe("after");
+      expect(wrapper.querySelectorAll(".diagview-btn")).toHaveLength(3);
+      expect(svg.id).toBe("chart");
+      expect(svg.getAttribute("data-x")).toBe("1");
+      expect(svg.classList.contains("flow")).toBe(true);
+    },
+  );
+
+  test("the toolbar opens fullscreen and exports the svg itself", async () => {
+    const { openFullscreen } = await import("../src/ui/modal.js");
+    const { exportDiagram } = await import("../src/features/export.js");
+    const svg = document.getElementById("chart");
+    initializeDiagram(svg);
+    const wrapper = svg.closest(".diagview-wrapper");
+
+    wrapper.querySelector('[data-action="fullscreen"]').click();
+    wrapper.querySelector('[data-action="download"]').click();
+
+    expect(openFullscreen).toHaveBeenCalledWith(svg);
+    expect(exportDiagram).toHaveBeenCalledWith(svg, "download");
+  });
+
+  test.each(["floating", "header", "off"])(
+    "destroy in the %s layout puts back the same node, as it was",
+    (layout) => {
+      const svg = document.getElementById("chart");
+      svg.dataset.diagviewLayout = layout;
+      const before = document.body.innerHTML;
+
+      initializeDiagram(svg);
+      deinitializeDiagram(svg);
+
+      expect(document.body.innerHTML).toBe(before);
+      expect(document.getElementById("chart")).toBe(svg);
+    },
+  );
+
+  test("layout off makes the svg itself a button in the tab order", () => {
+    const svg = document.getElementById("chart");
+    svg.dataset.diagviewLayout = "off";
+
+    initializeDiagram(svg);
+
+    expect(svg.closest(".diagview-wrapper")).toBeNull();
+    expect(svg.getAttribute("tabindex")).toBe("0");
+    expect(svg.getAttribute("role")).toBe("button");
+    expect(svg.getAttribute("aria-label")).toBe("Open Flow in fullscreen");
+  });
+
+  test("a broken svg gets the error box after it, not inside it", () => {
+    document.body.innerHTML = '<main id="page"><svg class="diagram" id="chart"></svg></main>';
+    const svg = document.getElementById("chart");
+    const before = document.body.innerHTML;
+
+    initializeDiagram(svg);
+
+    expect(svg.dataset.diagviewError).toBe("1");
+    expect(svg.nextElementSibling.className).toBe("diagview-error");
+    expect(svg.querySelector(".diagview-error")).toBeNull();
+
+    deinitializeDiagram(svg);
+    expect(document.body.innerHTML).toBe(before);
+  });
+});
+
 describe("Diagram Init: Interaction Handlers", () => {
   let container, svg;
 

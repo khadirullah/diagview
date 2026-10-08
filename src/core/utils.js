@@ -185,6 +185,32 @@ export function getDiagramTitle(svg, element = svg?.closest("[data-diagview-inde
   return titleEl?.textContent.trim() || "";
 }
 
+const SVG_NS = "http://www.w3.org/2000/svg";
+
+/**
+ * The SVG a diagram element shows: the element itself when the selector
+ * matched an <svg>, otherwise the first <svg> inside it. An <svg> drawn
+ * inside another SVG is part of that drawing and is no diagram of its own.
+ * @param {Element|null|undefined} element - Element matched by diagramSelector
+ * @returns {SVGSVGElement|null} The diagram's SVG, or null when it has none
+ */
+export function getDiagramSvg(element) {
+  if (element?.localName === "svg" && element.namespaceURI === SVG_NS) {
+    return element.parentElement?.namespaceURI === SVG_NS ? null : element;
+  }
+  return element?.querySelector?.("svg") ?? null;
+}
+
+/**
+ * Whether anything is drawn in the SVG yet. An <svg> matched by the
+ * selector can sit on the page empty until a library such as D3 fills it.
+ * @param {Element} svg - The diagram's SVG
+ * @returns {boolean} True once the SVG holds a shape, text or group
+ */
+export function hasDrawnContent(svg) {
+  return !!svg.querySelector("g, path, rect, circle, text, line, polygon, polyline");
+}
+
 /**
  * Get timestamp string for filenames
  */

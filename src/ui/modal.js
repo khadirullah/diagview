@@ -6,7 +6,13 @@
 
 import { state, addCleanupFunction } from "../core/config.js";
 import { detectTheme, syncTheme } from "../core/theme.js";
-import { throttle, setSVGContent, centerSVGViewBox, generateUniqueId } from "../core/utils.js";
+import {
+  throttle,
+  setSVGContent,
+  centerSVGViewBox,
+  generateUniqueId,
+  getDiagramSvg,
+} from "../core/utils.js";
 import { addModalListener, addModalCleanupFunction } from "../core/lifecycle.js";
 import { cloneSVGForModal } from "../core/svg-clone.js";
 import { BRANDING, TIMING } from "../core/constants.js";
@@ -426,7 +432,7 @@ function _attachModalLifecycle(element, clone, viewport, panzoom, diagramId) {
  * leak the first visualViewport listeners and orphan the first Panzoom
  * instance). To switch diagrams, `await closeModal()` first, then open.
  *
- * @param {HTMLElement} element - Diagram container element
+ * @param {HTMLElement|SVGSVGElement} element - Diagram container element, or the diagram's <svg>
  * @param {object} [options={}] - Optional overrides
  * @param {number} [options.zoom] - Initial zoom scale to apply after opening
  * @param {string} [options.searchQuery] - Pre-fill the search input with this query
@@ -435,7 +441,7 @@ export async function openFullscreen(element, options = {}) {
   // CRIT-3: Prevent concurrent execution of openFullscreen
   if (state.isModalOpening || state.isModalOpen) return;
 
-  const originalSvg = element.querySelector("svg");
+  const originalSvg = getDiagramSvg(element);
   if (!originalSvg) return;
 
   const modal = document.getElementById("diagview-modal");

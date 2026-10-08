@@ -96,7 +96,7 @@ When the page has no `data-diagview-no-auto-init` attribute, DiagView automatica
 .diagram, .chart, [data-diagram]
 ```
 
-Any element containing an `<svg>` child that matches this selector is enhanced.
+Any element containing an `<svg>` child that matches this selector is enhanced. The selector can also match the `<svg>` itself, as in `<svg class="diagram">`. That SVG gets the same card and toolbar, in the place where it stood. An `<svg>` drawn inside another SVG belongs to that drawing and is left alone. An empty `<svg>` that a script such as D3 fills later is set up once something is drawn in it.
 
 ```html
 <!-- Auto-detected ✅ -->
@@ -908,7 +908,7 @@ DiagView.init({
 
 Live example: [React 18 + StrictMode demo](https://khadirullah.github.io/diagview/framework-react.html). It is a real React dev-build tree that mounts, unmounts, remounts and replaces diagrams, with an "unsafe pattern" toggle that shows the error the rule below prevents. `demo/framework-react.html` in the repo, verified by `tests/e2e/verify-react-strictmode.spec.mjs`.
 
-> **The one rule:** keep the diagram element (the one matching `diagramSelector`) nested inside a container that your component renders and owns. With the `floating` and `header` layouts DiagView moves the diagram element into a wrapper so it can place the toolbar next to it. Your framework still believes the element sits where it rendered it, so if it later removes that exact element (unmount, conditional render, key change) the browser throws `NotFoundError: The node to be removed is not a child of this node`. Removing the outer container instead is always safe, because the wrapper is inside it and goes away with it.
+> **The one rule:** keep the diagram element (the one matching `diagramSelector`, which can be the `<svg>` itself) nested inside a container that your component renders and owns. With the `floating` and `header` layouts DiagView moves the diagram element into a wrapper so it can place the toolbar next to it. Your framework still believes the element sits where it rendered it, so if it later removes that exact element (unmount, conditional render, key change) the browser throws `NotFoundError: The node to be removed is not a child of this node`. Removing the outer container instead is always safe, because the wrapper is inside it and goes away with it.
 >
 > Drawing a new SVG inside the diagram element is fine. DiagView sees the new SVG and sets the diagram up again, as [Drawing a diagram again](#drawing-a-diagram-again) explains. What breaks is the framework replacing the diagram element itself.
 >
@@ -1233,7 +1233,7 @@ console.log(DiagView.version); // e.g. "1.1.0"
 ### Diagrams not showing interactive controls
 
 1. Check the selector: does your element match `diagramSelector`?
-2. Ensure the element contains an `<svg>` child with visible content. A `viewBox` is not required; width/height-only SVGs work
+2. Ensure the element contains an `<svg>` with visible content, or is that `<svg>` itself. A `viewBox` is not required; width/height-only SVGs work
 3. Check the browser console, where errors from SVG validation appear
 4. Confirm DiagView initialized: `console.log(DiagView.state.isInitialized)`
 
@@ -1247,7 +1247,7 @@ DiagView shows a placeholder titled "Syntax Error", "Parse Error" or "Diagram Er
 - declares a `viewBox` with zero width or height
 - has text but no shapes, and the text contains "error" or "failed"
 
-A container without an `<svg>` gets no placeholder. DiagView leaves it alone and sets it up once an `<svg>` appears in it.
+A container without an `<svg>` gets no placeholder. DiagView leaves it alone and sets it up once an `<svg>` appears in it. The same goes for an empty `<svg>` that the selector matches itself. For such an SVG the placeholder goes right after it, since an SVG cannot hold it.
 
 Mermaid 12 writes its parser message into the error picture it draws, such as "Parse error on line 3: ...A[Start] --> B{Check Expecting 'SQE', ..., got '1'". The placeholder shows that message on a third line, in a monospace font, and `onError` gets it at the end of `error.message`. DiagView reads it as text, so code in it never runs, and cuts it at 300 characters. It leaves out the line of dashes ending in `^`, which only points at the right column in Mermaid's own picture. Mermaid 10 and 11 draw only "Syntax error in text" and their version, so with them the placeholder shows its title and the short sentence only. To show the message from Mermaid 10 or 11, catch the error that `mermaid.run()` or `mermaid.parse()` throws and show `error.message` on your page.
 

@@ -116,13 +116,13 @@ Closing the viewer puts focus back on the button or diagram inside the shadow ro
 
 ## Export methods
 
-All export methods are async. `exportDiagram()` resolves to a boolean that says whether the export worked. The others resolve to `undefined`.
+All export methods are async. `exportDiagram()` resolves to a boolean that says whether the export worked. The others resolve to `undefined`. Each one takes the diagram element, or the diagram's `<svg>` when the selector matches the SVG itself.
 
 ### `DiagView.exportDiagram(element, mode, options?)`
 
 Generic export dispatcher.
 
-**Signature:** `exportDiagram(element: HTMLElement, mode: ExportMode, options?: ExportOptions | SVGSVGElement | null): Promise<boolean>`
+**Signature:** `exportDiagram(element: HTMLElement | SVGSVGElement, mode: ExportMode, options?: ExportOptions | SVGSVGElement | null): Promise<boolean>`
 
 ```typescript
 type ExportMode =
@@ -219,9 +219,9 @@ While Readable is on under Text Colours, every export with a background recolour
 
 ### `DiagView.openFullscreen(element, options?)`
 
-Open the fullscreen viewer for a diagram element.
+Open the fullscreen viewer for a diagram element. It takes the diagram's `<svg>` too.
 
-**Signature:** `openFullscreen(element: HTMLElement, options?: OpenOptions): Promise<void>`
+**Signature:** `openFullscreen(element: HTMLElement | SVGSVGElement, options?: OpenOptions): Promise<void>`
 
 ```typescript
 interface OpenOptions {

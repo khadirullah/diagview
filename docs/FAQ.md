@@ -73,6 +73,9 @@ A: Use `data-diagview-layout` on individual diagram containers and call `init()`
 **Q: Can a keyboard user open a diagram with `layout: "off"`?**  
 A: Yes. `Tab` stops on the diagram and draws an outline in the accent colour. `Enter` or `Space` opens the viewer, and `Esc` closes it and puts focus back on the diagram. Links inside the diagram stay in the `Tab` order after it. See [Off](USAGE.md#off).
 
+**Q: Can the selector match the `<svg>` itself instead of a container?**  
+A: Yes. With `<svg class="diagram">` and the default selector, DiagView puts that SVG in a card with the toolbar, in the place where it stood. It keeps its id, classes, attributes and inline style, shows at its own size and fits a phone screen. `layout: "off"` puts the SVG itself in the `Tab` order. An `<svg>` drawn inside another SVG is part of that drawing and gets no toolbar. An empty `<svg>` waits until a script draws something in it. In React or another framework, keep such an SVG inside a container your component renders, as for any diagram element (see [Framework integration](USAGE.md#20-framework-integration)).
+
 **Q: My selector matches a diagram and the box around it. Do I get two toolbars?**  
 A: No. When one match sits inside another, the outer match gets the toolbar if it holds a single diagram, since it carries `data-title` and the `data-diagview-*` settings. If it holds two or more diagrams, each inner match keeps its own toolbar and the outer one gets none. Every match still counts in the share link numbering.
 

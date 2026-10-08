@@ -16,6 +16,7 @@ import {
   loadScript,
   getRobustDimensions,
   getDiagramTitle,
+  getDiagramSvg,
 } from "../core/utils.js";
 import { embedDocumentFonts } from "./export-fonts.js";
 import { cloneSVGForExportAsync, exportSecurity } from "../core/svg-clone.js";
@@ -78,7 +79,7 @@ export function generateFilename(svg, element) {
  * @returns {SVGSVGElement|null} The SVG, or null after showing the error toast
  */
 function resolveSourceSvg(sourceElement) {
-  const svg = sourceElement?.querySelector?.("svg") ?? null;
+  const svg = getDiagramSvg(sourceElement);
   if (!svg) showErrorToast("No diagram found");
   return svg;
 }
@@ -584,7 +585,7 @@ export async function renderToCanvas(
   transparent = false,
   opaque = false,
 ) {
-  const originalSvg = sourceElement.querySelector("svg");
+  const originalSvg = getDiagramSvg(sourceElement);
   if (!originalSvg) throw new Error("No SVG found");
 
   const style = window.getComputedStyle(originalSvg);
@@ -686,7 +687,7 @@ export async function renderToCanvas(
 
 /**
  * Export as SVG
- * @param {HTMLElement} sourceElement - Element containing SVG
+ * @param {HTMLElement|SVGSVGElement} sourceElement - Diagram element, or the diagram's <svg>
  * @param {ExportOptions} [options={}] - Reads filename, transparent, silent and modalClone
  * @returns {Promise<void>} Resolves when the download has started
  */
@@ -745,13 +746,13 @@ function downloadSVG(data, filename) {
 /**
  * Copy raw SVG vector markup directly to clipboard. When the clipboard is
  * unavailable or denies the write, the markup downloads as a .svg file.
- * @param {HTMLElement} sourceElement - Element containing SVG
+ * @param {HTMLElement|SVGSVGElement} sourceElement - Diagram element, or the diagram's <svg>
  * @param {ExportOptions} [options={}] - Reads filename and modalClone. filename names the
  *   download used when the clipboard is unavailable.
  * @returns {Promise<boolean|undefined>} True once the markup is copied or downloaded
  */
 export async function copySVGCode(sourceElement, options = {}) {
-  const originalSvg = sourceElement.querySelector("svg");
+  const originalSvg = getDiagramSvg(sourceElement);
   if (!originalSvg) return showErrorToast("No SVG found");
 
   try {
@@ -921,7 +922,7 @@ async function processImageExport(
 
 /**
  * Export as PNG
- * @param {HTMLElement} sourceElement - Element containing SVG
+ * @param {HTMLElement|SVGSVGElement} sourceElement - Diagram element, or the diagram's <svg>
  * @param {ExportOptions} [options={}] - Reads filename, transparent, silent and modalClone
  * @returns {Promise<void>} Resolves when the download has started
  */
@@ -942,7 +943,7 @@ export async function exportToPNG(sourceElement, options = {}) {
 
 /**
  * Export as JPEG
- * @param {HTMLElement} sourceElement - Element containing SVG
+ * @param {HTMLElement|SVGSVGElement} sourceElement - Diagram element, or the diagram's <svg>
  * @param {ExportOptions} [options={}] - Reads filename, transparent, silent and modalClone
  * @returns {Promise<void>} Resolves when the download has started
  */
@@ -963,7 +964,7 @@ export async function exportToJPEG(sourceElement, options = {}) {
 
 /**
  * Export as WebP
- * @param {HTMLElement} sourceElement - Element containing SVG
+ * @param {HTMLElement|SVGSVGElement} sourceElement - Diagram element, or the diagram's <svg>
  * @param {ExportOptions} [options={}] - Reads filename, transparent, silent and modalClone
  * @returns {Promise<void>} Resolves when the download has started
  */
@@ -984,7 +985,7 @@ export async function exportToWebP(sourceElement, options = {}) {
 
 /**
  * Copy to Clipboard (PNG)
- * @param {HTMLElement} sourceElement - Element containing SVG
+ * @param {HTMLElement|SVGSVGElement} sourceElement - Diagram element, or the diagram's <svg>
  * @param {ExportOptions} [options={}] - Reads filename, silent and modalClone. filename names
  *   the download used when the clipboard is unavailable.
  * @returns {Promise<void>} Resolves when the image is copied or downloaded
@@ -1006,7 +1007,7 @@ export async function copyToClipboard(sourceElement, options = {}) {
 
 /**
  * Export as PDF
- * @param {HTMLElement} sourceElement - Element containing SVG
+ * @param {HTMLElement|SVGSVGElement} sourceElement - Diagram element, or the diagram's <svg>
  * @param {ExportOptions} [options={}] - Reads filename, transparent, silent and modalClone.
  *   PDF has no transparency, so transparent only shows a warning.
  * @returns {Promise<void>} Resolves when the download has started
@@ -1070,7 +1071,7 @@ async function savePDF(sourceElement, filename, { transparent, modalClone, silen
 
 /**
  * Main Export Handler
- * @param {HTMLElement} sourceElement - Element containing SVG
+ * @param {HTMLElement|SVGSVGElement} sourceElement - Diagram element, or the diagram's <svg>
  * @param {ExportMode} mode - Export format. An unknown mode exports PNG.
  * @param {ExportOptions|SVGSVGElement|null} [options={}] - Reads filename, transparent,
  *   silent and modalClone. silent hides the progress and JPEG notices for png, jpeg, webp
@@ -1092,7 +1093,7 @@ export async function exportDiagram(sourceElement, mode, options = {}) {
   const modalClone = options.modalClone || null;
   let isTransparent = options.transparent || false;
 
-  const svg = sourceElement.querySelector("svg");
+  const svg = getDiagramSvg(sourceElement);
   if (!svg) {
     showErrorToast("No diagram found");
     return false;

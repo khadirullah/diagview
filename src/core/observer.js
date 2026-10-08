@@ -6,7 +6,13 @@
 
 import { state } from "./config.js";
 import { TIMING } from "./constants.js";
-import { debounce, safeQuerySelectorAll, stripDiagViewParams } from "./utils.js";
+import {
+  debounce,
+  getDiagramSvg,
+  hasDrawnContent,
+  safeQuerySelectorAll,
+  stripDiagViewParams,
+} from "./utils.js";
 import {
   initializeDiagram,
   deinitializeDiagram,
@@ -58,7 +64,7 @@ export function checkShareLink() {
   if (result) {
     // Found a target diagram! Check if it's "ready" (has an SVG)
     // If the website is lazy-loading the SVG itself, we must wait for it.
-    if (!result.diagram.querySelector("svg")) {
+    if (!getDiagramSvg(result.diagram)) {
       return; // Keep hasCheckedShareLink = false to try again on next mutation
     }
 
@@ -155,7 +161,7 @@ function skipNestedDiagrams(diagrams, selector) {
       const inner = safeQuerySelectorAll(selector, outer);
       // Count SVGs, not matches. In .diagram > .chart > .mermaid every level
       // holds the same single SVG.
-      many = new Set(inner.map((el) => el.querySelector("svg")).filter(Boolean)).size > 1;
+      many = new Set(inner.map(getDiagramSvg).filter(Boolean)).size > 1;
       groups.set(outer, many);
       if (many) inner.forEach(add);
     }
@@ -215,8 +221,10 @@ export function processDiagrams(root = document) {
     }
     diagram.dataset.diagviewIndex = String(index);
 
-    // Check if diagram is ready (has SVG) and not already initialized
-    const hasSvg = diagram.querySelector("svg");
+    // Check if diagram is ready (has SVG) and not already initialized. An
+    // <svg> matched by the selector waits until something is drawn in it.
+    const svg = getDiagramSvg(diagram);
+    const hasSvg = svg && (svg !== diagram || hasDrawnContent(svg));
     const isInitialized = diagram.dataset.diagviewInit;
 
     if (hasSvg && !isInitialized) {

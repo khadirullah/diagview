@@ -154,6 +154,38 @@ describe("Observer Module", () => {
     expect(recheckDiagram).toHaveBeenCalledWith(div);
   });
 
+  test("an svg the selector matches is set up itself", () => {
+    document.body.innerHTML =
+      '<svg class="diagram" id="bare" xmlns="http://www.w3.org/2000/svg"><rect width="1" height="1"/></svg>';
+
+    observeDiagrams();
+
+    expect(initializeDiagram).toHaveBeenCalledWith(document.getElementById("bare"), 0);
+  });
+
+  test("an empty svg the selector matches waits until something is drawn in it", async () => {
+    document.body.innerHTML =
+      '<svg class="diagram" id="late" xmlns="http://www.w3.org/2000/svg"></svg>';
+    const svg = document.getElementById("late");
+
+    observeDiagrams();
+    expect(initializeDiagram).not.toHaveBeenCalled();
+
+    svg.innerHTML = '<rect width="1" height="1"/>';
+    await wait(200);
+
+    expect(initializeDiagram).toHaveBeenCalledWith(svg, 0);
+  });
+
+  test("an svg drawn inside another svg is part of that drawing, not a diagram", () => {
+    document.body.innerHTML =
+      '<svg xmlns="http://www.w3.org/2000/svg"><svg class="diagram"><rect width="1" height="1"/></svg></svg>';
+
+    observeDiagrams();
+
+    expect(initializeDiagram).not.toHaveBeenCalled();
+  });
+
   test("stopObserving disconnects the observer", () => {
     observeDiagrams();
     const observer = state.observer;
@@ -337,6 +369,15 @@ describe("Observer Module: matches inside other matches", () => {
     expect(deinitializeDiagram).toHaveBeenCalledWith($("a"));
     expect(setUp()).toEqual(["a", "b", "outer"]);
     expect($("a").dataset.diagviewIndex).toBe("1");
+  });
+
+  test("a match around a matched svg keeps the only toolbar", () => {
+    document.body.innerHTML =
+      '<div class="diagram" id="outer"><svg class="mermaid" id="inner"><rect/></svg></div>';
+
+    observeDiagrams();
+
+    expect(setUp()).toEqual(["outer"]);
   });
 
   test("an SVG rendered later into an inner match sets up the outer one", async () => {

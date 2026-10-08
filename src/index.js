@@ -357,7 +357,7 @@ const DiagView = {
 
   /**
    * Open a diagram in fullscreen programmatically.
-   * @param {HTMLElement} element - Diagram container
+   * @param {HTMLElement|SVGSVGElement} element - Diagram container, or the diagram's <svg>
    * @param {{zoom?: number, searchQuery?: string}} [options]
    */
   openFullscreen,

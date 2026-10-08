@@ -223,6 +223,9 @@ async function exporting(): Promise<void> {
   await exportToPDF(el, { filename: "report" });
   await copyToClipboard(el);
   await DiagView.exportToPNG(el, opts);
+  // The selector can match the <svg> itself
+  await exportDiagram(svg, "svg");
+  await exportToPNG(svg);
   // @ts-expect-error the element is required
   await exportToPNG();
 }
@@ -234,6 +237,8 @@ async function modal(): Promise<void> {
   await openFullscreen(el, { zoom: 2.5 });
   await openFullscreen(el, { searchQuery: "database" });
   await DiagView.openFullscreen(el, { zoom: 1.5, searchQuery: "auth" });
+  await openFullscreen(svg);
+  await DiagView.openFullscreen(svg, { zoom: 2 });
   // @ts-expect-error zoom is a number
   await openFullscreen(el, { zoom: "2" });
   await closeModal();

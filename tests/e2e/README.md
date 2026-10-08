@@ -66,8 +66,9 @@ build. Set `E2E_PORT` to use a port other than 9340.
 | `verify-diagram-size.spec.mjs`        | 15     | diagrams keep their own size, centred in any wrapper, wide or viewBox-only SVGs fill a card, tall ones keep their height, a short one's card hugs it over the floating toolbar, captions sit under, phones fit all, a page rule widens all or some, `--dv-max-height` caps height, fullscreen ignores it  |
 | `verify-search-lines.spec.mjs`        | 11     | a phrase across a line break finds Mermaid 12 and 11 HTML labels with `<br>`, Mermaid 12 plain SVG rows, a wrapped timeline event, a sequence note and message drawn as one text per line, and Graphviz node and edge labels, while one-line labels match as before and the joined lines do not           |
 | `verify-mermaid-errors.spec.mjs`      | 9      | the error box shows Mermaid 12's parser message, 11 and 10 give none, the box fits a phone inside `<pre>`, a Mermaid 12, 11 or 10 diagram fixed in place gets its toolbar, one that breaks shows the error box, also in the viewer, and `destroy()` and `init()` leave one toolbar                        |
+| `verify-bare-svg.spec.mjs`            | 9      | an `<svg>` the selector matches gets a card and toolbar where it stood, keeps its attributes and own size, fits a phone, opens fullscreen, searches, downloads a PNG named after its title, takes focus with layout "off", one inside another SVG is left alone, an empty one waits, destroy restores it  |
 
-That is 269 checks per browser.
+That is 278 checks per browser.
 
 `verify-react-strictmode` loads React from unpkg, and `verify-fixes` and
 `verify-mermaid-errors` load Mermaid from jsdelivr, so these three need
@@ -75,9 +76,10 @@ network access. Set `DV_CDN=<version>` (e.g. `DV_CDN=1.0.11`) to run
 `verify-react-strictmode` and `verify-fixes` against a published build
 instead of the local one. The other suites run offline.
 `verify-export-search`, `verify-search-export`, `verify-readable-text`,
-`verify-image-handler`, `verify-diagram-size`, `verify-search-lines` and
-`verify-mermaid-errors` inject the build themselves. Set
-`DV_DIST=/path/to/diagview.umd.js` to test another build with those seven.
+`verify-image-handler`, `verify-diagram-size`, `verify-search-lines`,
+`verify-mermaid-errors` and `verify-bare-svg` inject the build themselves.
+Set `DV_DIST=/path/to/diagview.umd.js` to test another build with those
+eight.
 
 `repro.html` is the shared test page: a 2000x1200 labelled grid SVG (cells
 A1 to J6, 200 units each) so any viewport centre measurement maps to a

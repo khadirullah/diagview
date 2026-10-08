@@ -6,7 +6,7 @@
 
 import { state } from "../../core/config.js";
 import { addModalListener } from "../../core/lifecycle.js";
-import { getClientCTM, getRobustDimensions } from "../../core/utils.js";
+import { getClientCTM, getDiagramSvg, getRobustDimensions } from "../../core/utils.js";
 
 // Stores the cleanup fn for the minimap click and window resize handlers so
 // they can be removed on modal close without duplicating handlers across frames
@@ -326,7 +326,7 @@ export function updateMinimap(clone, viewport, panzoom) {
       console.warn("DiagView: No active source element for minimap source");
       return;
     }
-    const originalSvg = originalContainer?.querySelector("svg");
+    const originalSvg = getDiagramSvg(originalContainer);
 
     if (!originalSvg) {
       console.warn("DiagView: Original SVG not found for minimap source");

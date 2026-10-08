@@ -11,6 +11,8 @@ import {
   generateUniqueId,
   setSVGContent,
   getDiagramTitle,
+  getDiagramSvg,
+  hasDrawnContent,
   removeEmptyAttr,
   sanitizeSVG,
 } from "../core/utils.js";
@@ -40,8 +42,7 @@ function isValidSvg(svg) {
   if (svg.querySelector("parsererror")) return false;
 
   // 2. Check if SVG has any visible structural content
-  const hasContent = svg.querySelector("g, path, rect, circle, text, line, polygon, polyline");
-  if (!hasContent) return false;
+  if (!hasDrawnContent(svg)) return false;
 
   // 3. Check for specific error indicators from popular libraries (like Mermaid).
   // Only match library-specific error elements — NOT the generic ".error" class which
@@ -191,11 +192,13 @@ function showErrorBoundary(element, svg) {
     errorDiv.appendChild(detailDiv);
   }
 
-  // Replace content or append
+  // Replace content or append. An <svg> matched by the selector cannot hold
+  // the HTML box, so it goes right after it.
   if (svg) {
     svg.style.display = "none";
   }
-  element.appendChild(errorDiv);
+  if (svg === element) element.after(errorDiv);
+  else element.appendChild(errorDiv);
 
   // Fire onError callback if configured (A2: was documented but never called)
   if (state.config.onError) {
@@ -290,7 +293,7 @@ function readElementOverrides(element) {
  * @param {number} [precalculatedIndex=-1] - Optional index to avoid global DOM query
  */
 export function initializeDiagram(element, precalculatedIndex = -1) {
-  const svg = element?.querySelector("svg");
+  const svg = getDiagramSvg(element);
   if (element.dataset.diagviewInit) return;
 
   element.dataset.diagviewInit = "1";
@@ -540,6 +543,8 @@ export function deinitializeAllDiagrams() {
  * @returns {SVGSVGElement|undefined} The SVG, if there is one
  */
 function findDiagramSvg(element) {
+  const own = getDiagramSvg(element);
+  if (own === element) return own;
   return Array.from(element.querySelectorAll("svg")).find(
     (candidate) => !candidate.closest(".diagview-error"),
   );

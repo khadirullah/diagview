@@ -5,6 +5,8 @@ import {
   sanitizeFilename,
   getClientCTM,
   loadScript,
+  getDiagramSvg,
+  hasDrawnContent,
 } from "../src/core/utils.js";
 
 describe("Utils API", () => {
@@ -300,5 +302,52 @@ describe("loadScript", () => {
     document.head.querySelector('script[src="https://example.test/quick.js"]').onload();
     await expect(result).resolves.toBeUndefined();
     expect(jest.getTimerCount()).toBe(0);
+  });
+});
+
+describe("getDiagramSvg", () => {
+  afterEach(() => {
+    document.body.innerHTML = "";
+  });
+
+  test("finds the first svg inside a container", () => {
+    document.body.innerHTML = '<div id="box"><svg id="first"></svg><svg></svg></div>';
+    expect(getDiagramSvg(document.getElementById("box")).id).toBe("first");
+  });
+
+  test("returns an svg the selector matched itself, even with an svg inside it", () => {
+    document.body.innerHTML = '<svg id="outer"><svg id="inner"></svg></svg>';
+    expect(getDiagramSvg(document.getElementById("outer")).id).toBe("outer");
+  });
+
+  test("an svg inside another svg has no diagram of its own", () => {
+    document.body.innerHTML = '<svg><g><svg id="inner"></svg></g></svg>';
+    expect(getDiagramSvg(document.getElementById("inner"))).toBeNull();
+  });
+
+  test("an svg in HTML inside a foreignObject is a diagram again", () => {
+    document.body.innerHTML =
+      '<svg><foreignObject><div><svg id="deep"></svg></div></foreignObject></svg>';
+    expect(getDiagramSvg(document.getElementById("deep")).id).toBe("deep");
+  });
+
+  test("an element with no svg, or none at all, gives null", () => {
+    document.body.innerHTML = '<div id="empty"></div>';
+    expect(getDiagramSvg(document.getElementById("empty"))).toBeNull();
+    expect(getDiagramSvg(null)).toBeNull();
+  });
+});
+
+describe("hasDrawnContent", () => {
+  test("is false for an empty svg or one with only defs and style", () => {
+    document.body.innerHTML =
+      '<svg id="a"></svg><svg id="b"><defs></defs><style>text{}</style></svg>';
+    expect(hasDrawnContent(document.getElementById("a"))).toBe(false);
+    expect(hasDrawnContent(document.getElementById("b"))).toBe(false);
+  });
+
+  test("is true once a shape, text or group is drawn", () => {
+    document.body.innerHTML = '<svg id="a"><text>Hi</text></svg>';
+    expect(hasDrawnContent(document.getElementById("a"))).toBe(true);
   });
 });
