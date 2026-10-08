@@ -42,15 +42,16 @@ const topOf = (sel) =>
   page.evaluate((s) => document.querySelector(s).getBoundingClientRect().top, sel);
 
 test("a link to a part of the diagram lands on the page's copy of it", async () => {
-  // Start below the diagram. Chromium puts the part at the top of the
-  // window and Firefox the whole diagram, so check that it is in view.
+  // Start below the diagram, which is taller than the window. Firefox
+  // scrolls to the top of the SVG on its own, so the part was off screen.
   await clickInViewer("node2", 2000);
   expect(await page.evaluate(() => location.hash)).toBe("#node2");
   const box = await page.evaluate(() => {
     const r = document.getElementById("node2").getBoundingClientRect();
     return { top: r.top, bottom: r.bottom, height: window.innerHeight };
   });
-  expect(box.top).toBeGreaterThanOrEqual(0);
+  expect(box.top).toBeGreaterThanOrEqual(-1);
+  expect(box.top).toBeLessThanOrEqual(1);
   expect(box.bottom).toBeLessThanOrEqual(box.height);
 });
 
@@ -64,4 +65,18 @@ test("the same link again still scrolls, though the address already has it", asy
   await clickInViewer("details");
   expect(await page.evaluate(() => location.hash)).toBe("#details");
   expect(Math.abs(await topOf("#details"))).toBeLessThan(5);
+});
+
+test("a part of the diagram lands under the page's scroll-padding", async () => {
+  // A page with a sticky header sets scroll-padding-top to keep targets
+  // out from under it
+  await page.evaluate(() => {
+    history.replaceState(null, "", location.pathname);
+    document.documentElement.style.scrollPaddingTop = "60px";
+  });
+  await clickInViewer("node2", 2000);
+  const top = await topOf("#node2");
+  await page.evaluate(() => (document.documentElement.style.scrollPaddingTop = ""));
+  expect(top).toBeGreaterThanOrEqual(59);
+  expect(top).toBeLessThanOrEqual(61);
 });

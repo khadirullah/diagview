@@ -835,7 +835,17 @@ function _wireModalEvents(elements, viewport) {
       await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
     }
     // Setting the hash the address already has does not scroll
-    if (location.hash === "#" + id) document.getElementById(id)?.scrollIntoView();
+    const target = document.getElementById(id);
+    if (location.hash === "#" + id) target?.scrollIntoView();
     else location.hash = id;
+    // For a part inside an SVG, Firefox scrolls to the top of the SVG, which
+    // leaves the part off screen in a diagram taller than the window
+    if (target?.ownerSVGElement) {
+      const box = target.getBoundingClientRect();
+      if (box.top < 0 || box.bottom > window.innerHeight) {
+        const pad = parseFloat(getComputedStyle(document.documentElement).scrollPaddingTop) || 0;
+        window.scrollBy(0, box.top - pad);
+      }
+    }
   });
 }
