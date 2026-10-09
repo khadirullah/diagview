@@ -21,6 +21,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 - **Less Padding Around Diagrams on Phones.** Below 640px the card has 12px of padding above and below the diagram instead of 24px, so a short diagram takes less of a small screen. Desktop cards keep 24px.
 - **Bigger Toolbar Buttons on Touch Screens.** The copy, download and fullscreen buttons on the page were 36px in the floating layout and 34px in the header layout, smaller than a fingertip. Touch screens now show them at 44px in both layouts, still in one row on a 320px phone. Desktop sizes do not change.
 - **Mermaid Example Uses Mermaid 12.** The Mermaid example in the usage guide imports mermaid@12 as an ES module instead of loading mermaid@10 with a script tag. A module script runs after the page has parsed, so the example no longer waits for `DOMContentLoaded`.
+- **Wide Diagrams Use the Full Card Width.** The card had 24px of padding at each side, or 12px on a phone, so a Mermaid diagram drawn 100% wide showed about 8% smaller than with `layout: "off"`. On a 595px blog column it was 545px wide. The card now has padding only above and below, so such a diagram is as wide as the column less the card's 1px border. A narrow diagram stays centred as before. To add room at the sides, set `--dv-card-padding`, for example `.diagview-wrapper { --dv-card-padding: 24px; }`.
 
 ### Fixed
 
