@@ -304,6 +304,15 @@ A: With the `floating` or `header` layout, DiagView moves the diagram element in
 **Q: In development, DiagView stops working after the first render (React StrictMode / hot reload).**  
 A: `init()` queues behind an in-flight `destroy()`, which is the sequence StrictMode produces, so the `useEffect` cleanup-then-setup cycle needs no special handling. Call `destroy()` in the cleanup and `init()` in the effect body, as shown in [USAGE](USAGE.md#20-framework-integration).
 
+**Q: I called `destroy()` and then `init()` from the console, and the diagrams got no toolbar.**  
+A: `destroy()` resets every option to its default, `diagramSelector` included. A page that set its own selector, such as `.mermaid`, then has no diagram that matches `.diagram, .chart, [data-diagram]`. DiagView logs a warning that names both selectors. Save the options before `destroy()` and pass them back:
+
+```javascript
+const options = DiagView.getConfiguration();
+await DiagView.destroy();
+DiagView.init(options);
+```
+
 **Q: My editor draws the diagram again as I type. Does the toolbar follow?**  
 A: Yes. When a new SVG arrives in a diagram element, DiagView checks it again. A diagram that had a syntax error and now draws gets its toolbar, and one that breaks shows the error placeholder instead of its toolbar. A working diagram that gets another valid SVG keeps its toolbar. No `refresh()` is needed. See [Drawing a diagram again](USAGE.md#drawing-a-diagram-again).
 

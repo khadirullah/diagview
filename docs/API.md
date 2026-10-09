@@ -50,6 +50,14 @@ await DiagView.destroy();
 DiagView.init({ layout: "floating" });
 ```
 
+`destroy()` resets the options, so `init()` with no options afterward starts from the defaults. On a page that set its own `diagramSelector`, that `init()` looks for `.diagram, .chart, [data-diagram]` and finds none of the page's diagrams. DiagView logs a warning in that case. To start again with the same options, save them before `destroy()`:
+
+```javascript
+const options = DiagView.getConfiguration();
+await DiagView.destroy();
+DiagView.init(options);
+```
+
 Calling `destroy()` again while a teardown is in flight returns the same promise rather than starting a second teardown. Calling `init()` during that window is also safe; see `init()` above.
 
 ---

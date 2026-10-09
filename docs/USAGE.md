@@ -910,6 +910,14 @@ DiagView.init({ layout: "header", accentColor: "#ff6b6b" });
 
 `destroy()` returns every diagram to its pre-init state: wrappers and toolbars are removed, the `data-diagview-*` attributes DiagView added, the `dv-svg-content` class, inline styles, click handlers, error placeholders and the `--dv-*` variables on `<html>` are all cleared, in every layout and in shadow roots as well. If nothing had focus when the viewer opened, closing it focuses the diagram and gives it `tabindex="-1"` until focus leaves. `destroy()` removes that too, and the `tabindex`, `role` and `aria-label` a diagram with `layout: "off"` gets. A `tabindex`, `role` or `aria-label` the page set itself stays. A `style` or `class` attribute that DiagView added and then emptied is removed, so `<html>`, `<body>`, the diagram and its SVG get their original markup back. This holds when `destroy()` runs with the viewer open as well. Attributes the page wrote itself stay, even empty ones. The one trace left is the `diagview-canvas-hint-shown` key in `localStorage`, so the theme hint does not show again after the next `init()`. The next `init()` therefore applies its own options to all diagrams again. `destroy()` also resets the configuration to the defaults, the Canvas Theme to Auto and Text Colours to Original.
 
+Because of that reset, an `init()` with no options after `destroy()` uses the default `diagramSelector`. A page that set its own selector, such as `.mermaid`, then gets no toolbars, and DiagView logs a warning that names both selectors. Pass the options again, or save them with `getConfiguration()` before `destroy()`:
+
+```javascript
+const options = DiagView.getConfiguration();
+await DiagView.destroy();
+DiagView.init(options);
+```
+
 ---
 
 ## 19. Callbacks

@@ -193,6 +193,44 @@ describe("DiagView Lifecycle", () => {
     expect(detectTheme().accent).toBe("#10b981");
   });
 
+  test("init() after destroy() warns when it leaves out the page's selector", async () => {
+    init({ diagramSelector: ".custom-mermaid" });
+    await destroy();
+    init();
+    expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('not ".custom-mermaid"'));
+
+    // Only the first init() after that destroy() warns
+    warnSpy.mockClear();
+    await destroy();
+    init();
+    expect(warnSpy).not.toHaveBeenCalled();
+  });
+
+  test("init() after destroy() does not warn with the selector or the saved options", async () => {
+    init({ diagramSelector: ".custom-mermaid", layout: "off", offHint: "icon" });
+    const saved = DiagView.getConfiguration();
+    await destroy();
+    init(saved);
+    expect(state.config.diagramSelector).toBe(".custom-mermaid");
+    expect(state.config.offHint).toBe("icon");
+
+    await destroy();
+    init({ diagramSelector: ".custom-mermaid" });
+    expect(warnSpy).not.toHaveBeenCalled();
+  });
+
+  test("init() after destroy() does not warn when the page used the default selector", async () => {
+    // Start after a destroy() of an instance that used the default selector
+    init();
+    await destroy();
+    warnSpy.mockClear();
+
+    init({ layout: "header" });
+    await destroy();
+    init();
+    expect(warnSpy).not.toHaveBeenCalled();
+  });
+
   test("destroy() before init() warns and returns early", async () => {
     expect(state.isInitialized).toBe(false);
 

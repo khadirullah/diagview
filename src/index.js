@@ -68,6 +68,11 @@ let autoStarted = false;
 /** @type {Promise<void>|null} */
 let pendingDestroy = null;
 
+// The diagramSelector in use when destroy() last ran. destroy() resets the
+// options, so an init() with no selector after it looks for the default one.
+/** @type {string|null} */
+let lastSelector = null;
+
 /**
  * Initialize DiagView
  *
@@ -120,6 +125,14 @@ function init(options = {}) {
   updateConfig(options);
   clearThemeCache(); // a new config must not reuse the previous theme
 
+  const { diagramSelector } = state.config;
+  if (lastSelector && lastSelector !== diagramSelector && options?.diagramSelector == null) {
+    console.warn(
+      `DiagView: destroy() reset the options, so init() looks for diagrams with "${diagramSelector}", not "${lastSelector}". To keep your options, save getConfiguration() before destroy() and pass it to init().`,
+    );
+  }
+  lastSelector = null;
+
   // Initialize components
   injectStyles();
   createModal();
@@ -170,6 +183,7 @@ function destroy() {
  * @private
  */
 async function _teardown() {
+  lastSelector = state.config.diagramSelector;
   // Everything below runs inside try/finally: whatever a single step does,
   // the DOM we own is removed and the state is reset, so a later init() is
   // never refused with "Already initialized" because of a failed destroy().
