@@ -187,7 +187,7 @@ DiagView.init({ layout: "floating" });
 
 ### Header
 
-A full-width toolbar with the diagram title sits above the diagram. With a mouse or trackpad it appears when the pointer is over the diagram or keyboard focus is inside it. On touch screens it is always shown, with 44px buttons.
+A full-width toolbar with the diagram title sits above the diagram. The title comes from `data-title`, the SVG's `<title>` (Mermaid `accTitle`) or a Mermaid chart `title`, in that order, and reads "DIAGRAM" when there is none. Export file names use the same title. With a mouse or trackpad it appears when the pointer is over the diagram or keyboard focus is inside it. On touch screens it is always shown, with 44px buttons.
 
 ```javascript
 DiagView.init({ layout: "header" });

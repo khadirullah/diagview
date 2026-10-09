@@ -56,14 +56,8 @@ export function generateFilename(svg, element) {
   // outer element, not the inner match next to the SVG.
   const owner =
     svg.closest("[data-diagview-init]") || element?.closest?.("[data-diagview-index]") || undefined;
-  // The data-title or the SVG's own <title> first, then a title drawn on the
-  // diagram. Mermaid draws one as text.titleText, or with the chart type in
-  // front, such as flowchartTitleText.
-  const rawTitle =
-    getDiagramTitle(svg, owner) ||
-    svg.querySelector('text.title, text.titleText, text[class$="TitleText"], text.diagview-title')
-      ?.textContent ||
-    "diagram";
+  // The same title the header shows
+  const rawTitle = getDiagramTitle(svg, owner) || "diagram";
 
   const cleanTitle = sanitizeFilename(rawTitle, "diagram");
   const finalName = cleanTitle === "diagram" ? "diagram_export" : cleanTitle;

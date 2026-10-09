@@ -41,6 +41,9 @@ A: Auto-init is deferred one task after the library loads, so an `init()` that r
 **Q: How do I hide the controls?**  
 A: Use `layout: 'off'`. Clicking the diagram opens fullscreen.
 
+**Q: Why does the header say "DIAGRAM"?**  
+A: The diagram has no title DiagView can find. It looks at `data-title` on the diagram element, then a `<title>` directly inside the `<svg>` (Mermaid writes `accTitle` there), then a Mermaid chart `title`. Export file names come from the same places. DiagView finds the drawn Mermaid title of flowcharts and class, state, ER, requirement, pie, Gantt and git diagrams. For other types, such as sequence, journey, timeline or C4 diagrams, set a `data-title` or an `accTitle`. A `<figcaption>` does not count, since the page already shows it under the diagram. See [Header](USAGE.md#header).
+
 **Q: How do I make controls always visible on desktop?**  
 A: There is no option for this. With a mouse or trackpad, DiagView shows the inline controls on hover or keyboard focus. On touch screens they are always shown. To keep them visible everywhere, add this CSS. It works for the header and floating layouts:
 

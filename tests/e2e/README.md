@@ -69,19 +69,20 @@ build. Set `E2E_PORT` to use a port other than 9340.
 | `verify-mermaid-errors.spec.mjs`      | 9      | the error box shows Mermaid 12's parser message, 11 and 10 give none, the box fits a phone inside `<pre>`, a Mermaid 12, 11 or 10 diagram fixed in place gets its toolbar, one that breaks shows the error box, also in the viewer, and `destroy()` and `init()` leave one toolbar                                                                                                                                                  |
 | `verify-bare-svg.spec.mjs`            | 9      | an `<svg>` the selector matches gets a card and toolbar where it stood, keeps its attributes and own size, fits a phone, opens fullscreen, searches, downloads a PNG named after its title, takes focus with layout "off", one inside another SVG is left alone, an empty one waits, destroy restores it                                                                                                                            |
 | `verify-search-pan.spec.mjs`          | 8      | at zoom 4 a typed query with every match off screen pans the nearest to the middle, keeping the zoom, a match in view keeps the view, Enter and Shift+Enter step in reading order with a thicker current outline, also at 90 degrees, on a Mermaid label, with reduced motion and on a phone                                                                                                                                        |
+| `verify-header-title.spec.mjs`        | 12     | the header title on Mermaid 11 and 12 comes from data-title, then accTitle, then the chart title, export files take the same name, a diagram with none reads DIAGRAM, Graphviz shape tooltips, a node label, a picture in an HTML label and a figure caption do not count, markup stays text, and a long title ends in an ellipsis and shows whole on hover                                                                         |
 
-That is 302 checks per browser.
+That is 314 checks per browser.
 
-`verify-react-strictmode` loads React from unpkg, and `verify-fixes` and
-`verify-mermaid-errors` load Mermaid from jsdelivr, so these three need
-network access. Set `DV_CDN=<version>` (e.g. `DV_CDN=1.0.11`) to run
-`verify-react-strictmode` and `verify-fixes` against a published build
-instead of the local one. The other suites run offline.
-`verify-export-search`, `verify-search-export`, `verify-readable-text`,
+`verify-react-strictmode` loads React from unpkg, and `verify-fixes`,
+`verify-mermaid-errors` and `verify-header-title` load Mermaid from
+jsdelivr, so these four need network access. Set `DV_CDN=<version>`
+(e.g. `DV_CDN=1.0.11`) to run `verify-react-strictmode` and `verify-fixes`
+against a published build instead of the local one. The other suites run
+offline. `verify-export-search`, `verify-search-export`, `verify-readable-text`,
 `verify-image-handler`, `verify-diagram-size`, `verify-search-lines`,
-`verify-mermaid-errors`, `verify-bare-svg` and `verify-off-hint` inject the
-build themselves. Set `DV_DIST=/path/to/diagview.umd.js` to test another
-build with those nine.
+`verify-mermaid-errors`, `verify-bare-svg`, `verify-off-hint` and
+`verify-header-title` inject the build themselves. Set
+`DV_DIST=/path/to/diagview.umd.js` to test another build with those ten.
 
 `repro.html` is the shared test page: a 2000x1200 labelled grid SVG (cells
 A1 to J6, 200 units each) so any viewport centre measurement maps to a

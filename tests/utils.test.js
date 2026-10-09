@@ -7,6 +7,7 @@ import {
   loadScript,
   getDiagramSvg,
   hasDrawnContent,
+  getDiagramTitle,
 } from "../src/core/utils.js";
 
 describe("Utils API", () => {
@@ -349,5 +350,65 @@ describe("hasDrawnContent", () => {
   test("is true once a shape, text or group is drawn", () => {
     document.body.innerHTML = '<svg id="a"><text>Hi</text></svg>';
     expect(hasDrawnContent(document.getElementById("a"))).toBe(true);
+  });
+});
+
+describe("getDiagramTitle", () => {
+  const NS = 'xmlns="http://www.w3.org/2000/svg"';
+  const title = (html) => {
+    document.body.innerHTML = html;
+    return getDiagramTitle(document.querySelector("svg"));
+  };
+
+  test("data-title, then the svg's own <title>, then a drawn title", () => {
+    const svg = (attrs) =>
+      `<div data-diagview-index="0" ${attrs}><svg ${NS}><title>Checkout</title><text class="flowchartTitleText">Order flow</text></svg></div>`;
+    expect(title(svg('data-title="Payments"'))).toBe("Payments");
+    expect(title(svg(""))).toBe("Checkout");
+    expect(
+      title(
+        `<div data-diagview-index="0"><svg ${NS}><text class="flowchartTitleText">Order flow</text></svg></div>`,
+      ),
+    ).toBe("Order flow");
+  });
+
+  test.each([
+    ["Gantt", '<text class="titleText">Release plan</text>'],
+    ["git", '<text class="gitTitleText">Release plan</text>'],
+    ["pie", '<g><path/><text class="pieTitleText">Release plan</text></g>'],
+    ["plain", '<text class="title">Release plan</text>'],
+  ])("a %s chart title drawn on the diagram names it", (_, drawn) => {
+    expect(title(`<svg ${NS}><rect/>${drawn}</svg>`)).toBe("Release plan");
+  });
+
+  test("text deeper in the diagram does not name it", () => {
+    expect(
+      title(
+        `<svg ${NS}><g><g><text class="title">Cart</text></g></g><g><svg><text class="titleText">Logo</text></svg></g></svg>`,
+      ),
+    ).toBe("");
+  });
+
+  test("runs of spaces and line breaks read as one space", () => {
+    expect(
+      title(`<div data-diagview-index="0" data-title=" Order\n  flow "><svg ${NS}/></div>`),
+    ).toBe("Order flow");
+    expect(title(`<svg ${NS}><text class="titleText">  Order\n   flow </text></svg>`)).toBe(
+      "Order flow",
+    );
+  });
+
+  test("an svg the selector matches itself carries its own data-title", () => {
+    document.body.innerHTML = `<svg ${NS} data-diagview-index="0" data-title="Payments"><title>Checkout</title></svg>`;
+    const svg = document.querySelector("svg");
+    expect(getDiagramTitle(svg)).toBe("Payments");
+    expect(getDiagramTitle(svg, svg)).toBe("Payments");
+  });
+
+  test("with no svg only the data-title counts", () => {
+    const el = document.createElement("div");
+    expect(getDiagramTitle(null, el)).toBe("");
+    el.setAttribute("data-title", "Payments");
+    expect(getDiagramTitle(null, el)).toBe("Payments");
   });
 });

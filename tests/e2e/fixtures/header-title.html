@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DiagView header titles</title>
+<style>body{font-family:sans-serif;margin:0 auto;padding:16px;max-width:760px;background:#fff;color:#1e293b}</style>
+</head>
+<body>
+<!--
+  Where the header title comes from. The suite renders the .mermaid blocks
+  with Mermaid 11 and 12 from jsdelivr, then sets DiagView up on
+  ".diagram, .mermaid" with the header layout.
+-->
+
+<!-- 1. Mermaid chart title -->
+<pre class="mermaid" id="m-title">---
+title: Order flow
+---
+flowchart LR
+  A[Cart] --> B[Pay]</pre>
+
+<!-- 2. accTitle and a chart title: accTitle comes first -->
+<pre class="mermaid" id="m-acc">---
+title: Order flow
+---
+flowchart LR
+  accTitle: Checkout steps
+  accDescr: Cart, then payment
+  A[Cart] --> B[Pay]</pre>
+
+<!-- 3. No title of any kind -->
+<pre class="mermaid" id="m-plain">sequenceDiagram
+  Alice->>Bob: Hello</pre>
+
+<!-- 4. Pie chart title -->
+<pre class="mermaid" id="m-pie">pie title Pets
+  "Dogs" : 3
+  "Cats" : 2</pre>
+
+<!-- 5. data-title wins over everything -->
+<pre class="mermaid" id="m-data" data-title="Payments">---
+title: Order flow
+---
+flowchart LR
+  accTitle: Checkout steps
+  A[Cart] --> B[Pay]</pre>
+
+<!-- 6. A <title> on the SVG, with Graphviz shape tooltips inside -->
+<div class="diagram" id="gv"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 120" width="240" height="120"><title>Build pipeline</title><g id="graph0" class="graph"><title>G</title><g id="node1" class="node"><title>compile</title><ellipse cx="60" cy="60" rx="50" ry="22" fill="none" stroke="#000"/><text x="60" y="64" text-anchor="middle" font-size="14">compile</text></g><g id="node2" class="node"><title>test</title><ellipse cx="180" cy="60" rx="50" ry="22" fill="none" stroke="#000"/><text x="180" y="64" text-anchor="middle" font-size="14">test</text></g></g></svg></div>
+
+<!-- 7. Graphviz output: only shape tooltips -->
+<div class="diagram" id="gv-shapes"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 120" width="240" height="120"><g id="graph0" class="graph"><title>G</title><g id="node1" class="node"><title>compile</title><ellipse cx="60" cy="60" rx="50" ry="22" fill="none" stroke="#000"/><text x="60" y="64" text-anchor="middle" font-size="14">compile</text></g><g id="node2" class="node"><title>test</title><ellipse cx="180" cy="60" rx="50" ry="22" fill="none" stroke="#000"/><text x="180" y="64" text-anchor="middle" font-size="14">test</text></g></g></svg></div>
+
+<!-- 8. A figure with a caption -->
+<figure class="diagram" id="fig" style="margin:0"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 120" width="240" height="120"><rect x="10" y="10" width="220" height="100" rx="10" fill="#f1f5f9" stroke="#64748b"/><text x="120" y="65" text-anchor="middle" font-size="14">Production VPC</text></svg><figcaption>Figure 1. Production network</figcaption></figure>
+
+<!-- 9. Markup in a title stays text -->
+<div class="diagram" id="markup"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 120" width="240" height="120"><title>  Login &lt;img src=x onerror="window.__hit=1"&gt;
+    flow  </title><rect x="10" y="10" width="220" height="100" rx="10" fill="#fef3c7" stroke="#b45309"/></svg></div>
+
+<!-- 10. A title too long for two lines -->
+<div class="diagram" id="long"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 120" width="240" height="120"><text class="titleText" x="120" y="20" text-anchor="middle" font-size="12">Customer order processing, payment reconciliation, refunds, chargebacks, fraud review, partner payouts, tax reports, ledger exports and the nightly settlement run across every region, every warehouse, every sales channel and every currency we support today</text><rect x="10" y="30" width="220" height="80" rx="10" fill="#dcfce7" stroke="#15803d"/></svg></div>
+
+<!-- 11. A node label with a title class, and a logo with a drawn title inside an HTML label -->
+<div class="diagram" id="deep"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 120" width="240" height="120"><g class="root"><g class="nodes"><g class="node title" transform="translate(60 60)"><rect x="-50" y="-22" width="100" height="44" fill="#e0f2fe" stroke="#0369a1"/><text class="title" text-anchor="middle" y="5" font-size="14">Cart</text></g><g class="node" transform="translate(130 38)"><foreignObject width="100" height="44"><div xmlns="http://www.w3.org/1999/xhtml"><svg xmlns="http://www.w3.org/2000/svg" width="100" height="44"><text class="titleText" x="50" y="27" text-anchor="middle" font-size="14">Logo</text></svg></div></foreignObject></g></g></g></svg></div>
+
+<script src="../../../node_modules/@panzoom/panzoom/dist/panzoom.min.js"></script>
+</body>
+</html>

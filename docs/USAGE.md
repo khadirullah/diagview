@@ -175,7 +175,7 @@ DiagView.init({ layout: "floating" });
 
 ### Header
 
-A toolbar sits above each diagram. On desktop it fades in when you hover the diagram or tab into it; on touch screens it is always visible, and its buttons grow from 34px to 44px. It shows the diagram's title (from `data-title` or the SVG `<title>` element) on the left, and action buttons on the right. The title is a muted shade of the page text that keeps 4.5:1 against the page (see [Theming](#13-theming)). A long title wraps onto a second line. A title too long even for two lines ends in "...", and resting the mouse on it shows the whole title.
+A toolbar sits above each diagram. On desktop it fades in when you hover the diagram or tab into it; on touch screens it is always visible, and its buttons grow from 34px to 44px. It shows the diagram's title (from `data-title`, the SVG `<title>` element or a Mermaid chart title) on the left, and action buttons on the right. The title is a muted shade of the page text that keeps 4.5:1 against the page (see [Theming](#13-theming)). A long title wraps onto a second line. A title too long even for two lines ends in "...", and resting the mouse on it shows the whole title.
 
 ```javascript
 DiagView.init({ layout: "header" });
@@ -184,10 +184,13 @@ DiagView.init({ layout: "header" });
 **Title resolution order:**
 
 1. `data-title` attribute on the container element
-2. A `<title>` element directly inside the `<svg>`. PlantUML and Graphviz put a `<title>` on every shape as a tooltip, and those do not count.
-3. Fallback: `"DIAGRAM"`
+2. A `<title>` element directly inside the `<svg>`. Mermaid writes `accTitle` there. PlantUML and Graphviz put a `<title>` on every shape as a tooltip, and those do not count.
+3. A chart title drawn on the diagram. Mermaid draws `title` this way for flowcharts and class, state, ER, requirement, pie, Gantt and git diagrams. Text deeper in the diagram, such as a node label, does not count.
+4. Fallback: `"DIAGRAM"`
 
-Export file names use the same order, then a chart title Mermaid draws on the diagram, then `diagram_export`. A timestamp follows, as in `checkout_sequence_2026-09-28_011554.png`.
+The diagram type, such as "flowchart" in Mermaid's `aria-roledescription`, is not used as a title. DiagView does not pick up the drawn title of other Mermaid diagrams, such as sequence, journey, timeline or C4 diagrams, so give those a `data-title` or an `accTitle`.
+
+Export file names use the same order, with `diagram_export` as the fallback. A timestamp follows, as in `checkout_sequence_2026-09-28_011554.png`.
 
 ```html
 <!-- Shows "MY PIPELINE" in the header -->
@@ -202,13 +205,22 @@ Export file names use the same order, then a chart title Mermaid draws on the di
     ...
   </svg>
 </div>
+
+<!-- Shows "ORDER FLOW" from the Mermaid chart title -->
+<pre class="mermaid">
+---
+title: Order flow
+---
+flowchart LR
+  Cart --> Pay
+</pre>
 ```
 
 ### Off
 
 No controls are injected. Clicking the diagram opens the fullscreen viewer. Over it the cursor turns into the same `zoom-in` magnifier that a card shows in the other layouts. Links inside the diagram keep their own cursor. DiagView adds its stylesheet after the page's own CSS, and its rule is more specific than a single class, so `.diagram { cursor: pointer; }` loses. Add `!important`, as in `.diagram { cursor: pointer !important; }`, or use a selector such as `div.diagram[data-diagview-init]`.
 
-`Tab` stops on the diagram, which then shows an outline in the accent colour. `Enter` or `Space` opens the viewer, and `Space` does not scroll the page. Closing the viewer puts focus back on the diagram. A mouse click or a tap shows no outline. Screen readers announce the diagram as a button. With `data-title="Order flow"`, or an SVG `<title>` of "Order flow", its name is "Open Order flow in fullscreen". Without a title it is "Open diagram in fullscreen". A diagram with its own links, such as Mermaid `click` links, is a group named "Order flow, press Enter to open fullscreen" instead, since a button must not hold links. `Tab` goes on to each link. `Enter` on a link follows it. DiagView keeps a `tabindex`, `role` or `aria-label` you set on the element.
+`Tab` stops on the diagram, which then shows an outline in the accent colour. `Enter` or `Space` opens the viewer, and `Space` does not scroll the page. Closing the viewer puts focus back on the diagram. A mouse click or a tap shows no outline. Screen readers announce the diagram as a button. With `data-title="Order flow"`, an SVG `<title>` or a Mermaid chart title of "Order flow", its name is "Open Order flow in fullscreen". Without a title it is "Open diagram in fullscreen". A diagram with its own links, such as Mermaid `click` links, is a group named "Order flow, press Enter to open fullscreen" instead, since a button must not hold links. `Tab` goes on to each link. `Enter` on a link follows it. DiagView keeps a `tabindex`, `role` or `aria-label` you set on the element.
 
 ```javascript
 DiagView.init({ layout: "off" });
@@ -414,7 +426,7 @@ await DiagView.copyToClipboard(el);
 const saved = await DiagView.exportDiagram(el, "png", { transparent: false });
 ```
 
-`exportDiagram()` takes one of these modes: `png`, `jpeg`, `webp`, `svg`, `pdf`, `copy` (PNG to the clipboard), `copy-svg` (SVG markup to the clipboard), `png-transparent`, `webp-transparent` and `download` (a PNG). It uses `filename` when you pass one, and otherwise builds the name from the diagram title and a timestamp. The title comes from `data-title`, then the SVG's own `<title>`, then a Mermaid chart title (see [Header](#header)).
+`exportDiagram()` takes one of these modes: `png`, `jpeg`, `webp`, `svg`, `pdf`, `copy` (PNG to the clipboard), `copy-svg` (SVG markup to the clipboard), `png-transparent`, `webp-transparent` and `download` (a PNG). It uses `filename` when you pass one, and otherwise builds the name from the diagram title and a timestamp. The title comes from the same places as the header title (see [Header](#header)).
 
 Every export function resolves without throwing when the element contains no `<svg>`, and a "No diagram found" toast shows instead. `exportDiagram()` resolves to `true` when the export succeeded and to `false` when it failed, was blocked or found no diagram. It also resolves to `false` when a PDF export falls back to PNG. The toolbar's copy and download buttons show their green tick only after a `true`. `copyToClipboard()` downloads the PNG when the browser denies the clipboard write (Safari does this once the click that started the export is over). `exportDiagram(el, "copy-svg")` downloads the .svg file in the same case.
 

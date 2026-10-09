@@ -1864,6 +1864,22 @@ describe("generateFilename", () => {
     ).toBe("order_flow");
   });
 
+  test("a title wrapped over lines gives one name", () => {
+    expect(
+      name(`<div data-diagview-index="0"><svg ${NS}><title>
+        Order
+        pipeline</title></svg></div>`),
+    ).toBe("order_pipeline");
+  });
+
+  test("an empty drawn title leaves the file as diagram_export", () => {
+    expect(
+      name(
+        `<div data-diagview-index="0"><svg ${NS}><text class="pieTitleText"> </text></svg></div>`,
+      ),
+    ).toBe("diagram_export");
+  });
+
   test("with no title at all the file is diagram_export", () => {
     expect(name(`<div data-diagview-index="0"><svg ${NS}><rect/></svg></div>`)).toBe(
       "diagram_export",

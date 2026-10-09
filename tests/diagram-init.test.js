@@ -155,6 +155,70 @@ describe("Diagram Init: Title Extraction Logic", () => {
     expect(document.querySelector(".diagview-label").textContent).toBe("DIAGRAM");
   });
 
+  /** Header label for a diagram with this SVG markup and these attributes */
+  function headerLabel(svgMarkup, attrs = "") {
+    document.body.innerHTML = `<div class="diagram" data-diagview-layout="header" ${attrs}>${svgMarkup}</div>`;
+    initializeDiagram(document.querySelector(".diagram"));
+    return document.querySelector(".diagview-label").textContent;
+  }
+  const NS = 'xmlns="http://www.w3.org/2000/svg"';
+
+  test("a Mermaid chart title drawn on the diagram names it", () => {
+    // Mermaid 11 and 12 output for a flowchart with "title: Order flow"
+    const svg = `<svg ${NS} aria-roledescription="flowchart-v2"><g><rect/></g><text class="flowchartTitleText">Order flow</text></svg>`;
+    expect(headerLabel(svg)).toBe("ORDER FLOW");
+  });
+
+  test("Mermaid accTitle comes before the drawn title, data-title before both", () => {
+    const svg = `<svg ${NS}><title>Checkout</title><g><rect/></g><text class="flowchartTitleText">Order flow</text></svg>`;
+    expect(headerLabel(svg)).toBe("CHECKOUT");
+    expect(headerLabel(svg, 'data-title="Payments"')).toBe("PAYMENTS");
+  });
+
+  test("a pie chart title names it", () => {
+    // Mermaid draws the pie title inside the chart's <g>
+    const svg = `<svg ${NS} aria-roledescription="pie"><g><path/><text class="pieTitleText">Pets</text></g></svg>`;
+    expect(headerLabel(svg)).toBe("PETS");
+  });
+
+  test("an empty drawn title falls back to DIAGRAM", () => {
+    // Mermaid draws an empty pieTitleText for a pie chart without a title
+    const svg = `<svg ${NS}><g><path/><text class="pieTitleText">  </text></g></svg>`;
+    expect(headerLabel(svg)).toBe("DIAGRAM");
+  });
+
+  test("a node label with a title class does not name it", () => {
+    // A node styled with classDef title, drawn as SVG text
+    const svg = `<svg ${NS}><g class="root"><g class="nodes"><g class="node title"><text class="title">Cart</text></g></g></g></svg>`;
+    expect(headerLabel(svg)).toBe("DIAGRAM");
+  });
+
+  test("a picture inside an HTML label does not name it", () => {
+    const svg = `<svg ${NS}><g><foreignObject><div xmlns="http://www.w3.org/1999/xhtml"><svg ${NS}><text class="titleText">Logo</text></svg></div></foreignObject></g></svg>`;
+    expect(headerLabel(svg)).toBe("DIAGRAM");
+  });
+
+  test("the diagram type alone does not name it", () => {
+    const svg = `<svg ${NS} aria-roledescription="sequence"><g><rect/></g></svg>`;
+    expect(headerLabel(svg)).toBe("DIAGRAM");
+  });
+
+  test("a title wrapped over lines reads as one line of text", () => {
+    const svg = `<svg ${NS}><title>
+      Order
+      pipeline &lt;b&gt;v2&lt;/b&gt;
+    </title><rect/></svg>`;
+    expect(headerLabel(svg)).toBe("ORDER PIPELINE <B>V2</B>");
+    expect(document.querySelector(".diagview-label").children).toHaveLength(0);
+  });
+
+  test("layout off names the diagram after a drawn title too", () => {
+    document.body.innerHTML = `<div class="diagram" data-diagview-layout="off"><svg ${NS}><g><rect/></g><text class="titleText">Plan</text></svg></div>`;
+    const el = document.querySelector(".diagram");
+    initializeDiagram(el);
+    expect(el.getAttribute("aria-label")).toBe("Open Plan in fullscreen");
+  });
+
   describe("tooltip for a long title", () => {
     const TITLE = "Customer Order Processing and Payment Reconciliation (EU)";
 
@@ -334,6 +398,26 @@ describe("Diagram Init: an svg the selector matches itself", () => {
     expect(svg.getAttribute("tabindex")).toBe("0");
     expect(svg.getAttribute("role")).toBe("button");
     expect(svg.getAttribute("aria-label")).toBe("Open Flow in fullscreen");
+  });
+
+  test("the header names a bare svg after its drawn title or its own data-title", () => {
+    document.body.innerHTML = `<main id="page"><svg class="diagram" id="chart" data-diagview-layout="header" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 10"><rect width="5" height="5"/><text class="flowchartTitleText">Order flow</text></svg></main>`;
+    const svg = document.getElementById("chart");
+    initializeDiagram(svg);
+    const label = () => svg.closest(".diagview-wrapper").querySelector(".diagview-label");
+    expect(label().textContent).toBe("ORDER FLOW");
+
+    deinitializeDiagram(svg);
+    svg.setAttribute("data-title", "Payments");
+    initializeDiagram(svg);
+    expect(label().textContent).toBe("PAYMENTS");
+  });
+
+  test("layout off names a bare svg after its drawn title", () => {
+    document.body.innerHTML = `<main id="page"><svg class="diagram" id="chart" data-diagview-layout="off" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 10"><rect width="5" height="5"/><text class="flowchartTitleText">Order flow</text></svg></main>`;
+    const svg = document.getElementById("chart");
+    initializeDiagram(svg);
+    expect(svg.getAttribute("aria-label")).toBe("Open Order flow in fullscreen");
   });
 
   test("a broken svg gets the error box after it, not inside it", () => {

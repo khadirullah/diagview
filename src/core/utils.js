@@ -172,20 +172,33 @@ export function sanitizeFilename(text, fallback = "diagram") {
 }
 
 /**
- * The title a page author gave a diagram. A data-title on the diagram
- * element wins, since someone typed it for that spot. Then the SVG's own
- * <title>, but only a direct child: PlantUML and Graphviz put a <title> on
- * every shape as a tooltip, and the first of those names one shape, such as
- * "Bob", not the diagram.
+ * The title of a diagram, for the header label, the layout "off" name and
+ * export file names. A data-title on the diagram element wins, since
+ * someone typed it for that spot. Then the SVG's own <title>, but only a
+ * direct child: PlantUML and Graphviz put a <title> on every shape as a
+ * tooltip, and the first of those names one shape, such as "Bob", not the
+ * diagram. Mermaid writes accTitle there too. Last comes a title drawn on
+ * the diagram. Mermaid draws one as text.titleText, or with the chart type
+ * in front, such as flowchartTitleText. It sits right in the <svg>, or in
+ * a <g> right inside it on a pie chart. Text deeper in, such as a node label
+ * or a picture inside an HTML label, never names the diagram.
  * @param {Element} svg - The diagram's SVG
  * @param {Element|null} [element] - The diagram element, when the caller has it
- * @returns {string} The trimmed title, or "" when there is none
+ * @returns {string} The title on one line, or "" when there is none
  */
 export function getDiagramTitle(svg, element = svg?.closest("[data-diagview-index]")) {
-  const dataTitle = element?.getAttribute("data-title")?.trim();
-  if (dataTitle) return dataTitle;
-  const titleEl = svg && Array.from(svg.children).find((el) => el.localName === "title");
-  return titleEl?.textContent.trim() || "";
+  // Runs of spaces and line breaks, as in a <title> wrapped in the source,
+  // read as one space
+  const oneLine = (text) => text?.replace(/\s+/g, " ").trim() || "";
+  const dataTitle = oneLine(element?.getAttribute("data-title"));
+  if (dataTitle || !svg) return dataTitle;
+  const titleEl = Array.from(svg.children).find((el) => el.localName === "title");
+  const drawn = Array.from(
+    svg.querySelectorAll(
+      'text.title, text.titleText, text[class$="TitleText"], text.diagview-title',
+    ),
+  ).find((el) => el.parentNode === svg || el.parentNode?.parentNode === svg);
+  return oneLine(titleEl?.textContent) || oneLine(drawn?.textContent);
 }
 
 const SVG_NS = "http://www.w3.org/2000/svg";
