@@ -11,6 +11,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 ### Added
 
 - **Video Walkthrough on the Demo Page.** The demo home page has a "See it in action" section between the hero and the layouts with the 2:31 walkthrough from YouTube. It shows the video's thumbnail and a play button, and loads the player from youtube-nocookie.com only when the button is pressed, so visitors who never play it download no YouTube scripts and get no YouTube cookies. Without JavaScript, or with a modifier key or middle click, the thumbnail opens the video on YouTube. So does a copy of the page opened from disk, because YouTube refuses to play an embed without the page address and shows error 153.
+- **Hint That a Diagram Opens.** With `layout: "off"` the only sign that a diagram opens fullscreen is the zoom-in cursor, and a phone has no cursor. The new `offHint` option adds a small hint. `"icon"` shows a round expand badge in the top-right corner of the diagram, and `"label"` adds "Click to expand" or "Tap to expand" to it. With a mouse the badge shows on hover or keyboard focus, and on a touch screen it always shows. `"below"` puts a "Tap to expand" line under the diagram on touch screens only, for diagrams where the badge would cover a legend or a node. `offHintText` changes the words, and `data-diagview-off-hint` sets the hint for one diagram. The default, `"none"`, leaves pages as they were.
 
 ### Changed
 
