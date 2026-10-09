@@ -1162,6 +1162,8 @@ describe("exportSearchHighlight", () => {
 
   test("false leaves the search look out and keeps the on-screen search", async () => {
     updateConfig({ exportSearchHighlight: false });
+    // The match Enter moved to
+    match.classList.add("dv-search-current");
     await copySVGCode(container, { modalClone });
 
     const copied = navigator.clipboard.writeText.mock.calls[0][0];
@@ -1171,7 +1173,7 @@ describe("exportSearchHighlight", () => {
     expect(copied).toContain('class="node"');
 
     expect(modalClone.getAttribute("class")).toBe("dv-searching");
-    expect(match.getAttribute("class")).toBe("dv-search-match");
+    expect(match.getAttribute("class")).toBe("dv-search-match dv-search-current");
     expect(getComputedStyle(other).opacity).toBe("0.15");
   });
 });

@@ -139,6 +139,9 @@ export function throttle(func, limit) {
     }
   };
 
+  // A trailing call is waiting to run
+  throttledFunc.pending = () => !!lastFunc;
+
   throttledFunc.cancel = function () {
     clearTimeout(timeout);
     inThrottle = false;
@@ -1117,6 +1120,21 @@ function screenToClientMatrix() {
   } finally {
     probe.remove();
   }
+}
+
+/**
+ * Write Panzoom's current pan and scale to the DOM now. Panzoom applies
+ * them on the next frame, and a running transition shows a halfway value,
+ * so without this a measurement can see an old view and a new viewBox can
+ * paint one frame at the old pan.
+ * @param {*} pz - Panzoom instance
+ * @param {Element|null} el - The element Panzoom moves
+ */
+export function applyTransformNow(pz, el) {
+  const opts = pz?.getOptions?.();
+  if (!el || typeof opts?.setTransform !== "function") return;
+  el.style.transition = "none";
+  opts.setTransform(el, { ...pz.getPan(), scale: pz.getScale() }, opts);
 }
 
 /**

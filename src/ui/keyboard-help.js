@@ -14,6 +14,8 @@ const SHORTCUTS = [
   { keys: ["Esc"], desc: "Close help, search or menu, then the viewer" },
   { keys: ["Space", "0"], desc: "Reset / Fit to screen" },
   { keys: ["F"], desc: "Open search" },
+  { keys: ["Enter"], desc: "Next search match" },
+  { keys: ["Shift", "Enter"], combo: true, desc: "Previous search match" },
   { keys: ["T"], desc: "Toggle text select (copy SVG labels)" },
   { keys: ["R"], desc: "Rotate 90° clockwise" },
   { keys: ["M"], desc: "Meeting mode (laser pointer)" },

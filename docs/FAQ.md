@@ -134,6 +134,9 @@ DiagView.openFullscreen(element, { searchQuery: "my term" });
 **Q: Is search case-sensitive?**  
 A: No. All queries and node text are lowercased before comparison. Each run of spaces and line breaks also counts as one space, so `first release` finds a label drawn as `First   release`. A break between two lines of a label counts as a space too, so `firewall ufw` finds `Firewall<br>UFW`, and `firewallufw` does not. See [Search](USAGE.md#6-search) for how DiagView tells a new line from a styled word.
 
+**Q: I am zoomed in and the match is somewhere off screen. How do I get to it?**  
+A: Type the query and the view pans to the nearest match when none is in view, at the same zoom. Press `Enter` for the next match and `Shift`+`Enter` for the one before. The view pans each time the match is out of view. See [Search](USAGE.md#6-search).
+
 **Q: Does search work on draw.io diagrams?**  
 A: Yes. draw.io keeps a `<text>` copy of each label that the browser never draws. Search matches the HTML label you see and outlines the box under it.
 

@@ -6,7 +6,13 @@
 
 import { state } from "../../core/config.js";
 import { TIMING, SELECTORS } from "../../core/constants.js";
-import { throttle, getClientCTM, drawnChild, undrawnSwitch } from "../../core/utils.js";
+import {
+  throttle,
+  getClientCTM,
+  drawnChild,
+  undrawnSwitch,
+  applyTransformNow,
+} from "../../core/utils.js";
 import { addModalListener } from "../../core/lifecycle.js";
 
 /**
@@ -36,6 +42,13 @@ let markedShapes = [];
  * @type {Map<Element, string|null>}
  */
 let savedClass = new Map();
+
+/**
+ * Candidates that match the query, and the one Enter last moved to
+ * @type {Array<*>}
+ */
+let matched = [];
+let current = null;
 
 function mark(el, cls) {
   if (!savedClass.has(el)) savedClass.set(el, el.getAttribute("class"));
@@ -278,6 +291,128 @@ function findShapeForText(clone, item) {
 }
 
 /**
+ * Screen box of the text of a match, as [left, top, right, bottom] in
+ * client pixels. A Mermaid node or group is measured by its label, not its
+ * shape, so a large group pans to its title.
+ */
+function labelRect(item) {
+  let box = null;
+  for (const line of item.lines) {
+    const sel = "text, foreignObject";
+    const parts = line.matches(sel) ? [line] : line.querySelectorAll(sel);
+    for (const el of parts.length ? parts : [line]) {
+      const r = (el.localName === "foreignObject" ? labelBox(el) : el).getBoundingClientRect();
+      if (!r.width && !r.height) continue;
+      const [l, t, rr, b] = box || [Infinity, Infinity, -Infinity, -Infinity];
+      box = [Math.min(l, r.left), Math.min(t, r.top), Math.max(rr, r.right), Math.max(b, r.bottom)];
+    }
+  }
+  return box;
+}
+
+/** The part of the viewer the reader can see, above a phone keyboard */
+function viewRect() {
+  const r = document.getElementById("diagview-modal-viewport")?.getBoundingClientRect();
+  const v = window.visualViewport;
+  if (!r) return null;
+  if (!v) return [r.left, r.top, r.right, r.bottom];
+  return [
+    Math.max(r.left, v.offsetLeft),
+    Math.max(r.top, v.offsetTop),
+    Math.min(r.right, v.offsetLeft + v.width),
+    Math.min(r.bottom, v.offsetTop + v.height),
+  ];
+}
+
+const inside = (r, v) => r && r[0] >= v[0] && r[1] >= v[1] && r[2] <= v[2] && r[3] <= v[3];
+const middle = (r) => [(r[0] + r[2]) / 2, (r[1] + r[3]) / 2];
+
+/**
+ * Make item the current match and pan it to the middle of the view, at the
+ * same zoom, unless it is already in view. Rotation turns the content
+ * inside the SVG, so screen boxes and pan steps share the same axes at any
+ * angle. A match larger than the view gets its centre in the middle.
+ */
+function goTo(item, box, view) {
+  for (const it of [current, item]) {
+    for (const el of it ? [...it.lines, it.shape] : []) {
+      el?.classList.toggle("dv-search-current", it === item);
+    }
+  }
+  current = item;
+  const pz = state.activePanzoom;
+  if (!item || !pz || inside(box, view)) return;
+  const [x, y] = middle(box);
+  const [cx, cy] = middle(view);
+  const scale = pz.getScale();
+  pz.pan((cx - x) / scale, (cy - y) / scale, {
+    relative: true,
+    animate: true,
+    duration: state.config.panAnimationDuration ?? TIMING.PAN_ANIMATION_DURATION,
+  });
+}
+
+/**
+ * After a typed query, bring the nearest match into view when none is in
+ * view, so a match off screen at a high zoom is not left to find by hand.
+ * The first match found in view ends the search, so a query that matches
+ * thousands of labels measures only a few of them.
+ */
+function revealNearest(clone) {
+  // Measure with Panzoom's latest pan and zoom, not a frame on its way there
+  applyTransformNow(state.activePanzoom, clone);
+  const view = viewRect();
+  if (!view) return;
+  const [cx, cy] = middle(view);
+  let best = null;
+  let far = Infinity;
+  for (const it of matched) {
+    const box = labelRect(it);
+    if (!box) continue;
+    if (inside(box, view)) return;
+    const [x, y] = middle(box);
+    const d = Math.hypot(x - cx, y - cy);
+    if (d < far) [best, far] = [[it, box], d];
+  }
+  if (best) goTo(best[0], best[1], view);
+}
+
+/**
+ * Move to the next match, or the one before with back, in reading order
+ * on screen, row by row from the top and each row from left to right. The
+ * first Enter picks the first match in view, or the first of all.
+ */
+function step(clone, back) {
+  // Measure with Panzoom's latest pan and zoom, not a frame on its way there
+  applyTransformNow(state.activePanzoom, clone);
+  const view = viewRect();
+  const boxes = new Map();
+  for (const it of matched) {
+    const box = labelRect(it);
+    if (box) boxes.set(it, box);
+  }
+  const order = [...boxes.keys()].sort((a, b) => {
+    const [pl, pt, , pb] = boxes.get(a);
+    const [ql, qt, , qb] = boxes.get(b);
+    const row = Math.min(pb - pt, qb - qt) / 2;
+    return Math.abs(pt - qt) > row ? pt - qt : pl - ql;
+  });
+  const n = order.length;
+  if (!view || !n) return;
+  let i = order.indexOf(current);
+  if (i < 0) {
+    const seen = order.filter((it) => inside(boxes.get(it), view));
+    const list = seen.length ? seen : order;
+    i = order.indexOf(list[back ? list.length - 1 : 0]);
+  } else {
+    i = (i + (back ? n - 1 : 1)) % n;
+  }
+  goTo(order[i], boxes.get(order[i]), view);
+  const statusEl = document.getElementById("diagview-search-status");
+  if (statusEl) statusEl.textContent = `Match ${i + 1} of ${n}`;
+}
+
+/**
  * Clear all search highlights
  */
 function clearHighlights(clone) {
@@ -302,6 +437,8 @@ function clearHighlights(clone) {
   }
   for (const el of markedShapes) unmark(el, "dv-search-match");
   markedShapes = [];
+  matched = [];
+  current = null;
 
   const statusEl = document.getElementById("diagview-search-status");
   if (statusEl) statusEl.textContent = "";
@@ -309,8 +446,12 @@ function clearHighlights(clone) {
 
 /**
  * Perform search on diagram
+ * @param {SVGSVGElement|null} clone - The SVG in the viewer
+ * @param {string} query - What to find
+ * @param {boolean} [reveal] - Bring a match into view when none is, for a
+ *   query the reader typed. A query from a share link keeps the shared view.
  */
-export function performSearch(clone, query) {
+export function performSearch(clone, query, reveal = false) {
   const gen = ++searchGeneration;
   if (state.searchRafId) cancelAnimationFrame(state.searchRafId);
 
@@ -338,7 +479,7 @@ export function performSearch(clone, query) {
 
     // Single loop for O(1) DOM updates utilizing CSS fading architecture.
     // A label drawn as several <text> lines marks each line and counts once.
-    let count = 0;
+    const found = [];
     for (let i = 0; i < candidates.length; i++) {
       const item = candidates[i];
       const isMatch = item.text.includes(lq);
@@ -353,7 +494,7 @@ export function performSearch(clone, query) {
         }
       }
       if (isMatch) {
-        count++;
+        found.push(item);
         const shape = findShapeForText(clone, item);
         if (shape) shapes.add(shape);
       }
@@ -366,6 +507,11 @@ export function performSearch(clone, query) {
     markedShapes = [...shapes];
 
     state.searchMatches = newMatches;
+    matched = found;
+    // The match Enter moved to stays current while the query still finds it
+    if (!found.includes(current)) goTo(null);
+    if (reveal && found.length) revealNearest(clone);
+    const count = found.length;
 
     // Announce match count to screen readers via aria-live region (B3)
     const statusEl = document.getElementById("diagview-search-status");
@@ -451,7 +597,7 @@ export function setupSearch(clone, initialQuery = "") {
     // Final safety check: Only apply search if it still matches the current input value
     const currentVal = searchInput.value || "";
     if (currentVal.toLowerCase().trim() === query.toLowerCase().trim()) {
-      performSearch(clone, query);
+      performSearch(clone, query, true);
     }
   }, TIMING.SEARCH_THROTTLE);
 
@@ -486,15 +632,23 @@ export function setupSearch(clone, initialQuery = "") {
     addModalListener(searchClear, "click", handleClear);
   }
 
-  // Keyboard navigation — Escape clears search
-  // Note: Enter/next-match cycling was intentionally removed.
-  // SVG diagrams have no meaningful spatial reading order (DOM order ≠ visual order)
-  // so cycling through matches by Enter would jump to arbitrary canvas locations.
-  // All matches are shown simultaneously — users navigate via pan/zoom.
+  // Escape clears the search. Enter moves to the next match and
+  // Shift+Enter to the one before, in reading order on screen, since the
+  // order of the markup says nothing about where a node is drawn.
   const handleKeydown = (e) => {
     if (e.key === "Escape") {
       e.stopPropagation();
       clearSearch();
+    } else if (e.key === "Enter" && !e.isComposing) {
+      e.preventDefault();
+      // Run a search still waiting in the throttle first, without moving
+      // the view, so Enter steps through what the box says
+      if (activeSearchThrottle.pending()) {
+        activeSearchThrottle.cancel();
+        performSearch(clone, searchInput.value);
+      }
+      const back = e.shiftKey;
+      requestAnimationFrame(() => step(clone, back));
     }
   };
   addModalListener(searchInput, "keydown", handleKeydown);
@@ -507,6 +661,8 @@ export function setupSearch(clone, initialQuery = "") {
 export function resetSearch() {
   searchGeneration = 0;
   markedShapes = [];
+  matched = [];
+  current = null;
   savedClass = new Map();
   if (state.searchRafId) {
     cancelAnimationFrame(state.searchRafId);

@@ -68,8 +68,9 @@ build. Set `E2E_PORT` to use a port other than 9340.
 | `verify-search-lines.spec.mjs`        | 11     | a phrase across a line break finds Mermaid 12 and 11 HTML labels with `<br>`, Mermaid 12 plain SVG rows, a wrapped timeline event, a sequence note and message drawn as one text per line, and Graphviz node and edge labels, while one-line labels match as before and the joined lines do not                                                                                                                                     |
 | `verify-mermaid-errors.spec.mjs`      | 9      | the error box shows Mermaid 12's parser message, 11 and 10 give none, the box fits a phone inside `<pre>`, a Mermaid 12, 11 or 10 diagram fixed in place gets its toolbar, one that breaks shows the error box, also in the viewer, and `destroy()` and `init()` leave one toolbar                                                                                                                                                  |
 | `verify-bare-svg.spec.mjs`            | 9      | an `<svg>` the selector matches gets a card and toolbar where it stood, keeps its attributes and own size, fits a phone, opens fullscreen, searches, downloads a PNG named after its title, takes focus with layout "off", one inside another SVG is left alone, an empty one waits, destroy restores it                                                                                                                            |
+| `verify-search-pan.spec.mjs`          | 8      | at zoom 4 a typed query with every match off screen pans the nearest to the middle, keeping the zoom, a match in view keeps the view, Enter and Shift+Enter step in reading order with a thicker current outline, also at 90 degrees, on a Mermaid label, with reduced motion and on a phone                                                                                                                                        |
 
-That is 294 checks per browser.
+That is 302 checks per browser.
 
 `verify-react-strictmode` loads React from unpkg, and `verify-fixes` and
 `verify-mermaid-errors` load Mermaid from jsdelivr, so these three need

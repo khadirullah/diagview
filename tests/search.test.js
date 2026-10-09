@@ -807,6 +807,231 @@ describe("Search: shapes behind plain SVG text", () => {
   });
 });
 
+describe("Search: bringing a match into view", () => {
+  const NS = "http://www.w3.org/2000/svg";
+  let svg;
+  let input;
+  let status;
+  let rafCallbacks;
+  // Screen offset of the diagram, moved by the mocked Panzoom
+  let view;
+  let pz;
+
+  // jsdom has no layout, so each label reports a box the pan moves
+  function label(text, x, y) {
+    const t = document.createElementNS(NS, "text");
+    t.textContent = text;
+    t.getBoundingClientRect = () => {
+      const left = view.x + x;
+      const top = view.y + y;
+      return { left, top, width: 60, height: 20, right: left + 60, bottom: top + 20 };
+    };
+    svg.appendChild(t);
+    return t;
+  }
+
+  function flushRaf() {
+    while (rafCallbacks.length) rafCallbacks.shift()();
+  }
+
+  function type(q) {
+    input.value = q;
+    input.dispatchEvent(new Event("input"));
+    flushRaf();
+  }
+
+  function press(key, shiftKey = false) {
+    input.dispatchEvent(new KeyboardEvent("keydown", { key, shiftKey }));
+    flushRaf();
+  }
+
+  const current = () => [...svg.querySelectorAll(".dv-search-current")].map((e) => e.textContent);
+
+  beforeEach(() => {
+    resetConfig();
+    resetSearch();
+    view = { x: 0, y: 0 };
+    document.body.innerHTML = `<input id="diagview-search" />
+      <div id="diagview-modal-viewport"></div>
+      <div id="diagview-search-status"></div>`;
+    const viewport = document.getElementById("diagview-modal-viewport");
+    viewport.getBoundingClientRect = () => ({
+      left: 0,
+      top: 0,
+      right: 800,
+      bottom: 600,
+      width: 800,
+      height: 600,
+    });
+    svg = viewport.appendChild(document.createElementNS(NS, "svg"));
+    input = document.getElementById("diagview-search");
+    status = document.getElementById("diagview-search-status");
+    pz = {
+      getScale: () => 4,
+      getPan: () => ({ x: view.x / 4, y: view.y / 4 }),
+      getOptions: () => ({ setTransform: () => {} }),
+      zoom: jest.fn(),
+      // A relative pan moves the diagram by the step times the scale
+      pan: jest.fn((dx, dy) => {
+        view.x += dx * 4;
+        view.y += dy * 4;
+      }),
+    };
+    state.activePanzoom = pz;
+    rafCallbacks = [];
+    jest.spyOn(window, "requestAnimationFrame").mockImplementation((cb) => {
+      rafCallbacks.push(cb);
+      return rafCallbacks.length;
+    });
+    jest.spyOn(window, "cancelAnimationFrame").mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    clearSearch();
+    state.activePanzoom = null;
+    document.body.innerHTML = "";
+    jest.restoreAllMocks();
+  });
+
+  test("a typed query pans the nearest match to the middle when none is in view", () => {
+    label("Gateway east", 3000, 2000);
+    label("Gateway west", 1500, 900);
+    setupSearch(svg);
+
+    type("gateway");
+
+    expect(pz.pan).toHaveBeenCalledTimes(1);
+    expect(pz.pan.mock.calls[0][2]).toMatchObject({ relative: true, animate: true });
+    expect(pz.zoom).not.toHaveBeenCalled();
+    // The middle of Gateway west now sits in the middle of the view
+    expect(view).toEqual({ x: -1500 + 400 - 30, y: -900 + 300 - 10 });
+    expect(current()).toEqual(["Gateway west"]);
+    expect(status.textContent).toBe("2 matches found");
+  });
+
+  test("a label drawn as one text per line pans to the middle of all its lines", () => {
+    for (const [text, y] of [
+      ["Gateway", 2000],
+      ["east", 2020],
+    ]) {
+      const t = label(text, 3000, y);
+      t.setAttribute("x", "3000");
+      t.setAttribute("y", String(y));
+    }
+    setupSearch(svg);
+
+    type("gateway east");
+
+    expect(status.textContent).toBe("1 match found");
+    expect(view).toEqual({ x: -3030 + 400, y: -2020 + 300 });
+    expect(current()).toEqual(["Gateway", "east"]);
+  });
+
+  test("a large group pans to its title, not the middle of its frame", () => {
+    const group = svg.appendChild(document.createElementNS(NS, "g"));
+    group.setAttribute("class", "cluster");
+    const frame = group.appendChild(document.createElementNS(NS, "rect"));
+    frame.getBoundingClientRect = () => ({ left: 0, top: 0, right: 5000, bottom: 5000 });
+    group.appendChild(label("Backend", 3000, 2000));
+    setupSearch(svg);
+
+    type("backend");
+
+    expect(view).toEqual({ x: -3030 + 400, y: -2010 + 300 });
+  });
+
+  test("a typed query with a match in view leaves the view alone", () => {
+    label("Gateway east", 3000, 2000);
+    label("Gateway west", 100, 100);
+    setupSearch(svg);
+
+    type("gateway");
+
+    expect(pz.pan).not.toHaveBeenCalled();
+    expect(current()).toEqual([]);
+  });
+
+  test("a query given on open keeps the view it opened with", () => {
+    label("Gateway east", 3000, 2000);
+    setupSearch(svg, "gateway");
+    flushRaf();
+
+    expect(status.textContent).toBe("1 match found");
+    expect(pz.pan).not.toHaveBeenCalled();
+  });
+
+  test("Enter and Shift+Enter step through matches in reading order, not markup order", () => {
+    label("Node C", 100, 300);
+    label("Node B", 500, 100);
+    label("Node A", 100, 105);
+    setupSearch(svg);
+    type("node");
+
+    const steps = [];
+    for (const shift of [false, false, false, false, true, true]) {
+      press("Enter", shift);
+      steps.push(`${current()[0]} ${status.textContent}`);
+    }
+
+    expect(steps).toEqual([
+      "Node A Match 1 of 3",
+      "Node B Match 2 of 3",
+      "Node C Match 3 of 3",
+      "Node A Match 1 of 3",
+      "Node C Match 3 of 3",
+      "Node B Match 2 of 3",
+    ]);
+    // Every match was in view
+    expect(pz.pan).not.toHaveBeenCalled();
+  });
+
+  test("Enter pans to the next match when it is out of view", () => {
+    label("Node A", 100, 100);
+    label("Node B", 2000, 100);
+    setupSearch(svg);
+    type("node");
+
+    press("Enter");
+    expect(pz.pan).not.toHaveBeenCalled();
+    press("Enter");
+
+    expect(current()).toEqual(["Node B"]);
+    expect(pz.pan).toHaveBeenCalledTimes(1);
+    expect(view).toEqual({ x: -2000 + 400 - 30, y: -100 + 300 - 10 });
+  });
+
+  test("Enter right after typing steps through the query in the box", () => {
+    label("Node A", 100, 100);
+    label("Node B", 300, 100);
+    setupSearch(svg);
+    type("node");
+    // Typed within the throttle, so this search still waits
+    type("node b");
+    expect(status.textContent).toBe("2 matches found");
+
+    press("Enter");
+
+    expect(current()).toEqual(["Node B"]);
+    expect(status.textContent).toBe("Match 1 of 1");
+  });
+
+  test("clearing after Enter restores the SVG markup exactly", () => {
+    label("Node A", 100, 100);
+    label("Node B", 300, 100);
+    setupSearch(svg);
+    // Panzoom owns the style of the SVG itself, so compare what is inside
+    const before = svg.innerHTML;
+    type("node");
+    press("Enter");
+    press("Enter");
+    expect(current()).toEqual(["Node B"]);
+
+    clearSearch();
+
+    expect(svg.innerHTML).toBe(before);
+  });
+});
+
 describe("Search: a query given on open", () => {
   let hadMatchMedia;
 

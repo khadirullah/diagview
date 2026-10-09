@@ -182,6 +182,12 @@ describe("Keyboard help list", () => {
     expect(key.textContent).toBe("Shift+Arrows");
   });
 
+  test("Enter and Shift+Enter step through search matches", () => {
+    expect(row("Next search match").querySelector(".diagview-help-key").textContent).toBe("Enter");
+    const back = row("Previous search match").querySelector(".diagview-help-key");
+    expect(back.textContent).toBe("Shift+Enter");
+  });
+
   test("alternative keys keep a space between them", () => {
     expect(row("Zoom in").querySelector(".diagview-help-key").textContent).toBe("+ =");
   });

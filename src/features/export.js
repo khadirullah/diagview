@@ -506,8 +506,8 @@ async function prepareSvgForExport(svg, modalClone, transparent) {
   if (!exportSvg) return null;
 
   if (hideSearch) {
-    for (const el of exportSvg.querySelectorAll(".dv-search-match")) {
-      el.classList.remove("dv-search-match");
+    for (const el of exportSvg.querySelectorAll(".dv-search-match, .dv-search-current")) {
+      el.classList.remove("dv-search-match", "dv-search-current");
       if (!el.classList.length) el.removeAttribute("class");
     }
   }

@@ -1118,7 +1118,12 @@
 .dv-searching .dv-search-match > .label-container > :is(rect, circle, ellipse, polygon, path),
 .dv-searching :is(rect, circle, ellipse, polygon, path).dv-search-match {
   stroke: var(--dv-search-ring, #2563eb) !important;
-  stroke-width: 3px !important;
+  stroke-width: var(--dv-ring-width, 3px) !important;
+}
+
+/* The match Enter moved to gets a thicker outline than the others */
+.dv-search-current {
+  --dv-ring-width: 6px;
 }
 
 /* Modal Viewport - Diagram Container */

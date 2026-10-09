@@ -6,7 +6,7 @@
 
 import { state } from "../../core/config.js";
 import { showSuccessToast } from "../../ui/toast.js";
-import { centerSVGViewBox, getClientCTM } from "../../core/utils.js";
+import { applyTransformNow, centerSVGViewBox, getClientCTM } from "../../core/utils.js";
 
 /**
  * Apply a rotation angle to the modal diagram's DOM.
@@ -98,21 +98,6 @@ function mapPoint(el, x, y, invert) {
 }
 
 /**
- * Write Panzoom's current pan and scale to the DOM now. Panzoom applies
- * them on the next frame, and a running transition shows a halfway value,
- * so without this a measurement can see an old view and a new viewBox can
- * paint one frame at the old pan.
- * @param {*} pz - Panzoom instance
- */
-function applyTransformNow(pz) {
-  const el = modalSvg();
-  const opts = pz.getOptions?.();
-  if (!el || typeof opts?.setTransform !== "function") return;
-  el.style.transition = "none";
-  opts.setTransform(el, { ...pz.getPan(), scale: pz.getScale() }, opts);
-}
-
-/**
  * The diagram point under the viewport centre, for rotateKeepsView.
  * @returns {{cx: number, cy: number, point: number[]}|null} Centre and point
  */
@@ -120,7 +105,7 @@ function viewCentre() {
   const viewport = document.getElementById("diagview-modal-viewport");
   const root = contentRoot();
   if (!viewport || !root) return null;
-  applyTransformNow(state.activePanzoom);
+  applyTransformNow(state.activePanzoom, modalSvg());
   const r = viewport.getBoundingClientRect();
   const cx = r.left + r.width / 2;
   const cy = r.top + r.height / 2;
@@ -152,13 +137,13 @@ function keepView({ cx, cy, point, unit }) {
   const after = root ? screenUnit(root) : 0;
   if (unit && after) {
     pz.zoom(pz.getScale() * (unit / after), { animate: false });
-    applyTransformNow(pz);
+    applyTransformNow(pz, modalSvg());
   }
   const at = root && mapPoint(root, point[0], point[1]);
   if (!at) return false;
   const scale = pz.getScale();
   pz.pan((cx - at[0]) / scale, (cy - at[1]) / scale, { animate: false, relative: true });
-  applyTransformNow(pz);
+  applyTransformNow(pz, modalSvg());
   return true;
 }
 

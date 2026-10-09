@@ -38,7 +38,7 @@
 | Feature                      | Description                                                                            |
 | ---------------------------- | -------------------------------------------------------------------------------------- |
 | 🎨 **Auto-Theming**          | Detects Tailwind, Bootstrap, and system dark/light mode automatically                  |
-| 🔍 **Node Search**           | Instant search that outlines matching nodes and fades the rest                         |
+| 🔍 **Node Search**           | Outlines matching nodes, fades the rest, and pans to a match off screen                |
 | 🖼️ **Canvas Themes**         | Auto, light, dark or custom canvas; Readable mode for faint labels                     |
 | 📤 **Multi-Format Export**   | PNG, SVG, PDF, JPEG and WebP, with a transparent background option                     |
 | 📋 **Clipboard Copy**        | Copy diagrams directly to the clipboard                                                |
@@ -280,13 +280,15 @@ Any diagram can override the global configuration using `data-diagview-*` attrib
 
 ## ⌨️ Keyboard Shortcuts
 
-All shortcuts are active when the fullscreen viewer is open, except while the `?` panel is open. Then only `Esc` and `?` act, and they close it. While the search box or another text field has focus, keys type into the field and only `Esc` acts as a shortcut. With a query in the box, the first `Esc` clears it, the next one leaves the search box, and the one after that closes the viewer. When a button has focus, `Space` and `Enter` press it and the letter keys still work.
+All shortcuts are active when the fullscreen viewer is open, except while the `?` panel is open. Then only `Esc` and `?` act, and they close it. While the search box or another text field has focus, keys type into the field and only `Esc` acts as a shortcut. In the search box, `Enter` and `Shift`+`Enter` move to the next and the previous match and pan to it when it is out of view. With a query in the box, the first `Esc` clears it, the next one leaves the search box, and the one after that closes the viewer. When a button has focus, `Space` and `Enter` press it and the letter keys still work.
 
 | Key                              | Action                                                                  |
 | -------------------------------- | ----------------------------------------------------------------------- |
 | `Esc`                            | Close help, search or menu, then the viewer                             |
 | `Space` / `0`                    | Reset / Fit to screen                                                   |
 | `F`                              | Open search                                                             |
+| `Enter`                          | Next search match                                                       |
+| `Shift`+`Enter`                  | Previous search match                                                   |
 | `T`                              | Toggle text select (copy SVG labels)                                    |
 | `R`                              | Rotate 90° clockwise                                                    |
 | `M`                              | Meeting mode (laser pointer)                                            |
