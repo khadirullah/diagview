@@ -91,6 +91,13 @@
   outline-offset: -2px;
 }
 
+/* A click on a diagram with layout "off" opens it fullscreen, as a click
+   on a card does, so it shows the same cursor. A failed diagram does not
+   open. A link inside keeps its own cursor. */
+[data-diagview-init]:not(.diagview-viewport > *, [data-diagview-error]) {
+  cursor: zoom-in;
+}
+
 /* Specific override for Search Input (Wrapper handles the focus style) */
 .diagview-search-input:focus-visible {
   outline: none !important;

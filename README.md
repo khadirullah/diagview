@@ -195,7 +195,7 @@ DiagView.init({ layout: "header" });
 
 ### Off (Click-to-open)
 
-DiagView adds no controls to the diagram card. Clicking the diagram itself opens the fullscreen viewer. This suits tight layouts and embeds. `Tab` stops on the diagram too, and `Enter` or `Space` opens the viewer.
+DiagView adds no controls to the diagram card. Clicking the diagram itself opens the fullscreen viewer, and the cursor shows a `zoom-in` magnifier over it, as it does over a card. This suits tight layouts and embeds. `Tab` stops on the diagram too, and `Enter` or `Space` opens the viewer.
 
 ```javascript
 DiagView.init({ layout: "off" });

@@ -99,6 +99,13 @@ describe("styles.css: diagram size on the page", () => {
       /min-height:\s*120px/,
     );
   });
+  test("a diagram with layout off shows the zoom-in cursor of a card", () => {
+    expect(
+      ruleBody("[data-diagview-init]:not(.diagview-viewport > *, [data-diagview-error]) {"),
+    ).toMatch(/cursor:\s*zoom-in;/);
+    expect(ruleBody("\n.diagview-viewport {")).toMatch(/cursor:\s*zoom-in;/);
+  });
+
   test("the card's border sits inside its width", () => {
     expect(ruleBody("\n.diagview-wrapper {")).toMatch(/box-sizing:\s*border-box;/);
   });

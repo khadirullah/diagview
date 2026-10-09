@@ -206,7 +206,7 @@ Export file names use the same order, then a chart title Mermaid draws on the di
 
 ### Off
 
-No controls are injected. Clicking the diagram opens the fullscreen viewer, and the cursor changes to `pointer` over it.
+No controls are injected. Clicking the diagram opens the fullscreen viewer. Over it the cursor turns into the same `zoom-in` magnifier that a card shows in the other layouts. Links inside the diagram keep their own cursor. DiagView adds its stylesheet after the page's own CSS, and its rule is more specific than a single class, so `.diagram { cursor: pointer; }` loses. Add `!important`, as in `.diagram { cursor: pointer !important; }`, or use a selector such as `div.diagram[data-diagview-init]`.
 
 `Tab` stops on the diagram, which then shows an outline in the accent colour. `Enter` or `Space` opens the viewer, and `Space` does not scroll the page. Closing the viewer puts focus back on the diagram. A mouse click or a tap shows no outline. Screen readers announce the diagram as a button. With `data-title="Order flow"`, or an SVG `<title>` of "Order flow", its name is "Open Order flow in fullscreen". Without a title it is "Open diagram in fullscreen". A diagram with its own links, such as Mermaid `click` links, is a group named "Order flow, press Enter to open fullscreen" instead, since a button must not hold links. `Tab` goes on to each link. `Enter` on a link follows it. DiagView keeps a `tabindex`, `role` or `aria-label` you set on the element.
 
@@ -912,7 +912,7 @@ Live example: [React 18 + StrictMode demo](https://khadirullah.github.io/diagvie
 >
 > Drawing a new SVG inside the diagram element is fine. DiagView sees the new SVG and sets the diagram up again, as [Drawing a diagram again](#drawing-a-diagram-again) explains. What breaks is the framework replacing the diagram element itself.
 >
-> If you would rather DiagView never touch the DOM around your element, use `layout: "off"`. It leaves the element where it is and adds only a click and a key handler, a pointer cursor, `tabindex="0"`, a `role` and an `aria-label` when the element has none, the `data-diagview-init`, `data-diagview-id` and `data-diagview-index` attributes, and the `dv-svg-content` class and a `filter` transition on the SVG. `destroy()` removes them again. Fullscreen, zoom, search, minimap and export all still work; only the inline toolbar is dropped. Closing the viewer puts focus back on the diagram. Pair it with `DiagView.openFullscreen(el)` / `DiagView.exportDiagram(el, ...)` from your own buttons if you need them.
+> If you would rather DiagView never touch the DOM around your element, use `layout: "off"`. It leaves the element where it is and adds only a click and a key handler, `tabindex="0"`, a `role` and an `aria-label` when the element has none, the `data-diagview-init`, `data-diagview-id` and `data-diagview-index` attributes, and the `dv-svg-content` class and a `filter` transition on the SVG. `destroy()` removes them again. Fullscreen, zoom, search, minimap and export all still work; only the inline toolbar is dropped. Closing the viewer puts focus back on the diagram. Pair it with `DiagView.openFullscreen(el)` / `DiagView.exportDiagram(el, ...)` from your own buttons if you need them.
 >
 > **React StrictMode / hot reload:** the development-only destroy-then-init sequence is handled by `init()` itself, which queues behind an in-flight `destroy()`. You do not need to await either call in an effect.
 >

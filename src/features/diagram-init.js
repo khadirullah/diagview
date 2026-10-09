@@ -306,7 +306,6 @@ export function initializeDiagram(element, precalculatedIndex = -1) {
     errorDiv: null,
     svg,
     prev: {
-      cursor: element.style.cursor,
       display: svg ? svg.style.display : "",
       transition: svg ? svg.style.transition : "",
       color: svg ? svg.style.color : "",
@@ -350,9 +349,9 @@ export function initializeDiagram(element, precalculatedIndex = -1) {
   const title = getDiagramTitle(svg, element);
 
   // If layout is "off", the diagram itself opens fullscreen on a click, or
-  // on Enter or Space once Tab reaches it
+  // on Enter or Space once Tab reaches it. styles.css gives it the zoom-in
+  // cursor a card has.
   if (isOff) {
-    element.style.cursor = "pointer";
     const openHandler = () => openFullscreen(element);
     // Only a key on the diagram itself. Enter on a link inside follows it.
     const keyHandler = (e) => {
@@ -515,7 +514,6 @@ export function deinitializeDiagram(element) {
       removeEmptyAttr(svg, "class", prev.svgClass);
     }
 
-    element.style.cursor = prev.cursor;
     removeEmptyAttr(element, "style", prev.style);
 
     cleanupMap.delete(element);

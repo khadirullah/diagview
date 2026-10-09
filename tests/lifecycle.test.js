@@ -225,7 +225,8 @@ describe("destroy() restores every touched element", () => {
 
     DiagView.init({ layout: "off" });
     expect(el.dataset.diagviewInit).toBe("1");
-    expect(el.style.cursor).toBe("pointer");
+    // The cursor comes from styles.css, not an inline style
+    expect(el.style.cursor).toBe("");
     expect(svg.classList.contains("dv-svg-content")).toBe(true);
 
     await DiagView.destroy();

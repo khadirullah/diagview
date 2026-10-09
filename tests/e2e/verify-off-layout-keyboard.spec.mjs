@@ -1,7 +1,8 @@
 // A diagram with layout "off" has no toolbar, so it takes focus itself. Tab
 // stops on it with a ring in the accent colour, Enter or Space opens the
 // viewer and Esc brings focus back. A diagram with links inside keeps them
-// reachable, and a click still opens the viewer without a ring.
+// reachable, and a click still opens the viewer without a ring. It shows
+// the same zoom-in cursor as a card.
 import { test, expect } from "@playwright/test";
 import { SITE, newPage } from "./helpers.mjs";
 
@@ -82,6 +83,26 @@ test("the ring is drawn inside the diagram's box, so a card that clips it still 
     `data:image/png;base64,${png.toString("base64")}`,
   );
   expect(edges).toEqual(Array(4).fill("59,130,246"));
+});
+
+test("the diagram shows the zoom-in cursor of a card, and a link inside keeps its own", async () => {
+  const cursors = await page.evaluate(() => {
+    const cursor = (sel) => getComputedStyle(document.querySelector(sel)).cursor;
+    return {
+      off: cursor("#titled"),
+      offSvg: cursor("#titled svg"),
+      card: cursor(".diagview-wrapper:has(#header) .diagview-viewport"),
+      link: cursor("#inner"),
+      inline: document.getElementById("titled").style.cursor,
+    };
+  });
+  expect(cursors).toEqual({
+    off: "zoom-in",
+    offSvg: "zoom-in",
+    card: "zoom-in",
+    link: "pointer",
+    inline: "",
+  });
 });
 
 test("Enter opens the viewer", async () => {
