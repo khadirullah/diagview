@@ -123,6 +123,9 @@
   display: flex;
   flex-direction: column;
   width: 100%;
+  /* The border sits inside that width, so the card is as wide as the
+     column on a page without a border-box reset */
+  box-sizing: border-box;
   position: relative;
   border: 1px solid var(--dv-border-color);
   border-radius: 10px;

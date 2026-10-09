@@ -165,6 +165,32 @@ test("a diagram wider than the card and one with only a viewBox fill the card", 
   }
 });
 
+test("a card is as wide as its column, border included, on a desktop and a phone", async ({
+  browser,
+  browserName,
+}) => {
+  // The fixture page has no border-box reset of its own
+  const phonePage = await load(browser, { options: phone(browserName) });
+  for (const [where, p] of [
+    ["desktop", page],
+    ["phone", phonePage],
+  ]) {
+    const { card, column, scroll, view } = await p.evaluate(() => {
+      const wrapper = document.querySelector(".diagview-wrapper");
+      const parent = wrapper.parentElement;
+      const cs = getComputedStyle(parent);
+      return {
+        card: wrapper.getBoundingClientRect().width,
+        column: parent.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight),
+        scroll: document.documentElement.scrollWidth,
+        view: document.documentElement.clientWidth,
+      };
+    });
+    near(card, column, `${where} card width`);
+    expect(scroll, `${where} page scrolls sideways`).toBeLessThanOrEqual(view);
+  }
+});
+
 test("no diagram is wider than its card and each keeps its aspect ratio", async () => {
   for (const id of IDS) {
     const s = sizes[id];

@@ -99,6 +99,10 @@ describe("styles.css: diagram size on the page", () => {
       /min-height:\s*120px/,
     );
   });
+  test("the card's border sits inside its width", () => {
+    expect(ruleBody("\n.diagview-wrapper {")).toMatch(/box-sizing:\s*border-box;/);
+  });
+
   test("a phone card has half the padding of a desktop one", () => {
     expect(ruleBody("\n.diagview-viewport {")).toMatch(/padding:\s*24px;/);
     const phone = css.indexOf("@media (max-width: 639px) {\n  .diagview-viewport {");
