@@ -283,7 +283,61 @@ describe("styles.css: topbar shortcut hint", () => {
     expect(ruleBody(".dv-menu-item.active kbd {")).toMatch(
       /color:\s*var\(--dv-on-accent\)\s*!important/,
     );
-    expect(css).toContain(".dv-menu-item:hover kbd,\n.dv-menu-item.active kbd {");
+    expect(ruleBody(".dv-menu-item:hover kbd {")).toMatch(
+      /color:\s*var\(--dv-on-accent\)\s*!important/,
+    );
+  });
+});
+
+describe("styles.css: hover on touch screens", () => {
+  // Each rule with :hover in its selector, with the @media lines around it
+  function hoverRules() {
+    const found = [];
+    const stack = [];
+    let start = 0;
+    for (let i = 0; i < css.length; i++) {
+      if (css.startsWith("/*", i)) {
+        i = css.indexOf("*/", i) + 1;
+        start = i + 1;
+      } else if (css[i] === "{") {
+        const prelude = css.slice(start, i).trim();
+        stack.push(prelude);
+        if (prelude.includes(":hover"))
+          found.push({ selector: prelude, media: stack.slice(0, -1) });
+        start = i + 1;
+      } else if (css[i] === "}") {
+        stack.pop();
+        start = i + 1;
+      } else if (css[i] === ";") {
+        start = i + 1;
+      }
+    }
+    return found;
+  }
+
+  test("every hover look needs a pointer that can hover, so a tap leaves none behind", () => {
+    const looks = hoverRules().filter(
+      ({ selector }) => !/\.diagview-wrapper:hover \.diagview-controls/.test(selector),
+    );
+    expect(looks.length).toBeGreaterThan(20);
+    for (const { selector, media } of looks) {
+      expect([selector, media.some((m) => m.includes("(hover: hover)"))]).toEqual([selector, true]);
+    }
+  });
+
+  test("the toolbar reveal on hover stays as it was, and touch screens show the toolbar anyway", () => {
+    const reveals = hoverRules().filter(({ selector }) =>
+      /\.diagview-wrapper:hover \.diagview-controls/.test(selector),
+    );
+    expect(reveals.map((r) => r.media)).toEqual([
+      ["@media (hover: hover) and (pointer: fine)"],
+      [],
+    ]);
+    const touch = css.indexOf("@media (hover: none) or (pointer: coarse) {");
+    expect(ruleBody(".diagview-controls {", touch)).toMatch(/opacity:\s*1 !important/);
+    expect(ruleBody(".diagview-wrapper .diagview-controls-floating {", touch)).toMatch(
+      /transform:\s*none/,
+    );
   });
 });
 
@@ -632,10 +686,16 @@ describe("styles.css: off hint", () => {
   });
 
   test("a mouse shows the badge on hover or keyboard focus", () => {
-    const body = ruleBody(
-      ".diagview-off-host:hover > .diagview-off-hint,\n.diagview-off-host:focus-visible > .diagview-off-hint,",
+    const focus = ruleBody(
+      ".diagview-off-host:focus-visible > .diagview-off-hint,\n[data-diagview-init]:focus-visible + .diagview-off-hint--after {",
     );
-    expect(body).toContain("opacity: 1");
+    expect(focus).toContain("opacity: 1");
+    // Only a pointer that can hover, so a tap leaves the touch opacity as it was
+    const hover = css.indexOf(
+      "@media (hover: hover) {\n  .diagview-off-host:hover > .diagview-off-hint,\n  [data-diagview-init]:hover + .diagview-off-hint--after {",
+    );
+    expect(hover).toBeGreaterThan(-1);
+    expect(ruleBody(".diagview-off-host:hover", hover)).toContain("opacity: 1");
   });
 
   test("a hint after a bare svg takes its own line", () => {

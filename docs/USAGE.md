@@ -1148,7 +1148,7 @@ Shapes that a script adds inside a working diagram's SVG, as an animated chart d
 DiagView.init({ ui: { buttons: { style: "neutral" } } });
 ```
 
-The built-in icons are outline drawings in the button colour.
+The built-in icons are outline drawings in the button colour. With a mouse, the card gets a shadow and the button under the pointer lifts and tints. Touch screens skip these hover looks, so a tapped button or card does not keep them after the tap. The same goes for the buttons in the viewer.
 
 ### Custom button icons
 

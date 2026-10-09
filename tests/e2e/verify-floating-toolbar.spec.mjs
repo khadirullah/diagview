@@ -2,7 +2,8 @@
 // own, so a hovered card shows one bottom edge. The header toolbar keeps
 // the line that separates it from the diagram. A touch screen shows the
 // toolbar without a hover, at the same spot a desktop hover puts it, with
-// buttons big enough for a finger.
+// buttons big enough for a finger. A tap leaves no hover look behind, on
+// the page or in the viewer.
 import { test, expect } from "@playwright/test";
 import { SITE, newPage } from "./helpers.mjs";
 
@@ -43,6 +44,17 @@ const toolbarFit = (page, id) =>
       oneRow: new Set(btns.map((r) => Math.round(r.top))).size === 1,
       inside: btns.every((r) => r.left >= card.left && r.right <= card.right),
     };
+  }, id);
+
+// Card shadow, and the first button's look next to the second one's
+const hoverLook = (page, id) =>
+  page.evaluate((id) => {
+    const wrap = document.getElementById(id).closest(".diagview-wrapper");
+    const [first, second] = [...wrap.querySelectorAll(".diagview-btn")].map((b) => {
+      const cs = getComputedStyle(b);
+      return `${cs.backgroundColor} ${cs.transform} ${cs.borderTopLeftRadius}`;
+    });
+    return { shadow: getComputedStyle(wrap).boxShadow, first, second };
   }, id);
 
 /** Desktop gap under the hovered floating toolbar, for the touch check */
@@ -134,6 +146,81 @@ test("a touch screen gives the toolbar buttons 44px and keeps them in one row on
         });
       }
     }
+  } finally {
+    await phonePage.context().close();
+  }
+});
+
+test("a desktop hover still lifts the card and the button under the pointer", async () => {
+  const wrapper = page.locator(".diagview-wrapper:has(#floating)");
+  const first = wrapper.locator(".diagview-btn").first();
+  // Headless WebKit can drop a hover, so hover again until it holds
+  await expect(async () => {
+    await wrapper.hover();
+    await first.hover();
+    await expect(first).toHaveCSS("transform", "matrix(1, 0, 0, 1, 0, -1)", { timeout: 1000 });
+    const look = await hoverLook(page, "floating");
+    expect(look.shadow).not.toBe("none");
+    expect(look.first).not.toBe(look.second);
+  }).toPass();
+});
+
+test("a tap on a touch screen leaves no hover look on the card or its button", async ({
+  browser,
+  browserName,
+}) => {
+  const phonePage = await newPage(browser, phone(browserName));
+  try {
+    await phonePage.goto(PAGE);
+    await phonePage.waitForSelector("#header[data-diagview-init]");
+    test.skip(
+      !(await phonePage.evaluate(() => matchMedia("(hover: none)").matches)),
+      "This browser does not emulate a touch screen",
+    );
+    for (const id of ["floating", "header"]) {
+      // Copy leaves the page as it is. Wait for its tick to come and go,
+      // where the browser allows the copy.
+      const copy = phonePage.locator(`.diagview-wrapper:has(#${id}) .diagview-btn`).first();
+      await copy.tap();
+      await expect(copy)
+        .toHaveClass(/success/, { timeout: 3000 })
+        .catch(() => {});
+      await expect(copy).not.toHaveClass(/success/, { timeout: 5000 });
+      await phonePage.waitForTimeout(400);
+      const look = await hoverLook(phonePage, id);
+      expect(look.shadow, `${id} card`).toBe("none");
+      expect(look.first, `${id} button`).toBe(look.second);
+    }
+  } finally {
+    await phonePage.context().close();
+  }
+});
+
+test("a tap in the viewer leaves no hover look on the menu button it hit", async ({
+  browser,
+  browserName,
+}) => {
+  const phonePage = await newPage(browser, phone(browserName));
+  try {
+    await phonePage.goto(PAGE);
+    await phonePage.waitForSelector("#floating[data-diagview-init]");
+    test.skip(
+      !(await phonePage.evaluate(() => matchMedia("(hover: none)").matches)),
+      "This browser does not emulate a touch screen",
+    );
+    await phonePage.locator(".diagview-wrapper:has(#floating) [data-action=fullscreen]").tap();
+    await phonePage.locator(".diagview-fab-btn").tap();
+    const zoomOut = phonePage.locator("#dv-zoomout");
+    await expect(zoomOut).toBeVisible();
+    await zoomOut.tap();
+    await phonePage.waitForTimeout(400);
+    const [tapped, other] = await phonePage.evaluate(() =>
+      ["dv-zoomout", "dv-zoomin"].map((id) => {
+        const cs = getComputedStyle(document.getElementById(id));
+        return `${cs.backgroundColor} ${cs.color} ${cs.transform}`;
+      }),
+    );
+    expect(tapped).toBe(other);
   } finally {
     await phonePage.context().close();
   }

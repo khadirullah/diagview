@@ -145,9 +145,13 @@
   contain-intrinsic-size: auto 500px;
 }
 
-.diagview-wrapper:hover {
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-  border-color: rgba(128, 128, 128, 0.4);
+/* Hover looks need a pointer that can hover. A touch screen keeps :hover on
+   the last thing tapped, so the look would stick after a tap. */
+@media (hover: hover) {
+  .diagview-wrapper:hover {
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    border-color: rgba(128, 128, 128, 0.4);
+  }
 }
 
 /* Viewport */
@@ -313,8 +317,10 @@
   }
 }
 
-.diagview-controls-floating .diagview-btn:hover {
-  border-radius: 50%;
+@media (hover: hover) {
+  .diagview-controls-floating .diagview-btn:hover {
+    border-radius: 50%;
+  }
 }
 
 /* Action Buttons */
@@ -336,9 +342,11 @@
   position: relative;
 }
 
-.diagview-btn:hover {
-  background: rgba(128, 128, 128, 0.25);
-  transform: translateY(-1px);
+@media (hover: hover) {
+  .diagview-btn:hover {
+    background: rgba(128, 128, 128, 0.25);
+    transform: translateY(-1px);
+  }
 }
 
 .diagview-btn:active {
@@ -424,11 +432,17 @@
   padding: 0 12px 0 10px;
 }
 
-.diagview-off-host:hover > .diagview-off-hint,
 .diagview-off-host:focus-visible > .diagview-off-hint,
-[data-diagview-init]:hover + .diagview-off-hint--after,
 [data-diagview-init]:focus-visible + .diagview-off-hint--after {
   opacity: 1;
+}
+
+/* A touch screen shows the badge at all times, and a tap leaves it as it was */
+@media (hover: hover) {
+  .diagview-off-host:hover > .diagview-off-hint,
+  [data-diagview-init]:hover + .diagview-off-hint--after {
+    opacity: 1;
+  }
 }
 
 /* An <svg> the selector matched cannot hold the badge, so it goes after
@@ -594,9 +608,11 @@
   stroke-linejoin: round;
   pointer-events: none;
 }
-.dv-icon-btn:hover {
-  background: rgba(128, 128, 128, 0.14);
-  color: var(--dv-text-color);
+@media (hover: hover) {
+  .dv-icon-btn:hover {
+    background: rgba(128, 128, 128, 0.14);
+    color: var(--dv-text-color);
+  }
 }
 .dv-icon-btn.active {
   color: var(--dv-accent, #3b82f6);
@@ -690,10 +706,12 @@
     stroke-linejoin: round;
     pointer-events: none;
   }
-  .dv-text-select-btn:hover {
-    background: rgba(59, 130, 246, 0.1);
-    color: var(--dv-accent, #3b82f6);
-    border-color: var(--dv-accent, #3b82f6) !important;
+  @media (hover: hover) {
+    .dv-text-select-btn:hover {
+      background: rgba(59, 130, 246, 0.1);
+      color: var(--dv-accent, #3b82f6);
+      border-color: var(--dv-accent, #3b82f6) !important;
+    }
   }
   .dv-text-select-btn.active {
     color: var(--dv-on-accent) !important;
@@ -738,9 +756,11 @@
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
     border: 1px solid rgba(255, 255, 255, 0.07);
   }
-  [data-tooltip]:hover::after {
-    opacity: 1;
-    transform: translateX(-50%) scale(1);
+  @media (hover: hover) {
+    [data-tooltip]:hover::after {
+      opacity: 1;
+      transform: translateX(-50%) scale(1);
+    }
   }
 }
 
@@ -789,9 +809,11 @@
   }
 }
 
-.diagview-branding:hover {
-  opacity: 1;
-  color: var(--dv-primary, var(--dv-accent, #3b82f6));
+@media (hover: hover) {
+  .diagview-branding:hover {
+    opacity: 1;
+    color: var(--dv-primary, var(--dv-accent, #3b82f6));
+  }
 }
 
 /* Branding Footer - Menu Panel (Mobile/Desktop) */
@@ -824,9 +846,11 @@
   color: color-mix(in srgb, var(--dv-accent) 75%, var(--dv-text-color)) !important;
 }
 
-.dv-menu-footer a:hover {
-  color: var(--dv-primary, var(--dv-accent, #3b82f6));
-  opacity: 1;
+@media (hover: hover) {
+  .dv-menu-footer a:hover {
+    color: var(--dv-primary, var(--dv-accent, #3b82f6));
+    opacity: 1;
+  }
 }
 
 /* Search Container */
@@ -917,9 +941,11 @@
   visibility: visible;
 }
 
-.diagview-search-clear:hover {
-  opacity: 1;
-  color: #ff4444;
+@media (hover: hover) {
+  .diagview-search-clear:hover {
+    opacity: 1;
+    color: #ff4444;
+  }
 }
 
 /* Zoom Display */
@@ -1027,11 +1053,13 @@
     transform 0.2s;
 }
 
-.diagview-close-btn:hover {
-  background: rgba(255, 68, 68, 0.15);
-  color: #ff4444;
-  border-color: rgba(255, 68, 68, 0.3) !important;
-  transform: translateY(-50%) scale(1.06);
+@media (hover: hover) {
+  .diagview-close-btn:hover {
+    background: rgba(255, 68, 68, 0.15);
+    color: #ff4444;
+    border-color: rgba(255, 68, 68, 0.3) !important;
+    transform: translateY(-50%) scale(1.06);
+  }
 }
 
 .diagview-close-btn:active {
@@ -1200,9 +1228,11 @@
   outline-offset: -2px;
 }
 
-.diagview-fab-btn:hover {
-  transform: translateY(-2px) scale(1.02);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+@media (hover: hover) {
+  .diagview-fab-btn:hover {
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+  }
 }
 
 .diagview-fab-btn:active {
@@ -1371,10 +1401,12 @@
   fill: none;
 }
 
-.dv-zoom button:hover {
-  background: var(--dv-accent-fill);
-  color: var(--dv-on-accent);
-  transform: translateY(-1px);
+@media (hover: hover) {
+  .dv-zoom button:hover {
+    background: var(--dv-accent-fill);
+    color: var(--dv-on-accent);
+    transform: translateY(-1px);
+  }
 }
 
 /* Export Grid (3 columns for compact look) */
@@ -1412,12 +1444,14 @@
   text-decoration: none !important;
 }
 
-.dv-exp button:hover {
-  background: var(--dv-accent-fill);
-  border-color: transparent;
-  color: var(--dv-on-accent);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+@media (hover: hover) {
+  .dv-exp button:hover {
+    background: var(--dv-accent-fill);
+    border-color: transparent;
+    color: var(--dv-on-accent);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
 }
 
 /* Export label row modifier (contains the transparent checkbox) */
@@ -1480,12 +1514,14 @@
   transform: translateX(16px);
 }
 
-.dv-exp-trans-chk:hover {
-  background: var(--dv-toggle-track, rgba(255, 255, 255, 0.25));
-}
+@media (hover: hover) {
+  .dv-exp-trans-chk:hover {
+    background: var(--dv-toggle-track, rgba(255, 255, 255, 0.25));
+  }
 
-.dv-exp-trans-chk:checked:hover {
-  background: var(--dv-primary, var(--dv-accent, #0891b2));
+  .dv-exp-trans-chk:checked:hover {
+    background: var(--dv-primary, var(--dv-accent, #0891b2));
+  }
 }
 
 .dv-exp button:disabled,
@@ -1517,9 +1553,11 @@
   transition: all 0.2s ease;
 }
 
-.dv-theme-btn:hover {
-  background: color-mix(in srgb, var(--dv-primary, var(--dv-accent, #3b82f6)) 15%, transparent);
-  border-color: color-mix(in srgb, var(--dv-primary, var(--dv-accent, #3b82f6)) 60%, transparent);
+@media (hover: hover) {
+  .dv-theme-btn:hover {
+    background: color-mix(in srgb, var(--dv-primary, var(--dv-accent, #3b82f6)) 15%, transparent);
+    border-color: color-mix(in srgb, var(--dv-primary, var(--dv-accent, #3b82f6)) 60%, transparent);
+  }
 }
 
 .dv-theme-btn.active {
@@ -1564,8 +1602,10 @@
     0 1px 3px rgba(0, 0, 0, 0.2);
 }
 
-.dv-swatch-btn:hover {
-  transform: scale(1.15);
+@media (hover: hover) {
+  .dv-swatch-btn:hover {
+    transform: scale(1.15);
+  }
 }
 
 .dv-swatch-btn.active {
@@ -1626,13 +1666,15 @@
   text-decoration: none !important;
 }
 
-.dv-menu-item:hover {
-  background: var(--dv-accent-fill);
-  color: var(--dv-on-accent);
-}
+@media (hover: hover) {
+  .dv-menu-item:hover {
+    background: var(--dv-accent-fill);
+    color: var(--dv-on-accent);
+  }
 
-.dv-menu-item:hover svg {
-  stroke: var(--dv-on-accent);
+  .dv-menu-item:hover svg {
+    stroke: var(--dv-on-accent);
+  }
 }
 
 .dv-menu-item.active {
@@ -1641,9 +1683,14 @@
 }
 
 /* On the accent background the key badge follows the item's text colour */
-.dv-menu-item:hover kbd,
 .dv-menu-item.active kbd {
   color: var(--dv-on-accent) !important;
+}
+
+@media (hover: hover) {
+  .dv-menu-item:hover kbd {
+    color: var(--dv-on-accent) !important;
+  }
 }
 
 .dv-menu-item svg {
@@ -1897,9 +1944,11 @@
   filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.15));
 }
 
-.dv-btn-transparent:hover {
-  transform: scale(1.1);
-  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2));
+@media (hover: hover) {
+  .dv-btn-transparent:hover {
+    transform: scale(1.1);
+    filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2));
+  }
 }
 
 /* Style: accent (Icon Only) */
@@ -1909,10 +1958,12 @@
   color: var(--dv-accent) !important;
 }
 
-.dv-btn-accent:hover {
-  background: color-mix(in srgb, var(--dv-accent) 10%, transparent) !important;
-  color: var(--dv-accent) !important;
-  border-color: var(--dv-accent) !important;
+@media (hover: hover) {
+  .dv-btn-accent:hover {
+    background: color-mix(in srgb, var(--dv-accent) 10%, transparent) !important;
+    color: var(--dv-accent) !important;
+    border-color: var(--dv-accent) !important;
+  }
 }
 
 /* Icons drawn in an accent that fades into the page get a 1px outline in
@@ -1933,9 +1984,11 @@
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
 }
 
-.dv-btn-solid:hover {
-  filter: brightness(1.1);
-  transform: translateY(-1px);
+@media (hover: hover) {
+  .dv-btn-solid:hover {
+    filter: brightness(1.1);
+    transform: translateY(-1px);
+  }
 }
 
 /* Style: neutral (Classic/Grey) */
@@ -1945,9 +1998,11 @@
   color: var(--dv-text-color) !important;
 }
 
-.dv-btn-neutral:hover {
-  background: rgba(128, 128, 128, 0.25) !important;
-  color: var(--dv-text-color) !important;
+@media (hover: hover) {
+  .dv-btn-neutral:hover {
+    background: rgba(128, 128, 128, 0.25) !important;
+    color: var(--dv-text-color) !important;
+  }
 }
 
 /* Success state after a copy or download. It comes after the style rules */
@@ -2041,8 +2096,10 @@
   transition: background 0.2s;
 }
 
-.diagview-search-back:hover {
-  background: rgba(128, 128, 128, 0.1);
+@media (hover: hover) {
+  .diagview-search-back:hover {
+    background: rgba(128, 128, 128, 0.1);
+  }
 }
 
 /* === Error Boundary === */
@@ -2153,8 +2210,10 @@
   transition: opacity 0.2s;
 }
 
-.diagview-help-close:hover {
-  opacity: 1;
+@media (hover: hover) {
+  .diagview-help-close:hover {
+    opacity: 1;
+  }
 }
 
 /* No gap, each row already has padding and a divider */
