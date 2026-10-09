@@ -23,6 +23,13 @@ import { deepMerge, deepFreeze } from "./state-utils.js";
  */
 
 /**
+ * Text of the offHint "label" and "below" styles.
+ * @typedef {object} DiagViewOffHintText
+ * @property {string} mouse - Text on a device with a mouse, "Click to expand" by default
+ * @property {string} touch - Text on a touch screen, "Tap to expand" by default
+ */
+
+/**
  * @typedef {object} DiagViewSecurityConfig
  * @property {"strict"|"permissive"|"off"} mode - SVG sanitization level
  * @property {boolean} allowOverrides - Let data-diagview-sanitize change the mode per diagram
@@ -80,6 +87,8 @@ import { deepMerge, deepFreeze } from "./state-utils.js";
  * @property {string|null} backgroundColor - Background colour, null to detect from the page
  * @property {string|null} textColor - Text colour, null to detect from the page
  * @property {"header"|"floating"|"off"} layout - Where the diagram buttons go
+ * @property {"none"|"icon"|"label"|"below"} offHint - Hint that a diagram with layout "off" opens fullscreen. "icon" is an expand badge in its top right corner, "label" the badge with text, "below" a line of text under it on touch screens only. Icon and label show on hover or focus with a mouse and always on touch screens
+ * @property {DiagViewOffHintText} offHintText - Text of the "label" and "below" hints
  * @property {number} highResScale - Export scale on desktop, 1 to 10
  * @property {number} mobileScale - Export scale on mobile, 1 to 5
  * @property {number} maxPixels - Largest export canvas in pixels
@@ -120,11 +129,12 @@ import { deepMerge, deepFreeze } from "./state-utils.js";
  * Options for init() and configure(). Every key is optional, including the
  * keys inside each group. Omitted keys keep their current value. Unknown
  * keys are allowed, as at runtime, where DiagView warns and ignores them.
- * @typedef {Partial<Omit<DiagViewConfig, "ui"|"security"|"performance"|"watermark">> & {
+ * @typedef {Partial<Omit<DiagViewConfig, "ui"|"security"|"performance"|"watermark"|"offHintText">> & {
  *   ui?: { buttons?: Partial<Omit<DiagViewButtonsConfig, "icons">> & { icons?: Partial<DiagViewButtonIcons> } },
  *   security?: Partial<DiagViewSecurityConfig> & { [key: string]: unknown },
  *   performance?: Partial<DiagViewPerformanceConfig> & { [key: string]: unknown },
  *   watermark?: Partial<DiagViewWatermarkConfig> & { [key: string]: unknown },
+ *   offHintText?: Partial<DiagViewOffHintText>,
  * } & { [key: string]: unknown }} DiagViewOptions
  */
 
@@ -141,6 +151,12 @@ export const INITIAL_CONFIG = {
 
   // Layout settings
   layout: LAYOUTS.FLOATING,
+  // Hint that a diagram with layout "off" opens fullscreen
+  offHint: "none",
+  offHintText: {
+    mouse: "Click to expand",
+    touch: "Tap to expand",
+  },
 
   // Export settings
   highResScale: EXPORT.HIGH_RES_SCALE_DEFAULT,

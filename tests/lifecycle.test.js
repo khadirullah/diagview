@@ -244,6 +244,37 @@ describe("destroy() restores every touched element", () => {
     expect(el.closest(".diagview-wrapper")).not.toBeNull();
   });
 
+  test.each(["icon", "label", "below"])(
+    "layout off with the %s hint: destroy restores the page exactly",
+    async (offHint) => {
+      document.body.innerHTML = `<main><div class="diagram">${SVG}</div><div data-diagram>${SVG}</div>${SVG.replace("<svg", '<svg class="chart"')}</main>`;
+      const before = document.body.innerHTML;
+
+      DiagView.init({ layout: "off", offHint });
+      expect(document.querySelectorAll(".diagview-off-hint")).toHaveLength(3);
+
+      await DiagView.destroy();
+      expect(document.body.innerHTML).toBe(before);
+    },
+  );
+
+  test("offHint set by configure() reaches diagrams set up after it, as layout does", async () => {
+    document.body.innerHTML = `<main><div class="diagram" id="a">${SVG}</div></main>`;
+    DiagView.init({ layout: "off" });
+    DiagView.configure({ offHint: "label", offHintText: { mouse: "Open" } });
+    expect(document.querySelector(".diagview-off-hint")).toBeNull();
+
+    document
+      .querySelector("main")
+      .insertAdjacentHTML("beforeend", `<div class="diagram" id="b">${SVG}</div>`);
+    await Promise.resolve();
+    jest.advanceTimersByTime(150);
+
+    const hint = document.querySelector("#b .diagview-off-hint--label");
+    expect(hint.textContent).toBe("OpenTap to expand");
+    expect(document.querySelector("#a .diagview-off-hint")).toBeNull();
+  });
+
   test("a diagram opened before its lazy init keeps its id through init and loses it on destroy", async () => {
     const realObserver = window.IntersectionObserver;
     window.IntersectionObserver = class {
@@ -527,6 +558,34 @@ describe("diagrams the page renders again in place", () => {
     await settle();
     expect(el.getAttribute("role")).toBe("button");
     expect(el.dataset.diagviewError).toBeUndefined();
+  });
+
+  test("layout off: a new render gets the off hint back once, with no further rounds", async () => {
+    document.body.innerHTML = `<main><pre class="diagram">${SVG}</pre></main>`;
+    DiagView.init({ layout: "off", offHint: "icon" });
+    const el = document.querySelector(".diagram");
+    expect(el.querySelectorAll(".diagview-off-hint")).toHaveLength(1);
+
+    el.innerHTML = OTHER_SVG;
+    await settle();
+    expect(el.querySelectorAll(".diagview-off-hint")).toHaveLength(1);
+    expect(el.lastElementChild.className).toBe("diagview-off-hint diagview-off-hint--icon");
+
+    // The hint coming back does not start another round
+    await settle();
+    jest.runAllTimers();
+    expect(el.querySelectorAll(".diagview-off-hint")).toHaveLength(1);
+    expect(el.dataset.diagviewInit).toBe("1");
+
+    el.innerHTML = ERROR_SVG;
+    await settle();
+    expect(el.querySelector(".diagview-off-hint")).toBeNull();
+    expect(el.classList.contains("diagview-off-host")).toBe(false);
+
+    el.innerHTML = SVG;
+    await settle();
+    expect(el.querySelectorAll(".diagview-off-hint")).toHaveLength(1);
+    expect(el.classList.contains("diagview-off-host")).toBe(true);
   });
 
   test("a shadow root diagram recovers when initShadowRoot() runs again", () => {

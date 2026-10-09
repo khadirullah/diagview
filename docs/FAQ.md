@@ -73,6 +73,15 @@ A: Use `data-diagview-layout` on individual diagram containers and call `init()`
 **Q: Can a keyboard user open a diagram with `layout: "off"`?**  
 A: Yes. `Tab` stops on the diagram and draws an outline in the accent colour. `Enter` or `Space` opens the viewer, and `Esc` closes it and puts focus back on the diagram. Links inside the diagram stay in the `Tab` order after it. See [Off](USAGE.md#off).
 
+**Q: How do visitors know a diagram with `layout: "off"` opens fullscreen?**  
+A: With a mouse, the cursor turns into a `zoom-in` magnifier over the diagram. A phone has no cursor, so set `offHint`:
+
+```javascript
+DiagView.init({ layout: "off", offHint: "icon" });
+```
+
+`"icon"` shows a round expand badge in the top-right corner, and `"label"` adds "Click to expand" or "Tap to expand" to it. With a mouse the badge shows on hover or keyboard focus, and on a touch screen it always shows. The badge can cover a legend or a node in that corner. For such a diagram use `"below"`, which puts a "Tap to expand" line under it on touch screens only. `data-diagview-off-hint` sets the hint for one diagram, and `offHintText` changes the words. See [Hint that the diagram opens](USAGE.md#hint-that-the-diagram-opens).
+
 **Q: Can the selector match the `<svg>` itself instead of a container?**  
 A: Yes. With `<svg class="diagram">` and the default selector, DiagView puts that SVG in a card with the toolbar, in the place where it stood. It keeps its id, classes, attributes and inline style, shows at its own size and fits a phone screen. `layout: "off"` puts the SVG itself in the `Tab` order. An `<svg>` drawn inside another SVG is part of that drawing and gets no toolbar. An empty `<svg>` waits until a script draws something in it. In React or another framework, keep such an SVG inside a container your component renders, as for any diagram element (see [Framework integration](USAGE.md#20-framework-integration)).
 

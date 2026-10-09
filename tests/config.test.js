@@ -149,6 +149,49 @@ describe("Core Config: validateConfig gaps", () => {
     expect(state.config.exportFonts).toBe("none");
   });
 
+  test("offHint takes none, icon, label and below and keeps the previous value otherwise", () => {
+    expect(state.config.offHint).toBe("none");
+    updateConfig({ offHint: "icon" });
+    updateConfig({ offHint: "label" });
+    updateConfig({ offHint: "below" });
+    expect(warn).not.toHaveBeenCalled();
+
+    updateConfig({ offHint: "badge" });
+    expect(warn).toHaveBeenCalledWith(
+      'DiagView: offHint must be "none", "icon", "label" or "below", keeping "below"',
+    );
+    expect(state.config.offHint).toBe("below");
+  });
+
+  test("offHintText merges a partial object over the defaults", () => {
+    expect(state.config.offHintText).toEqual({ mouse: "Click to expand", touch: "Tap to expand" });
+    updateConfig({ offHintText: { touch: "Tippen zum Vergrößern" } });
+    expect(state.config.offHintText).toEqual({
+      mouse: "Click to expand",
+      touch: "Tippen zum Vergrößern",
+    });
+    expect(warn).not.toHaveBeenCalled();
+  });
+
+  test("offHintText keeps the previous text for a value that is not a string", () => {
+    updateConfig({ offHintText: { mouse: "Open" } });
+    updateConfig({ offHintText: { mouse: 5, touch: null } });
+    expect(warn).toHaveBeenCalledWith(
+      'DiagView: offHintText.mouse must be a string, keeping "Open"',
+    );
+    expect(warn).toHaveBeenCalledWith(
+      'DiagView: offHintText.touch must be a string, keeping "Tap to expand"',
+    );
+    expect(state.config.offHintText).toEqual({ mouse: "Open", touch: "Tap to expand" });
+
+    warn.mockClear();
+    updateConfig({ offHintText: "Open" });
+    expect(warn).toHaveBeenCalledWith(
+      "DiagView: offHintText must be an object, keeping previous settings",
+    );
+    expect(state.config.offHintText).toEqual({ mouse: "Open", touch: "Tap to expand" });
+  });
+
   test("an unknown security.mode warns once and uses strict", () => {
     updateConfig({ security: { mode: "permissive" } });
     updateConfig({ security: { mode: "off" } });

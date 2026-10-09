@@ -201,6 +201,14 @@ DiagView adds no controls to the diagram card. Clicking the diagram itself opens
 DiagView.init({ layout: "off" });
 ```
 
+A phone has no cursor, so nothing tells a visitor that the diagram opens. Set `offHint` to add a small hint. `"icon"` puts a round expand badge in the top-right corner of the diagram, and `"label"` adds the words "Click to expand" or "Tap to expand" to it. With a mouse the badge shows on hover or keyboard focus. On a touch screen it always shows. `"below"` puts a "Tap to expand" line under the diagram on touch screens only. The default `"none"` adds nothing.
+
+```javascript
+DiagView.init({ layout: "off", offHint: "icon" });
+```
+
+The badge can cover a legend or a node in the top-right corner. Use `"below"` for such a diagram, or set `data-diagview-off-hint` on it. [Off](docs/USAGE.md#off) has the details.
+
 ### Diagram size
 
 In the floating and header layouts a diagram shows at its own size, centred in the card. A diagram wider than the card shrinks to fit. A tall diagram keeps its own height, as it does with `layout: "off"`, and the page scrolls past it. The card around a short diagram hugs it, with 24px of padding above and below, or 12px on a screen under 640px wide. The card has no padding at the sides, so a diagram that fills the card is as wide as it is with `layout: "off"`. To add room at the sides, set `--dv-card-padding`, for example `.diagview-wrapper { --dv-card-padding: 24px; }`. The markup does not change this. A `<pre class="mermaid">` on its own, the same `<pre>` inside a `<div class="diagram">`, and an `<svg>` in a `<figure>` with a caption all keep the width their tool drew, and the caption sits under the diagram. The caption keeps the page's own alignment, so add `figcaption { text-align: center; }` to the page to centre it under the diagram. An SVG with only a `viewBox` has no size of its own, so it fills the card. The fullscreen viewer fits every diagram to the screen either way. With `layout: "off"` DiagView adds no wrapper around the diagram, so the page's own CSS sets its size.
@@ -251,19 +259,20 @@ Any diagram can override the global configuration using `data-diagview-*` attrib
 </div>
 ```
 
-| Attribute                           | Values                              | Description                                                                         |
-| ----------------------------------- | ----------------------------------- | ----------------------------------------------------------------------------------- |
-| `data-diagview-layout`              | `header` \| `floating` \| `off`     | Layout for this diagram only                                                        |
-| `data-diagview-scale`               | `1` to `10`                         | Export resolution for this diagram only                                             |
-| `data-diagview-sanitize`            | `strict` \| `permissive` \| `off`   | SVG sanitization mode                                                               |
-| `data-diagview-allow-remote`        | `true` \| `false`                   | Keep remote CSS and fonts under `strict`                                            |
-| `data-diagview-watermark`           | `true` \| `false`                   | Turn the watermark on or off for this diagram                                       |
-| `data-diagview-watermark-text`      | Any string                          | Custom brand text (e.g. your name)                                                  |
-| `data-diagview-watermark-style`     | `corner` \| `background` \| `both`  | Style override for this diagram                                                     |
-| `data-diagview-watermark-pos`       | `top-left` \| `...` \| `four-sides` | Position override for this diagram                                                  |
-| `data-diagview-watermark-placement` | `diagram` \| `margin`               | Corner and side text on the diagram or in the margin                                |
-| `data-diagview-watermark-opacity`   | `0` to `1`                          | Transparency override for this diagram                                              |
-| `data-title`                        | Any string                          | Header label, and export file names such as `my_architecture_2026-09-29_101500.png` |
+| Attribute                           | Values                                 | Description                                                                         |
+| ----------------------------------- | -------------------------------------- | ----------------------------------------------------------------------------------- |
+| `data-diagview-layout`              | `header` \| `floating` \| `off`        | Layout for this diagram only                                                        |
+| `data-diagview-off-hint`            | `none` \| `icon` \| `label` \| `below` | Hint that the diagram opens, with `layout: "off"`                                   |
+| `data-diagview-scale`               | `1` to `10`                            | Export resolution for this diagram only                                             |
+| `data-diagview-sanitize`            | `strict` \| `permissive` \| `off`      | SVG sanitization mode                                                               |
+| `data-diagview-allow-remote`        | `true` \| `false`                      | Keep remote CSS and fonts under `strict`                                            |
+| `data-diagview-watermark`           | `true` \| `false`                      | Turn the watermark on or off for this diagram                                       |
+| `data-diagview-watermark-text`      | Any string                             | Custom brand text (e.g. your name)                                                  |
+| `data-diagview-watermark-style`     | `corner` \| `background` \| `both`     | Style override for this diagram                                                     |
+| `data-diagview-watermark-pos`       | `top-left` \| `...` \| `four-sides`    | Position override for this diagram                                                  |
+| `data-diagview-watermark-placement` | `diagram` \| `margin`                  | Corner and side text on the diagram or in the margin                                |
+| `data-diagview-watermark-opacity`   | `0` to `1`                             | Transparency override for this diagram                                              |
+| `data-title`                        | Any string                             | Header label, and export file names such as `my_architecture_2026-09-29_101500.png` |
 
 > **Security note:** `data-diagview-sanitize="off"` and `data-diagview-allow-remote="true"` only work when `security.allowOverrides` is `true` in the global config (the default). Use these only with SVGs from fully trusted sources. A diagram's `data-diagview-sanitize` mode also applies to its exports, from the page toolbar and from the fullscreen menu alike. To clean every export and copy in `strict` mode, whatever mode the diagram uses on screen, set `security.exportMode` to `"strict"`. [Choosing a mode](docs/USAGE.md#choosing-a-mode) lists what each mode removes and which one to use.
 
@@ -455,6 +464,8 @@ DiagView.init({
 
   // ── Layout ───────────────────────────────────────
   layout: "floating", // 'header' | 'floating' | 'off'
+  offHint: "none", // 'none' | 'icon' | 'label' | 'below' (hint that a diagram with layout 'off' opens)
+  offHintText: { mouse: "Click to expand", touch: "Tap to expand" }, // words for 'label' and 'below'
 
   // ── UI ───────────────────────────────────────────
   ui: {

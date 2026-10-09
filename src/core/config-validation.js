@@ -1,4 +1,4 @@
-import { ZOOM, LAYOUTS, EXPORT, SECURITY_MODES } from "./constants.js";
+import { ZOOM, LAYOUTS, EXPORT, SECURITY_MODES, OFF_HINTS } from "./constants.js";
 import { DEFAULT_CONFIG } from "./config-defaults.js";
 import { deepMerge } from "./state-utils.js";
 
@@ -80,6 +80,13 @@ export function validateConfig(config, previous = DEFAULT_CONFIG) {
     config["layout"] = defaults["layout"];
   }
 
+  if (!OFF_HINTS.includes(/** @type {string} */ (config["offHint"]))) {
+    console.warn(
+      `DiagView: offHint must be "none", "icon", "label" or "below", keeping "${fallback("offHint")}"`,
+    );
+    config["offHint"] = fallback("offHint");
+  }
+
   if (!["none", "dots"].includes(/** @type {string} */ (config["canvasGrid"]))) {
     console.warn(
       `DiagView: canvasGrid must be "none" or "dots", keeping "${fallback("canvasGrid")}"`,
@@ -103,10 +110,20 @@ export function validateConfig(config, previous = DEFAULT_CONFIG) {
 
   // Nested option groups must stay objects: a scalar, null or array would
   // replace the whole group and break every `config.group.key` read.
-  ["security", "watermark", "ui", "performance"].forEach((key) => {
+  ["security", "watermark", "ui", "performance", "offHintText"].forEach((key) => {
     if (!isPlainObject(config[key])) {
       console.warn(`DiagView: ${key} must be an object, keeping previous settings`);
       config[key] = deepMerge({}, fallback(key));
+    }
+  });
+
+  // The hint shows this text as it is, so it must be a string
+  ["mouse", "touch"].forEach((key) => {
+    const text = config["offHintText"];
+    if (typeof text[key] !== "string") {
+      const keep = fallback("offHintText")[key];
+      console.warn(`DiagView: offHintText.${key} must be a string, keeping "${keep}"`);
+      text[key] = keep;
     }
   });
 

@@ -599,3 +599,64 @@ describe("styles.css: notice icon", () => {
     expect(ruleBody("\n.diagview-toast-icon {")).toMatch(/display:\s*inline-block/);
   });
 });
+
+describe("styles.css: off hint", () => {
+  const touch = css.slice(
+    css.indexOf("@media (hover: none) or (pointer: coarse) {\n  .diagview-off-hint"),
+  );
+
+  test("lets a click through to the diagram and positions its host with no specificity", () => {
+    expect(ruleBody("\n.diagview-off-hint {")).toContain("pointer-events: none");
+    expect(ruleBody(":where(.diagview-off-host) {")).toContain("position: relative");
+  });
+
+  test("draws the expand icon as a mask, not an svg element", () => {
+    const body = ruleBody(".diagview-off-hint::before {");
+    expect(body).toContain("-webkit-mask: var(--dv-expand-icon)");
+    expect(body).toContain("mask: var(--dv-expand-icon)");
+    expect(body).toContain("M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7");
+  });
+
+  test("the badge takes the page colours and sits 8px from the top right corner", () => {
+    const body = ruleBody(".diagview-off-hint--icon,\n.diagview-off-hint--label {");
+    expect(body).toMatch(/top: 8px;\s*right: 8px/);
+    expect(body).toContain("height: 32px");
+    expect(body).toContain("background: var(--dv-page-bg");
+    expect(body).toContain("opacity: 0");
+    expect(ruleBody("\n.diagview-off-hint {")).toContain("color: var(--dv-page-text");
+    // The page font DiagView reads from <body>, so a <pre> host does not
+    // turn the words monospace
+    expect(ruleBody("\n.diagview-off-hint {")).toContain(
+      "font-family: var(--dv-hint-font, inherit)",
+    );
+  });
+
+  test("a mouse shows the badge on hover or keyboard focus", () => {
+    const body = ruleBody(
+      ".diagview-off-host:hover > .diagview-off-hint,\n.diagview-off-host:focus-visible > .diagview-off-hint,",
+    );
+    expect(body).toContain("opacity: 1");
+  });
+
+  test("a hint after a bare svg takes its own line", () => {
+    const body = ruleBody("\n.diagview-off-hint--after {");
+    expect(body).toContain("position: static");
+    expect(body).toContain("margin: 6px 0 0 auto");
+  });
+
+  test("does not fade with reduced motion and is not printed", () => {
+    const at = (query) =>
+      css.slice(css.indexOf(query), css.indexOf("{", css.indexOf(query) + query.length + 2));
+    expect(at("@media (prefers-reduced-motion: reduce) {")).toContain(".diagview-off-hint");
+    expect(at("@media print {")).toContain(".diagview-off-hint");
+  });
+
+  test("the line below and the touch text show only on touch screens", () => {
+    expect(ruleBody(".diagview-off-hint--below {")).toContain("display: none");
+    expect(ruleBody(".diagview-off-hint-touch {")).toContain("display: none");
+    expect(touch).toMatch(/\.diagview-off-hint--label \{\s*opacity: 0\.85/);
+    expect(touch).toMatch(/\.diagview-off-hint--below \{\s*display: flex/);
+    expect(touch).toMatch(/\.diagview-off-hint-mouse \{\s*display: none/);
+    expect(touch).toMatch(/\.diagview-off-hint-touch \{\s*display: inline/);
+  });
+});

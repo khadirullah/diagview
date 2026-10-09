@@ -41,6 +41,8 @@ const full: DiagViewOptions = {
   backgroundColor: null,
   textColor: "#e2e8f0",
   layout: "floating",
+  offHint: "none",
+  offHintText: { mouse: "Click to expand", touch: "Tap to expand" },
   ui: {
     buttons: {
       style: "accent",
@@ -100,6 +102,7 @@ const partialNested: DiagViewOptions = {
   security: { mode: "off", exportMode: "strict" },
   performance: {},
   watermark: { enabled: true, placement: "diagram" },
+  offHintText: { touch: "Tippen" },
 };
 
 // Watermark values are matched without regard to case
@@ -126,6 +129,10 @@ const unknownKey: DiagViewOptions = { someOldOption: true };
 // Wrong values must not compile
 // @ts-expect-error layout is a fixed set of strings
 const badLayout: DiagViewOptions = { layout: "sidebar" };
+// @ts-expect-error offHint is a fixed set of strings
+const badOffHint: DiagViewOptions = { offHint: "badge" };
+// @ts-expect-error offHintText values are strings
+const badOffHintText: DiagViewOptions = { offHintText: { mouse: 5 } };
 // @ts-expect-error showMinimap is a boolean
 const badMinimap: DiagViewOptions = { showMinimap: "yes" };
 // @ts-expect-error exportSearchHighlight is a boolean
@@ -151,7 +158,7 @@ const badZoom: DiagViewOptions = { maxZoomScale: "25" };
 
 void [full, empty, partialNested, caseInsensitive, cleared, unknownKey, fontsAll, fontsNone];
 void [badLayout, badMinimap, badGrid, badMode, badStyle, badWatermark, badZoomCb, badZoom];
-void [badSearchExport, badFonts, badPlacement, badExportMode];
+void [badSearchExport, badFonts, badPlacement, badExportMode, badOffHint, badOffHintText];
 
 async function lifecycle(): Promise<void> {
   expectType<Equal<ReturnType<typeof init>, Promise<void>>>();
@@ -172,6 +179,8 @@ async function lifecycle(): Promise<void> {
 function configuration(): void {
   const config: DiagViewConfig = getConfiguration();
   expectType<Equal<typeof config.layout, "header" | "floating" | "off">>();
+  expectType<Equal<typeof config.offHint, "none" | "icon" | "label" | "below">>();
+  expectType<Equal<typeof config.offHintText.touch, string>>();
   expectType<Equal<typeof config.accentColor, string | null>>();
   expectType<Equal<typeof config.warningColor, string>>();
   expectType<Equal<typeof config.security.mode, "strict" | "permissive" | "off">>();

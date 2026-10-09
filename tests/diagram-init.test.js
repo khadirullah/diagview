@@ -16,7 +16,9 @@ jest.unstable_mockModule("../src/features/export.js", () => ({
 }));
 
 // 2. Import modules after mocks
-const { initializeDiagram, deinitializeDiagram } = await import("../src/features/diagram-init.js");
+const { initializeDiagram, deinitializeDiagram, recheckDiagram } =
+  await import("../src/features/diagram-init.js");
+const { getDiagramSvg } = await import("../src/core/utils.js");
 
 describe("Diagram Init: SVG Validation (via error boundary)", () => {
   beforeEach(() => {
@@ -908,5 +910,169 @@ describe("Diagram Init: keyboard access with layout off", () => {
     expect(el.hasAttribute("tabindex")).toBe(false);
     expect(el.hasAttribute("role")).toBe(false);
     expect(el.hasAttribute("aria-label")).toBe(false);
+  });
+});
+
+describe("Diagram Init: offHint", () => {
+  const RECT = '<svg viewBox="0 0 10 10"><rect width="5" height="5"/></svg>';
+  let updateConfig;
+
+  const setup = (attrs = "", layout = "off") => {
+    document.body.innerHTML = `<div class="diagram" data-diagview-layout="${layout}" ${attrs}>${RECT}</div>`;
+    const el = document.querySelector(".diagram");
+    initializeDiagram(el);
+    return el;
+  };
+
+  beforeEach(async () => {
+    const config = await import("../src/core/config.js");
+    config.resetConfig();
+    ({ updateConfig } = config);
+    document.body.innerHTML = "";
+  });
+
+  test("is off by default and leaves the element as layout off always did", () => {
+    const el = setup();
+    expect(el.querySelector(".diagview-off-hint")).toBeNull();
+    expect(el.className).toBe("diagram");
+    expect(el.lastElementChild.localName).toBe("svg");
+  });
+
+  test("icon puts an empty badge last in the element and positions the element", () => {
+    updateConfig({ offHint: "icon" });
+    const el = setup();
+    const hint = el.lastElementChild;
+    expect(hint.className).toBe("diagview-off-hint diagview-off-hint--icon");
+    expect(hint.getAttribute("aria-hidden")).toBe("true");
+    expect(hint.childNodes).toHaveLength(0);
+    expect(hint.querySelector("svg")).toBeNull();
+    expect(el.classList.contains("diagview-off-host")).toBe(true);
+    expect(el.getAttribute("style")).toBeNull();
+  });
+
+  test.each(["label", "below"])("%s holds the mouse and the touch text as plain text", (style) => {
+    updateConfig({ offHint: style, offHintText: { touch: "<b>Tap</b> me" } });
+    const el = setup();
+    const hint = el.querySelector(`.diagview-off-hint--${style}`);
+    expect(hint.querySelector("svg, b")).toBeNull();
+    expect(hint.querySelector(".diagview-off-hint-mouse").textContent).toBe("Click to expand");
+    expect(hint.querySelector(".diagview-off-hint-touch").textContent).toBe("<b>Tap</b> me");
+    // Only icon and label sit in the corner
+    expect(el.classList.contains("diagview-off-host")).toBe(style === "label");
+  });
+
+  test.each(["label", "below"])("%s text takes the page font, not the font of a <pre>", (style) => {
+    document.body.style.fontFamily = "Georgia, serif";
+    updateConfig({ offHint: style });
+    document.body.innerHTML = `<pre class="diagram" data-diagview-layout="off">${RECT}</pre>`;
+    const el = document.querySelector(".diagram");
+    initializeDiagram(el);
+    const hint = el.querySelector(".diagview-off-hint");
+    expect(hint.style.getPropertyValue("--dv-hint-font")).toBe("Georgia, serif");
+    document.body.removeAttribute("style");
+  });
+
+  test("the diagram still finds its own SVG, not the hint", () => {
+    updateConfig({ offHint: "label" });
+    const el = setup();
+    expect(getDiagramSvg(el)).toBe(el.firstElementChild);
+  });
+
+  test("data-diagview-off-hint picks the style for one diagram", () => {
+    updateConfig({ offHint: "icon" });
+    expect(setup('data-diagview-off-hint="BELOW"').lastElementChild.className).toBe(
+      "diagview-off-hint diagview-off-hint--below",
+    );
+    expect(setup('data-diagview-off-hint="none"').querySelector(".diagview-off-hint")).toBeNull();
+  });
+
+  test("an unknown data-diagview-off-hint warns and keeps the page setting", () => {
+    const warn = jest.spyOn(console, "warn").mockImplementation(() => {});
+    updateConfig({ offHint: "icon" });
+    const el = setup('data-diagview-off-hint="badge"');
+    expect(warn).toHaveBeenCalledWith(
+      'DiagView: Unknown data-diagview-off-hint "badge" on element, ignoring.',
+    );
+    expect(el.querySelector(".diagview-off-hint--icon")).not.toBeNull();
+    warn.mockRestore();
+  });
+
+  test.each(["header", "floating"])("the %s layout gets no hint", (layout) => {
+    updateConfig({ offHint: "label" });
+    const el = setup('data-diagview-off-hint="icon"', layout);
+    expect(document.querySelector(".diagview-off-hint")).toBeNull();
+    expect(el.classList.contains("diagview-off-host")).toBe(false);
+  });
+
+  test("a diagram that shows the error box gets no hint", () => {
+    updateConfig({ offHint: "icon", layout: "off" });
+    document.body.innerHTML = '<div class="diagram"><svg width="0" height="0"></svg></div>';
+    const el = document.querySelector(".diagram");
+    initializeDiagram(el);
+    expect(el.dataset.diagviewError).toBe("1");
+    expect(document.querySelector(".diagview-off-hint")).toBeNull();
+    expect(el.classList.contains("diagview-off-host")).toBe(false);
+  });
+
+  test.each(["icon", "label", "below"])("destroy puts the element back as it was (%s)", (style) => {
+    updateConfig({ offHint: style });
+    for (const attrs of ["", 'class="diagram"']) {
+      document.body.innerHTML = `<div data-diagram data-diagview-layout="off" ${attrs}>${RECT}</div>`;
+      const el = document.querySelector("[data-diagram]");
+      const before = document.body.innerHTML;
+      initializeDiagram(el);
+      expect(document.querySelector(".diagview-off-hint")).not.toBeNull();
+      deinitializeDiagram(el);
+      expect(document.body.innerHTML).toBe(before);
+    }
+  });
+
+  test.each(["icon", "label", "below"])(
+    "a bare svg gets the %s hint after it, in the flow, and no host class",
+    (style) => {
+      updateConfig({ offHint: style });
+      document.body.innerHTML =
+        '<main><svg class="diagram" id="chart" data-diagview-layout="off" viewBox="0 0 10 10"><rect width="5" height="5"/></svg><p>After</p></main>';
+      const svg = document.getElementById("chart");
+      const before = document.body.innerHTML;
+
+      initializeDiagram(svg);
+
+      const hint = svg.nextElementSibling;
+      expect(hint.className).toBe(
+        `diagview-off-hint diagview-off-hint--${style} diagview-off-hint--after`,
+      );
+      expect(svg.querySelector(".diagview-off-hint")).toBeNull();
+      expect(svg.classList.contains("diagview-off-host")).toBe(false);
+
+      deinitializeDiagram(svg);
+      expect(document.body.innerHTML).toBe(before);
+    },
+  );
+
+  test("a new render into the element gets the hint back once", () => {
+    updateConfig({ offHint: "icon" });
+    const el = setup();
+    el.innerHTML = '<svg viewBox="0 0 20 20"><rect width="9" height="9"/></svg>';
+    expect(el.querySelector(".diagview-off-hint")).toBeNull();
+
+    expect(recheckDiagram(el)).toBe(false);
+    expect(recheckDiagram(el)).toBe(false);
+
+    expect(el.querySelectorAll(".diagview-off-hint")).toHaveLength(1);
+    expect(el.lastElementChild.classList.contains("diagview-off-hint")).toBe(true);
+  });
+
+  test("a render that breaks the diagram swaps the hint for the error box", () => {
+    updateConfig({ offHint: "icon" });
+    const el = setup();
+    el.innerHTML = '<svg width="0" height="0"></svg>';
+
+    expect(recheckDiagram(el)).toBe(true);
+    initializeDiagram(el);
+
+    expect(el.dataset.diagviewError).toBe("1");
+    expect(el.querySelector(".diagview-off-hint")).toBeNull();
+    expect(el.classList.contains("diagview-off-host")).toBe(false);
   });
 });

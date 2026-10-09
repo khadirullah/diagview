@@ -59,6 +59,11 @@
             margin-top: 20px;
         }
 
+        /* The line below sits under the diagram, not beside it */
+        .hint-grid .mermaid {
+            flex-direction: column;
+        }
+
         @media (max-width: 600px) {
             .crumbs {
                 display: none;
@@ -214,6 +219,52 @@
             </div>
         </div>
 
+        <!-- Hints that a diagram opens -->
+        <section class="section">
+            <div class="wrap">
+                <div class="section-head">
+                    <h2>Show that it opens</h2>
+                    <p>A phone has no cursor, so nothing says that a tap opens the diagram. Set offHint, or
+                        data-diagview-off-hint on one diagram, to add a small hint.</p>
+                </div>
+            </div>
+            <div class="wrap grid hint-grid" style="--fig-chapter: '2'">
+                <div class="card third">
+                    <div class="card-header">
+                        <h3>Icon</h3>
+                        <span class="tag">icon</span>
+                    </div>
+                    <div class="mermaid" data-title="Hint: icon" data-diagview-off-hint="icon">
+                        graph LR
+                        A[Write] --> B[Review] --> C[Ship]
+                    </div>
+                    <p class="card-note">data-diagview-off-hint="icon". A badge in the corner. A mouse shows it on hover or Tab, a phone always.</p>
+                </div>
+                <div class="card third">
+                    <div class="card-header">
+                        <h3>Label</h3>
+                        <span class="tag">label</span>
+                    </div>
+                    <div class="mermaid" data-title="Hint: label" data-diagview-off-hint="label">
+                        graph LR
+                        A[Write] --> B[Review] --> C[Ship]
+                    </div>
+                    <p class="card-note">data-diagview-off-hint="label". The badge with "Click to expand", or "Tap to expand" on a phone.</p>
+                </div>
+                <div class="card third">
+                    <div class="card-header">
+                        <h3>Below</h3>
+                        <span class="tag">below</span>
+                    </div>
+                    <div class="mermaid" data-title="Hint: below" data-diagview-off-hint="below">
+                        graph LR
+                        A[Write] --> B[Review] --> C[Ship]
+                    </div>
+                    <p class="card-note">data-diagview-off-hint="below". A line under the diagram, on phones only. A mouse has the zoom-in cursor.</p>
+                </div>
+            </div>
+        </section>
+
         <!-- Feature highlights -->
         <section class="section">
             <div class="wrap">
@@ -225,8 +276,10 @@
                     <div>
                         <h3>No extra elements</h3>
                         <p>Off mode adds no wrapper elements, no toolbar, no buttons. DiagView only adds a click
-                            and a key handler, a tab stop, a screen reader name, a class and a few data attributes,
-                            and destroy() removes them all.</p>
+                            and a key handler, a tab stop, a screen reader name, a class and a few data attributes.
+                            With offHint set it also adds the hint element. For icon and label it adds the
+                            diagview-off-host class too, unless the diagram is the svg itself.
+                            destroy() removes them all.</p>
                     </div>
                     <div>
                         <h3>A zoom-in cursor</h3>
@@ -316,7 +369,8 @@
 <pre><code><span class="c">// Off mode. A click opens it.</span>
 <span class="kw">DiagView</span>.init({
   diagramSelector: <span class="v">'.diagram'</span>,
-  layout:          <span class="v">'off'</span>
+  layout:          <span class="v">'off'</span>,
+  offHint:         <span class="v">'icon'</span>  <span class="c">// a badge that shows it opens</span>
 });
 
 <span class="c">&lt;!-- Mix layouts (v1.0.5+) --&gt;</span>

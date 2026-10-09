@@ -216,6 +216,47 @@ DiagView.init({ layout: "off" });
 
 This is the most performant layout for dense pages with many diagrams.
 
+#### Hint that the diagram opens
+
+The `zoom-in` cursor tells a mouse user that the diagram opens. A phone or tablet has no cursor, so nothing tells a visitor there. Set `offHint` to add a small hint. The default, `"none"`, adds nothing, so a page that does not set it looks the same as before.
+
+```javascript
+DiagView.init({ layout: "off", offHint: "label" });
+```
+
+| Value     | With a mouse                                                  | On a touch screen                                       |
+| --------- | ------------------------------------------------------------- | ------------------------------------------------------- |
+| `"none"`  | Nothing                                                       | Nothing                                                 |
+| `"icon"`  | Round expand badge in the top-right corner, on hover or focus | The same badge, always shown                            |
+| `"label"` | Badge with "Click to expand", on hover or focus               | Badge with "Tap to expand", always shown                |
+| `"below"` | Nothing, since the cursor is the hint                         | "Tap to expand" with the icon, right aligned underneath |
+
+The badge is 32px high and sits 8px in from the top-right corner of the diagram. With a mouse it fades in when the pointer is over the diagram or the diagram has keyboard focus. A device without hover shows it all the time.
+
+The badge sits over the diagram, so it can cover a legend or a node in the top-right corner. Use `"below"` for such a diagram. To change the hint for one diagram only, set `data-diagview-off-hint` on its element:
+
+```html
+<div class="diagram" data-diagview-off-hint="below">...</div>
+```
+
+DiagView ignores an unknown value in the attribute and logs a warning.
+
+`offHintText` sets the words. `"label"` uses `mouse` on a device with a mouse and `touch` on a touch screen. `"below"` uses only `touch`. Leave out a key to keep its default:
+
+```javascript
+DiagView.init({
+  layout: "off",
+  offHint: "label",
+  offHintText: { mouse: "Click to enlarge", touch: "Tap to enlarge" },
+});
+```
+
+Clicks on the hint go through to the diagram. A device with no hover or a coarse pointer counts as a touch screen, the same test the floating toolbar uses. Screen readers skip it, because the diagram's own name already says "Open ... in fullscreen". The hint shows only with `layout: "off"`, and never in the fullscreen viewer, in exports, in search or in the minimap. A diagram that failed to draw gets no hint, and `destroy()` removes it.
+
+For `"icon"` and `"label"` DiagView adds the class `diagview-off-host` to the diagram element. It sets `position: relative` so the badge can sit in the corner. The hint itself has the classes `diagview-off-hint` and `diagview-off-hint--icon`, `diagview-off-hint--label` or `diagview-off-hint--below`, so the page can restyle it. The words use the font of the page's `<body>`, so a diagram inside a `<pre>` does not turn them monospace. When the selector matches the `<svg>` itself, the hint goes right after the SVG, under it and right aligned, since a badge cannot sit inside an SVG. The hint is then outside the SVG, so a tap on it does not open the diagram.
+
+`"below"` is a block at the end of the diagram element. If the page makes that element a flex row, as some themes do for `.mermaid`, the line sits beside the SVG instead of under it. Set `flex-direction: column` on that element to move it under.
+
 ### Diagram size
 
 In the floating and header layouts a diagram shows at its own size, centred in the card. A diagram wider than the card shrinks to fit. A tall diagram keeps its own height, as it does with `layout: "off"`, and the page scrolls past it. The card around a short diagram hugs it, with 24px of padding above and below, or 12px on a screen under 640px wide. The card has no padding at the sides, so a diagram that fills the card is as wide as it is with `layout: "off"`. To add room at the sides, set `--dv-card-padding`, for example `.diagview-wrapper { --dv-card-padding: 24px; }`. The markup does not change this. A `<pre class="mermaid">` on its own, the same `<pre>` inside a `<div class="diagram">`, and an `<svg>` in a `<figure>` with a caption all keep the width their tool drew, and the caption sits under the diagram. The caption keeps the page's own alignment, so add `figcaption { text-align: center; }` to the page to centre it under the diagram. An SVG with only a `viewBox` has no size of its own, so it fills the card. The fullscreen viewer fits every diagram to the screen either way. With `layout: "off"` DiagView adds no wrapper around the diagram, so the page's own CSS sets its size.
@@ -265,6 +306,7 @@ Set any of the following `data-diagview-*` attributes directly on a diagram cont
 | Attribute                           | Type                               | Description                                                                     |
 | ----------------------------------- | ---------------------------------- | ------------------------------------------------------------------------------- |
 | `data-diagview-layout`              | `header \| floating \| off`        | Layout for this diagram                                                         |
+| `data-diagview-off-hint`            | `none \| icon \| label \| below`   | Hint that the diagram opens, with `layout: "off"` (see [Off](#off))             |
 | `data-diagview-scale`               | Integer `1` to `10`                | Export `highResScale` for this diagram                                          |
 | `data-diagview-sanitize`            | `strict` \| `permissive` \| `off`  | SVG sanitization mode                                                           |
 | `data-diagview-allow-remote`        | `true` \| `false`                  | Keep remote CSS and fonts under `strict`                                        |
@@ -912,7 +954,7 @@ Live example: [React 18 + StrictMode demo](https://khadirullah.github.io/diagvie
 >
 > Drawing a new SVG inside the diagram element is fine. DiagView sees the new SVG and sets the diagram up again, as [Drawing a diagram again](#drawing-a-diagram-again) explains. What breaks is the framework replacing the diagram element itself.
 >
-> If you would rather DiagView never touch the DOM around your element, use `layout: "off"`. It leaves the element where it is and adds only a click and a key handler, `tabindex="0"`, a `role` and an `aria-label` when the element has none, the `data-diagview-init`, `data-diagview-id` and `data-diagview-index` attributes, and the `dv-svg-content` class and a `filter` transition on the SVG. `destroy()` removes them again. Fullscreen, zoom, search, minimap and export all still work; only the inline toolbar is dropped. Closing the viewer puts focus back on the diagram. Pair it with `DiagView.openFullscreen(el)` / `DiagView.exportDiagram(el, ...)` from your own buttons if you need them.
+> If you would rather DiagView never touch the DOM around your element, use `layout: "off"`. It leaves the element where it is and adds only a click and a key handler, `tabindex="0"`, a `role` and an `aria-label` when the element has none, the `data-diagview-init`, `data-diagview-id` and `data-diagview-index` attributes, and the `dv-svg-content` class and a `filter` transition on the SVG. With [`offHint`](#off) set it also adds the hint element, last inside the diagram element or right after it when the element is the `<svg>`, and for `"icon"` or `"label"` the `diagview-off-host` class. `destroy()` removes them again. Fullscreen, zoom, search, minimap and export all still work; only the inline toolbar is dropped. Closing the viewer puts focus back on the diagram. Pair it with `DiagView.openFullscreen(el)` / `DiagView.exportDiagram(el, ...)` from your own buttons if you need them.
 >
 > **React StrictMode / hot reload:** the development-only destroy-then-init sequence is handled by `init()` itself, which queues behind an in-flight `destroy()`. You do not need to await either call in an effect.
 >
@@ -952,7 +994,7 @@ useEffect(() => {
   };
 }, []);
 
-// DiagView only attaches a click-to-fullscreen handler; the DOM is left as rendered.
+// DiagView adds no wrapper, only handlers, attributes and, with offHint, a hint element.
 return <div className="diagram" dangerouslySetInnerHTML={{ __html: svgContent }} />;
 ```
 

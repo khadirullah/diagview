@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DiagView layout off hints</title>
+<style>body{font-family:sans-serif;margin:24px;background:#fff;color:#1e293b} .diagram{display:block;width:320px;margin:24px 0} svg.diagram{width:320px;height:107px}</style>
+</head>
+<body>
+<!--
+  Every diagram has layout "off". The page leaves offHint at "none", so
+  only the ones with data-diagview-off-hint show a hint.
+-->
+<p><a id="before" href="#top">A link before the diagrams</a></p>
+<div class="diagram" id="icon" data-diagview-layout="off" data-diagview-off-hint="icon" data-title="Icon">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 160"><rect x="20" y="40" width="160" height="80" fill="#dbeafe"/><rect x="300" y="40" width="160" height="80" fill="#dcfce7"/><path d="M180 80H300" stroke="#334155"/></svg>
+</div>
+<div class="diagram" id="label" data-diagview-layout="off" data-diagview-off-hint="label" data-title="Label">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 160"><rect x="160" y="40" width="160" height="80" fill="#fef3c7"/></svg>
+</div>
+<div class="diagram" id="below" data-diagview-layout="off" data-diagview-off-hint="below" data-title="Below">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 160"><rect x="160" y="40" width="160" height="80" fill="#fce7f3"/></svg>
+</div>
+<div class="diagram" id="plain" data-diagview-layout="off" data-title="Plain">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 160"><rect x="160" y="40" width="160" height="80" fill="#e0e7ff"/></svg>
+</div>
+<p id="bare-host"><svg class="diagram" id="bare" data-diagview-layout="off" data-diagview-off-hint="label" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 160"><title>Bare</title><rect x="160" y="40" width="160" height="80" fill="#ccfbf1"/></svg></p>
+<div class="diagram" id="header" data-diagview-layout="header" data-diagview-off-hint="icon" data-title="Header">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 160"><rect x="160" y="40" width="160" height="80" fill="#ede9fe"/></svg>
+</div>
+<script src="../../../node_modules/@panzoom/panzoom/dist/panzoom.min.js"></script>
+</body>
+</html>

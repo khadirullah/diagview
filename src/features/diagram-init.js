@@ -18,7 +18,7 @@ import {
 } from "../core/utils.js";
 import { resolveElementSecurity } from "../core/svg-clone.js";
 import { ICONS } from "../ui/icons.js";
-import { LAYOUTS, BUTTON_STYLES } from "../core/constants.js";
+import { LAYOUTS, BUTTON_STYLES, OFF_HINTS } from "../core/constants.js";
 import { createButtonGroup } from "../ui/button-factory.js";
 
 // Map to store per-diagram cleanup functions (for SPA-safe teardown)
@@ -238,9 +238,9 @@ function getIcon(key, defaultIcon, styleClass) {
 
 /**
  * Read per-element data-diagview-* overrides and merge over global config.
- * Only layout is merged. Scale, sanitize and allow-remote are checked here
- * for warnings. Export reads scale and the data-diagview-watermark-*
- * attributes itself when it runs.
+ * Only layout and offHint are merged. Scale, sanitize and allow-remote are
+ * checked here for warnings. Export reads scale and the
+ * data-diagview-watermark-* attributes itself when it runs.
  *
  * @param {HTMLElement} element - Diagram container element
  * @returns {object} A local config snapshot for this element only
@@ -258,6 +258,16 @@ function readElementOverrides(element) {
       cfg.layout = v;
     } else {
       console.warn(`DiagView: Unknown data-diagview-layout "${v}" on element, ignoring.`);
+    }
+  }
+
+  // data-diagview-off-hint="none|icon|label|below"
+  if (dataset.diagviewOffHint) {
+    const v = dataset.diagviewOffHint.toLowerCase();
+    if (OFF_HINTS.includes(v)) {
+      cfg.offHint = v;
+    } else {
+      console.warn(`DiagView: Unknown data-diagview-off-hint "${v}" on element, ignoring.`);
     }
   }
 
@@ -288,6 +298,36 @@ function readElementOverrides(element) {
 }
 
 /**
+ * The offHint element for a diagram with layout "off", or null for "none".
+ * CSS draws its icon, so it holds no <svg> that getDiagramSvg() or the
+ * observer could take for the diagram. The element's aria-label already
+ * says it opens, so the hint is hidden from screen readers.
+ * @param {object} cfg - The element's config
+ * @param {boolean} after - The hint goes after the element, which is the <svg> itself
+ * @returns {HTMLElement|null} The hint, not yet in the page
+ */
+function createOffHint(cfg, after) {
+  const style = cfg.offHint;
+  if (!style || style === "none") return null;
+  const hint = document.createElement("div");
+  hint.className = `diagview-off-hint diagview-off-hint--${style}`;
+  if (after) hint.classList.add("diagview-off-hint--after");
+  hint.setAttribute("aria-hidden", "true");
+  // CSS shows the text that suits the device
+  if (style !== "icon") {
+    // In the page font, not the monospace of a <pre> that holds a diagram
+    hint.style.setProperty("--dv-hint-font", getComputedStyle(document.body).fontFamily);
+    ["mouse", "touch"].forEach((kind) => {
+      const span = document.createElement("span");
+      span.className = `diagview-off-hint-${kind}`;
+      span.textContent = cfg.offHintText[kind];
+      hint.appendChild(span);
+    });
+  }
+  return hint;
+}
+
+/**
  * Initialize diagram with enhanced UI
  * @param {HTMLElement} element - Diagram container
  * @param {number} [precalculatedIndex=-1] - Optional index to avoid global DOM query
@@ -304,6 +344,7 @@ export function initializeDiagram(element, precalculatedIndex = -1) {
     fn: null,
     wrapper: null,
     errorDiv: null,
+    hint: null,
     svg,
     prev: {
       display: svg ? svg.style.display : "",
@@ -375,11 +416,28 @@ export function initializeDiagram(element, precalculatedIndex = -1) {
     }).filter(([name]) => !element.hasAttribute(name));
     added.forEach(([name, value]) => element.setAttribute(name, value));
 
+    // The hint goes inside the element, last. An <svg> cannot hold it, so
+    // it goes right after one, in the flow, and the svg gets no host class.
+    const after = svg === element;
+    const hint = createOffHint(elementConfig, after);
+    // Icon and label sit in the corner, so the element must be positioned
+    const host = hint && !after && elementConfig.offHint !== "below";
+    const hadClass = element.hasAttribute("class");
+    if (host) element.classList.add("diagview-off-host");
+    if (hint && after) element.after(hint);
+    else if (hint) element.appendChild(hint);
+    record.hint = hint;
+
     // Store cleanup for this specific element (no wrapper in 'off' layout)
     record.fn = () => {
       element.removeEventListener("click", openHandler);
       element.removeEventListener("keydown", keyHandler);
       added.forEach(([name]) => element.removeAttribute(name));
+      hint?.remove();
+      if (host) {
+        element.classList.remove("diagview-off-host");
+        removeEmptyAttr(element, "class", hadClass);
+      }
     };
 
     // Apply minimal SVG styling
@@ -573,7 +631,12 @@ export function recheckDiagram(element) {
   const release = element.dataset.diagviewError
     ? replaced || isValidSvg(svg)
     : replaced && !isValidSvg(svg);
-  if (!release) return false;
+  if (!release) {
+    // A new render into the element drops the off hint with the old SVG
+    const { hint } = record;
+    if (hint && !hint.parentNode && svg !== element) element.appendChild(hint);
+    return false;
+  }
 
   deinitializeDiagram(element);
   return true;

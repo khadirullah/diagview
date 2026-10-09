@@ -365,6 +365,119 @@
   fill: currentColor;
 }
 
+/* offHint marks a diagram with layout "off" as one that opens. A phone
+   shows no cursor. The hint sits on the page, so it takes the page colours
+   like the toolbar. A click goes through it to the diagram. :where() keeps
+   a position the page gives the diagram. */
+:where(.diagview-off-host) {
+  position: relative;
+}
+
+.diagview-off-hint {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  box-sizing: border-box;
+  margin: 0;
+  pointer-events: none;
+  color: var(--dv-page-text, currentColor);
+  font-family: var(--dv-hint-font, inherit);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1;
+  white-space: nowrap;
+  text-align: right;
+}
+
+/* The expand icon, drawn as a mask so the hint holds no <svg> */
+.diagview-off-hint::before {
+  content: "";
+  flex: none;
+  width: 16px;
+  height: 16px;
+  background: currentColor;
+  --dv-expand-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7'/%3E%3C/svg%3E");
+  -webkit-mask: var(--dv-expand-icon) center / contain no-repeat;
+  mask: var(--dv-expand-icon) center / contain no-repeat;
+}
+
+/* A round badge in the top right corner, or a pill with text. With a
+   mouse it shows while the diagram is hovered or has keyboard focus. */
+.diagview-off-hint--icon,
+.diagview-off-hint--label {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 1;
+  min-width: 32px;
+  height: 32px;
+  border: 1px solid var(--dv-border-color);
+  border-radius: 16px;
+  background: var(--dv-page-bg, Canvas);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.diagview-off-hint--label {
+  padding: 0 12px 0 10px;
+}
+
+.diagview-off-host:hover > .diagview-off-hint,
+.diagview-off-host:focus-visible > .diagview-off-hint,
+[data-diagview-init]:hover + .diagview-off-hint--after,
+[data-diagview-init]:focus-visible + .diagview-off-hint--after {
+  opacity: 1;
+}
+
+/* An <svg> the selector matched cannot hold the badge, so it goes after
+   the svg, on a line of its own under the right edge */
+.diagview-off-hint--after {
+  position: static;
+  width: fit-content;
+  margin: 6px 0 0 auto;
+}
+
+/* A line of muted text under the diagram, only on touch screens. With a
+   mouse the zoom-in cursor says the same. */
+.diagview-off-hint--below {
+  display: none;
+  /* Full width in a column flex host too */
+  align-self: stretch;
+  justify-content: flex-end;
+  margin-top: 6px;
+  color: var(--dv-page-muted, var(--dv-page-text, currentColor));
+}
+
+.diagview-off-hint--below::before {
+  width: 14px;
+  height: 14px;
+}
+
+.diagview-off-hint-touch {
+  display: none;
+}
+
+@media (hover: none) or (pointer: coarse) {
+  .diagview-off-hint--icon,
+  .diagview-off-hint--label {
+    opacity: 0.85;
+  }
+
+  .diagview-off-hint--below {
+    display: flex;
+  }
+
+  .diagview-off-hint-mouse {
+    display: none;
+  }
+
+  .diagview-off-hint-touch {
+    display: inline;
+  }
+}
+
 /* Fullscreen Modal */
 .diagview-modal {
   display: none;
@@ -1757,7 +1870,8 @@
   .diagview-modal *:not(.diagview-spinner):not(.diagview-toast-spin),
   .diagview-modal *::before,
   .diagview-modal *::after,
-  .diagview-wrapper * {
+  .diagview-wrapper *,
+  .diagview-off-hint {
     animation-duration: 0.01ms !important;
     transition-duration: 0.01ms !important;
   }
@@ -1765,6 +1879,7 @@
 
 @media print {
   .diagview-controls,
+  .diagview-off-hint,
   .diagview-menu,
   .diagview-modal {
     display: none !important;

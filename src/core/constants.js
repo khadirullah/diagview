@@ -108,6 +108,9 @@ export const LAYOUTS = {
   OFF: "off",
 };
 
+/** Values of offHint and data-diagview-off-hint */
+export const OFF_HINTS = ["none", "icon", "label", "below"];
+
 /** Values of security.mode and data-diagview-sanitize */
 export const SECURITY_MODES = ["strict", "permissive", "off"];
 

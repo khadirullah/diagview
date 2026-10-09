@@ -61,6 +61,7 @@ build. Set `E2E_PORT` to use a port other than 9340.
 | `verify-section-links.spec.mjs`       | 4      | a `#` link in the viewer lands on the page's copy of a diagram node at the top of the window, also in a diagram taller than the window and under the page's `scroll-padding-top`, scrolls to a page section, and scrolls again when the address already names it                                                                                                                                                                    |
 | `verify-reset-duration.spec.mjs`      | 6      | double click and the reset after a window resize take `zoomAnimationDuration` by default, at 0 and at 700                                                                                                                                                                                                                                                                                                                           |
 | `verify-off-layout-keyboard.spec.mjs` | 8      | a diagram with layout "off" shows the zoom-in cursor of a card, is in the tab order with an accent ring drawn inside its box, Enter and Space open the viewer without scrolling the page, Esc and the close button return focus without a ring after a click, and Enter on a link inside it follows the link                                                                                                                        |
+| `verify-off-hint.spec.mjs`            | 8      | a layout "off" diagram gets no offHint by default, the icon badge shows on hover and keyboard focus, the label reads "Click to expand", the line below stays hidden with a mouse, a touch screen shows all three with "Tap to expand", a bare `<svg>` gets its hint on a line under it, a click on the badge opens a viewer with no hint, destroy restores the page                                                                 |
 | `verify-key-badges.spec.mjs`          | 3      | a touch phone hides the menu's key badges until a key press shows them, typing into the search box keeps them hidden, and a desktop shows them and the shortcut hint from the start                                                                                                                                                                                                                                                 |
 | `verify-floating-toolbar.spec.mjs`    | 5      | a hovered floating card shows one bottom edge with no toolbar line above it, the header toolbar keeps its line under the title, a touch screen shows the floating toolbar where a desktop hover puts it with 44px buttons in one row on a 320px phone, and a desktop keeps 36px and 34px                                                                                                                                            |
 | `verify-diagram-size.spec.mjs`        | 18     | diagrams keep their own size, centred in any wrapper, a card is as wide as its column, a diagram that fills it as wide as with layout "off", `--dv-card-padding` adds side room, wide or viewBox-only SVGs fill a card, tall ones keep their height, a short one's card hugs it over the floating toolbar, captions sit under, phones fit all, a page rule widens all or some, `--dv-max-height` caps height, fullscreen ignores it |
@@ -68,7 +69,7 @@ build. Set `E2E_PORT` to use a port other than 9340.
 | `verify-mermaid-errors.spec.mjs`      | 9      | the error box shows Mermaid 12's parser message, 11 and 10 give none, the box fits a phone inside `<pre>`, a Mermaid 12, 11 or 10 diagram fixed in place gets its toolbar, one that breaks shows the error box, also in the viewer, and `destroy()` and `init()` leave one toolbar                                                                                                                                                  |
 | `verify-bare-svg.spec.mjs`            | 9      | an `<svg>` the selector matches gets a card and toolbar where it stood, keeps its attributes and own size, fits a phone, opens fullscreen, searches, downloads a PNG named after its title, takes focus with layout "off", one inside another SVG is left alone, an empty one waits, destroy restores it                                                                                                                            |
 
-That is 283 checks per browser.
+That is 291 checks per browser.
 
 `verify-react-strictmode` loads React from unpkg, and `verify-fixes` and
 `verify-mermaid-errors` load Mermaid from jsdelivr, so these three need
@@ -77,9 +78,9 @@ network access. Set `DV_CDN=<version>` (e.g. `DV_CDN=1.0.11`) to run
 instead of the local one. The other suites run offline.
 `verify-export-search`, `verify-search-export`, `verify-readable-text`,
 `verify-image-handler`, `verify-diagram-size`, `verify-search-lines`,
-`verify-mermaid-errors` and `verify-bare-svg` inject the build themselves.
-Set `DV_DIST=/path/to/diagview.umd.js` to test another build with those
-eight.
+`verify-mermaid-errors`, `verify-bare-svg` and `verify-off-hint` inject the
+build themselves. Set `DV_DIST=/path/to/diagview.umd.js` to test another
+build with those nine.
 
 `repro.html` is the shared test page: a 2000x1200 labelled grid SVG (cells
 A1 to J6, 200 units each) so any viewport centre measurement maps to a
