@@ -153,18 +153,20 @@
   cursor: zoom-in;
   overflow: hidden;
   /* No minimum height, so the card hugs a short diagram. A failed diagram
-     gets the error box, which has its own minimum, and no card. */
-  padding: 24px;
+     gets the error box, which has its own minimum, and no card. No padding
+     at the sides, so a wide diagram gets the width it has with layout
+     "off". A page can set --dv-card-padding, such as 24px, to add it. */
+  padding: 24px var(--dv-card-padding, 0);
   border-radius: 8px;
   user-select: none;
   background: rgba(128, 128, 128, 0.02);
   contain: layout style;
 }
 
-/* A phone card gives the diagram more of its narrow width */
+/* A phone card has less room above and below the diagram */
 @media (max-width: 639px) {
   .diagview-viewport {
-    padding: 12px;
+    padding: 12px var(--dv-card-padding, 0);
   }
 }
 

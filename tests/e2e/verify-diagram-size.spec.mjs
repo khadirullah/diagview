@@ -1,7 +1,9 @@
 // Diagrams on the page show at their own size, centred in the card, and
 // shrink only when the card is narrower. A tall diagram keeps its own
-// height, and the card around a short one hugs it. A wrapper between the diagram element and its SVG does not change
-// that size, and a caption sits under the diagram. A page rule can still
+// height, and the card around a short one hugs it. The card has no
+// padding at the sides, so a diagram that fills it is as wide as with
+// layout "off". A wrapper between the diagram element and its SVG does not
+// change that size, and a caption sits under the diagram. A page rule can still
 // make every diagram, or chosen ones, fill the card, --dv-max-height caps
 // the height, and fullscreen ignores both.
 //
@@ -50,9 +52,10 @@ const phone = (browserName) => ({
 
 /**
  * Open the fixture and set DiagView up on every diagram. `css` goes in a
- * style tag in <head> before init, `big` gets class "big".
+ * style tag in <head> before init, `big` gets class "big", and `init` adds
+ * to the init options.
  */
-async function load(browser, { options = {}, css = "", big = [] } = {}) {
+async function load(browser, { options = {}, css = "", big = [], init = {} } = {}) {
   const page = await newPage(browser, options);
   await page.goto(fixtureFile("diagram-size.html"));
   await page.evaluate(
@@ -69,8 +72,9 @@ async function load(browser, { options = {}, css = "", big = [] } = {}) {
     { css, big },
   );
   await page.addScriptTag({ path: DIST });
-  await page.evaluate(() =>
-    DiagView.init({ diagramSelector: ".diagram, .mermaid", animateOpen: false }),
+  await page.evaluate(
+    (init) => DiagView.init({ diagramSelector: ".diagram, .mermaid", animateOpen: false, ...init }),
+    init,
   );
   // Diagrams are set up as they scroll into view
   for (const id of IDS) {
@@ -189,6 +193,33 @@ test("a card is as wide as its column, border included, on a desktop and a phone
     near(card, column, `${where} card width`);
     expect(scroll, `${where} page scrolls sideways`).toBeLessThanOrEqual(view);
   }
+});
+
+test("a diagram that fills the card is as wide as with layout off", async ({
+  browser,
+  browserName,
+}) => {
+  const width = (p) =>
+    p.evaluate(() => document.querySelector("#viewbox svg").getBoundingClientRect().width);
+  for (const [where, options] of [
+    ["desktop", {}],
+    ["phone", phone(browserName)],
+  ]) {
+    const cardPage = await load(browser, { options });
+    const offPage = await load(browser, { options, init: { layout: "off" } });
+    // The card has no padding at the sides, so only its 1px border is lost
+    near(await width(cardPage), (await width(offPage)) - 2, `${where} width in a card`);
+    await cardPage.context().close();
+    await offPage.context().close();
+  }
+});
+
+test("--dv-card-padding adds room at the sides of the card", async ({ browser }) => {
+  const padded = await load(browser, { css: ":root { --dv-card-padding: 24px; }" });
+  const paddedSizes = await measure(padded);
+  near(paddedSizes.viewbox.card, sizes.viewbox.card - 48, "card content width");
+  near(paddedSizes.viewbox.width, paddedSizes.viewbox.card, "viewbox width");
+  near(paddedSizes.fixed.width, DIAGRAMS.fixed.width, "fixed width");
 });
 
 test("no diagram is wider than its card and each keeps its aspect ratio", async () => {
@@ -384,7 +415,7 @@ test("the floating toolbar sits under a short diagram, on hover and on a touch s
   near(touch.card.height, touch.svg.height + touch.padding, "short card height on a phone");
 });
 
-test("a phone card has 12px of padding around the diagram, a desktop card 24px", async ({
+test("a phone card has 12px of padding above and below the diagram, a desktop card 24px", async ({
   browser,
   browserName,
 }) => {
@@ -393,6 +424,16 @@ test("a phone card has 12px of padding around the diagram, a desktop card 24px",
   const phonePage = await load(browser, { options: phone(browserName) });
   const parts = await cardParts(phonePage, "fixed");
   near(parts.padding, 24, "phone top and bottom padding");
+  for (const [where, card] of [
+    ["desktop", page],
+    ["phone", phonePage],
+  ]) {
+    const sides = await card.evaluate(() => {
+      const cs = getComputedStyle(document.querySelector("#fixed").closest(".diagview-viewport"));
+      return parseFloat(cs.paddingLeft) + parseFloat(cs.paddingRight);
+    });
+    near(sides, 0, `${where} side padding`);
+  }
   // The 311px diagram now fits a 390px phone at its own size
   near(parts.svg.width, DIAGRAMS.fixed.width, "fixed width on a phone");
   near(parts.svg.left - parts.card.left, parts.card.right - parts.svg.right, "fixed centred");

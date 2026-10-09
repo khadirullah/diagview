@@ -103,11 +103,21 @@ describe("styles.css: diagram size on the page", () => {
     expect(ruleBody("\n.diagview-wrapper {")).toMatch(/box-sizing:\s*border-box;/);
   });
 
-  test("a phone card has half the padding of a desktop one", () => {
-    expect(ruleBody("\n.diagview-viewport {")).toMatch(/padding:\s*24px;/);
+  test("a phone card has half the padding of a desktop one above and below", () => {
+    expect(ruleBody("\n.diagview-viewport {")).toMatch(/padding:\s*24px /);
     const phone = css.indexOf("@media (max-width: 639px) {\n  .diagview-viewport {");
     expect(phone).toBeGreaterThan(-1);
-    expect(ruleBody(".diagview-viewport {", phone)).toMatch(/padding:\s*12px;/);
+    expect(ruleBody(".diagview-viewport {", phone)).toMatch(/padding:\s*12px /);
+  });
+
+  test("the card has no padding at the sides unless the page sets --dv-card-padding", () => {
+    const phone = css.indexOf("@media (max-width: 639px) {\n  .diagview-viewport {");
+    for (const body of [
+      ruleBody("\n.diagview-viewport {"),
+      ruleBody(".diagview-viewport {", phone),
+    ]) {
+      expect(body).toMatch(/padding:\s*\d+px var\(--dv-card-padding, 0\);/);
+    }
   });
 });
 

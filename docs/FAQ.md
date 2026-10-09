@@ -102,7 +102,7 @@ A: In the floating and header layouts DiagView shows each diagram at its own siz
 }
 ```
 
-Keep `.diagview-wrapper` in the selector, or DiagView's own rule wins. A tall diagram that fills the card grows taller too. Add `:root { --dv-max-height: 80vh; }` to stop it at 80% of the window. See [Diagram size](USAGE.md#diagram-size) for chosen diagrams only and for shadow roots.
+Keep `.diagview-wrapper` in the selector, or DiagView's own rule wins. The card has no padding at the sides, so a diagram that fills it is as wide as the column, the same as with `layout: "off"`. Set `--dv-card-padding`, such as `24px`, on `.diagview-wrapper` to add room at the sides. A tall diagram that fills the card grows taller too. Add `:root { --dv-max-height: 80vh; }` to stop it at 80% of the window. See [Diagram size](USAGE.md#diagram-size) for chosen diagrams only and for shadow roots.
 
 ---
 
