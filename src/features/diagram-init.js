@@ -540,6 +540,16 @@ export function initializeDiagram(element, precalculatedIndex = -1) {
     svg.classList.add("dv-svg-content");
     svg.style.color = "inherit";
   }
+
+  // A card set up just off screen takes the 500px placeholder of
+  // content-visibility until it is first drawn. Then its height changes,
+  // and Safari, which keeps no scroll anchor, moves the text being read.
+  // So lay the card out once and keep its own height as the placeholder.
+  // A diagram with no size yet, as in a hidden tab, keeps the 500px.
+  wrapper.style.contentVisibility = "visible";
+  const height = wrapper.offsetHeight;
+  wrapper.style.removeProperty("content-visibility");
+  if (height > 0) wrapper.style.setProperty("contain-intrinsic-height", `auto ${height}px`);
 }
 
 /**
