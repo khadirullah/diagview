@@ -309,6 +309,44 @@ describe("loadScript", () => {
   });
 });
 
+describe("loadScript integrity", () => {
+  afterEach(() => {
+    jest.useRealTimers();
+    document.head.innerHTML = "";
+  });
+
+  const tagFor = (url) => document.head.querySelector(`script[src="${url}"]`);
+
+  test("an integrity hash goes on the tag with crossOrigin anonymous", async () => {
+    jest.useFakeTimers();
+    const url = "https://example.test/sri.js";
+    const result = loadScript(url, "sha384-abc");
+    expect(tagFor(url).integrity).toBe("sha384-abc");
+    expect(tagFor(url).crossOrigin).toBe("anonymous");
+    tagFor(url).dispatchEvent(new Event("load"));
+    await expect(result).resolves.toBeUndefined();
+  });
+
+  test("without a hash the tag has no integrity and no crossOrigin", async () => {
+    jest.useFakeTimers();
+    const url = "https://example.test/no-sri.js";
+    const result = loadScript(url);
+    expect(tagFor(url).hasAttribute("integrity")).toBe(false);
+    expect(tagFor(url).hasAttribute("crossorigin")).toBe(false);
+    tagFor(url).dispatchEvent(new Event("error"));
+    await expect(result).rejects.toThrow(`Failed to load script: ${url}`);
+    await expect(result).rejects.not.toThrow("Integrity");
+  });
+
+  test("a failed load with a hash names a possible integrity mismatch", async () => {
+    jest.useFakeTimers();
+    const url = "https://example.test/sri-fails.js";
+    const result = loadScript(url, "sha384-abc");
+    tagFor(url).dispatchEvent(new Event("error"));
+    await expect(result).rejects.toThrow("Subresource Integrity (SRI) mismatch");
+  });
+});
+
 describe("loadScript with a <script> the page already has", () => {
   const original = performance.getEntriesByName;
   let url, script;

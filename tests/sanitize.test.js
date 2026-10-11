@@ -232,6 +232,46 @@ describe("sanitizeSVG CSS escape and syntax variants (strict, remote blocked)", 
   });
 });
 
+describe("sanitizeSVG decodes CSS before it checks it (strict)", () => {
+  // Same CSS in a <style> block and in a style attribute, as the browser
+  // would read it
+  const styleBlock = (css) =>
+    wrap(`<style>${css}</style><rect style="${css.replace(/"/g, "&quot;")}"/>`);
+  const kept = (out) => [out.includes("<style>"), out.includes("<rect style=")];
+
+  test.each([
+    ["a hex escape", ".a{background:url(\\68ttps://evil.com/x.png)}"],
+    ["a hex escape ended by a space", ".a{background:url(\\68 ttps://evil.com/x.png)}"],
+    ["a six digit hex escape", ".a{background:url(\\000068ttps://evil.com/x.png)}"],
+    ["a \\u escape", ".a{background:url(\\u0068ttps://evil.com/x.png)}"],
+    ["an escape past the last code point", ".a{background:url(\\110000https://evil.com/x.png)}"],
+    ["an XML character reference", ".a{background:url(&#104;ttps://evil.com/x.png)}"],
+  ])("finds a remote url() hidden by %s", (_label, css) => {
+    const out = sanitizeToString(styleBlock(css));
+    expect(out).toContain("<rect");
+    expect(kept(out)).toEqual([false, false]);
+  });
+
+  test.each([
+    ["javascript: in hex escapes", ".a{background:url(\\6a avascript:alert(1))}"],
+    ["expression() with an escaped first letter", ".a{width:\\65xpression(alert(1))}"],
+    ["expression() split by a comment", ".a{width:expression/**/(alert(1))}"],
+    ["javascript: split by a comment", ".a{background:url(java/* x */script:alert(1))}"],
+  ])("finds %s", (_label, css) => {
+    const out = sanitizeToString(styleBlock(css));
+    expect(kept(out)).toEqual([false, false]);
+  });
+
+  test("escapes and comments that hide nothing stay as written", () => {
+    const css =
+      '.a::before{content:"\\201C"} .c::after{content:"\\00201D \\u2014 \\110000"} /* note */ .b{fill:url(#grad)}';
+    const out = sanitizeToString(styleBlock(css));
+    expect(kept(out)).toEqual([true, true]);
+    expect(out).toContain("\\201C");
+    expect(out).toContain("/* note */");
+  });
+});
+
 describe("sanitizeSVG SMIL animation of href/on* attributes (permissive)", () => {
   test('<animate attributeName="href"> is removed in permissive mode', () => {
     const out = sanitizeToString(
