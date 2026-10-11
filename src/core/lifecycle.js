@@ -155,7 +155,9 @@ export function clearAsyncTasks(state) {
   state.asyncTasks.rafs.clear();
 }
 
-// Lazy chunks that failed to load, so each warns once
+// Lazy chunks by feature name, once loaded, and those that failed to load
+/** @type {Record<string, any>} */
+const chunks = {};
 const failedChunks = new Set();
 
 /**
@@ -168,11 +170,22 @@ const failedChunks = new Set();
  * @returns {Promise<T>} The chunk's module
  */
 export function loadChunk(name, load) {
-  return load().catch((e) => {
-    if (!failedChunks.has(name)) {
-      failedChunks.add(name);
-      console.warn(`DiagView: Could not load the ${name} feature, so it does not work`, e);
-    }
-    throw e;
-  });
+  return load().then(
+    (m) => (chunks[name] = m),
+    (e) => {
+      if (!failedChunks.has(name)) {
+        failedChunks.add(name);
+        console.warn(`DiagView: Could not load the ${name} feature, so it does not work`, e);
+      }
+      throw e;
+    },
+  );
 }
+
+/**
+ * The module of a lazy chunk that has loaded. Teardown uses it, since a
+ * chunk that never loaded has nothing to tear down.
+ * @param {string} name - The feature, as passed to loadChunk()
+ * @returns {any} The module, or undefined when it has not loaded
+ */
+export const loadedChunk = (name) => chunks[name];

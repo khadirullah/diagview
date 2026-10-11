@@ -5,7 +5,7 @@
  */
 
 import { state, runModalCleanupFunctions } from "../core/config.js";
-import { safeDestroy, clearAsyncTasks } from "../core/lifecycle.js";
+import { safeDestroy, clearAsyncTasks, loadChunk } from "../core/lifecycle.js";
 import { removeEmptyAttr } from "../core/utils.js";
 import { rootHadStyle } from "../core/theme.js";
 import { restoreFocus } from "./focus-manager.js";
@@ -149,13 +149,13 @@ export async function closeModal() {
     // 3. Cleanup features (awaited to ensure state is clean before DOM removal)
     // We use try/catch inside each import to ensure one failure doesn't block the rest.
     await Promise.all([
-      import("../features/lazy/search.js")
+      loadChunk("search", () => import("../features/lazy/search.js"))
         .then((m) => m.clearSearch())
         .catch((e) => console.warn("DiagView: Search cleanup failed", e)),
-      import("../features/lazy/minimap.js")
+      loadChunk("minimap", () => import("../features/lazy/minimap.js"))
         .then((m) => m.cleanupMinimap())
         .catch((e) => console.warn("DiagView: Minimap cleanup failed", e)),
-      import("../features/lazy/rotate.js")
+      loadChunk("rotate", () => import("../features/lazy/rotate.js"))
         .then((m) => m.cleanupRotation())
         .catch((e) => console.warn("DiagView: Rotation cleanup failed", e)),
     ]);

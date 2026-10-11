@@ -19,7 +19,8 @@ import {
   runModalCleanupFunctions,
 } from "./core/config.js";
 import { isBrowser, sanitizeSVG, clearSVGContentCache } from "./core/utils.js";
-import { safeDestroy, clearAsyncTasks, loadChunk } from "./core/lifecycle.js";
+import { safeDestroy, clearAsyncTasks, loadChunk, loadedChunk } from "./core/lifecycle.js";
+import { hideToast } from "./ui/toast.js";
 import {
   setupThemeWatchers,
   teardownThemeWatchers,
@@ -224,21 +225,14 @@ async function _teardown() {
     runCleanupFunctions();
     clearAsyncTasks(state);
 
-    // Lazy module resets (module-level vars not in state)
-    // We use Promise.all to ensure all async cleanups finish before resetConfig()
-    try {
-      await Promise.all([
-        import("./features/lazy/search.js").then((m) => {
-          m.resetSearch?.();
-          m.clearSearch();
-        }),
-        import("./features/lazy/meeting-mode.js").then((m) => m.resetMeetingState?.()),
-        import("./ui/toast.js").then((m) => m.hideToast()),
-        import("./features/lazy/minimap.js").then((m) => m.cleanupMinimap()),
-      ]);
-    } catch (e) {
-      console.error("DiagView: Error during async cleanup:", e);
-    }
+    // Lazy module resets (module-level vars not in state). A chunk that
+    // never loaded has nothing to reset, so it is not loaded for this.
+    const search = loadedChunk("search");
+    search?.resetSearch();
+    search?.clearSearch();
+    loadedChunk("meeting mode")?.resetMeetingState();
+    hideToast();
+    loadedChunk("minimap")?.cleanupMinimap();
 
     // Restore every diagram we touched (wrapped, layout "off", error-boundary
     // and shadow-root ones alike), then drop the index the observer stamps on
