@@ -1,6 +1,7 @@
-// Exports in browsers that cannot do everything DiagView asks of them.
+// Exports in browsers that cannot do everything DiagView asks of them,
+// and in a tab in the background, which runs no animation frames.
 // Safari's canvas cannot make WebP and hands back a PNG. Playwright's
-// WebKit can, so each check stands in for Safari by wrapping toBlob.
+// WebKit can, so the WebP checks stand in for Safari by wrapping toBlob.
 //
 // Runs offline on the copy-image fixture. DV_DIST=/path/to/diagview.umd.js
 // tests another build.
@@ -98,6 +99,28 @@ test("a browser that makes WebP still saves a .webp file", async ({ browser }) =
     const notice = await savedNotice(page);
     expect(notice.text).toMatch(/^\d\.\dx WebP saved$/);
     expect(notice.warning).toBe(false);
+  } finally {
+    await page.context().close();
+  }
+});
+
+test("an export started from code in a tab in the background still finishes", async ({
+  browser,
+}) => {
+  const page = await openViewer(browser);
+  try {
+    const download = page.waitForEvent("download");
+    // A tab in the background runs no animation frames
+    const result = await page.evaluate(() => {
+      window.requestAnimationFrame = () => 0;
+      const done = DiagView.exportDiagram(document.getElementById("diag"), "png", {
+        filename: "background",
+      });
+      const stalled = new Promise((resolve) => setTimeout(() => resolve("stalled"), 10000));
+      return Promise.race([done, stalled]);
+    });
+    expect(result).toBe(true);
+    expect((await download).suggestedFilename()).toBe("background.png");
   } finally {
     await page.context().close();
   }

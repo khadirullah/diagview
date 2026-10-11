@@ -461,6 +461,22 @@ export function exportSecurity(svg) {
 }
 
 /**
+ * Run fn at the next animation frame. A tab in the background runs no
+ * frames, so a timer runs it there instead and the export still ends.
+ * @private
+ */
+function nextFrame(fn) {
+  const timer = setTimeout(() => {
+    cancelAnimationFrame(frame);
+    fn();
+  }, 100);
+  const frame = requestAnimationFrame(() => {
+    clearTimeout(timer);
+    fn();
+  });
+}
+
+/**
  * Clone SVG specifically for export (Asynchronous)
  * Bakes all computed styles for standalone use without locking the main thread.
  */
@@ -583,12 +599,12 @@ export function cloneSVGForExportAsync(svg, paint = null) {
         cloned.removeAttribute("data-dv-match-id");
       }
       if (wi < clonedNodes.length) {
-        requestAnimationFrame(applyChunk);
+        nextFrame(applyChunk);
       } else {
         resolve(clone);
       }
     }
 
-    requestAnimationFrame(applyChunk);
+    nextFrame(applyChunk);
   });
 }

@@ -537,3 +537,53 @@ describe("warning when code is removed from a diagram", () => {
     expect(codeWarnings()).toEqual([]);
   });
 });
+
+describe("cloneSVGForExportAsync in a tab in the background", () => {
+  const ns = "http://www.w3.org/2000/svg";
+  let svg;
+
+  /** An SVG with more shapes than one write chunk takes */
+  beforeEach(() => {
+    svg = document.createElementNS(ns, "svg");
+    svg.setAttribute("viewBox", "0 0 10 10");
+    for (let i = 0; i < 1200; i++) {
+      const rect = document.createElementNS(ns, "rect");
+      rect.setAttribute("style", "fill: red");
+      svg.appendChild(rect);
+    }
+    document.body.appendChild(svg);
+  });
+
+  afterEach(() => {
+    svg.remove();
+    jest.useRealTimers();
+    jest.restoreAllMocks();
+  });
+
+  test("finishes when no animation frame ever runs", async () => {
+    // A hidden tab runs no frames
+    jest.useFakeTimers();
+    jest.spyOn(window, "requestAnimationFrame").mockImplementation(() => 1);
+    const done = cloneSVGForExportAsync(svg);
+    let clone = null;
+    done.then((c) => (clone = c));
+    await jest.advanceTimersByTimeAsync(99);
+    expect(clone).toBe(null);
+    // Three chunks of 500, one timer each
+    await jest.advanceTimersByTimeAsync(201);
+    expect(clone.querySelectorAll("rect")).toHaveLength(1200);
+    expect(clone.querySelector("[data-dv-match-id]")).toBeNull();
+    expect(clone.querySelector("rect").style.fill).toBe("rgb(255, 0, 0)");
+  });
+
+  test("a frame that runs first cancels the timer, so each chunk runs once", async () => {
+    const frames = [];
+    jest.useFakeTimers();
+    jest.spyOn(window, "requestAnimationFrame").mockImplementation((fn) => frames.push(fn));
+    const done = cloneSVGForExportAsync(svg);
+    while (frames.length) frames.shift()();
+    const clone = await done;
+    expect(jest.getTimerCount()).toBe(0);
+    expect(clone.querySelectorAll("rect")).toHaveLength(1200);
+  });
+});
