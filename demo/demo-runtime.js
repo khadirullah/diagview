@@ -65,7 +65,8 @@
             ' stroke: var(--line-strong); stroke-dasharray: 4 3; }',
         '.cluster-label .nodeLabel, .cluster text { color: var(--ink-2); fill: var(--ink-2); }',
         '.flowchart-link { stroke: var(--muted); }',
-        'marker path, marker circle, #arrowhead path, #crosshead path' +
+        'marker path, marker circle, #arrowhead path, #crosshead path,' +
+            ' [id$="-arrowhead"] path, [id$="-crosshead"] path' +
             ' { fill: var(--muted); stroke: var(--muted); }',
         '.edgeLabel, .edgeLabel rect { background-color: var(--canvas); fill: var(--canvas); color: var(--ink-2); }',
 
