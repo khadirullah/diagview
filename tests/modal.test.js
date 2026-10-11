@@ -86,6 +86,25 @@ describe("Modal System", () => {
     expect(buttons.filter((b) => b.getAttribute("type") !== "button")).toEqual([]);
   });
 
+  test("the dialog carries the pan and zoom instructions", () => {
+    const modal = document.getElementById("diagview-modal");
+    expect(modal.getAttribute("role")).toBe("dialog");
+    expect(modal.getAttribute("aria-label")).toBe("Diagram viewer");
+    const instructions = document.getElementById(modal.getAttribute("aria-describedby"));
+    expect(modal.contains(instructions)).toBe(true);
+    expect(instructions.hidden).toBe(true);
+    expect(instructions.textContent).toBe(
+      "Use arrow keys to pan, plus and minus to zoom, Space to reset.",
+    );
+  });
+
+  test("the diagram area keeps browse mode and stays out of the tab order", () => {
+    const viewport = document.getElementById("diagview-modal-viewport");
+    expect(viewport.hasAttribute("role")).toBe(false);
+    expect(viewport.hasAttribute("aria-label")).toBe(false);
+    expect(viewport.hasAttribute("tabindex")).toBe(false);
+  });
+
   test("openFullscreen opens modal and applies animation class if enabled", async () => {
     updateConfig({ animateOpen: true });
     await openFullscreen(container);

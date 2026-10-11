@@ -70,6 +70,15 @@ export function createModal() {
   modal.setAttribute("aria-label", "Diagram viewer");
   modal.tabIndex = -1; // Allows silent focus capture
 
+  // The keys work wherever focus is in the viewer, so the dialog carries
+  // the instructions, and screen readers read them as it takes focus
+  const instructions = document.createElement("p");
+  instructions.id = "diagview-modal-instructions";
+  instructions.hidden = true;
+  instructions.textContent = "Use arrow keys to pan, plus and minus to zoom, Space to reset.";
+  modal.appendChild(instructions);
+  modal.setAttribute("aria-describedby", instructions.id);
+
   modal.style.backgroundColor = theme.bg;
 
   // 1. Loading Indicator
@@ -670,11 +679,6 @@ function _createModalMainContent(modal, content) {
   const viewport = document.createElement("div");
   viewport.id = "diagview-modal-viewport";
   viewport.className = "diagview-modal-viewport";
-  viewport.setAttribute("role", "application");
-  viewport.setAttribute(
-    "aria-label",
-    "Diagram viewer. Use arrow keys to pan, plus and minus to zoom, Space to reset.",
-  );
 
   // Intercept the events that would START a pan before they reach Panzoom,
   // so native text selection can begin. Move events must keep bubbling:
