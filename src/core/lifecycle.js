@@ -126,22 +126,6 @@ export function registerTimeout(state, fn, delay) {
 }
 
 /**
- * Register a RequestAnimationFrame with automatic cleanup
- * @param {import('./config.js').DiagViewState} state - Instance state
- * @param {FrameRequestCallback} fn - Callback function
- * @returns {number} RAF ID
- */
-export function registerRAF(state, fn) {
-  const task = { id: 0 };
-  task.id = requestAnimationFrame((timestamp) => {
-    state.asyncTasks.rafs.delete(task.id);
-    fn(timestamp);
-  });
-  state.asyncTasks.rafs.add(task.id);
-  return task.id;
-}
-
-/**
  * Clear all pending async tasks for an instance
  * @param {import('./config.js').DiagViewState} state - Instance state
  */

@@ -5,7 +5,6 @@ import {
   addManagedListener,
   addModalListener,
   registerTimeout,
-  registerRAF,
   clearAsyncTasks,
 } from "../src/core/lifecycle.js";
 
@@ -84,19 +83,9 @@ describe("Core Lifecycle Utilities", () => {
     expect(state.asyncTasks.timeouts.size).toBe(0);
   });
 
-  test("registerRAF adds to state and cleans up", () => {
-    const fn = jest.fn();
-    registerRAF(state, fn);
-    expect(state.asyncTasks.rafs.size).toBe(1);
-
-    jest.advanceTimersByTime(16); // Trigger RAF in JSDOM
-    expect(fn).toHaveBeenCalled();
-    expect(state.asyncTasks.rafs.size).toBe(0);
-  });
-
   test("clearAsyncTasks clears everything", () => {
     registerTimeout(state, () => {}, 100);
-    registerRAF(state, () => {});
+    state.asyncTasks.rafs.add(requestAnimationFrame(() => {}));
 
     expect(state.asyncTasks.timeouts.size).toBe(1);
     expect(state.asyncTasks.rafs.size).toBe(1);
