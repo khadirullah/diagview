@@ -342,6 +342,8 @@ console.log(DiagView.version); // e.g. "1.1.0"
 
 `DiagView.state` is a read-only Proxy over the internal state object, at every depth: nested objects come back as read-only views, and collections (Sets, Arrays, Maps) as snapshots. Writes and deletes log a warning and are ignored. Two exceptions: `activePanzoom` is the live Panzoom instance while the modal is open (its methods are safe to call), and `events` exposes `on`, `off` and `emit` bound to the internal event bus.
 
+DiagView fires one event on that bus. `dv:toggle-text-select` carries no data. The `T` shortcut emits it while the viewer is open, and the viewer then turns Text Select Mode on or off. The Text Select buttons switch the mode without the event. Any other name is free for your own events.
+
 ```typescript
 interface PublicState {
   isInitialized: boolean;
