@@ -407,8 +407,12 @@ function linksOtherSite(svg) {
  * @param {SVGSVGElement|null} [found.faint] - Source whose labels are hard to read
  * @param {boolean} [found.silent] - Skip the warnings
  * @param {string} [found.kind] - What the file is, for the linked images warning
+ * @param {boolean} [found.warn] - Show the plain notice as a warning
  */
-function showSaved(message, { linked = 0, faint = null, silent = false, kind = "image" } = {}) {
+function showSaved(
+  message,
+  { linked = 0, faint = null, silent = false, kind = "image", warn = false } = {},
+) {
   const advice = faintAdvice(faint, silent);
   if (linked && !silent) {
     const images = linked === 1 ? "1 linked image was" : `${linked} linked images were`;
@@ -424,7 +428,7 @@ function showSaved(message, { linked = 0, faint = null, silent = false, kind = "
       `${message.replace(/!$/, "")}, but some labels are hard to read on this background. ${advice}`,
     );
   }
-  showSuccessToast(message);
+  (warn ? showWarningToast : showSuccessToast)(message);
 }
 
 /**
@@ -907,6 +911,13 @@ async function processImageExport(
           quality,
         );
       });
+      // Safari cannot make WebP and hands back a PNG, so the file is named
+      // and announced as what the browser made
+      const noWebP = isWebP && blob.type === "image/png";
+      if (noWebP) {
+        ext = "png";
+        label = label.replace("WebP", "PNG");
+      }
 
       if (copy) {
         // Fallback when the clipboard cannot be used: hand the file over as a download
@@ -935,7 +946,12 @@ async function processImageExport(
         downloadFile(downloadUrl, `${filename}.${ext}`);
         // Revoke after a short delay to ensure browser has started the download
         setTimeout(() => URL.revokeObjectURL(downloadUrl), TIMING.BUTTON_SUCCESS_DURATION);
-        showSaved(`${scale.toFixed(1)}x ${label} saved`, found);
+        const made = `${scale.toFixed(1)}x ${label}`;
+        found.warn = noWebP;
+        showSaved(
+          noWebP ? `This browser cannot make WebP, so it saved a ${made}` : `${made} saved`,
+          found,
+        );
       }
       return ext;
     } finally {

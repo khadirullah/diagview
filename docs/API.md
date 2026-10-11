@@ -183,6 +183,8 @@ await DiagView.exportToWebP(el);
 await DiagView.exportToWebP(el, { transparent: true });
 ```
 
+Safari cannot make WebP images. There the export saves a PNG with a `.png` name and shows the warning "This browser cannot make WebP, so it saved a 4.0x PNG". `exportDiagram()` then reports the format as `png` to `onExport`.
+
 ### `DiagView.exportToPDF(element, options?)`
 
 Lazy-loads jsPDF on first call. When jsPDF does not load, it saves a PNG instead and shows the warning "PDF engine unavailable, falling back to PNG..."

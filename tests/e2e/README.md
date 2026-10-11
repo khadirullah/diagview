@@ -73,8 +73,9 @@ build. Set `E2E_PORT` to use a port other than 9340.
 | `verify-host-form.spec.mjs`           | 3      | a diagram inside the page's `<form>` copies, downloads and opens fullscreen from its floating and header toolbars without submitting the form, and Enter in a field of the form submits it with the page's own button                                                                                                                                                                                                               |
 | `verify-detached-diagrams.spec.mjs`   | 4      | a route a single-page app takes out and puts back at once keeps its cards and opens fullscreen, one swapped out without `destroy()` is released with its own markup back, one put back later gets its cards again and opens fullscreen, a diagram removed from inside its card takes the empty card with it, and `destroy()` restores the rest                                                                                      |
 | `verify-copy-image.spec.mjs`          | 4      | Copy Image from the viewer menu and the page button calls `clipboard.write` inside the click and copies, Chromium reads back a PNG the size of the PNG download, a copy held past 5 seconds by a slow font file still copies, and a denied write downloads the PNG                                                                                                                                                                  |
+| `verify-export-fallbacks.spec.mjs`    | 2      | a WebP export in a browser whose canvas makes a PNG instead, as Safari does, downloads a .png file with a PNG inside, warns that it saved a PNG and reports `png` to `onExport`, and a browser that makes WebP still saves a .webp file                                                                                                                                                                                             |
 
-That is 325 checks per browser.
+That is 327 checks per browser.
 
 `verify-react-strictmode` loads React from unpkg, and `verify-fixes`,
 `verify-mermaid-errors` and `verify-header-title` load Mermaid from
@@ -85,9 +86,9 @@ offline. `verify-export-search`, `verify-search-export`, `verify-readable-text`,
 `verify-image-handler`, `verify-diagram-size`, `verify-search-lines`,
 `verify-export-fonts`, `verify-search-pan`, `verify-mermaid-errors`,
 `verify-bare-svg`, `verify-off-hint`, `verify-header-title`,
-`verify-host-form`, `verify-detached-diagrams` and `verify-copy-image`
-inject the build themselves. Set `DV_DIST=/path/to/diagview.umd.js` to
-test another build with those suites.
+`verify-host-form`, `verify-detached-diagrams`, `verify-copy-image` and
+`verify-export-fallbacks` inject the build themselves. Set
+`DV_DIST=/path/to/diagview.umd.js` to test another build with those suites.
 
 `repro.html` is the shared test page: a 2000x1200 labelled grid SVG (cells
 A1 to J6, 200 units each) so any viewport centre measurement maps to a

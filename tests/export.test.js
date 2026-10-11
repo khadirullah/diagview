@@ -1779,6 +1779,30 @@ describe("onExport fires and exportDiagram resolves to true only after a success
     expect(onExport).toHaveBeenCalledWith(format, "ok");
   });
 
+  test.each([
+    ["webp", "1.0x PNG"],
+    ["webp-transparent", "1.0x Transparent PNG"],
+  ])("a %s the browser makes as PNG is saved and reported as png", async (mode, made) => {
+    // Safari's canvas cannot make WebP and hands back a PNG
+    HTMLCanvasElement.prototype.toBlob = function (cb) {
+      cb(new Blob(["img"], { type: "image/png" }));
+    };
+    expect(await exportDiagram(container, mode, { filename: "ok" })).toBe(true);
+    expect(clickSpy.mock.contexts[0].download).toBe("ok.png");
+    expect(onExport).toHaveBeenCalledWith("png", "ok");
+    const notice = document.querySelector(".diagview-toast");
+    expect(notice.textContent).toBe(`This browser cannot make WebP, so it saved a ${made}`);
+    expect(notice.classList.contains("diagview-toast-warning")).toBe(true);
+  });
+
+  test("exportToWebP names the file .png when the browser makes a PNG", async () => {
+    HTMLCanvasElement.prototype.toBlob = function (cb) {
+      cb(new Blob(["img"], { type: "image/png" }));
+    };
+    await exportToWebP(container, { filename: "ok" });
+    expect(clickSpy.mock.contexts[0].download).toBe("ok.png");
+  });
+
   test("Copy Image that downloads the PNG instead still fires it", async () => {
     Object.defineProperty(navigator, "clipboard", { value: undefined, configurable: true });
     expect(await exportDiagram(container, "copy", { filename: "ok" })).toBe(true);

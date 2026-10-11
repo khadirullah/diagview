@@ -311,7 +311,7 @@ All shortcuts are active when the fullscreen viewer is open, except while the `?
 | PNG        | ✅          | High-res raster. Default scale is 4, or 2 on touch devices and narrow screens |
 | SVG        | ✅          | Fully scalable vector                                                         |
 | JPEG       | ❌          | Smallest file size                                                            |
-| WebP       | ✅          | Modern format; good compression                                               |
+| WebP       | ✅          | Modern format; good compression. Safari cannot make WebP and saves a PNG      |
 | PDF        | ❌          | Requires jsPDF (lazy-loaded from CDN)                                         |
 | Copy Image | ❌          | Copies PNG to system clipboard                                                |
 | Copy SVG   | ✅          | Copies the SVG markup to the clipboard as text                                |
