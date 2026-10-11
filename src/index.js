@@ -197,86 +197,90 @@ function destroy() {
  */
 async function _teardown() {
   lastSelector = state.config.diagramSelector;
-  // Everything below runs inside try/finally: whatever a single step does,
-  // the DOM we own is removed and the state is reset, so a later init() is
-  // never refused with "Already initialized" because of a failed destroy().
-  try {
-    // 0. If modal is open, close it first to release scroll locks and global listeners
-    if (state.isModalOpen) {
-      await closeModal();
-    }
+  // Each step runs on its own, so one that throws only logs and the rest
+  // still run. The DOM we own is removed and the state is reset, so a later
+  // init() is never refused with "Already initialized" after a failed step.
+  const failed = (e) => console.error("DiagView: Error during teardown:", e);
 
+  // 0. If modal is open, close it first to release scroll locks and global listeners
+  if (state.isModalOpen) await closeModal().catch(failed);
+
+  [
     // Stop observers first so no new diagrams get initialised during teardown
-    stopObserving();
-    teardownThemeWatchers();
-    teardownKeyboardShortcuts();
-    cleanupKeyboardHelp();
-    resetShareLinkCheck();
-    resetFocusManagement();
+    stopObserving,
+    teardownThemeWatchers,
+    teardownKeyboardShortcuts,
+    cleanupKeyboardHelp,
+    resetShareLinkCheck,
+    resetFocusManagement,
 
     // Destroy panzoom before cleanup functions run (cleanup may reference it)
-    if (state.activePanzoom) {
-      safeDestroy(state.activePanzoom, "destroy");
-      state.activePanzoom = null;
-    }
+    () => {
+      if (state.activePanzoom) {
+        safeDestroy(state.activePanzoom, "destroy");
+        state.activePanzoom = null;
+      }
+    },
 
     // Run cleanup BEFORE resetConfig so cleanup functions can still read state
-    runModalCleanupFunctions();
-    runCleanupFunctions();
-    clearAsyncTasks(state);
+    runModalCleanupFunctions,
+    runCleanupFunctions,
+    () => clearAsyncTasks(state),
 
     // Lazy module resets (module-level vars not in state). A chunk that
     // never loaded has nothing to reset, so it is not loaded for this.
-    const search = loadedChunk("search");
-    search?.resetSearch();
-    search?.clearSearch();
-    loadedChunk("meeting mode")?.resetMeetingState();
-    hideToast();
-    loadedChunk("minimap")?.cleanupMinimap();
+    () => loadedChunk("search")?.resetSearch(),
+    () => loadedChunk("search")?.clearSearch(),
+    () => loadedChunk("meeting mode")?.resetMeetingState(),
+    hideToast,
+    () => loadedChunk("minimap")?.cleanupMinimap(),
 
     // Restore every diagram we touched (wrapped, layout "off", error-boundary
     // and shadow-root ones alike), then drop the index the observer stamps on
     // diagrams that were only queued for lazy initialization, and the id the
     // viewer gives one of those when it is opened early.
-    deinitializeAllDiagrams();
-    [document, ...state.shadowRoots].forEach((root) => {
-      root.querySelectorAll("[data-diagview-index]").forEach((el) => {
-        delete el.dataset.diagviewIndex;
-        delete el.dataset.diagviewId;
-      });
-    });
-    state.shadowRoots.forEach((root) => removeStylesFrom(root));
-  } catch (e) {
-    console.error("DiagView: Error during teardown:", e);
-  } finally {
+    deinitializeAllDiagrams,
+    () =>
+      [document, ...state.shadowRoots].forEach((root) => {
+        root.querySelectorAll("[data-diagview-index]").forEach((el) => {
+          delete el.dataset.diagviewIndex;
+          delete el.dataset.diagviewId;
+        });
+      }),
+    () => state.shadowRoots.forEach((root) => removeStylesFrom(root)),
+
     // Remove DOM elements
-    [
-      "diagview-modal",
-      "diagview-toast",
-      "diagview-toast-live",
-      "diagview-temp-menu",
-      "diagview-help-modal",
-      "diagview-minimap",
-      "diagview-laser",
-    ].forEach((id) => {
-      document.getElementById(id)?.remove();
-    });
+    () =>
+      [
+        "diagview-modal",
+        "diagview-toast",
+        "diagview-toast-live",
+        "diagview-temp-menu",
+        "diagview-help-modal",
+        "diagview-minimap",
+        "diagview-laser",
+      ].forEach((id) => {
+        document.getElementById(id)?.remove();
+      }),
 
-    // Remove styles
-    removeStyles();
-
+    removeStyles,
     // Forget remembered zoom, pan and rotation
-    clearAllZoomStates();
-
+    clearAllZoomStates,
     // Clear event bus and caches
-    state.events.clear();
-    clearSVGContentCache();
+    () => state.events.clear(),
+    clearSVGContentCache,
 
-    // Now reset all state — cleanup functions have already run
-    resetViewportState();
-    resetConfig();
-    autoStarted = false;
-  }
+    // Now reset all state, after every cleanup function has run
+    resetViewportState,
+    resetConfig,
+  ].forEach((step) => {
+    try {
+      step();
+    } catch (e) {
+      failed(e);
+    }
+  });
+  autoStarted = false;
 }
 
 /**

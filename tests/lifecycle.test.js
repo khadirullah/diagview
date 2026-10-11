@@ -163,6 +163,31 @@ describe("DiagView Lifecycle", () => {
     });
   });
 
+  test("a teardown step that throws does not skip the steps after it", async () => {
+    const host = document.body.appendChild(document.createElement("div"));
+    const root = host.attachShadow({ mode: "open" });
+    init();
+    DiagView.initShadowRoot(root);
+    const styled = () =>
+      !!root.querySelector("style[data-diagview-styles]") || root.adoptedStyleSheets?.length > 0;
+    expect(styled()).toBe(true);
+    // A root that throws when DiagView looks for its diagrams
+    state.shadowRoots.add({
+      querySelectorAll() {
+        throw new Error("broken root");
+      },
+    });
+    const errorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
+
+    await destroy();
+
+    expect(errorSpy).toHaveBeenCalledWith("DiagView: Error during teardown:", expect.any(Error));
+    expect(styled()).toBe(false);
+    expect(document.getElementById("diagview-modal")).toBeNull();
+    expect(state.isInitialized).toBe(false);
+    errorSpy.mockRestore();
+  });
+
   test("destroy() forgets remembered zoom states", async () => {
     init({ rememberZoom: true });
     const pz = {
