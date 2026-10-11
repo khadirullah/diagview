@@ -320,6 +320,8 @@ DiagView.utils.sanitizeSVG(rawSvg, "strict", { removed });
 
 Input over `maxChars` is blocked with a console error: a string returns `""`, a Node returns `null`. `options` may be omitted or `null`.
 
+`strict` and `permissive` drop comments and processing instructions, and turn CDATA sections into plain text with the same content. An HTML parser ends all three at the first `>`, so markup hidden in them would otherwise run once you put the string in the page.
+
 When the root element itself is one the mode removes, such as a lone `<script>` or `<iframe>`, nothing is left to return. A string returns `""` and a Node returns `null`, with no console error. A DocumentFragment is cleaned child by child and comes back as a fragment.
 
 ---

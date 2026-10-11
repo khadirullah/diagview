@@ -491,3 +491,79 @@ describe("sanitizeSVG input whose root is removed", () => {
     expect(clean.querySelector("rect").hasAttribute("onclick")).toBe(false);
   });
 });
+
+describe("sanitizeSVG comments, processing instructions and CDATA", () => {
+  const SVG = 'xmlns="http://www.w3.org/2000/svg"';
+  const HTML = 'xmlns="http://www.w3.org/1999/xhtml"';
+  const IMG = '<img src="x" onerror="alert(1)"/>';
+  const inLabel = (inner) =>
+    `<svg ${SVG}><foreignObject width="10" height="10"><div ${HTML}>${inner}</div></foreignObject></svg>`;
+
+  /** Put the string in the page the way the docs show, and look for the image */
+  const runsInPage = (markup) => {
+    const box = document.createElement("div");
+    box.innerHTML = markup;
+    const found = !!box.querySelector("img[onerror]");
+    box.remove();
+    return found;
+  };
+
+  test.each(["strict", "permissive"])("%s drops comments and processing instructions", (mode) => {
+    const out = sanitizeSVG(
+      `<svg ${SVG}><!-->${IMG}--><?x >${IMG}?><rect width="1" height="1"/></svg>`,
+      mode,
+    );
+    expect(out).toBe(`<svg ${SVG}><rect width="1" height="1"/></svg>`);
+  });
+
+  test.each([
+    ["a comment", `<!-->${IMG}-->`],
+    ["a processing instruction", `<?x >${IMG}?>`],
+    ["CDATA", `<![CDATA[>${IMG}]]>`],
+    ["CDATA in an HTML <style>", `<style><![CDATA[</style>${IMG}]]></style>`],
+  ])("markup in %s inside a label stays text in the page", (_name, inner) => {
+    for (const mode of ["strict", "permissive"]) {
+      const out = sanitizeSVG(inLabel(inner), mode);
+      expect(out).not.toMatch(/<!--|<\?|<!\[CDATA\[/);
+      expect(runsInPage(out)).toBe(false);
+    }
+  });
+
+  test("CDATA in a label keeps its text", () => {
+    const out = sanitizeSVG(`<svg ${SVG}><text><![CDATA[a < b & c]]></text></svg>`);
+    expect(out).toBe(`<svg ${SVG}><text>a &lt; b &amp; c</text></svg>`);
+  });
+
+  test("CSS in CDATA keeps its rules, as with plain CSS", () => {
+    const css = "#d .node > rect { fill: #ececff; } #d .label { color: #333; }";
+    const plain = sanitizeSVG(`<svg ${SVG}><style>${css.replace(">", "&gt;")}</style></svg>`);
+    const cdata = sanitizeSVG(`<svg ${SVG}><style><![CDATA[${css}]]></style></svg>`);
+    expect(cdata).toBe(plain);
+    const doc = new DOMParser().parseFromString(cdata, "image/svg+xml");
+    expect(doc.querySelector("style").textContent).toBe(css);
+  });
+
+  test("CSS in CDATA is still checked", () => {
+    const out = sanitizeSVG(
+      `<svg ${SVG}><style><![CDATA[@import url(https://evil.test/x.css);]]></style><rect/></svg>`,
+    );
+    expect(out).not.toContain("<style");
+    expect(out).toContain("<rect/>");
+  });
+
+  test("a Node keeps no comments", () => {
+    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    svg.appendChild(document.createComment("note"));
+    svg.appendChild(document.createElementNS("http://www.w3.org/2000/svg", "rect"));
+    const out = sanitizeSVG(svg, "strict");
+    expect(out.childNodes).toHaveLength(1);
+    expect(out.firstChild.localName).toBe("rect");
+    // The page's own SVG keeps its comment
+    expect(svg.childNodes).toHaveLength(2);
+  });
+
+  test("off leaves them as they were", () => {
+    const input = `<svg ${SVG}><!-- note --><![CDATA[x]]></svg>`;
+    expect(sanitizeSVG(input, "off")).toBe(input);
+  });
+});

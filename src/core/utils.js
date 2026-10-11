@@ -619,7 +619,15 @@ export function sanitizeSVG(input, mode = "strict", options = 0) {
 
   // Returns false when it removed el
   const cleanElement = (el) => {
-    if (el.nodeType !== 1) return;
+    if (el.nodeType !== 1) {
+      // The string comes back with comments, processing instructions and
+      // CDATA as written, and an HTML parser ends those at the first ">".
+      // Markup inside them would then run in the page. CDATA turns into
+      // plain text, so labels and CSS keep their content.
+      if (el.nodeType === 4) el.replaceWith(el.data);
+      else if (el.nodeType !== 3) el.remove();
+      return;
+    }
 
     // Compare the local name so prefixed forms (<svg:script>, <h:iframe>)
     // are treated like their unprefixed counterparts. The HTML parser keeps

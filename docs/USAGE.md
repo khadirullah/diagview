@@ -724,6 +724,7 @@ DiagView.init({ security: { mode: "off", exportMode: "strict" } });
 | `<script>`, `<iframe>`, `<object>`, `<applet>`, `<embed>`, `<form>`, `<link>`, `<base>`, `<meta>`                                                         | Yes      | Yes          | No    |
 | `on*` event handler attributes such as `onclick`, `onload` and `onerror`                                                                                  | Yes      | Yes          | No    |
 | `javascript:`, `vbscript:` and `data:` URLs in `href`, `xlink:href`, `src`, `action` and `formaction`. Base64 images of the `allowedImageTypes` stay      | Yes      | Yes          | No    |
+| Comments and processing instructions. CDATA sections become plain text with the same content, so labels and CSS in them stay                              | Yes      | Yes          | No    |
 | SMIL animations whose `attributeName` is `href`, `xlink:href` or an `on*` handler                                                                         | Yes      | Yes          | No    |
 | All other SMIL animations: `<animate>`, `<animateColor>`, `<animateMotion>`, `<animateTransform>`, `<set>`                                                | Yes      | No           | No    |
 | `<discard>`, `<mpath>`, `<tref>`, `<math>`, `<feImage>`                                                                                                   | Yes      | No           | No    |
