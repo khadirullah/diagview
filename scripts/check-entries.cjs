@@ -21,6 +21,12 @@ for (const file of bundles) {
   );
 }
 
+assert.equal(
+  require("diagview/package.json").version,
+  version,
+  'require("diagview/package.json") failed',
+);
+
 const required = require("diagview");
 assert.equal(typeof required.init, "function", 'require("diagview").init is not a function');
 assert.ok(!Object.keys(required).includes("default"), 'require("diagview") lists a default key');

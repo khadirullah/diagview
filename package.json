@@ -14,7 +14,8 @@
       "import": "./dist/esm/index.js",
       "require": "./dist/diagview.umd.cjs"
     },
-    "./style": "./dist/diagview.css"
+    "./style": "./dist/diagview.css",
+    "./package.json": "./package.json"
   },
   "files": [
     "dist",
