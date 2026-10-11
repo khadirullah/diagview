@@ -10,7 +10,7 @@
 
 ![DiagView Demo](media/demo.gif)
 
-> **[Live Demo →](https://khadirullah.github.io/diagview/)** · **[Video Walkthrough (2:31) →](https://www.youtube.com/watch?v=0XemdL7n3ao)**
+> **[Live Demo →](https://diagview.khadirullah.com/)** · **[Video Walkthrough (2:31) →](https://www.youtube.com/watch?v=0XemdL7n3ao)**
 
 ---
 
@@ -343,7 +343,7 @@ Pass `silent: true` to skip the linked image and hard-to-read label warnings in 
 
 ## 🌐 Framework Integration
 
-Live example: **[React 18 + StrictMode demo](https://khadirullah.github.io/diagview/framework-react.html)** (mount, unmount, remount, replace).
+Live example: **[React 18 + StrictMode demo](https://diagview.khadirullah.com/framework-react.html)** (mount, unmount, remount, replace).
 
 > **One rule for component frameworks (React, Vue, Svelte, Angular):** keep the diagram element nested inside a container that your component renders and owns, as in the examples below. With the `floating` and `header` layouts DiagView moves the diagram element into a wrapper to place the toolbar. Frameworks that later remove that exact element themselves will fail, because it is no longer where they left it. Removing the outer container is always safe. If you would rather DiagView never touch the surrounding DOM, use `layout: "off"`; fullscreen, zoom, search and export still work, only the inline toolbar is dropped.
 
@@ -558,7 +558,7 @@ DiagView.init({
 
 Experience all features including Search, Export, and Meeting Mode in our interactive playground:
 
-**[Explore the Live Demo →](https://khadirullah.github.io/diagview/)**
+**[Explore the Live Demo →](https://diagview.khadirullah.com/)**
 
 The [2:31 video walkthrough](https://www.youtube.com/watch?v=0XemdL7n3ao) shows every feature, with narration and English subtitles.
 
@@ -595,16 +595,16 @@ Choose the layout that fits your site: **Floating HUD**, **Header Controls**, or
 
 ## 📚 Documentation
 
-| Document                                             | Description                             |
-| ---------------------------------------------------- | --------------------------------------- |
-| [Live Demo](https://khadirullah.github.io/diagview/) | **Interactive online playground**       |
-| docs/USAGE.md                                        | Complete usage guide (basic → advanced) |
-| docs/API.md                                          | Full public API reference               |
-| docs/FAQ.md                                          | Frequently asked questions              |
-| BUILD.md                                             | Local development & build instructions  |
-| CONTRIBUTING.md                                      | How to contribute                       |
-| SECURITY.md                                          | Security policy                         |
-| CHANGELOG.md                                         | Version history                         |
+| Document                                       | Description                             |
+| ---------------------------------------------- | --------------------------------------- |
+| [Live Demo](https://diagview.khadirullah.com/) | **Interactive online playground**       |
+| docs/USAGE.md                                  | Complete usage guide (basic → advanced) |
+| docs/API.md                                    | Full public API reference               |
+| docs/FAQ.md                                    | Frequently asked questions              |
+| BUILD.md                                       | Local development & build instructions  |
+| CONTRIBUTING.md                                | How to contribute                       |
+| SECURITY.md                                    | Security policy                         |
+| CHANGELOG.md                                   | Version history                         |
 
 ---
 

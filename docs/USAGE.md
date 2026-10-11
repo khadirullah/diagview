@@ -699,7 +699,7 @@ Setting up a diagram changes the page's `<svg>` element itself in a few small wa
 
 In the header and floating layouts, DiagView moves the diagram element into its wrapper when it sets the diagram up, and `destroy()` moves it back. Every browser reloads an `<iframe>`, `<object>` or `<embed>` inside the element each time it moves. Their content starts again from the beginning and loses its state, such as a scroll position or a half-filled form. Safari also reloads images, so an image with an `onerror` handler may run that handler once more. This is your page's own code, which already ran when the page loaded. DiagView's copies never run it. With `layout: "off"` DiagView never moves the element, so nothing reloads.
 
-The Security modes panel on the [demo page](https://khadirullah.github.io/diagview/#security) runs one small diagram through all three modes side by side.
+The Security modes panel on the [demo page](https://diagview.khadirullah.com/#security) runs one small diagram through all three modes side by side.
 
 ### Choosing a mode
 
@@ -974,7 +974,7 @@ DiagView.init({
 
 ## 20. Framework integration
 
-Live example: [React 18 + StrictMode demo](https://khadirullah.github.io/diagview/framework-react.html). It is a real React dev-build tree that mounts, unmounts, remounts and replaces diagrams, with an "unsafe pattern" toggle that shows the error the rule below prevents. `demo/framework-react.html` in the repo, verified by `tests/e2e/verify-react-strictmode.spec.mjs`.
+Live example: [React 18 + StrictMode demo](https://diagview.khadirullah.com/framework-react.html). It is a real React dev-build tree that mounts, unmounts, remounts and replaces diagrams, with an "unsafe pattern" toggle that shows the error the rule below prevents. `demo/framework-react.html` in the repo, verified by `tests/e2e/verify-react-strictmode.spec.mjs`.
 
 > **The one rule:** keep the diagram element (the one matching `diagramSelector`, which can be the `<svg>` itself) nested inside a container that your component renders and owns. With the `floating` and `header` layouts DiagView moves the diagram element into a wrapper so it can place the toolbar next to it. Your framework still believes the element sits where it rendered it, so if it later removes that exact element (unmount, conditional render, key change) the browser throws `NotFoundError: The node to be removed is not a child of this node`. Removing the outer container instead is always safe, because the wrapper is inside it and goes away with it.
 >
