@@ -492,10 +492,11 @@ function stripCSSComments(str) {
 }
 
 /**
- * Patterns that represent remote resource loading in CSS.
+ * Patterns that represent remote resource loading in CSS: @import, url()
+ * and a quoted URL right after "(" or ",", as image-set() takes one.
  * @private
  */
-const REMOTE_RESOURCE_RE = /(?:@import\b|url\s*\(\s*['"]?\s*(?:https?:|\/\/))/i;
+const REMOTE_RESOURCE_RE = /@import\b|(?:url\s*\(|[(,]\s*['"])\s*['"]?\s*(?:https?:|\/\/)/i;
 
 /**
  * Lower-cased local name of an element or attribute with any namespace

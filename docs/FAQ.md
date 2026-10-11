@@ -262,7 +262,7 @@ A: `strict` mode removes `<animate>`, `<animateTransform>`, `<set>`, and similar
 </div>
 ```
 
-CSS `@keyframes` animations in a `<style>` block are kept. `strict` removes the block only if it contains script patterns, `@import` or a remote `url()`.
+CSS `@keyframes` animations in a `<style>` block are kept. `strict` removes the block only if it contains script patterns, `@import`, or a remote `url()` or `image-set()`.
 
 `permissive` still drops animations whose `attributeName` is `href`/`xlink:href` or an `on*` handler, because those can be used to inject a script.
 

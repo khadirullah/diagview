@@ -719,22 +719,22 @@ DiagView.init({ security: { mode: "off", exportMode: "strict" } });
 
 ### What each mode removes
 
-| Removed from the copy                                                                                                                                     | `strict` | `permissive` | `off` |
-| --------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- | ------------ | ----- |
-| `<script>`, `<iframe>`, `<object>`, `<applet>`, `<embed>`, `<form>`, `<link>`, `<base>`, `<meta>`                                                         | Yes      | Yes          | No    |
-| `on*` event handler attributes such as `onclick`, `onload` and `onerror`                                                                                  | Yes      | Yes          | No    |
-| `javascript:`, `vbscript:` and `data:` URLs in `href`, `xlink:href`, `src`, `action` and `formaction`. Base64 images of the `allowedImageTypes` stay      | Yes      | Yes          | No    |
-| Comments and processing instructions. CDATA sections become plain text with the same content, so labels and CSS in them stay                              | Yes      | Yes          | No    |
-| SMIL animations whose `attributeName` is `href`, `xlink:href` or an `on*` handler                                                                         | Yes      | Yes          | No    |
-| All other SMIL animations: `<animate>`, `<animateColor>`, `<animateMotion>`, `<animateTransform>`, `<set>`                                                | Yes      | No           | No    |
-| `<discard>`, `<mpath>`, `<tref>`, `<math>`, `<feImage>`                                                                                                   | Yes      | No           | No    |
-| `<foreignObject>` whose `src` or `data` is an `http(s)` URL. Other `<foreignObject>` elements stay, since Mermaid and draw.io put their labels in them    | Yes      | No           | No    |
-| The `form` attribute, which ties a button or field in the diagram to a form on the page                                                                   | Yes      | No           | No    |
-| `href` on a `<use>` that points to another site (`https://`, `http://` or `//`)                                                                           | Yes      | No           | No    |
-| A `style` attribute with `expression()`, `javascript:` or `vbscript:`, also when hidden by CSS escapes or comments, or with `@import` or a remote `url()` | Yes      | No           | No    |
-| A `<style>` block with the same patterns. The whole block goes                                                                                            | Yes      | No           | No    |
+| Removed from the copy                                                                                                                                                      | `strict` | `permissive` | `off` |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- | ------------ | ----- |
+| `<script>`, `<iframe>`, `<object>`, `<applet>`, `<embed>`, `<form>`, `<link>`, `<base>`, `<meta>`                                                                          | Yes      | Yes          | No    |
+| `on*` event handler attributes such as `onclick`, `onload` and `onerror`                                                                                                   | Yes      | Yes          | No    |
+| `javascript:`, `vbscript:` and `data:` URLs in `href`, `xlink:href`, `src`, `action` and `formaction`. Base64 images of the `allowedImageTypes` stay                       | Yes      | Yes          | No    |
+| Comments and processing instructions. CDATA sections become plain text with the same content, so labels and CSS in them stay                                               | Yes      | Yes          | No    |
+| SMIL animations whose `attributeName` is `href`, `xlink:href` or an `on*` handler                                                                                          | Yes      | Yes          | No    |
+| All other SMIL animations: `<animate>`, `<animateColor>`, `<animateMotion>`, `<animateTransform>`, `<set>`                                                                 | Yes      | No           | No    |
+| `<discard>`, `<mpath>`, `<tref>`, `<math>`, `<feImage>`                                                                                                                    | Yes      | No           | No    |
+| `<foreignObject>` whose `src` or `data` is an `http(s)` URL. Other `<foreignObject>` elements stay, since Mermaid and draw.io put their labels in them                     | Yes      | No           | No    |
+| The `form` attribute, which ties a button or field in the diagram to a form on the page                                                                                    | Yes      | No           | No    |
+| `href` on a `<use>` that points to another site (`https://`, `http://` or `//`)                                                                                            | Yes      | No           | No    |
+| A `style` attribute with `expression()`, `javascript:` or `vbscript:`, also when hidden by CSS escapes or comments, or with `@import` or a remote `url()` or `image-set()` | Yes      | No           | No    |
+| A `<style>` block with the same patterns. The whole block goes                                                                                                             | Yes      | No           | No    |
 
-With `allowRemoteResources: true`, `@import` and remote `url()` stay in `strict` too. See [Allowing remote resources](#allowing-remote-resources).
+With `allowRemoteResources: true`, `@import`, remote `url()` and remote `image-set()` stay in `strict` too. See [Allowing remote resources](#allowing-remote-resources).
 
 ### What readers notice
 

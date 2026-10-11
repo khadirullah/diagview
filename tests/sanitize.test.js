@@ -200,11 +200,26 @@ describe("sanitizeSVG CSS escape and syntax variants (strict, remote blocked)", 
       "whitespace after the opening quote in url()",
       ".a{background:url(' https://evil.com/x.png')}",
     ],
+    ["a quoted URL in image-set()", '.a{background-image:image-set("https://evil.com/x.png" 1x)}'],
+    [
+      "the second quoted URL in -webkit-image-set()",
+      ".a{background-image:-webkit-image-set('a.png' 1x, 'https://evil.com/x.png' 2x)}",
+    ],
+    ["a protocol-relative URL in image-set()", '.a{background:image-set( "//evil.com/x.png" 1x)}'],
   ])("removes remote resource written as %s", (_label, css) => {
     const out = sanitizeToString(styleBlock(css));
     expect(out).toContain("<rect"); // parsed fine, not rejected wholesale
     expect(out).not.toContain("evil.com");
     expect(out).not.toContain("import");
+  });
+
+  test("image-set() with local images and quoted text that loads nothing survive", () => {
+    const css =
+      '.a{background-image:image-set("a.png" 1x, url(b.png) 2x)} .b::after{content:"https://example.com"} .c{font-family:"Trebuchet MS", "Verdana"}';
+    const out = sanitizeToString(styleBlock(css));
+    expect(out.match(/<style>/g)).toHaveLength(1);
+    expect(out).toContain("<rect style=");
+    expect(out).toContain('content:"https://example.com"');
   });
 
   test("local url(#grad) and raster data: URIs still survive", () => {
