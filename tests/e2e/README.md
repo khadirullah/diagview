@@ -81,10 +81,10 @@ jsdelivr, so these four need network access. Set `DV_CDN=<version>`
 against a published build instead of the local one. The other suites run
 offline. `verify-export-search`, `verify-search-export`, `verify-readable-text`,
 `verify-image-handler`, `verify-diagram-size`, `verify-search-lines`,
-`verify-mermaid-errors`, `verify-bare-svg`, `verify-off-hint`,
-`verify-header-title` and `verify-host-form` inject the build themselves.
-Set `DV_DIST=/path/to/diagview.umd.js` to test another build with those
-eleven.
+`verify-export-fonts`, `verify-search-pan`, `verify-mermaid-errors`,
+`verify-bare-svg`, `verify-off-hint`, `verify-header-title` and
+`verify-host-form` inject the build themselves. Set
+`DV_DIST=/path/to/diagview.umd.js` to test another build with those suites.
 
 `repro.html` is the shared test page: a 2000x1200 labelled grid SVG (cells
 A1 to J6, 200 units each) so any viewport centre measurement maps to a
@@ -100,9 +100,6 @@ annotated in the spec, never deleted:
 - The zoomed-out phone page checks in `verify-theme-hint` and
   `verify-phone-topbar` are skipped on Firefox, which cannot emulate a
   phone page without a viewport meta tag.
-- Two draw.io Text Colours checks are marked as failing on Firefox.
-  Firefox gives the undrawn `<text>` fallbacks inside a `<switch>` a
-  non-zero box, so `readable-text.js` recolours them too.
 
 A check marked as failing that starts to pass shows up as a failure, so
 remove the mark once the bug is fixed.
