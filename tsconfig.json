@@ -6,7 +6,6 @@
     "moduleResolution": "bundler",
     "resolveJsonModule": true,
     "declaration": true,
-    "declarationMap": true,
     "emitDeclarationOnly": true,
     "outDir": "./dist",
     "rootDir": "./src",
