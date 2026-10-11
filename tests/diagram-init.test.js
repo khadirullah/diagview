@@ -1020,6 +1020,74 @@ describe("Diagram Init: keyboard access with layout off", () => {
   });
 });
 
+describe("Diagram Init: a name for the SVG", () => {
+  const RECT = '<rect width="5" height="5"/>';
+  const setup = (attrs = "", svgAttrs = "", inner = RECT, layout = "header") => {
+    document.body.innerHTML = `<div class="diagram" data-diagview-layout="${layout}" ${attrs}><svg viewBox="0 0 10 10" ${svgAttrs}>${inner}</svg></div>`;
+    const el = document.querySelector(".diagram");
+    initializeDiagram(el);
+    return el.querySelector("svg");
+  };
+
+  beforeEach(() => {
+    document.body.innerHTML = "";
+  });
+
+  test.each(["header", "floating", "off"])(
+    "an SVG with no name takes the data-title in the %s layout",
+    (layout) => {
+      expect(setup('data-title="Order flow"', "", RECT, layout).getAttribute("aria-label")).toBe(
+        "Order flow",
+      );
+    },
+  );
+
+  test("a drawn chart title names it too", () => {
+    const svg = setup("", "", '<text class="titleText">Sales</text>' + RECT);
+    expect(svg.getAttribute("aria-label")).toBe("Sales");
+  });
+
+  test("a diagram with no title gets no name", () => {
+    expect(setup().hasAttribute("aria-label")).toBe(false);
+  });
+
+  test.each([
+    ["its own <title>", "", "<title>Login</title>" + RECT, null],
+    ["an aria-label", 'aria-label="Sales chart"', RECT, "Sales chart"],
+    ["Mermaid's aria-labelledby", 'aria-labelledby="chart-title-1"', RECT, null],
+    ["aria-hidden", 'aria-hidden="true"', RECT, null],
+    ['role="presentation"', 'role="presentation"', RECT, null],
+    ['role="none"', 'role="none"', RECT, null],
+  ])("an SVG with %s gets no name from DiagView", (_, svgAttrs, inner, label) => {
+    const svg = setup('data-title="Flow"', svgAttrs, inner);
+    expect(svg.getAttribute("aria-label")).toBe(label);
+  });
+
+  test("the role Mermaid set stays", () => {
+    const svg = setup('data-title="Flow"', 'role="graphics-document document"');
+    expect(svg.getAttribute("role")).toBe("graphics-document document");
+    expect(svg.getAttribute("aria-label")).toBe("Flow");
+  });
+
+  test("an <svg> with layout off keeps the name that says it opens", () => {
+    document.body.innerHTML =
+      '<svg class="diagram" data-diagview-layout="off" data-title="Flow" viewBox="0 0 10 10"><rect width="5" height="5"/></svg>';
+    const svg = document.querySelector("svg");
+    initializeDiagram(svg);
+    expect(svg.getAttribute("aria-label")).toBe("Open Flow in fullscreen");
+  });
+
+  test("destroy removes the name DiagView gave and keeps the page's own", () => {
+    const svg = setup('data-title="Flow"');
+    deinitializeDiagram(svg.closest(".diagram"));
+    expect(svg.hasAttribute("aria-label")).toBe(false);
+
+    const own = setup('data-title="Flow"', 'aria-label="Sales chart"');
+    deinitializeDiagram(own.closest(".diagram"));
+    expect(own.getAttribute("aria-label")).toBe("Sales chart");
+  });
+});
+
 describe("Diagram Init: offHint", () => {
   const RECT = '<svg viewBox="0 0 10 10"><rect width="5" height="5"/></svg>';
   let updateConfig;

@@ -279,10 +279,11 @@ A: No. DiagView sanitizes a copy of the SVG for the viewer and for each export, 
 
 - `init()` adds the `dv-svg-content` class and an inline `transition: filter 0.3s ease`.
 - The header and floating layouts also set an inline `color: inherit`.
+- An SVG with no name of its own gets an `aria-label` with the diagram's title.
 - An SVG that fails to render gets `display: none` and sits behind the error placeholder.
 - During an export, DiagView marks the elements inside it with a `data-dv-match-id` attribute and removes the marks again before the export carries on.
 
-`destroy()` removes the class and puts back the SVG's own `transition`, `color` and `display` values. It also removes a `style` or `class` attribute that DiagView added and left empty. An attribute the page wrote itself stays, even an empty one.
+`destroy()` removes the class and the label and puts back the SVG's own `transition`, `color` and `display` values. It also removes a `style` or `class` attribute that DiagView added and left empty. An attribute the page wrote itself stays, even an empty one.
 
 ---
 

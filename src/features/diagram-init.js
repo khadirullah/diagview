@@ -346,6 +346,8 @@ export function initializeDiagram(element, precalculatedIndex = -1) {
     errorDiv: null,
     hint: null,
     svg,
+    // DiagView named the SVG
+    svgLabel: false,
     prev: {
       display: svg ? svg.style.display : "",
       transition: svg ? svg.style.transition : "",
@@ -388,6 +390,19 @@ export function initializeDiagram(element, precalculatedIndex = -1) {
   const isOff = layout === LAYOUTS.OFF;
   const isFloating = layout === LAYOUTS.FLOATING;
   const title = getDiagramTitle(svg, element);
+
+  // An SVG with no name of its own takes the title, so screen readers name
+  // the drawing on the page and its copy in the viewer. A <title>, a name
+  // Mermaid or the page set, and a decorative SVG stay as they are. An
+  // <svg> with layout "off" already gets the name "Open ... in fullscreen".
+  record.svgLabel =
+    !!title &&
+    !(isOff && svg === element) &&
+    !svg.matches(
+      '[aria-label],[aria-labelledby],[aria-hidden="true"],[role~="none"],[role~="presentation"]',
+    ) &&
+    !svg.querySelector(":scope > title");
+  if (record.svgLabel) svg.setAttribute("aria-label", title);
 
   // If layout is "off", the diagram itself opens fullscreen on a click, or
   // on Enter or Space once Tab reaches it. styles.css gives it the zoom-in
@@ -576,6 +591,7 @@ export function deinitializeDiagram(element) {
     if (errorDiv) errorDiv.remove();
 
     if (svg) {
+      if (data.svgLabel) svg.removeAttribute("aria-label");
       svg.classList.remove("dv-svg-content");
       svg.style.display = prev.display;
       svg.style.transition = prev.transition;

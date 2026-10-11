@@ -3,7 +3,8 @@
 // drawn on the diagram (Mermaid "title"). Only with none of them does it
 // read "DIAGRAM". Checked on real Mermaid 11 and 12 output, Graphviz shape
 // tooltips, a node label and a picture in an HTML label, a figure caption,
-// markup in a title and a title too long for two lines.
+// markup in a title and a title too long for two lines. Screen readers get
+// the same title as the SVG's name, unless it already has one.
 //
 // Mermaid comes from jsdelivr, so this suite needs network access. The page
 // is file://, and DV_DIST=/path/to/diagview.umd.js tests another build.
@@ -104,6 +105,28 @@ for (const version of [11, 12]) {
       expect(await labels(page, ["m-plain"])).toEqual({ "m-plain": "DIAGRAM" });
     });
 
+    test("screen readers name the drawing after the title, and Mermaid's own name stays", async () => {
+      const svgs = await page.evaluate((ids) => {
+        const attrs = (id) => {
+          const svg = document.querySelector(`#${id} svg`);
+          return [svg.getAttribute("role"), svg.getAttribute("aria-label")];
+        };
+        return Object.fromEntries(ids.map((id) => [id, attrs(id)]));
+      }, MERMAID);
+      const role = "graphics-document document";
+      expect(svgs).toEqual({
+        "m-title": [role, "Order flow"],
+        "m-acc": [role, null],
+        "m-plain": [role, null],
+        "m-pie": [role, "Pets"],
+        "m-data": [role, null],
+      });
+      await expect(page.locator("#m-title svg")).toHaveAccessibleName("Order flow");
+      await expect(page.locator("#m-acc svg")).toHaveAccessibleName("Checkout steps");
+      await expect(page.locator("#m-data svg")).toHaveAccessibleName("Checkout steps");
+      await expect(page.locator("#m-pie svg")).toHaveAccessibleName("Pets");
+    });
+
     test("export files take the name the header shows", async () => {
       const shown = await labels(page, MERMAID);
       const names = await fileNames(page, MERMAID);
@@ -129,6 +152,16 @@ test.describe("other diagrams", () => {
       gv: "BUILD PIPELINE",
       "gv-shapes": "DIAGRAM",
     });
+  });
+
+  test("an SVG <title> stays its name, and the viewer's copy keeps a label DiagView added", async () => {
+    expect(await page.locator("#gv svg").getAttribute("aria-label")).toBeNull();
+    await expect(page.locator("#gv > svg")).toHaveAccessibleName("Build pipeline");
+    await page.evaluate(() => DiagView.openFullscreen(document.getElementById("m-pie")));
+    const copy = page.locator("#diagview-modal-viewport svg").first();
+    await expect(copy).toHaveAccessibleName("Pets");
+    await page.keyboard.press("Escape");
+    await expect(page.locator("#diagview-modal.open")).toHaveCount(0);
   });
 
   test("a node label or a picture inside an HTML label does not name it", async () => {
