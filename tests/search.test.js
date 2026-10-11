@@ -10,7 +10,7 @@ import {
   resetSearch,
   setupSearch,
 } from "../src/features/lazy/search.js";
-import { state, resetConfig } from "../src/core/config.js";
+import { state, resetConfig, runModalCleanupFunctions } from "../src/core/config.js";
 
 // Mock SVG with searchable nodes
 function createMockSvg() {
@@ -1013,6 +1013,26 @@ describe("Search: bringing a match into view", () => {
 
     expect(current()).toEqual(["Node B"]);
     expect(status.textContent).toBe("Match 1 of 1");
+  });
+
+  test("closing the viewer drops a search still waiting in the throttle", () => {
+    jest.useFakeTimers();
+    try {
+      label("Node A", 100, 100);
+      label("Node B", 300, 100);
+      setupSearch(svg);
+      type("node");
+      type("node b");
+
+      // The viewer closes and lets go of the throttle and this clone
+      runModalCleanupFunctions();
+      jest.runAllTimers();
+      flushRaf();
+
+      expect(status.textContent).toBe("2 matches found");
+    } finally {
+      jest.useRealTimers();
+    }
   });
 
   test("clearing after Enter restores the SVG markup exactly", () => {

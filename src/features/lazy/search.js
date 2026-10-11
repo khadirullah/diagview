@@ -13,7 +13,7 @@ import {
   undrawnSwitch,
   applyTransformNow,
 } from "../../core/utils.js";
-import { addModalListener } from "../../core/lifecycle.js";
+import { addModalListener, addModalCleanupFunction } from "../../core/lifecycle.js";
 
 /**
  * Module-level reference to the active search throttle.
@@ -593,13 +593,19 @@ export function setupSearch(clone, initialQuery = "") {
   state.searchMatches = [];
 
   // Throttled search using centralized constant
-  activeSearchThrottle = throttle((query) => {
+  const search = throttle((query) => {
     // Final safety check: Only apply search if it still matches the current input value
     const currentVal = searchInput.value || "";
     if (currentVal.toLowerCase().trim() === query.toLowerCase().trim()) {
       performSearch(clone, query, true);
     }
   }, TIMING.SEARCH_THROTTLE);
+  activeSearchThrottle = search;
+  // The throttle holds this clone, so let go of it when the viewer closes
+  addModalCleanupFunction(() => {
+    search.cancel();
+    if (activeSearchThrottle === search) activeSearchThrottle = null;
+  });
 
   // Input handler
   const handleInput = (e) => {
@@ -611,10 +617,10 @@ export function setupSearch(clone, initialQuery = "") {
     // CRITICAL: If query is empty, clear immediately (bypass throttle)
     // to prevent race conditions when holding backspace.
     if (!query) {
-      activeSearchThrottle.cancel();
+      search.cancel();
       performSearch(clone, "");
     } else {
-      activeSearchThrottle(query);
+      search(query);
     }
   };
 
@@ -623,7 +629,7 @@ export function setupSearch(clone, initialQuery = "") {
   // Clear button handler
   if (searchClear) {
     const handleClear = () => {
-      activeSearchThrottle.cancel();
+      search.cancel();
       searchInput.value = "";
       searchClear.classList.remove("show");
       searchInput.focus();
@@ -643,8 +649,8 @@ export function setupSearch(clone, initialQuery = "") {
       e.preventDefault();
       // Run a search still waiting in the throttle first, without moving
       // the view, so Enter steps through what the box says
-      if (activeSearchThrottle.pending()) {
-        activeSearchThrottle.cancel();
+      if (search.pending()) {
+        search.cancel();
         performSearch(clone, searchInput.value);
       }
       const back = e.shiftKey;
@@ -660,6 +666,7 @@ export function setupSearch(clone, initialQuery = "") {
  */
 export function resetSearch() {
   searchGeneration = 0;
+  activeSearchThrottle = null;
   markedShapes = [];
   matched = [];
   current = null;
