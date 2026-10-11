@@ -790,6 +790,55 @@ export async function copySVGCode(sourceElement, options = {}) {
 }
 
 /**
+ * Start a clipboard write for an image that is not drawn yet. Safari and
+ * Firefox let a page write to the clipboard only during the click that
+ * asked for it, and drawing the image takes longer than that. So the write
+ * starts at once with a promise of the image, and the browser waits for it.
+ * Call it before the first await of the click.
+ * @private
+ * @param {string} mime - Type of the image
+ * @returns {{give: Function, done: Promise<{ok: boolean, error?: *}>|null}|null}
+ *   null when the clipboard cannot take an image. give(blob) hands over the
+ *   image, and give(null, error) says it failed. done settles once the
+ *   write ends, and is null where ClipboardItem takes only a finished Blob
+ *   (Chrome before 98).
+ */
+function startImageCopy(mime) {
+  if (!isClipboardAvailable()) return null;
+  let give;
+  const image = new Promise((resolve, reject) => {
+    give = (blob, error) => (blob ? resolve(blob) : reject(error));
+  });
+  // A browser that never takes the promise must not report it as unhandled
+  image.catch(() => {});
+  let done = null;
+  try {
+    done = navigator.clipboard.write([new ClipboardItem({ [mime]: image })]).then(
+      () => ({ ok: true }),
+      (error) => ({ ok: false, error }),
+    );
+  } catch (_e) {
+    // ClipboardItem refused the promise, so the finished Blob goes in later
+  }
+  return { give, done };
+}
+
+/**
+ * Write a finished image to the clipboard. Resolves to false when the
+ * browser denies the write, and throws any other error.
+ * @private
+ */
+async function writeImage(mime, blob) {
+  try {
+    await navigator.clipboard.write([new ClipboardItem({ [mime]: blob })]);
+    return true;
+  } catch (err) {
+    if (err?.name !== "NotAllowedError") throw err;
+    return false;
+  }
+}
+
+/**
  * Internal Image Export Processor. Resolves to the extension of the file
  * made ("png", "jpeg" or "webp") once the image is saved, copied, or
  * downloaded because the clipboard was unavailable.
@@ -805,6 +854,8 @@ async function processImageExport(
 ) {
   // Set once the copy is drawn, for the notice if reading it back fails
   let foreign = false;
+  // The clipboard write for Copy Image, started before the first await
+  let clip = null;
   try {
     const isWebP = format === "webp";
     const isJpeg = format === "jpeg" || format === "jpg";
@@ -835,6 +886,8 @@ async function processImageExport(
       showProgressToast(`Processing ${label}...`);
     }
 
+    if (copy && !isWebP) clip = startImageCopy(mime);
+
     // Small delay to ensure toast renders before heavy canvas work
     await new Promise((resolve) => setTimeout(resolve, TIMING.RENDER_DELAY));
 
@@ -864,21 +917,18 @@ async function processImageExport(
           showSaved(`${label} downloaded (Clipboard unavailable)`, found);
         };
 
-        // Clipboard (PNG only usually)
-        if (!isClipboardAvailable() || isWebP) {
-          downloadInstead();
-        } else {
-          try {
-            await navigator.clipboard.write([new ClipboardItem({ [mime]: blob })]);
-            showSaved("Copied to clipboard!", found);
-          } catch (err) {
-            // Safari requires the write to happen inside the user gesture; by
-            // the time the canvas has rendered that window has closed and it
-            // rejects with NotAllowedError. Treat it like a missing clipboard.
-            if (err?.name !== "NotAllowedError") throw err;
-            downloadInstead();
-          }
+        let copied = false;
+        if (clip) {
+          clip.give(blob);
+          const early = clip.done && (await clip.done);
+          // A denied write gets the download. Any other failure of the early
+          // write, or a browser that refused the promise, gets one more try
+          // with the finished image, which throws if that fails too.
+          if (early?.ok) copied = true;
+          else if (early?.error?.name !== "NotAllowedError") copied = await writeImage(mime, blob);
         }
+        if (copied) showSaved("Copied to clipboard!", found);
+        else downloadInstead();
       } else {
         // Download: Use BlobURL for maximum stability
         const downloadUrl = URL.createObjectURL(blob);
@@ -896,6 +946,8 @@ async function processImageExport(
       }
     }
   } catch (e) {
+    // Nothing goes on the clipboard
+    clip?.give(null, e);
     if (e?.dvReported) return;
     console.error("DiagView Export Error:", e);
 
@@ -978,7 +1030,8 @@ export async function exportToWebP(sourceElement, options = {}) {
 }
 
 /**
- * Copy to Clipboard (PNG)
+ * Copy to Clipboard (PNG). Safari and Firefox copy only during a click, so
+ * call it from the click handler before any await of your own.
  * @param {HTMLElement|SVGSVGElement} sourceElement - Diagram element, or the diagram's <svg>
  * @param {ExportOptions} [options={}] - Reads filename, silent and modalClone. filename names
  *   the download used when the clipboard is unavailable.

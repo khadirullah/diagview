@@ -194,10 +194,10 @@ await DiagView.exportToPDF(el, { filename: "report" });
 
 ### `DiagView.copyToClipboard(element, options?)`
 
-Copies a PNG to the system clipboard. Requires HTTPS or localhost. If the browser denies the write (Safari does once the click that started the export is over), the PNG is downloaded instead and the toast says so.
+Copies a PNG to the system clipboard. Safari and Firefox allow the write only during a click, so call it from a click handler before any `await` of your own. DiagView starts the write within the click and hands the image over once it is drawn. If the page cannot write images to the clipboard, or the browser denies the write, DiagView downloads the PNG instead and the toast says so. That happens on plain HTTP, where browsers allow the clipboard only on HTTPS or localhost, and in Firefox before 127, which has no `ClipboardItem`.
 
 ```javascript
-await DiagView.copyToClipboard(el);
+button.addEventListener("click", () => DiagView.copyToClipboard(el));
 ```
 
 All export methods resolve without throwing when `element` contains no `<svg>`; they show a "No diagram found" toast instead. Per-diagram `data-diagview-scale` and `data-diagview-watermark-*` attributes on the element are honoured by every export path, inline or fullscreen. On touch devices and narrow screens, `mobileScale` applies instead. Every export path also follows `data-diagview-sanitize` while `security.allowOverrides` is on, unless `security.exportMode` is `'strict'`.

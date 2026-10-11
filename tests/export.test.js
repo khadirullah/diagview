@@ -1346,6 +1346,169 @@ describe("copyToClipboard falls back to download when the clipboard write is den
   });
 });
 
+describe("Copy Image starts the clipboard write during the click", () => {
+  let container, onExport, clickSpy, errorSpy;
+  const toastTexts = () =>
+    Array.from(document.querySelectorAll("#diagview-toast-container .diagview-toast")).map(
+      (t) => t.textContent,
+    );
+  // ClipboardItem as Safari, Firefox and Chrome 98 and later have it
+  class PromiseItem {
+    constructor(items) {
+      this.items = items;
+    }
+  }
+  // ClipboardItem as Chrome before 98 has it, a Blob only
+  class BlobOnlyItem {
+    constructor(items) {
+      for (const v of Object.values(items)) {
+        if (!(v instanceof Blob)) throw new TypeError("Failed to convert value to 'Blob'.");
+      }
+      this.items = items;
+    }
+  }
+  // A clipboard that waits for each image, like the browsers do
+  const clipboard = (result = () => undefined) => {
+    const written = [];
+    const write = jest.fn(async ([item]) => {
+      const blob = await item.items["image/png"];
+      written.push(blob);
+      return result(write.mock.calls.length);
+    });
+    Object.defineProperty(navigator, "clipboard", { value: { write }, configurable: true });
+    return written;
+  };
+
+  beforeEach(() => {
+    container = document.createElement("div");
+    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    svg.setAttribute("viewBox", "0 0 100 100");
+    svg.appendChild(document.createElementNS("http://www.w3.org/2000/svg", "rect"));
+    container.appendChild(svg);
+    document.body.appendChild(container);
+    onExport = jest.fn();
+    updateConfig({ highResScale: 1, maxPixels: 16000000, onExport });
+    global.URL.createObjectURL = jest.fn().mockReturnValue("blob:mock-url");
+    global.URL.revokeObjectURL = jest.fn();
+    global.Image = jest.fn(() => {
+      const img = document.createElement("img");
+      Object.defineProperty(img, "src", {
+        set(val) {
+          this._src = val;
+          setTimeout(() => this.onload?.(), 5);
+        },
+        get() {
+          return this._src;
+        },
+      });
+      return img;
+    });
+    HTMLCanvasElement.prototype.toBlob = function (cb, type) {
+      cb(new Blob(["png"], { type: type || "image/png" }));
+    };
+    global.ClipboardItem = PromiseItem;
+    clickSpy = jest.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => {});
+    errorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    container.remove();
+    hideToast();
+    document.getElementById("diagview-toast-container")?.remove();
+    updateConfig({ onExport: null, performance: { criticalFileLimit: 50000000 } });
+    delete global.ClipboardItem;
+    delete navigator.clipboard;
+    jest.restoreAllMocks();
+  });
+
+  test("exportDiagram calls clipboard.write before it returns, with a promise of the PNG", async () => {
+    const written = clipboard();
+    const done = exportDiagram(container, "copy", { filename: "ok" });
+    expect(navigator.clipboard.write).toHaveBeenCalledTimes(1);
+    const [[item]] = navigator.clipboard.write.mock.calls[0];
+    expect(item).toBeInstanceOf(PromiseItem);
+    expect(item.items["image/png"]).toBeInstanceOf(Promise);
+
+    expect(await done).toBe(true);
+    expect(written).toHaveLength(1);
+    expect(written[0].type).toBe("image/png");
+    expect(navigator.clipboard.write).toHaveBeenCalledTimes(1);
+    expect(clickSpy).not.toHaveBeenCalled();
+    expect(toastTexts()).toContain("Copied to clipboard!");
+    expect(onExport).toHaveBeenCalledWith("copy", "ok");
+  });
+
+  test("copyToClipboard calls clipboard.write before it returns", async () => {
+    clipboard();
+    const done = copyToClipboard(container);
+    expect(navigator.clipboard.write).toHaveBeenCalledTimes(1);
+    await done;
+    expect(toastTexts()).toContain("Copied to clipboard!");
+  });
+
+  test("a ClipboardItem that takes only a Blob gets the finished PNG", async () => {
+    global.ClipboardItem = BlobOnlyItem;
+    const written = clipboard();
+    const done = exportDiagram(container, "copy");
+    expect(navigator.clipboard.write).not.toHaveBeenCalled();
+    expect(await done).toBe(true);
+    expect(navigator.clipboard.write).toHaveBeenCalledTimes(1);
+    expect(written[0]).toBeInstanceOf(Blob);
+    expect(clickSpy).not.toHaveBeenCalled();
+    expect(toastTexts()).toContain("Copied to clipboard!");
+  });
+
+  test("a denied write downloads the PNG and does not write again", async () => {
+    clipboard(() => {
+      throw new DOMException("Denied", "NotAllowedError");
+    });
+    expect(await exportDiagram(container, "copy", { filename: "denied" })).toBe(true);
+    expect(navigator.clipboard.write).toHaveBeenCalledTimes(1);
+    expect(clickSpy.mock.contexts[0].download).toBe("denied.png");
+    expect(toastTexts()).toContain("PNG downloaded (Clipboard unavailable)");
+    expect(onExport).toHaveBeenCalledWith("copy", "denied");
+  });
+
+  test("a write that fails another way tries once more with the finished PNG", async () => {
+    const written = clipboard((n) => {
+      if (n === 1) throw new TypeError("Promise values are not supported");
+    });
+    expect(await exportDiagram(container, "copy")).toBe(true);
+    expect(navigator.clipboard.write).toHaveBeenCalledTimes(2);
+    expect(navigator.clipboard.write.mock.calls[1][0][0].items["image/png"]).toBeInstanceOf(Blob);
+    expect(written).toHaveLength(2);
+    expect(clickSpy).not.toHaveBeenCalled();
+    expect(toastTexts()).toContain("Copied to clipboard!");
+  });
+
+  test("without ClipboardItem the PNG downloads and nothing throws", async () => {
+    delete global.ClipboardItem;
+    clipboard();
+    expect(await exportDiagram(container, "copy", { filename: "plain" })).toBe(true);
+    expect(navigator.clipboard.write).not.toHaveBeenCalled();
+    expect(clickSpy.mock.contexts[0].download).toBe("plain.png");
+    expect(toastTexts()).toContain("PNG downloaded (Clipboard unavailable)");
+    expect(toastTexts().some((t) => t.includes("Export Failed"))).toBe(false);
+  });
+
+  test("an export the size limit blocks rejects the waiting write", async () => {
+    updateConfig({ performance: { criticalFileLimit: 10 } });
+    const settled = [];
+    const write = jest.fn(([item]) =>
+      item.items["image/png"].then(
+        () => settled.push("resolved"),
+        () => settled.push("rejected"),
+      ),
+    );
+    Object.defineProperty(navigator, "clipboard", { value: { write }, configurable: true });
+    expect(await exportDiagram(container, "copy")).toBe(false);
+    await Promise.resolve();
+    expect(settled).toEqual(["rejected"]);
+    expect(toastTexts().some((t) => t.includes("Diagram blocked"))).toBe(true);
+    expect(onExport).not.toHaveBeenCalled();
+  });
+});
+
 describe("exportDiagram honours the filename and silent options", () => {
   let container;
   const toastTexts = () =>
