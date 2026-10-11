@@ -1,5 +1,6 @@
-// Exports in browsers that cannot do everything DiagView asks of them,
-// and in a tab in the background, which runs no animation frames.
+// Exports in browsers that cannot do everything DiagView asks of them, in
+// a tab in the background, which runs no animation frames, and while the
+// page's own jsPDF script is still loading.
 // Safari's canvas cannot make WebP and hands back a PNG. Playwright's
 // WebKit can, so the WebP checks stand in for Safari by wrapping toBlob.
 //
@@ -121,6 +122,42 @@ test("an export started from code in a tab in the background still finishes", as
     });
     expect(result).toBe(true);
     expect((await download).suggestedFilename()).toBe("background.png");
+  } finally {
+    await page.context().close();
+  }
+});
+
+test("a PDF export waits for the page's own jsPDF tag that is still loading", async ({
+  browser,
+}) => {
+  const page = await openViewer(browser);
+  try {
+    const url = `${SITE}/held-back-jspdf.js`;
+    // A stand-in for jsPDF that arrives after 1.5 seconds
+    await page.route(url, async (route) => {
+      await new Promise((r) => setTimeout(r, 1500));
+      await route.fulfill({
+        contentType: "text/javascript",
+        body: `window.jspdf = { jsPDF: function () {
+          return { addImage() {}, save(name) { window.__pdf = name; } };
+        } };`,
+      });
+    });
+    const result = await page.evaluate(async (src) => {
+      DiagView.configure({ pdfLibraryUrl: src, pdfLibraryIntegrity: null });
+      const script = document.createElement("script");
+      script.src = src;
+      script.async = true;
+      document.head.appendChild(script);
+      const ok = await DiagView.exportDiagram(document.getElementById("diag"), "pdf", {
+        filename: "waited",
+      });
+      return { ok, saved: window.__pdf ?? null };
+    }, url);
+    expect(result).toEqual({ ok: true, saved: "waited.pdf" });
+    expect(await page.evaluate(() => document.querySelectorAll("script[src*=jspdf]").length)).toBe(
+      1,
+    );
   } finally {
     await page.context().close();
   }

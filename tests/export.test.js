@@ -1957,14 +1957,17 @@ describe("onExport fires and exportDiagram resolves to true only after a success
   });
 
   test("a PDF that falls back to PNG because jsPDF did not load does not fire it", async () => {
-    // A script tag for the URL already exists, so loadScript resolves without jsPDF
+    // A script tag for the URL has already loaded, so loadScript resolves without jsPDF
     const url = "https://example.test/jspdf-missing.js";
     updateConfig({ pdfLibraryUrl: url, pdfLibraryIntegrity: null });
+    const original = performance.getEntriesByName;
+    performance.getEntriesByName = () => [{ name: url }];
     const script = document.createElement("script");
     script.src = url;
     document.head.appendChild(script);
     const result = await exportDiagram(container, "pdf");
     script.remove();
+    performance.getEntriesByName = original;
     expect(result).toBe(false);
     expect(toastTexts().some((t) => t.includes("PDF engine unavailable"))).toBe(true);
     expect(onExport).not.toHaveBeenCalled();

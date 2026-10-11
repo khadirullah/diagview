@@ -271,7 +271,8 @@ const SCRIPT_PROMISES = new Map();
  * @param {string} url - Script URL
  * @param {string|null} [integrity=null] - SRI hash
  * @returns {Promise<void>} Rejects when the script fails to load or takes
- *   longer than TIMING.SCRIPT_LOAD_TIMEOUT
+ *   longer than TIMING.SCRIPT_LOAD_TIMEOUT. A <script> for the URL that the
+ *   page already has resolves once it has loaded.
  */
 export function loadScript(url, integrity = null) {
   if (!isBrowser()) return Promise.resolve();
@@ -291,19 +292,23 @@ export function loadScript(url, integrity = null) {
   }
 
   const promise = new Promise((resolve, reject) => {
-    // Check if already loaded by another part of the app (non-DiagView)
-    const isAlreadyLoaded = Array.from(document.scripts).some((s) => s.src === absoluteUrl);
-    if (isAlreadyLoaded) {
+    // A tag another part of the page added. Its download has a timing
+    // entry once it is over. One still loading gets waited for.
+    let script = Array.from(document.scripts).find((s) => s.src === absoluteUrl);
+    if (script && performance.getEntriesByName?.(absoluteUrl).length) {
       resolve();
       return;
     }
 
-    const script = document.createElement("script");
-    script.src = url;
-    script.async = true;
-    if (integrity) {
-      script.integrity = integrity;
-      script.crossOrigin = "anonymous";
+    if (!script) {
+      script = document.createElement("script");
+      script.src = url;
+      script.async = true;
+      if (integrity) {
+        script.integrity = integrity;
+        script.crossOrigin = "anonymous";
+      }
+      document.head.appendChild(script);
     }
 
     // A stalled download fails after a while so the caller can fall back
@@ -311,20 +316,18 @@ export function loadScript(url, integrity = null) {
       () => reject(new Error(`Timed out loading script: ${url}`)),
       TIMING.SCRIPT_LOAD_TIMEOUT,
     );
-    script.onload = () => {
+    script.addEventListener("load", () => {
       clearTimeout(timer);
       resolve();
-    };
-    script.onerror = () => {
+    });
+    script.addEventListener("error", () => {
       clearTimeout(timer);
       let errorMsg = `Failed to load script: ${url}`;
       if (integrity) {
         errorMsg += ". This may be due to a Subresource Integrity (SRI) mismatch.";
       }
       reject(new Error(errorMsg));
-    };
-
-    document.head.appendChild(script);
+    });
   });
 
   // Store promise to synchronize other callers

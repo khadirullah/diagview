@@ -301,8 +301,61 @@ describe("loadScript", () => {
   test("a script that loads in time resolves and leaves no timer", async () => {
     jest.useFakeTimers();
     const result = loadScript("https://example.test/quick.js");
-    document.head.querySelector('script[src="https://example.test/quick.js"]').onload();
+    document.head
+      .querySelector('script[src="https://example.test/quick.js"]')
+      .dispatchEvent(new Event("load"));
     await expect(result).resolves.toBeUndefined();
+    expect(jest.getTimerCount()).toBe(0);
+  });
+});
+
+describe("loadScript with a <script> the page already has", () => {
+  const original = performance.getEntriesByName;
+  let url, script;
+  let n = 0;
+
+  beforeEach(() => {
+    jest.useFakeTimers();
+    // loadScript remembers each URL, so every test gets its own
+    url = `https://example.test/page-script-${++n}.js`;
+    script = document.createElement("script");
+    script.src = url;
+    document.head.appendChild(script);
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
+    performance.getEntriesByName = original;
+    document.head.innerHTML = "";
+  });
+
+  /** Timing entries the browser has for the URL */
+  const timing = (entries) => {
+    performance.getEntriesByName = jest.fn((name) => (name === url ? entries : []));
+  };
+
+  test("one still loading is waited for, and no second tag is added", async () => {
+    timing([]);
+    let settled = false;
+    const result = loadScript(url).finally(() => (settled = true));
+    await Promise.resolve();
+    expect(settled).toBe(false);
+    expect(document.querySelectorAll("script")).toHaveLength(1);
+    script.dispatchEvent(new Event("load"));
+    await expect(result).resolves.toBeUndefined();
+    expect(jest.getTimerCount()).toBe(0);
+  });
+
+  test("one still loading that fails rejects", async () => {
+    timing([]);
+    const result = loadScript(url);
+    script.dispatchEvent(new Event("error"));
+    await expect(result).rejects.toThrow(`Failed to load script: ${url}`);
+  });
+
+  test("one that has loaded resolves at once", async () => {
+    timing([{ name: url }]);
+    await expect(loadScript(url)).resolves.toBeUndefined();
     expect(jest.getTimerCount()).toBe(0);
   });
 });
