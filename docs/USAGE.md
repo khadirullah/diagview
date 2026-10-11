@@ -1366,7 +1366,7 @@ DiagView.init({
 
 ### Clipboard copy fails
 
-Copying the image needs the Clipboard API, which browsers only offer on HTTPS or `localhost`. Without it, or when the browser denies the write, DiagView downloads the PNG instead. Safari and Firefox allow the write only during a click. The toolbar and menu buttons start it within the click and hand the image over once it is drawn. When you call `copyToClipboard()` or `exportDiagram(el, "copy")` yourself, call it from a click handler before any `await` of your own. Copy SVG and share links fall back to `document.execCommand('copy')` on HTTP. When the browser refuses the copy, Copy SVG downloads the .svg file instead.
+Copying the image needs the Clipboard API, which browsers only offer on HTTPS or `localhost`. Without it, or when the browser denies the write, DiagView downloads the PNG instead. Safari and Firefox allow the write only during a click. The toolbar and menu buttons start it within the click and hand the image or the SVG markup over once it is ready. When you call `copyToClipboard()`, `exportDiagram(el, "copy")` or `exportDiagram(el, "copy-svg")` yourself, call it from a click handler before any `await` of your own. Copy SVG and share links fall back to `document.execCommand('copy')` on HTTP. When the browser refuses the copy, Copy SVG downloads the .svg file instead.
 
 ### Search highlights nothing
 

@@ -1,7 +1,8 @@
-// Copy Image with a real click. Safari and Firefox take a clipboard write
-// only during the click, so DiagView must call clipboard.write before it
-// draws the image. Each check records whether the write ran inside the
-// click handler (window.event is the click then) and how it ended.
+// Copy Image and Copy SVG with a real click. Safari and Firefox take a
+// clipboard write only during the click, so DiagView must call
+// clipboard.write before it draws the image or makes the markup. Each check
+// records whether the write ran inside the click handler (window.event is
+// the click then) and how it ended.
 //
 // Runs offline on the copy-image fixture, served over http so the page
 // has the clipboard. DV_DIST=/path/to/diagview.umd.js tests another build.
@@ -13,22 +14,27 @@ test.describe.configure({ mode: "serial" });
 
 const URL_ = `${SITE}/tests/e2e/fixtures/copy-image.html`;
 
-/** Wrap clipboard.write to note each call, before the page's scripts run */
+/**
+ * Wrap clipboard.write and writeText to note each call, before the page's
+ * scripts run
+ */
 const recordWrites = () => {
   window.__writes = [];
   const clip = navigator.clipboard;
-  if (!clip?.write) return;
-  const write = clip.write.bind(clip);
-  clip.write = (items) => {
-    const call = { inClick: window.event?.type === "click", result: null };
-    window.__writes.push(call);
-    const done = write(items);
-    done.then(
-      () => (call.result = "ok"),
-      (e) => (call.result = e.name),
-    );
-    return done;
-  };
+  for (const name of ["write", "writeText"]) {
+    if (!clip?.[name]) continue;
+    const write = clip[name].bind(clip);
+    clip[name] = (data) => {
+      const call = { name, inClick: window.event?.type === "click", result: null };
+      window.__writes.push(call);
+      const done = write(data);
+      done.then(
+        () => (call.result = "ok"),
+        (e) => (call.result = e.name),
+      );
+      return done;
+    };
+  }
 };
 
 /**
@@ -75,7 +81,7 @@ async function copyNotice(page) {
     () =>
       [...document.querySelectorAll(".diagview-toast")]
         .map((n) => n.textContent)
-        .find((t) => /Copied|downloaded|Failed/.test(t)),
+        .find((t) => /copied|downloaded|failed/i.test(t)),
     null,
     { timeout: 20000 },
   );
@@ -115,7 +121,7 @@ test.describe("Copy Image", () => {
     await openMenu(page);
     await page.click('.dv-exp [data-action="copy"]');
     expect(await copyNotice(page)).toBe("Copied to clipboard!");
-    expect(await writes(page)).toEqual([{ inClick: true, result: "ok" }]);
+    expect(await writes(page)).toEqual([{ name: "write", inClick: true, result: "ok" }]);
     page.off("download", count);
     expect(downloads).toBe(0);
 
@@ -136,6 +142,26 @@ test.describe("Copy Image", () => {
     expect(copied.size[0]).toBeGreaterThan(300);
   });
 
+  test("Copy SVG in the viewer menu writes during the click and copies the markup", async ({
+    browserName,
+  }) => {
+    await clearNotices(page);
+    let downloads = 0;
+    const count = () => downloads++;
+    page.on("download", count);
+    await openMenu(page);
+    await page.click('.dv-exp [data-action="copy-svg"]');
+    expect(await copyNotice(page)).toBe("SVG Code copied to clipboard!");
+    expect(await writes(page)).toEqual([{ name: "write", inClick: true, result: "ok" }]);
+    page.off("download", count);
+    expect(downloads).toBe(0);
+
+    if (browserName !== "chromium") return;
+    const text = await page.evaluate(() => navigator.clipboard.readText());
+    expect(text).toMatch(/^<svg[^>]*>/);
+    expect(text).toContain("Invoice");
+  });
+
   test("the Copy button on the page writes during the click", async () => {
     if (await page.evaluate(() => DiagView.state.isModalOpen)) {
       await page.evaluate(() => DiagView.closeModal());
@@ -146,7 +172,7 @@ test.describe("Copy Image", () => {
     await page.hover("#diag");
     await page.locator('[data-action="copy"]').first().click({ force: true });
     expect(await copyNotice(page)).toBe("Copied to clipboard!");
-    expect(await writes(page)).toEqual([{ inClick: true, result: "ok" }]);
+    expect(await writes(page)).toEqual([{ name: "write", inClick: true, result: "ok" }]);
   });
 });
 
@@ -163,7 +189,7 @@ test("a copy that takes longer than the click still copies", async ({ browser })
     await page.click('.dv-exp [data-action="copy"]');
     expect(await copyNotice(page)).toBe("Copied to clipboard!");
     expect(Date.now() - start).toBeGreaterThan(5000);
-    expect(await writes(page)).toEqual([{ inClick: true, result: "ok" }]);
+    expect(await writes(page)).toEqual([{ name: "write", inClick: true, result: "ok" }]);
     expect(downloads).toBe(0);
   } finally {
     await page.context().close();
@@ -182,6 +208,41 @@ test("a denied write downloads the PNG", async ({ browser }) => {
     await page.click('.dv-exp [data-action="copy"]');
     expect((await download).suggestedFilename()).toMatch(/^copy_check_.*\.png$/);
     expect(await copyNotice(page)).toBe("PNG downloaded (Clipboard unavailable)");
+  } finally {
+    await page.context().close();
+  }
+});
+
+test("a Copy SVG that takes longer than the click still copies", async ({ browser }) => {
+  const page = await openPage(browser, { clipboard: false });
+  try {
+    let downloads = 0;
+    page.on("download", () => downloads++);
+    await openMenu(page);
+    page.hold(7000);
+    const start = Date.now();
+    await page.click('.dv-exp [data-action="copy-svg"]');
+    expect(await copyNotice(page)).toBe("SVG Code copied to clipboard!");
+    expect(Date.now() - start).toBeGreaterThan(5000);
+    expect(await writes(page)).toEqual([{ name: "write", inClick: true, result: "ok" }]);
+    expect(downloads).toBe(0);
+  } finally {
+    await page.context().close();
+  }
+});
+
+test("a denied Copy SVG write downloads the .svg file", async ({ browser }) => {
+  const page = await openPage(browser, { clipboard: false });
+  try {
+    await page.evaluate(() => {
+      navigator.clipboard.write = () =>
+        Promise.reject(new DOMException("Denied", "NotAllowedError"));
+    });
+    await openMenu(page);
+    const download = page.waitForEvent("download");
+    await page.click('.dv-exp [data-action="copy-svg"]');
+    expect((await download).suggestedFilename()).toMatch(/^copy_check_.*\.svg$/);
+    expect(await copyNotice(page)).toBe("SVG downloaded (Clipboard unavailable)");
   } finally {
     await page.context().close();
   }

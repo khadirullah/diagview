@@ -1346,7 +1346,7 @@ describe("copyToClipboard falls back to download when the clipboard write is den
   });
 });
 
-describe("Copy Image starts the clipboard write during the click", () => {
+describe("Copy Image and Copy SVG start the clipboard write during the click", () => {
   let container, onExport, clickSpy, errorSpy;
   const toastTexts = () =>
     Array.from(document.querySelectorAll("#diagview-toast-container .diagview-toast")).map(
@@ -1367,17 +1367,26 @@ describe("Copy Image starts the clipboard write during the click", () => {
       this.items = items;
     }
   }
-  // A clipboard that waits for each image, like the browsers do
-  const clipboard = (result = () => undefined) => {
+  // A clipboard that waits for each file, like the browsers do
+  const clipboard = (result = () => undefined, extra = {}) => {
     const written = [];
     const write = jest.fn(async ([item]) => {
-      const blob = await item.items["image/png"];
+      const blob = await Object.values(item.items)[0];
       written.push(blob);
       return result(write.mock.calls.length);
     });
-    Object.defineProperty(navigator, "clipboard", { value: { write }, configurable: true });
+    Object.defineProperty(navigator, "clipboard", {
+      value: { write, ...extra },
+      configurable: true,
+    });
     return written;
   };
+  const readText = (blob) =>
+    new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.readAsText(blob);
+    });
 
   beforeEach(() => {
     container = document.createElement("div");
@@ -1506,6 +1515,79 @@ describe("Copy Image starts the clipboard write during the click", () => {
     expect(settled).toEqual(["rejected"]);
     expect(toastTexts().some((t) => t.includes("Diagram blocked"))).toBe(true);
     expect(onExport).not.toHaveBeenCalled();
+  });
+  test("Copy SVG calls clipboard.write before it returns, with a promise of the markup", async () => {
+    const written = clipboard();
+    const writeText = jest.fn();
+    navigator.clipboard.writeText = writeText;
+    const done = exportDiagram(container, "copy-svg", { filename: "ok" });
+    expect(navigator.clipboard.write).toHaveBeenCalledTimes(1);
+    const [[item]] = navigator.clipboard.write.mock.calls[0];
+    expect(item).toBeInstanceOf(PromiseItem);
+    expect(Object.keys(item.items)).toEqual(["text/plain"]);
+    expect(item.items["text/plain"]).toBeInstanceOf(Promise);
+
+    expect(await done).toBe(true);
+    expect(written).toHaveLength(1);
+    expect(written[0].type).toBe("text/plain");
+    expect(await readText(written[0])).toMatch(/^<svg[^>]*>.*<rect/s);
+    expect(writeText).not.toHaveBeenCalled();
+    expect(clickSpy).not.toHaveBeenCalled();
+    expect(toastTexts()).toContain("SVG Code copied to clipboard!");
+    expect(onExport).toHaveBeenCalledWith("copy-svg", "ok");
+  });
+
+  test("copySVGCode calls clipboard.write before it returns", async () => {
+    clipboard();
+    const done = copySVGCode(container);
+    expect(navigator.clipboard.write).toHaveBeenCalledTimes(1);
+    await done;
+    expect(toastTexts()).toContain("SVG Code copied to clipboard!");
+  });
+
+  test("a denied Copy SVG write downloads the .svg file and does not write again", async () => {
+    clipboard(() => {
+      throw new DOMException("Denied", "NotAllowedError");
+    });
+    expect(await exportDiagram(container, "copy-svg", { filename: "denied" })).toBe(true);
+    expect(navigator.clipboard.write).toHaveBeenCalledTimes(1);
+    expect(clickSpy.mock.contexts[0].download).toBe("denied.svg");
+    expect(toastTexts()).toContain("SVG downloaded (Clipboard unavailable)");
+  });
+
+  test("a ClipboardItem that takes only a Blob gets the finished markup", async () => {
+    global.ClipboardItem = BlobOnlyItem;
+    const written = clipboard();
+    expect(await exportDiagram(container, "copy-svg")).toBe(true);
+    expect(navigator.clipboard.write).toHaveBeenCalledTimes(1);
+    expect(written[0].type).toBe("text/plain");
+    expect(toastTexts()).toContain("SVG Code copied to clipboard!");
+  });
+
+  test("Copy SVG without ClipboardItem copies with writeText as before", async () => {
+    delete global.ClipboardItem;
+    const writeText = jest.fn(() => Promise.resolve());
+    clipboard(undefined, { writeText });
+    expect(await exportDiagram(container, "copy-svg")).toBe(true);
+    expect(navigator.clipboard.write).not.toHaveBeenCalled();
+    expect(writeText).toHaveBeenCalledWith(expect.stringMatching(/^<svg/));
+    expect(toastTexts()).toContain("SVG Code copied to clipboard!");
+  });
+
+  test("a Copy SVG the size limit blocks rejects the waiting write", async () => {
+    updateConfig({ performance: { criticalFileLimit: 10 } });
+    const settled = [];
+    const write = jest.fn(([item]) =>
+      item.items["text/plain"].then(
+        () => settled.push("resolved"),
+        () => settled.push("rejected"),
+      ),
+    );
+    Object.defineProperty(navigator, "clipboard", { value: { write }, configurable: true });
+    expect(await exportDiagram(container, "copy-svg")).toBe(false);
+    await Promise.resolve();
+    expect(settled).toEqual(["rejected"]);
+    expect(toastTexts().some((t) => t.includes("Diagram blocked"))).toBe(true);
   });
 });
 
