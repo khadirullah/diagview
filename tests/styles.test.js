@@ -55,13 +55,23 @@ describe("styles.css: floating toolbar", () => {
   });
 
   test("on touch screens it rests where hover puts it on a desktop", () => {
-    const touch = css.indexOf("@media (hover: none) or (pointer: coarse) {");
+    const touch = css.indexOf("@media (hover: none), (pointer: coarse) {");
     const sel = ".diagview-wrapper .diagview-controls-floating {";
     const at = css.indexOf(sel, touch);
     expect(touch).toBeGreaterThan(-1);
     expect(at).toBeGreaterThan(touch);
     expect(at).toBeLessThan(css.indexOf("\n}", touch));
     expect(ruleBody(sel, touch)).toMatch(/transform:\s*none/);
+  });
+});
+
+describe("styles.css: media queries", () => {
+  // Chrome before 104 and Safari before 16.4 drop a whole block whose query uses `or`
+  test("join conditions with a comma, which older browsers read", () => {
+    const queries = css.match(/@media[^{]*\{/g);
+    expect(queries.length).toBeGreaterThan(0);
+    expect(queries.filter((q) => /\)\s+or\s+\(/.test(q))).toEqual([]);
+    expect(queries).toContain("@media (hover: none), (pointer: coarse) {");
   });
 });
 
@@ -333,7 +343,7 @@ describe("styles.css: hover on touch screens", () => {
       ["@media (hover: hover) and (pointer: fine)"],
       [],
     ]);
-    const touch = css.indexOf("@media (hover: none) or (pointer: coarse) {");
+    const touch = css.indexOf("@media (hover: none), (pointer: coarse) {");
     expect(ruleBody(".diagview-controls {", touch)).toMatch(/opacity:\s*1 !important/);
     expect(ruleBody(".diagview-wrapper .diagview-controls-floating {", touch)).toMatch(
       /transform:\s*none/,
@@ -514,7 +524,7 @@ describe("styles.css: page buttons", () => {
 
   test("touch screens get 44px buttons in both layouts, after the floating size", () => {
     const floating = css.indexOf(".diagview-controls-floating .diagview-btn {");
-    const touch = css.indexOf("@media (hover: none) or (pointer: coarse) {", floating);
+    const touch = css.indexOf("@media (hover: none), (pointer: coarse) {", floating);
     const sel = ".diagview-controls .diagview-btn {";
     expect(touch).toBeGreaterThan(floating);
     expect(css.indexOf(sel, touch)).toBeLessThan(css.indexOf("\n}", touch));
@@ -680,7 +690,7 @@ describe("styles.css: notice icon", () => {
 
 describe("styles.css: off hint", () => {
   const touch = css.slice(
-    css.indexOf("@media (hover: none) or (pointer: coarse) {\n  .diagview-off-hint"),
+    css.indexOf("@media (hover: none), (pointer: coarse) {\n  .diagview-off-hint"),
   );
 
   test("lets a click through to the diagram and positions its host with no specificity", () => {

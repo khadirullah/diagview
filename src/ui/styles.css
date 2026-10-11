@@ -259,7 +259,7 @@
 }
 
 /* Mobile: Always visible */
-@media (hover: none) or (pointer: coarse) {
+@media (hover: none), (pointer: coarse) {
   .diagview-controls {
     opacity: 1 !important;
     pointer-events: auto !important;
@@ -310,7 +310,7 @@
 }
 
 /* A finger needs 44px to hit a button reliably */
-@media (hover: none) or (pointer: coarse) {
+@media (hover: none), (pointer: coarse) {
   .diagview-controls .diagview-btn {
     width: 44px;
     height: 44px;
@@ -473,7 +473,7 @@
   display: none;
 }
 
-@media (hover: none) or (pointer: coarse) {
+@media (hover: none), (pointer: coarse) {
   .diagview-off-hint--icon,
   .diagview-off-hint--label {
     opacity: 0.85;
