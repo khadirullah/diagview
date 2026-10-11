@@ -172,26 +172,38 @@ function skipNestedDiagrams(diagrams, selector) {
 }
 
 /**
+ * The diagrams in a root, the root itself first when it matches
+ * @param {Element|Document|ShadowRoot} root - Where to look
+ * @param {string} selector - Diagram selector
+ * @returns {Element[]} Matches in document order
+ */
+function findDiagrams(root, selector) {
+  const diagrams = root.nodeType === 1 && root.matches?.(selector) ? [root] : [];
+  if (root.querySelectorAll) diagrams.push(...safeQuerySelectorAll(selector, root));
+  return diagrams;
+}
+
+/**
  * Process diagrams within a specific root
  */
 export function processDiagrams(root = document) {
+  setUpDiagrams(findDiagrams(root, state.config.diagramSelector));
+}
+
+/**
+ * Give each diagram its index and set up the ones that are ready
+ * @param {Element[]} diagrams - Matches to process
+ */
+function setUpDiagrams(diagrams) {
   // Ensure modal exists
   if (!document.getElementById("diagview-modal")) {
     createModal();
   }
 
+  // Nothing to index, so the page is not scanned
+  if (diagrams.length === 0) return;
+
   const selector = state.config.diagramSelector;
-  const diagrams = [];
-
-  // If root itself matches, add it
-  if (root.nodeType === 1 && root.matches?.(selector)) {
-    diagrams.push(root);
-  }
-
-  // Find all diagrams within root
-  if (root.querySelectorAll) {
-    diagrams.push(...safeQuerySelectorAll(selector, root));
-  }
 
   // MAJ-3: Use a Map for O(1) index lookups to avoid O(N^2) complexity on large pages.
   // This ensures the library scales linearly even with hundreds of diagrams.
@@ -260,17 +272,25 @@ export function observeDiagrams() {
   state.debouncedProcess = debounce(() => {
     if (state.nodesToProcess.size === 0) return;
 
+    // Gather the diagrams in or around every added node first, so the page
+    // is scanned for the index once per run, and not at all when a script
+    // only added text, list items or other plain markup
+    const selector = state.config.diagramSelector;
+    const found = new Set();
     state.nodesToProcess.forEach((node) => {
       // Check if node is still in the document
       if (node && document.body.contains(node)) {
-        processDiagrams(node);
+        findDiagrams(node, selector).forEach((diagram) => found.add(diagram));
       }
     });
-
     state.nodesToProcess.clear();
 
-    // Check for share link (Deep linking) - Always check globally
-    checkShareLink();
+    setUpDiagrams([...found]);
+
+    // Check for share link (Deep linking) - Always check globally. A link
+    // waiting for its diagram or that diagram's SVG can only resolve when
+    // one of them arrives.
+    if (found.size > 0) checkShareLink();
   }, TIMING.OBSERVER_DEBOUNCE);
 
   state.observer = new MutationObserver((mutations) => {

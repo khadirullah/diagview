@@ -154,6 +154,56 @@ describe("Observer Module", () => {
     expect(recheckDiagram).toHaveBeenCalledWith(div);
   });
 
+  test("plain nodes added by the page do not scan it for diagrams", async () => {
+    document.body.innerHTML = '<div class="diagram"><svg></svg></div><div id="feed"></div>';
+    observeDiagrams();
+    jest.clearAllMocks();
+    const scan = jest.spyOn(document, "querySelectorAll");
+    try {
+      // A chat page streaming its answer in
+      const feed = document.getElementById("feed");
+      for (let i = 0; i < 200; i++) {
+        const p = document.createElement("p");
+        p.innerHTML = `Line <b>${i}</b>`;
+        feed.appendChild(p);
+      }
+      await wait(200);
+
+      expect(scan).not.toHaveBeenCalled();
+      expect(initializeDiagram).not.toHaveBeenCalled();
+      expect(recheckDiagram).not.toHaveBeenCalled();
+    } finally {
+      scan.mockRestore();
+    }
+  });
+
+  test("many nodes added at once with diagrams among them scan the page once", async () => {
+    document.body.innerHTML = '<div class="diagram"><svg></svg></div><div id="feed"></div>';
+    observeDiagrams();
+    jest.clearAllMocks();
+    const scan = jest.spyOn(document, "querySelectorAll");
+    try {
+      const feed = document.getElementById("feed");
+      const added = [];
+      for (let i = 0; i < 100; i++) {
+        feed.appendChild(document.createElement("p"));
+        if (i % 25 === 0) {
+          const div = document.createElement("div");
+          div.className = "diagram";
+          div.innerHTML = "<svg></svg>";
+          feed.appendChild(div);
+          added.push(div);
+        }
+      }
+      await wait(200);
+
+      expect(scan.mock.calls.filter(([s]) => s === ".diagram")).toHaveLength(1);
+      expect(initializeDiagram.mock.calls).toEqual(added.map((div, i) => [div, i + 1]));
+    } finally {
+      scan.mockRestore();
+    }
+  });
+
   test("an svg the selector matches is set up itself", () => {
     document.body.innerHTML =
       '<svg class="diagram" id="bare" xmlns="http://www.w3.org/2000/svg"><rect width="1" height="1"/></svg>';

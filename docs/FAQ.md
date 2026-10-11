@@ -412,6 +412,9 @@ A: DiagView removes them with `history.replaceState` once it has read them. A li
 **Q: Does DiagView slow down pages with many diagrams?**  
 A: No. DiagView uses an `IntersectionObserver` to initialize each diagram lazily, once it comes within 200 px of the viewport. Diagrams off-screen consume almost no resources.
 
+**Q: Does DiagView slow down a page that adds a lot of content, such as a chat that streams its answer?**  
+A: No. DiagView looks at the nodes the page added, at most every 100 ms. When none of them is or holds a diagram, it does nothing more. When some do, it scans the page once to number the diagrams, however many nodes came in.
+
 **Q: Search is slow on a large diagram.**  
 A: Search pre-warms its candidate cache during browser idle time. On very large diagrams (5,000+ nodes), the first search may take a moment. Subsequent searches use the cache and are O(n) string comparisons with no DOM reads.
 
