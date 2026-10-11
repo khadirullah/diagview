@@ -17,6 +17,10 @@ import { hideToast } from "./toast.js";
 let bodyHadStyle = true;
 // Whether <html> had one before DiagView wrote its theme variables to it
 let htmlHadStyle = true;
+// The inline overflow of <html> and <body> before the lock. The longhands
+// too, since the shorthand reads "" when the page set only overflow-y.
+const OVERFLOW = ["overflow", "overflow-x", "overflow-y"];
+let savedOverflow = [];
 
 /**
  * Lock body scroll (Non-destructive version)
@@ -36,6 +40,9 @@ export function lockBodyScroll() {
 
   // 1. Standard lock for most browsers
   bodyHadStyle = document.body.hasAttribute("style");
+  savedOverflow = [htmlEl, document.body].map((el) =>
+    OVERFLOW.map((p) => el.style.getPropertyValue(p)),
+  );
   htmlEl.style.overflow = "hidden";
   document.body.style.overflow = "hidden";
 
@@ -79,8 +86,13 @@ export function lockBodyScroll() {
  */
 export function unlockBodyScroll() {
   const htmlEl = document.documentElement;
-  htmlEl.style.overflow = "";
-  document.body.style.overflow = "";
+  [htmlEl, document.body].forEach((el, i) =>
+    OVERFLOW.forEach((p, j) => {
+      const value = savedOverflow[i]?.[j];
+      if (value) el.style.setProperty(p, value);
+      else el.style.removeProperty(p);
+    }),
+  );
   removeEmptyAttr(document.body, "style", bodyHadStyle);
 
   // FIX: Use { behavior: "instant" } to restore scroll position without any

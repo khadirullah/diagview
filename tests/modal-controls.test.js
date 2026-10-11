@@ -98,6 +98,21 @@ describe("scroll lock leaves <body> as it found it", () => {
 
     expect(body.getAttribute("style")).toBe("");
   });
+
+  test("the page's own inline overflow comes back on <body> and <html>", () => {
+    const root = document.documentElement;
+    body.setAttribute("style", "overflow: hidden");
+    root.style.overflowY = "scroll";
+    lockBodyScroll();
+    expect(root.style.overflow).toBe("hidden");
+
+    unlockBodyScroll();
+
+    expect(body.style.overflow).toBe("hidden");
+    expect(root.style.overflow).toBe("");
+    expect(root.style.overflowY).toBe("scroll");
+    root.removeAttribute("style");
+  });
 });
 
 describe("destroy() with the viewer open leaves <html> as it found it", () => {
