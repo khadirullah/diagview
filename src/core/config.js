@@ -194,9 +194,10 @@ export function updateConfig(options = {}) {
   /** @type {Record<string, *>} */
   const sanitized = {};
 
-  // Validate and sanitize known keys
+  // Validate and sanitize known keys. Only the defaults' own keys count,
+  // so "__proto__", "constructor" and "toString" are unknown keys.
   for (const key in options) {
-    if (key in DEFAULT_CONFIG) {
+    if (Object.prototype.hasOwnProperty.call(DEFAULT_CONFIG, key)) {
       sanitized[key] = options[key];
     } else {
       console.warn(`DiagView: Unknown config key "${key}" ignored.`);

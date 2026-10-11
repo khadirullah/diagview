@@ -20,7 +20,16 @@ export function deepFreeze(obj) {
 }
 
 /**
- * Perform a deep merge of source into target.
+ * Keys that reach an object's prototype instead of the object itself.
+ * JSON.parse('{"__proto__": {...}}') makes "__proto__" an own key, and
+ * merging it would write to Object.prototype.
+ * @private
+ */
+const UNSAFE_KEYS = new Set(["__proto__", "constructor", "prototype"]);
+
+/**
+ * Perform a deep merge of source into target. Keys in UNSAFE_KEYS are
+ * skipped at every depth.
  * @param {Record<string, *>} target - The object to merge into
  * @param {Record<string, *>} source - The object to merge from
  * @returns {Record<string, *>} The mutated target object
@@ -28,6 +37,7 @@ export function deepFreeze(obj) {
 export function deepMerge(target, source) {
   if (!source) return target;
   Object.keys(source).forEach((key) => {
+    if (UNSAFE_KEYS.has(key)) return;
     if (source[key] && typeof source[key] === "object") {
       if (Array.isArray(source[key])) {
         // Fix for Bug #12: Clone arrays to prevent shared references

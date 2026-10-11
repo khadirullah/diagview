@@ -772,3 +772,54 @@ describe("shadow DOM styles and indexing", () => {
     expect(shadowDiagram.dataset.diagviewIndex).not.toBe("-1");
   });
 });
+
+describe("config from untrusted JSON", () => {
+  let warnSpy;
+
+  beforeEach(() => {
+    document.body.innerHTML = `<div class="diagram">${SVG}</div>`;
+    warnSpy = jest.spyOn(console, "warn").mockImplementation(() => {});
+  });
+
+  afterEach(async () => {
+    await DiagView.destroy();
+    jest.runAllTimers();
+    delete Object.prototype.polluted;
+    warnSpy.mockRestore();
+  });
+
+  const payloads = [
+    '{"security":{"__proto__":{"polluted":1}}}',
+    '{"watermark":{"__proto__":{"polluted":1}}}',
+    '{"ui":{"buttons":{"icons":{"__proto__":{"polluted":1}}}}}',
+    '{"ui":{"constructor":{"prototype":{"polluted":1}}}}',
+    '{"__proto__":{"polluted":1}}',
+  ];
+
+  test.each(payloads)("init() with %s leaves Object.prototype alone", (json) => {
+    DiagView.init(JSON.parse(json));
+    expect({}.polluted).toBeUndefined();
+    expect(DiagView.getConfiguration().security.mode).toBe("strict");
+  });
+
+  test.each(payloads)("configure() with %s leaves Object.prototype alone", (json) => {
+    DiagView.init();
+    DiagView.configure(JSON.parse(json));
+    expect({}.polluted).toBeUndefined();
+  });
+
+  test("the same JSON still merges its normal nested keys", () => {
+    DiagView.init(
+      JSON.parse(
+        '{"security":{"mode":"permissive","__proto__":{"polluted":1}},' +
+          '"watermark":{"enabled":true,"text":"Draft"}}',
+      ),
+    );
+    const config = DiagView.getConfiguration();
+    expect({}.polluted).toBeUndefined();
+    expect(config.security.mode).toBe("permissive");
+    expect(config.security.allowOverrides).toBe(DEFAULT_CONFIG.security.allowOverrides);
+    expect(config.watermark.text).toBe("Draft");
+    expect(config.watermark.position).toBe(DEFAULT_CONFIG.watermark.position);
+  });
+});

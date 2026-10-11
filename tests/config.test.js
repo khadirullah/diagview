@@ -106,6 +106,36 @@ describe("Core Config", () => {
     expect(spy).toHaveBeenCalled();
     spy.mockRestore();
   });
+
+  test("updateConfig treats keys every object inherits as unknown", () => {
+    const spy = jest.spyOn(console, "warn").mockImplementation(() => {});
+    updateConfig(JSON.parse('{"__proto__":{"layout":"header"},"toString":"x","constructor":1}'));
+    expect(spy).toHaveBeenCalledWith('DiagView: Unknown config key "__proto__" ignored.');
+    expect(spy).toHaveBeenCalledWith('DiagView: Unknown config key "toString" ignored.');
+    expect(spy).toHaveBeenCalledWith('DiagView: Unknown config key "constructor" ignored.');
+    expect(Object.hasOwn(state.config, "toString")).toBe(false);
+    expect(Object.hasOwn(state.config, "constructor")).toBe(false);
+    expect(Object.getPrototypeOf(state.config)).toBe(Object.prototype);
+    expect(state.config.layout).toBe("floating");
+    spy.mockRestore();
+  });
+
+  test("updateConfig skips __proto__, constructor and prototype at any depth", () => {
+    updateConfig(
+      JSON.parse(
+        '{"security":{"mode":"permissive","__proto__":{"polluted":1}},' +
+          '"ui":{"buttons":{"style":"solid","constructor":{"prototype":{"polluted":1}}}},' +
+          '"offHintText":{"prototype":{"polluted":1}}}',
+      ),
+    );
+    expect({}.polluted).toBeUndefined();
+    expect(state.config.security.mode).toBe("permissive");
+    expect(Object.getPrototypeOf(state.config.security)).toBe(Object.prototype);
+    expect(state.config.ui.buttons.style).toBe("solid");
+    expect(Object.hasOwn(state.config.ui.buttons, "constructor")).toBe(false);
+    expect(Object.hasOwn(state.config.offHintText, "prototype")).toBe(false);
+    delete Object.prototype.polluted;
+  });
 });
 
 describe("Core Config: validateConfig gaps", () => {
