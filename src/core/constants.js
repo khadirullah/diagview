@@ -12,7 +12,7 @@ export const TIMING = {
   BUTTON_SUCCESS_DURATION: 1000,
   TOAST_DURATION: 2500,
   ERROR_TOAST_DURATION: 5000,
-  HELP_FADE_TIMEOUT: 8000, // Auto-close keyboard help (0 to disable)
+  HELP_FADE_TIMEOUT: 8000, // Close keyboard help once the reader has left it (0 to disable)
 
   // Animations
   ZOOM_ANIMATION_DURATION: 200,

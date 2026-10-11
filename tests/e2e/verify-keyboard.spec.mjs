@@ -113,17 +113,20 @@ test("?, Escape, Enter and Space on the close button close the panel", async () 
   expect((await view()).scale).toBeGreaterThan(before.scale);
 });
 
-test("the panel closes on time under a resting mouse, a moving one pauses it", async () => {
+test("the panel stays open while focus or a moving mouse is on it", async () => {
   await page.evaluate(() => DiagView.configure({ helpTimeout: 1500 }));
   await page.mouse.move(640, 210); // where the panel opens
   await page.waitForTimeout(300);
+  // Opened with ?, focus is on its close button
   await openHelp();
   await page.waitForTimeout(2500);
-  expect(await helpOpen()).toBe(false);
+  expect(await helpOpen()).toBe(true);
 
-  await openHelp();
-  await page.mouse.move(660, 220, { steps: 4 });
+  // A click on the card's text moves focus to the viewer, and the mouse
+  // stays on the card
+  await page.click(".diagview-help-title span");
   await page.waitForTimeout(2500);
+  expect(await page.evaluate(() => document.activeElement.id)).toBe("diagview-modal");
   expect(await helpOpen()).toBe(true);
   await page.mouse.move(5, 5, { steps: 4 });
   await page.waitForTimeout(2500);

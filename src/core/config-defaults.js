@@ -96,7 +96,7 @@ import { deepMerge, deepFreeze } from "./state-utils.js";
  * @property {"used"|"all"|"none"} exportFonts - Page fonts to embed in exports. "used" embeds the ones the labels use, "all" every font-face rule on the page, "none" no fonts
  * @property {DiagViewUIConfig} ui - Button look and icons
  * @property {boolean} showKeyboardHelp - Allow the ? shortcuts panel. false also hides the "Press ? for shortcuts" hint in the topbar
- * @property {number} helpTimeout - Milliseconds before the shortcuts panel closes, 0 keeps it open
+ * @property {number} helpTimeout - Milliseconds before the shortcuts panel closes once focus and the mouse have left it, 0 keeps it open
  * @property {string} diagramSelector - CSS selector for diagram containers. Where matches nest, each diagram gets one toolbar
  * @property {boolean} naturalPanning - Arrow keys move the diagram in the arrow's direction
  * @property {boolean} rotateKeepsView - Rotating keeps the view, the same size on screen and the same centre, instead of fitting the diagram. The zoom % adjusts.

@@ -1,6 +1,7 @@
 /**
  * DiagView Keyboard Shortcuts Help Modal
- * Shows available keyboard shortcuts with auto-close
+ * Shows available keyboard shortcuts. It closes by itself only after the
+ * reader has left it.
  * @module ui/keyboard-help
  */
 
@@ -31,10 +32,13 @@ let helpModal = null;
 let autoCloseTimer = null;
 let cleanupPause = null;
 let returnFocus = null;
+// Whether a moving mouse is over the card
+let hovering = false;
 
 /**
  * Start or reset the auto-close timer
- * Uses helpTimeout from config (default: 8000ms, set 0 to disable)
+ * Uses helpTimeout from config (default: 8000ms, set 0 to disable).
+ * It only runs once focus and the mouse have left the card.
  */
 function startAutoCloseTimer() {
   clearAutoCloseTimer();
@@ -63,28 +67,50 @@ function clearAutoCloseTimer() {
 }
 
 /**
- * Setup hover/focus pause events for auto-close timer (WCAG 2.2.1)
+ * Start the timer unless someone is reading the card: focus is inside it
+ * or the mouse is over it (WCAG 2.2.1). The card opens with focus on its
+ * close button, so it stays open until focus leaves it.
  */
-function setupAutoPauseEvents(modal) {
-  const pause = () => clearAutoCloseTimer();
-  const resume = () => startAutoCloseTimer();
+function startTimerIfLeft() {
+  const card = helpModal?.querySelector(".diagview-help-content");
+  if (hovering || card?.contains(document.activeElement)) clearAutoCloseTimer();
+  else startAutoCloseTimer();
+}
+
+/**
+ * Setup hover/focus pause events for auto-close timer
+ */
+function setupAutoPauseEvents(card) {
   // Only a mouse that moves over the card pauses it. Browsers fire
   // mouseenter when the card opens under a resting pointer, and a tap on
   // a phone fires mouse events as well.
   const hover = (e) => {
-    if (e.pointerType === "mouse") pause();
+    if (e.pointerType !== "mouse") return;
+    hovering = true;
+    clearAutoCloseTimer();
   };
+  const leave = () => {
+    hovering = false;
+    startTimerIfLeft();
+  };
+  const focusIn = () => clearAutoCloseTimer();
+  // Look once focus has landed. Focus moving within the card, or the whole
+  // window losing focus, leaves the reader where they were.
+  const focusOut = () =>
+    queueMicrotask(() => {
+      if (isHelpVisible() && document.hasFocus()) startTimerIfLeft();
+    });
 
-  modal.addEventListener("pointermove", hover);
-  modal.addEventListener("focus", pause, true); // capture phase
-  modal.addEventListener("mouseleave", resume);
-  modal.addEventListener("blur", resume, true);
+  card.addEventListener("pointermove", hover);
+  card.addEventListener("mouseleave", leave);
+  card.addEventListener("focusin", focusIn);
+  card.addEventListener("focusout", focusOut);
 
   return () => {
-    modal.removeEventListener("pointermove", hover);
-    modal.removeEventListener("focus", pause, true);
-    modal.removeEventListener("mouseleave", resume);
-    modal.removeEventListener("blur", resume, true);
+    card.removeEventListener("pointermove", hover);
+    card.removeEventListener("mouseleave", leave);
+    card.removeEventListener("focusin", focusIn);
+    card.removeEventListener("focusout", focusOut);
   };
 }
 
@@ -165,8 +191,8 @@ function createHelpModal() {
 
   closeBtn.addEventListener("click", hideKeyboardHelp);
 
-  // Reset timer on touch; a moving mouse pauses it (see setupAutoPauseEvents)
-  content.addEventListener("touchstart", startAutoCloseTimer);
+  // A touch on the card restarts a running timer
+  content.addEventListener("touchstart", startTimerIfLeft);
 
   // SEC-7: Determine the best parent for the help modal.
   // If the main diagram modal is open, we append the help modal TO THE MODAL.
@@ -188,15 +214,18 @@ export function showKeyboardHelp() {
   if (!state.config.showKeyboardHelp) return;
 
   const modal = createHelpModal();
-  if (!modal.classList.contains("show")) returnFocus = document.activeElement;
+  if (!modal.classList.contains("show")) {
+    returnFocus = document.activeElement;
+    hovering = false;
+  }
   modal.classList.add("show");
 
   // Focus close button for accessibility
   const closeBtn = modal.querySelector(".diagview-help-close");
   if (closeBtn) closeBtn.focus();
 
-  // Start the timer after focusing: the focus pause listener would clear it
-  startAutoCloseTimer();
+  // No timer while focus is on the close button
+  startTimerIfLeft();
 }
 
 /**
