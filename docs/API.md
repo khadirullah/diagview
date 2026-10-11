@@ -506,11 +506,17 @@ The declarations describe the package import. The `DiagView` global that the scr
 | --------------- | --------------- |
 | Chrome          | 90              |
 | Firefox         | 88              |
-| Safari          | 14              |
+| Safari          | 14.1            |
 | Edge (Chromium) | 90              |
-| iOS Safari      | 14              |
+| iOS Safari      | 14.1            |
 | Android Chrome  | 90              |
 
 Internet Explorer is not supported.
 
 The custom colour swatch in the ☰ menu shows its keyboard focus ring through `:has()`. Chrome before 105, Firefox before 121 and Safari before 15.4 lack `:has()`, so there the swatch shows no ring. The picker still works from the keyboard.
+
+A few details need newer versions. Without them everything still works, and only these change:
+
+- `color-mix()` needs Chrome 111, Firefox 113 and Safari 16.2. Before that, `canvasGrid: "dots"` draws no dots, the accent buttons get the plain grey border and the theme buttons get no hover tint.
+- `:focus-visible` needs Safari 15.4. Older Safari shows its own focus ring in place of DiagView's.
+- Copy Image needs `ClipboardItem`, which Firefox has from 127. Older Firefox downloads the PNG instead.
