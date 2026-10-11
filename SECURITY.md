@@ -4,10 +4,10 @@
 
 Only the latest stable release receives security updates.
 
-| Version        | Supported |
-| -------------- | --------- |
-| 1.x.x (latest) | ✅        |
-| < 1.0.0        | ❌        |
+| Version | Supported |
+| ------- | --------- |
+| 1.2.x   | ✅        |
+| < 1.2.0 | ❌        |
 
 ---
 
