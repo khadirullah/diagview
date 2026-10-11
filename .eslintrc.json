@@ -4,17 +4,12 @@
     "es2021": true,
     "node": true
   },
-  "extends": [
-    "eslint:recommended",
-    "prettier"
-  ],
+  "extends": ["eslint:recommended", "prettier"],
   "parserOptions": {
     "ecmaVersion": 2021,
     "sourceType": "module"
   },
-  "plugins": [
-    "jsdoc"
-  ],
+  "plugins": ["jsdoc"],
   "rules": {
     "no-console": ["warn", { "allow": ["warn", "error"] }],
     "no-unused-vars": ["error", { "argsIgnorePattern": "^_" }],
@@ -24,5 +19,24 @@
     "jsdoc/check-types": "warn",
     "jsdoc/require-param-description": "warn",
     "jsdoc/require-returns-description": "warn"
-  }
+  },
+  "overrides": [
+    {
+      "files": ["tests/**/*.js", "tests/**/*.mjs", "scripts/**/*.js", "scripts/**/*.cjs", "*.js"],
+      "parserOptions": { "ecmaVersion": 2022 },
+      "rules": { "no-console": "off" }
+    },
+    {
+      "files": ["*.cjs"],
+      "parserOptions": { "sourceType": "script" }
+    },
+    {
+      "files": ["tests/*.test.js", "tests/mocks/**/*.js"],
+      "env": { "jest": true }
+    },
+    {
+      "files": ["tests/e2e/**/*.mjs"],
+      "globals": { "DiagView": "readonly", "mermaid": "readonly" }
+    }
+  ]
 }

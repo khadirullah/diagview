@@ -29,7 +29,7 @@ const SVG =
 document.body.innerHTML = `<div class="diagram">${SVG}</div>`;
 
 const DiagView = (await import("../src/index.js")).default;
-const { state, DEFAULT_CONFIG } = await import("../src/core/config.js");
+const { state } = await import("../src/core/config.js");
 
 describe("auto-init scheduling", () => {
   let autoInitWarn;

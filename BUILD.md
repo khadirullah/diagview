@@ -129,6 +129,9 @@ npm run lint         # check
 npm run lint:fix     # auto-fix
 ```
 
+ESLint checks `src/`, the unit tests, the e2e specs, `scripts/` and the
+config files in the repo root.
+
 ### Format
 
 ```bash

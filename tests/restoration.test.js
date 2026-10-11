@@ -1,5 +1,5 @@
 import { initializeDiagram, deinitializeDiagram } from "../src/features/diagram-init.js";
-import { state, resetConfig } from "../src/core/config.js";
+import { resetConfig } from "../src/core/config.js";
 import { cloneSVGForModal } from "../src/core/svg-clone.js";
 
 describe("Robust ID and Attribute Restoration", () => {

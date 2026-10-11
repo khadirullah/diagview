@@ -1347,7 +1347,7 @@ describe("copyToClipboard falls back to download when the clipboard write is den
 });
 
 describe("Copy Image and Copy SVG start the clipboard write during the click", () => {
-  let container, onExport, clickSpy, errorSpy;
+  let container, onExport, clickSpy;
   const toastTexts = () =>
     Array.from(document.querySelectorAll("#diagview-toast-container .diagview-toast")).map(
       (t) => t.textContent,
@@ -1417,7 +1417,7 @@ describe("Copy Image and Copy SVG start the clipboard write during the click", (
     };
     global.ClipboardItem = PromiseItem;
     clickSpy = jest.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => {});
-    errorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
+    jest.spyOn(console, "error").mockImplementation(() => {});
   });
 
   afterEach(() => {

@@ -74,7 +74,7 @@ test.describe("desktop", () => {
     expect(s1, `scale ${s0.toFixed(2)} -> ${s1.toFixed(2)}`).toBeGreaterThan(s0);
   });
 
-  test("share restore centers on shared point", async ({ browser, browserName }) => {
+  test("share restore centers on shared point", async ({ browser }) => {
     await page.evaluate(() => document.getElementById("dv-share").click());
     await page.waitForTimeout(400);
     link = await page.evaluate(() => window.__copied);
