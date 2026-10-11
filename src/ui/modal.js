@@ -269,6 +269,7 @@ async function _initCoreInteractions(element, clone, viewport, options, session)
   }
 
   if (panzoom) {
+    let searchSetUp = false;
     try {
       const [shareMod, searchMod] = await Promise.all([
         import("../features/lazy/share.js"),
@@ -299,20 +300,29 @@ async function _initCoreInteractions(element, clone, viewport, options, session)
       }
 
       // Initialize search
+      searchSetUp = true;
       searchMod.setupSearch(clone, query);
-
-      // Task 48: Sync minimap after zoom restore to avoid visual lag
-      const m = await import("../features/lazy/minimap.js");
-      if (_isSessionLive(session)) m.updateMinimap(clone, viewport, panzoom);
     } catch (err) {
       console.warn("DiagView: Failed to load lazy features", err);
-      // Fallback: at least try to setup search if one failed
+    }
+
+    // Search is set up once, so a failure after setupSearch must not run it
+    // again. Two sets of handlers made Enter skip every other match.
+    if (!searchSetUp) {
       try {
         const m = await import("../features/lazy/search.js");
         if (_isSessionLive(session)) m.setupSearch(clone);
       } catch (e) {
         // Silent fallback: Search failure is non-critical for core viewing
       }
+    }
+
+    // Task 48: Sync minimap after zoom restore to avoid visual lag
+    try {
+      const m = await import("../features/lazy/minimap.js");
+      if (_isSessionLive(session)) m.updateMinimap(clone, viewport, panzoom);
+    } catch (e) {
+      // The viewer works without the minimap
     }
   }
 
