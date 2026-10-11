@@ -474,6 +474,30 @@ describe("styles.css: keyboard focus ring", () => {
     );
   });
 
+  test("forced colours draw an outline, since they drop the box-shadow ring", () => {
+    const at = css.indexOf("@media (forced-colors: active) {");
+    expect(at).toBeGreaterThan(-1);
+    const block = css.slice(at, css.indexOf("\n}", at));
+    const ring = ruleBody(
+      ".diagview-modal *:focus-visible,\n  .diagview-wrapper *:focus-visible,\n  .diagview-menu *:focus-visible {",
+      at,
+    );
+    expect(ring).toMatch(/outline:\s*2px solid Highlight !important/);
+    expect(ring).toMatch(/outline-offset:\s*2px/);
+    // The search box and the custom colour swatch show focus for a hidden or plain input
+    expect(ruleBody(".dv-swatch-custom:has(:focus-visible) {", at)).toMatch(/solid Highlight/);
+    expect(block).toContain(".diagview-search-wrapper:focus-within {");
+    expect(ruleBody(".diagview-search-wrapper:focus-within {", at)).toMatch(/offset:\s*-2px/);
+    expect(ruleBody(".diagview-search-input:focus-visible {", at)).toMatch(/outline:\s*none/);
+    expect(ruleBody(".diagview-branding:focus-visible {", at)).toMatch(/opacity:\s*1/);
+    // The menu panel is not a control and gets no ring here either
+    expect(ruleBody(".diagview-modal .diagview-menu:focus-visible {", at)).toMatch(
+      /outline:\s*none !important/,
+    );
+    // Normal colours keep the box-shadow ring with no outline
+    expect(ruleBody(".diagview-modal *:focus-visible")).toMatch(/outline:\s*none !important/);
+  });
+
   test("keeps each control's own corners instead of its parent's", () => {
     const body = ruleBody(".diagview-menu *:focus-visible {");
     expect(body).toMatch(/box-shadow:/);

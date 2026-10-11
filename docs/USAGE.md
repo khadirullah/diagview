@@ -863,6 +863,8 @@ A double click on the canvas resets the view, as `0` does. On a touch screen a d
 
 `Tab` also reaches the links inside the diagram, after the topbar and before the ☰ menu button, and `Enter` or `Space` follows the focused link. Chrome and Firefox draw an accent outline around it. Safari draws no outline on SVG links, so there the focused link shows no ring.
 
+The button with keyboard focus shows a ring in the accent colour, on the page toolbar and in the viewer. Windows High Contrast and other forced colour modes leave that ring out, so there the button gets an outline in the system highlight colour instead.
+
 A link to a part of the page, such as `#details` or a Mermaid `click` link to `#details`, closes the viewer and then scrolls the page to that part. A link to a node of the same diagram lands on that node in the diagram on the page. In a diagram taller than the window, the node comes to the top of the window, below any `scroll-padding-top` the page sets for a sticky header. A link to the part the address already names scrolls there again. Back then works as it does after any other link to a part of the page. A link with a `target`, or held with `Ctrl`, `Cmd` or `Shift`, is left to the browser.
 
 While the ☰ menu is open, `Tab` and `Shift+Tab` go through its items and the menu button, and `↑` and `↓` step through its items instead of panning. From the menu button, `↓` goes to the first item and `↑` to the last. `←` and `→` do nothing there. `Esc` closes the menu and the arrows pan again.

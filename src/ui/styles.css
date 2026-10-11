@@ -2303,3 +2303,41 @@
     animation: none;
   }
 }
+
+/* Windows High Contrast and other forced colour modes drop box-shadow, so
+   the focus ring above shows nothing there. Each control gets an outline in
+   the system highlight colour instead, in the same 4px around it. */
+@media (forced-colors: active) {
+  .diagview-modal *:focus-visible,
+  .diagview-wrapper *:focus-visible,
+  .diagview-menu *:focus-visible {
+    outline: 2px solid Highlight !important;
+    outline-offset: 2px;
+  }
+
+  /* The faded link would fade its outline too */
+  .diagview-branding:focus-visible {
+    opacity: 1;
+  }
+
+  /* The box around the search input shows its focus, as it does above.
+     Its container clips anything outside, so the outline goes inside. */
+  .diagview-search-input:focus-visible {
+    outline: none !important;
+  }
+
+  .diagview-search-wrapper:focus-within {
+    outline: 2px solid Highlight;
+    outline-offset: -2px;
+  }
+
+  .dv-swatch-custom:has(:focus-visible) {
+    outline: 2px solid Highlight;
+    outline-offset: 2px;
+  }
+
+  /* The menu panel takes focus but is not a control */
+  .diagview-modal .diagview-menu:focus-visible {
+    outline: none !important;
+  }
+}
