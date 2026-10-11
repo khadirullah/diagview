@@ -91,13 +91,9 @@ export default [
       format: "umd",
       name: "DiagView",
       exports: "default",
-      globals: {
-        "@panzoom/panzoom": "Panzoom",
-      },
       banner: `/*! DiagView v${pkg.version} | MIT License | github.com/khadirullah/diagview */`,
       inlineDynamicImports: true, // FIX: Inline dynamic imports for UMD
     })),
-    external: ["@panzoom/panzoom"],
     plugins: [
       stringPlugin(),
       resolve({
@@ -120,14 +116,10 @@ export default [
       format: "umd",
       name: "DiagView",
       exports: "default",
-      globals: {
-        "@panzoom/panzoom": "Panzoom",
-      },
       sourcemap: production,
       banner: `/*! DiagView v${pkg.version} | MIT License */`,
       inlineDynamicImports: true, // FIX: Inline dynamic imports for UMD
     },
-    external: ["@panzoom/panzoom"],
     plugins: [
       stringPlugin(),
       resolve({
@@ -161,7 +153,6 @@ export default [
       banner: `/*! DiagView v${pkg.version} | MIT License */`,
       // Code splitting enabled by default for ESM
     },
-    external: ["@panzoom/panzoom"],
     plugins: [
       stringPlugin(),
       replace({

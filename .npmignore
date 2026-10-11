@@ -10,7 +10,6 @@ docs/
 !LICENSE
 
 # Build config
-.babelrc
 .eslintrc.json
 .prettierrc.json
 rollup.config.js
