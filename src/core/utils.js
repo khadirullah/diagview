@@ -554,8 +554,9 @@ export function inertDocument() {
  * @param {'strict'|'permissive'|'off'} [mode='strict'] - Sanitization mode.
  * @param {number|SanitizeOptions|null} [options=0] - Character limit (number) or options object.
  * @returns {string|Node|null} The sanitized string or Node; "" (string input)
- *   or null (Node input) when the input exceeds maxChars. A Node result is a
- *   new copy that belongs to no page until you insert it.
+ *   or null (Node input) when the input exceeds maxChars or its root element
+ *   is one the mode removes, such as <script>. A Node result is a new copy
+ *   that belongs to no page until you insert it.
  */
 export function sanitizeSVG(input, mode = "strict", options = 0) {
   // Accept a number, an options object, or null/undefined (treated as none).
@@ -610,6 +611,7 @@ export function sanitizeSVG(input, mode = "strict", options = 0) {
   const isStrict = mode !== "permissive";
   const blockedTags = isStrict ? STRICT_BLOCKED_TAGS : PERMISSIVE_BLOCKED_TAGS;
 
+  // Returns false when it removed el
   const cleanElement = (el) => {
     if (el.nodeType !== 1) return;
 
@@ -625,7 +627,7 @@ export function sanitizeSVG(input, mode = "strict", options = 0) {
         else if (ANIMATION_TAGS.has(tagName)) noteAnimatedCode(el, removed);
       }
       el.remove();
-      return;
+      return false;
     }
 
     // Permissive keeps SMIL animations, but never ones that write href or
@@ -633,7 +635,7 @@ export function sanitizeSVG(input, mode = "strict", options = 0) {
     if (!isStrict && ANIMATION_TAGS.has(tagName) && animatesDangerousAttribute(el)) {
       if (removed) noteAnimatedCode(el, removed);
       el.remove();
-      return;
+      return false;
     }
 
     // SMART BLOCK: allow <foreignObject> ONLY if it has no src/data/href
@@ -643,7 +645,7 @@ export function sanitizeSVG(input, mode = "strict", options = 0) {
       const src = el.getAttribute("src") || el.getAttribute("data") || "";
       if (/^https?:\/\//.test(src)) {
         el.remove();
-        return;
+        return false;
       }
     }
 
@@ -720,7 +722,7 @@ export function sanitizeSVG(input, mode = "strict", options = 0) {
         (!allowRemote && REMOTE_RESOURCE_RE.test(cleanContent));
       if (isDangerous) {
         el.remove();
-        return;
+        return false;
       }
     }
 
@@ -731,7 +733,14 @@ export function sanitizeSVG(input, mode = "strict", options = 0) {
     }
   };
 
-  cleanElement(root);
+  // A fragment has no tag of its own, so clean what it holds. A root the
+  // mode removes has no parent to leave, so remove() keeps it whole and
+  // nothing of it may be returned.
+  if (root.nodeType === Node.DOCUMENT_FRAGMENT_NODE) {
+    for (const child of Array.from(root.childNodes)) cleanElement(child);
+  } else if (cleanElement(root) === false) {
+    return isString ? "" : null;
+  }
 
   return isString ? new XMLSerializer().serializeToString(root) : root;
 }

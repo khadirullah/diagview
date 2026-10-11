@@ -420,3 +420,74 @@ describe("sanitizeSVG form buttons inside foreignObject", () => {
     expect(out).toContain("https://example.com/runbook");
   });
 });
+
+describe("sanitizeSVG input whose root is removed", () => {
+  const roots = [
+    ["<script>", `<script xmlns="${SVG_NS}">window.pwned=1</script>`, ["strict", "permissive"]],
+    [
+      "<svg:script>",
+      `<svg:script xmlns:svg="${SVG_NS}">window.pwned=1</svg:script>`,
+      ["strict", "permissive"],
+    ],
+    ["<script> in no namespace", "<script>window.pwned=1</script>", ["strict", "permissive"]],
+    [
+      "<iframe>",
+      `<iframe xmlns="${XHTML_NS}" src="javascript:window.pwned=1"/>`,
+      ["strict", "permissive"],
+    ],
+    [
+      "<animate> writing href",
+      `<animate xmlns="${SVG_NS}" attributeName="href" to="javascript:x()"/>`,
+      ["strict", "permissive"],
+    ],
+    [
+      "remote <foreignObject>",
+      `<foreignObject xmlns="${SVG_NS}" src="https://example.com/x"/>`,
+      ["strict"],
+    ],
+    [
+      "<style> loading a remote sheet",
+      `<style xmlns="${SVG_NS}">@import url(https://example.com/x.css);</style>`,
+      ["strict"],
+    ],
+  ];
+  const cases = roots.flatMap(([name, svg, modes]) => modes.map((mode) => [name, mode, svg]));
+
+  test.each(cases)("%s as the root returns an empty string in %s mode", (_name, mode, svg) => {
+    expect(sanitizeSVG(svg, mode)).toBe("");
+  });
+
+  test.each(["strict", "permissive"])("a <script> element returns null in %s mode", (mode) => {
+    const script = document.createElementNS(SVG_NS, "script");
+    script.textContent = "window.pwned=1";
+    expect(sanitizeSVG(script, mode)).toBeNull();
+    // The original is left alone
+    expect(script.textContent).toBe("window.pwned=1");
+  });
+
+  test("a removed root is still counted", () => {
+    const removed = { scripts: 0, handlers: [], urls: 0 };
+    sanitizeSVG(`<script xmlns="${SVG_NS}">a()</script>`, "strict", { removed });
+    expect(removed.scripts).toBe(1);
+  });
+
+  test("a root that stays is cleaned and kept", () => {
+    const out = sanitizeSVG(
+      `<foreignObject xmlns="${SVG_NS}"><div xmlns="${XHTML_NS}" onclick="x()">Label</div></foreignObject>`,
+      "strict",
+    );
+    expect(out).toContain("Label");
+    expect(out).not.toContain("onclick");
+  });
+
+  test.each(["strict", "permissive"])("a fragment is cleaned in %s mode", (mode) => {
+    const fragment = document.createDocumentFragment();
+    const svg = document.createElementNS(SVG_NS, "svg");
+    svg.innerHTML = '<script>window.pwned=1</script><rect onclick="x()"/>';
+    fragment.append(svg, document.createElementNS(SVG_NS, "script"));
+    const clean = sanitizeSVG(fragment, mode);
+    expect(clean.nodeType).toBe(Node.DOCUMENT_FRAGMENT_NODE);
+    expect(clean.querySelector("script")).toBeNull();
+    expect(clean.querySelector("rect").hasAttribute("onclick")).toBe(false);
+  });
+});

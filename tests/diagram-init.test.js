@@ -700,6 +700,15 @@ describe("Diagram Init: button style and custom icons", () => {
     expect(btn("fullscreen").classList.contains("dv-custom-icon")).toBe(false);
   });
 
+  test("a custom icon that is only a script falls back to the built-in icon", () => {
+    const icon = '<script xmlns="http://www.w3.org/2000/svg">window.pwned = 1</script>';
+    updateConfig({ ui: { buttons: { icons: { copy: icon } } } });
+    initializeDiagram(container);
+    expect(btn("copy").querySelector("script")).toBeNull();
+    expect(btn("copy").querySelector("svg path")).not.toBeNull();
+    expect(btn("copy").classList.contains("dv-custom-icon")).toBe(false);
+  });
+
   test("an icon set back to null uses the built-in icon without dv-custom-icon", () => {
     updateConfig({ ui: { buttons: { icons: { copy: CUSTOM } } } });
     updateConfig({ ui: { buttons: { icons: { copy: null } } } });

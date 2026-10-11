@@ -318,6 +318,8 @@ DiagView.utils.sanitizeSVG(rawSvg, "strict", { removed });
 
 Input over `maxChars` is blocked with a console error: a string returns `""`, a Node returns `null`. `options` may be omitted or `null`.
 
+When the root element itself is one the mode removes, such as a lone `<script>` or `<iframe>`, nothing is left to return. A string returns `""` and a Node returns `null`, with no console error. A DocumentFragment is cleaned child by child and comes back as a fragment.
+
 ---
 
 ### `DiagView.version`
