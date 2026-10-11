@@ -49,6 +49,80 @@ const TYPE_ICONS = {
   textSelect: ICONS.textSelect,
 };
 
+/** Id of the hidden live region that reads notices to screen readers */
+const LIVE_ID = "diagview-toast-live";
+
+/**
+ * Time between emptying a live region and writing the new notice into it.
+ * Many screen readers skip text that arrives together with its region, or
+ * in the same task that emptied it, so the text always comes later.
+ */
+const ANNOUNCE_DELAY = 100;
+
+/** Pending announcement timer per region, polite and assertive */
+const announceTimers = { status: null, alert: null };
+
+/**
+ * Get the live region in the parent the notices go to, creating it empty.
+ * It holds a polite region for results and an assertive one for errors
+ * and warnings.
+ * @param {HTMLElement} parent - The open modal or the page body
+ * @returns {HTMLElement} The live region
+ */
+function liveRegion(parent) {
+  let live = document.getElementById(LIVE_ID);
+  if (!live) {
+    live = document.createElement("div");
+    live.id = LIVE_ID;
+    live.className = "diagview-sr-only";
+    [
+      ["status", "polite"],
+      ["alert", "assertive"],
+    ].forEach(([role, politeness]) => {
+      const box = document.createElement("div");
+      box.setAttribute("role", role);
+      box.setAttribute("aria-live", politeness);
+      box.setAttribute("aria-atomic", "true");
+      live.appendChild(box);
+    });
+  }
+  if (live.parentNode !== parent) parent.appendChild(live);
+  return live;
+}
+
+/**
+ * Write a notice into the live region after a short wait, so screen readers
+ * announce it. An error or warning empties the polite region too, as its
+ * notice replaces everything on screen.
+ * @param {HTMLElement} parent - The open modal or the page body
+ * @param {string} message - Text to announce
+ * @param {boolean} alert - Use the assertive region
+ * @returns {HTMLElement} The region the text goes into
+ */
+function announce(parent, message, alert) {
+  const live = liveRegion(parent);
+  const kinds = alert ? ["status", "alert"] : ["status"];
+  kinds.forEach((kind) => {
+    clearTimeout(announceTimers[kind]);
+    toastTimers.delete(announceTimers[kind]);
+    state.asyncTasks.timeouts.delete(announceTimers[kind]);
+    announceTimers[kind] = null;
+    live.children[kind === "alert" ? 1 : 0].textContent = "";
+  });
+  const box = live.children[alert ? 1 : 0];
+  const kind = alert ? "alert" : "status";
+  const timerId = setTimeout(() => {
+    toastTimers.delete(timerId);
+    state.asyncTasks.timeouts.delete(timerId);
+    announceTimers[kind] = null;
+    box.textContent = message;
+  }, ANNOUNCE_DELAY);
+  announceTimers[kind] = timerId;
+  toastTimers.add(timerId);
+  state.asyncTasks.timeouts.add(timerId);
+  return box;
+}
+
 /**
  * Show toast notification
  * @param {string} message - Text to show
@@ -71,6 +145,10 @@ export function showToast(message, type = "success", duration = null, icon = nul
   const targetParent =
     modal && document.contains(modal) && modal.classList.contains("open") ? modal : document.body;
 
+  // The live region goes in first, so the container stays the last child
+  const alert = type === "error" || type === "warning";
+  const liveBox = announce(targetParent, message, alert);
+
   if (!container) {
     container = document.createElement("div");
     container.id = "diagview-toast-container";
@@ -83,9 +161,12 @@ export function showToast(message, type = "success", duration = null, icon = nul
 
   // Only the latest notice shows, so a result replaces its progress notice.
   // Errors and warnings stay for their full time unless another one follows.
-  const alert = type === "error" || type === "warning";
   container
-    .querySelectorAll(alert ? ".diagview-toast" : ".diagview-toast:not([role=alert])")
+    .querySelectorAll(
+      alert
+        ? ".diagview-toast"
+        : ".diagview-toast:not(.diagview-toast-error):not(.diagview-toast-warning)",
+    )
     .forEach((t) => t.remove());
 
   // 2. Create new toast element
@@ -123,14 +204,7 @@ export function showToast(message, type = "success", duration = null, icon = nul
         ? noticeColors(theme.warning || COLORS.WARNING)
         : toastConfig;
 
-  // 3. Set styles and accessibility
-  if (alert) {
-    toast.setAttribute("role", "alert");
-    toast.setAttribute("aria-live", "assertive");
-  } else {
-    toast.setAttribute("role", "status");
-    toast.setAttribute("aria-live", "polite");
-  }
+  // 3. Set styles. Screen readers get the message from the live region.
   toast.style.backgroundColor = colors.bg;
   toast.style.color = colors.text;
 
@@ -168,6 +242,9 @@ export function showToast(message, type = "success", duration = null, icon = nul
       const removeTimerId = setTimeout(() => {
         toastTimers.delete(removeTimerId);
         state.asyncTasks.timeouts.delete(removeTimerId);
+        // A screen reader that browses the page should not find it later.
+        // A notice that a newer one replaced leaves the region alone.
+        if (toast.isConnected && liveBox.textContent === message) liveBox.textContent = "";
         toast.remove();
         // Remove container if empty
         if (container.children.length === 0) {
@@ -188,10 +265,9 @@ export function showToast(message, type = "success", duration = null, icon = nul
  * Hide all toasts immediately and cancel pending animations
  */
 export function hideToast() {
-  const container = document.getElementById("diagview-toast-container");
-  if (container) {
-    container.remove();
-  }
+  document.getElementById("diagview-toast-container")?.remove();
+  document.getElementById(LIVE_ID)?.remove();
+  announceTimers.status = announceTimers.alert = null;
 
   // Safely cancel only the toast-related timers
   toastTimers.forEach((id) => {

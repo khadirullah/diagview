@@ -247,6 +247,7 @@ async function _teardown() {
     [
       "diagview-modal",
       "diagview-toast",
+      "diagview-toast-live",
       "diagview-temp-menu",
       "diagview-help-modal",
       "diagview-minimap",

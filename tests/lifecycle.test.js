@@ -3,6 +3,7 @@ import DiagView, { init, destroy } from "../src/index.js";
 import { state, resetConfig, DEFAULT_CONFIG } from "../src/core/config.js";
 import { detectTheme } from "../src/core/theme.js";
 import { saveZoomState, restoreZoomState } from "../src/features/panzoom-integration.js";
+import { showSuccessToast } from "../src/ui/toast.js";
 
 jest.useFakeTimers();
 
@@ -139,6 +140,8 @@ describe("DiagView Lifecycle", () => {
     init();
     expect(state.isInitialized).toBe(true);
     expect(document.getElementById("diagview-modal")).not.toBeNull();
+    showSuccessToast("Link copied");
+    expect(document.getElementById("diagview-toast-live")).not.toBeNull();
 
     await destroy();
 
@@ -148,6 +151,8 @@ describe("DiagView Lifecycle", () => {
     // Check other dynamic elements
     const elementsToCheck = [
       "diagview-toast",
+      "diagview-toast-container",
+      "diagview-toast-live",
       "diagview-temp-menu",
       "diagview-help-modal",
       "diagview-minimap",

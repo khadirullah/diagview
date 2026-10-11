@@ -10,6 +10,7 @@ import {
   showWarningToast,
   showMenuHint,
   closeMenuHint,
+  hideToast,
 } from "../src/ui/toast.js";
 import { ICONS } from "../src/ui/icons.js";
 
@@ -92,8 +93,10 @@ describe("Toast Notification System", () => {
     test("are amber with dark text and announced at once", () => {
       showWarningToast("Switched to Transparent PNG");
       const t = warning();
-      expect(t.getAttribute("role")).toBe("alert");
-      expect(t.getAttribute("aria-live")).toBe("assertive");
+      jest.advanceTimersByTime(100);
+      const alert = document.querySelector("#diagview-toast-live [role=alert]");
+      expect(alert.getAttribute("aria-live")).toBe("assertive");
+      expect(alert.textContent).toBe("Switched to Transparent PNG");
       expect(t.style.backgroundColor).toBe("rgb(245, 158, 11)");
       expect(t.style.color).toBe("rgb(15, 23, 42)");
       expect(document.querySelector(".diagview-toast-error")).toBeNull();
@@ -225,6 +228,118 @@ describe("Toast Notification System", () => {
       showToast("Second", "success", 0);
       jest.advanceTimersByTime(10000);
       expect(shown()).toEqual(["Second"]);
+    });
+  });
+
+  describe("screen reader announcements", () => {
+    const live = () => document.getElementById("diagview-toast-live");
+    const status = () => live().querySelector("[role=status]");
+    const alert = () => live().querySelector("[role=alert]");
+
+    test("a hidden polite and an assertive region hold the notices", () => {
+      showSuccessToast("Link copied");
+      expect(live().className).toBe("diagview-sr-only");
+      expect(status().getAttribute("aria-live")).toBe("polite");
+      expect(status().getAttribute("aria-atomic")).toBe("true");
+      expect(alert().getAttribute("aria-live")).toBe("assertive");
+      expect(alert().getAttribute("aria-atomic")).toBe("true");
+      // The visible notice is not a live region of its own
+      const toast = document.querySelector(".diagview-toast");
+      expect(toast.hasAttribute("role")).toBe(false);
+      expect(toast.hasAttribute("aria-live")).toBe(false);
+    });
+
+    test("the text arrives after the region is in the page", () => {
+      showSuccessToast("Link copied");
+      expect(document.body.contains(live())).toBe(true);
+      expect(status().textContent).toBe("");
+      jest.advanceTimersByTime(99);
+      expect(status().textContent).toBe("");
+      jest.advanceTimersByTime(1);
+      expect(status().textContent).toBe("Link copied");
+    });
+
+    test("the same notice twice is emptied first, so it is read again", () => {
+      showSuccessToast("Rotated 90°");
+      jest.advanceTimersByTime(100);
+      const region = status();
+      showSuccessToast("Rotated 90°");
+      expect(status()).toBe(region);
+      expect(region.textContent).toBe("");
+      jest.advanceTimersByTime(100);
+      expect(region.textContent).toBe("Rotated 90°");
+    });
+
+    test("a quick result replaces its progress notice before it is read", () => {
+      showProgressToast("Processing PNG...");
+      jest.advanceTimersByTime(50);
+      showSuccessToast("PNG saved");
+      jest.advanceTimersByTime(50);
+      expect(status().textContent).toBe("");
+      jest.advanceTimersByTime(50);
+      expect(status().textContent).toBe("PNG saved");
+    });
+
+    test("a result after a warning leaves the warning in its region", () => {
+      showWarningToast("Switched to Transparent PNG");
+      jest.advanceTimersByTime(100);
+      showSuccessToast("Transparent PNG saved");
+      jest.advanceTimersByTime(100);
+      expect(alert().textContent).toBe("Switched to Transparent PNG");
+      expect(status().textContent).toBe("Transparent PNG saved");
+    });
+
+    test("an error empties the polite region and goes in the assertive one", () => {
+      showProgressToast("Processing PNG...");
+      jest.advanceTimersByTime(100);
+      showErrorToast("Export Failed");
+      expect(status().textContent).toBe("");
+      jest.advanceTimersByTime(100);
+      expect(status().textContent).toBe("");
+      expect(alert().textContent).toBe("Export Failed");
+    });
+
+    test("the region empties when its notice leaves the screen", () => {
+      showToast("Saved", "success", 1000);
+      jest.advanceTimersByTime(100);
+      expect(status().textContent).toBe("Saved");
+      jest.advanceTimersByTime(1300);
+      expect(document.querySelector(".diagview-toast")).toBeNull();
+      expect(status().textContent).toBe("");
+      // The region stays for the next notice
+      expect(live()).not.toBeNull();
+    });
+
+    test("an early notice's timer leaves a later one's text alone", () => {
+      showToast("Saved", "success", 1000);
+      jest.advanceTimersByTime(500);
+      showToast("Saved", "success", 0);
+      jest.advanceTimersByTime(1500);
+      expect(status().textContent).toBe("Saved");
+    });
+
+    test("hideToast removes the region and drops a pending text", () => {
+      showSuccessToast("Link copied");
+      const region = status();
+      hideToast();
+      expect(live()).toBeNull();
+      jest.advanceTimersByTime(200);
+      expect(region.textContent).toBe("");
+    });
+
+    test("the region follows the modal as it opens and closes", () => {
+      const modal = document.createElement("div");
+      modal.id = "diagview-modal";
+      document.body.appendChild(modal);
+      showSuccessToast("Before");
+      expect(live().parentNode).toBe(document.body);
+      modal.classList.add("open");
+      showSuccessToast("While open");
+      expect(live().parentNode).toBe(modal);
+      // The notices stay on top of the region
+      expect(modal.lastElementChild.id).toBe("diagview-toast-container");
+      jest.advanceTimersByTime(100);
+      expect(status().textContent).toBe("While open");
     });
   });
 
