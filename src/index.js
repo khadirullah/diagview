@@ -73,14 +73,20 @@ let pendingDestroy = null;
 /** @type {string|null} */
 let lastSelector = null;
 
+// Counts destroy() calls. A start still waiting, for the page to load or for
+// a destroy() in flight, goes ahead only if no destroy() came after it.
+let destroys = 0;
+
 /**
  * Initialize DiagView
  *
  * Runs synchronously when nothing is pending. If a destroy() is still in
  * flight, the initialization is queued behind it. Called before the page has
  * a <body>, it waits for DOMContentLoaded. Either way the returned
- * promise resolves once DiagView is initialized. On a parsed page with no
- * <body>, such as an SVG file, it warns and resolves without starting.
+ * promise resolves once DiagView is initialized. A destroy() called during
+ * the wait cancels the start, and the promise resolves without starting.
+ * On a parsed page with no <body>, such as an SVG file, it warns and
+ * resolves without starting.
  * @param {DiagViewOptions} [options] - Configuration options
  * @returns {Promise<void>} Resolves when initialization has completed
  */
@@ -90,8 +96,11 @@ function init(options = {}) {
     return Promise.resolve();
   }
 
+  const seen = destroys;
+  const resume = () => (seen === destroys ? init(options) : undefined);
+
   if (pendingDestroy) {
-    return pendingDestroy.then(() => init(options));
+    return pendingDestroy.then(resume);
   }
 
   // A script in <head> runs before there is a body to hold the viewer or the
@@ -103,7 +112,7 @@ function init(options = {}) {
       return Promise.resolve();
     }
     return new Promise((resolve) => {
-      document.addEventListener("DOMContentLoaded", () => resolve(init(options)), { once: true });
+      document.addEventListener("DOMContentLoaded", () => resolve(resume()), { once: true });
     });
   }
 
@@ -165,6 +174,9 @@ function init(options = {}) {
  * @returns {Promise<void>} Resolves when teardown has completed
  */
 function destroy() {
+  destroys++;
+  clearTimeout(autoInitTimeout);
+  autoInitTimeout = null;
   if (pendingDestroy) return pendingDestroy;
 
   if (!state.isInitialized) {
@@ -393,8 +405,8 @@ if (typeof window !== "undefined") {
   const autoInit = () => {
     autoInitTimeout = null;
 
-    // 1. Check if already initialized
-    if (state.isInitialized) return;
+    // 1. Check if already initialized, or stopped by an early destroy()
+    if (state.isInitialized || destroys) return;
 
     // 2. Check for explicit opt-out. It can sit on any element, not only a
     // script whose name contains "diagview". A bundled app's script is called

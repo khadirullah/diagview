@@ -60,6 +60,8 @@ DiagView.init(options);
 
 Calling `destroy()` again while a teardown is in flight returns the same promise rather than starting a second teardown. Calling `init()` during that window is also safe; see `init()` above.
 
+`destroy()` also cancels a start that is still waiting. With the script in `<head>`, that is the auto-init or an `init()` waiting for `DOMContentLoaded`. It is also an `init()` queued behind a teardown in flight. An `init()` called after that `destroy()` starts as usual.
+
 ---
 
 ### `DiagView.refresh()`
