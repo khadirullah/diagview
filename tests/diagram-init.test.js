@@ -16,7 +16,7 @@ jest.unstable_mockModule("../src/features/export.js", () => ({
 }));
 
 // 2. Import modules after mocks
-const { initializeDiagram, deinitializeDiagram, recheckDiagram } =
+const { initializeDiagram, deinitializeDiagram, recheckDiagram, releaseDetachedDiagrams } =
   await import("../src/features/diagram-init.js");
 const { getDiagramSvg } = await import("../src/core/utils.js");
 
@@ -318,6 +318,20 @@ describe("Diagram Init: deinitializeDiagram", () => {
     deinitializeDiagram(container);
 
     expect(container.outerHTML).toBe(before);
+  });
+
+  test("a diagram the page took out of its card and off the page stays out, and the card goes", () => {
+    document.body.innerHTML = `<main><div class="diagram"><svg viewBox="0 0 10 10"><rect width="5" height="5"/></svg></div></main>`;
+    const container = document.querySelector(".diagram");
+    initializeDiagram(container);
+
+    // A framework removing the node it rendered, not knowing about the card
+    container.remove();
+    deinitializeDiagram(container);
+
+    expect(container.isConnected).toBe(false);
+    expect(document.querySelector(".diagview-wrapper")).toBeNull();
+    expect(document.querySelector("main").innerHTML).toBe("");
   });
 
   test("handles element without diagviewInit data gracefully", () => {
@@ -1197,4 +1211,68 @@ describe("Diagram Init: a diagram inside a page's form", () => {
       expect(openFullscreen).toHaveBeenCalledTimes(1);
     },
   );
+});
+
+describe("Diagram Init: diagrams that left the page", () => {
+  const SVG = '<svg viewBox="0 0 10 10"><rect width="5" height="5"/></svg>';
+
+  beforeEach(() => {
+    document.body.innerHTML = "";
+  });
+
+  test("releaseDetachedDiagrams restores a removed diagram inside its removed subtree", () => {
+    document.body.innerHTML = `<main id="route"><div class="diagram" id="gone">${SVG}</div></main><div class="diagram" id="kept">${SVG}</div>`;
+    const route = document.getElementById("route");
+    const gone = document.getElementById("gone");
+    const kept = document.getElementById("kept");
+    const before = route.innerHTML;
+    initializeDiagram(gone);
+    initializeDiagram(kept);
+
+    route.remove();
+    releaseDetachedDiagrams();
+
+    expect(route.innerHTML).toBe(before);
+    expect(gone.dataset.diagviewInit).toBeUndefined();
+    expect(kept.dataset.diagviewInit).toBe("1");
+    expect(kept.closest(".diagview-wrapper")).not.toBeNull();
+    // Released once, so destroy() has nothing left to do with it
+    deinitializeDiagram(gone);
+    expect(route.innerHTML).toBe(before);
+    deinitializeDiagram(kept);
+  });
+
+  test("a released diagram with layout off no longer opens and loses its hint", async () => {
+    const { openFullscreen } = await import("../src/ui/modal.js");
+    document.body.innerHTML = `<main><div class="diagram" data-diagview-layout="off" data-diagview-off-hint="icon">${SVG}</div></main>`;
+    const main = document.querySelector("main");
+    const el = document.querySelector(".diagram");
+    initializeDiagram(el);
+    expect(el.querySelector(".diagview-off-hint")).not.toBeNull();
+
+    main.remove();
+    releaseDetachedDiagrams();
+    openFullscreen.mockClear();
+    el.click();
+
+    expect(openFullscreen).not.toHaveBeenCalled();
+    expect(el.querySelector(".diagview-off-hint")).toBeNull();
+    expect(el.hasAttribute("tabindex")).toBe(false);
+  });
+
+  test("a diagram in a shadow root is kept when its host leaves the page", () => {
+    const host = document.createElement("div");
+    document.body.appendChild(host);
+    const shadow = host.attachShadow({ mode: "open" });
+    shadow.innerHTML = `<div class="diagram">${SVG}</div>`;
+    const el = shadow.querySelector(".diagram");
+    initializeDiagram(el);
+
+    host.remove();
+    releaseDetachedDiagrams();
+
+    expect(el.dataset.diagviewInit).toBe("1");
+    expect(shadow.querySelector(".diagview-wrapper")).not.toBeNull();
+    deinitializeDiagram(el);
+  });
 });

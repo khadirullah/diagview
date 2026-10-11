@@ -17,6 +17,7 @@ import {
   initializeDiagram,
   deinitializeDiagram,
   recheckDiagram,
+  releaseDetachedDiagrams,
 } from "../features/diagram-init.js";
 import { createModal, openFullscreen } from "../ui/modal.js";
 import { restoreViewFromURL } from "../features/lazy/share.js";
@@ -26,6 +27,9 @@ import { restoreViewFromURL } from "../features/lazy/share.js";
 /** Milliseconds a share link waits for its diagram before it is removed */
 const SHARE_LINK_WAIT = 3000;
 let stripTimer = 0;
+
+/** Whether the page removed an element since the last run */
+let removedAny = false;
 
 /**
  * Every diagram DiagView knows about, in a stable order: the document first,
@@ -270,6 +274,16 @@ export function observeDiagrams() {
 
   // Define debounced processor (stored at module level for cancellation)
   state.debouncedProcess = debounce(() => {
+    // Let go of diagrams that left the page, so a single-page app that
+    // swaps routes without destroy() does not keep the old ones in memory.
+    // Only checked after the page removed something. A node the page moves,
+    // or takes out and puts back before this runs, is on the page again by
+    // now and keeps its toolbar. One put back later is set up again.
+    if (removedAny) {
+      removedAny = false;
+      releaseDetachedDiagrams();
+    }
+
     if (state.nodesToProcess.size === 0) return;
 
     // Gather the diagrams in or around every added node first, so the page
@@ -300,6 +314,15 @@ export function observeDiagrams() {
     for (const mutation of mutations) {
       if (mutation.type !== "childList") continue;
 
+      if (!removedAny) {
+        for (const node of mutation.removedNodes) {
+          if (node.nodeType === 1) {
+            removedAny = true;
+            break;
+          }
+        }
+      }
+
       for (const node of mutation.addedNodes) {
         if (node.nodeType !== 1) continue;
 
@@ -329,7 +352,7 @@ export function observeDiagrams() {
       }
     }
 
-    if (addedAny) {
+    if (addedAny || removedAny) {
       state.debouncedProcess();
     }
   });
@@ -367,6 +390,7 @@ export function stopObserving() {
     state.debouncedProcess = null;
   }
   state.nodesToProcess.clear();
+  removedAny = false;
   state.isInitialProcessDone = false;
 }
 

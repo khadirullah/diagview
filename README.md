@@ -347,6 +347,8 @@ Live example: **[React 18 + StrictMode demo](https://diagview.khadirullah.com/fr
 
 > **One rule for component frameworks (React, Vue, Svelte, Angular):** keep the diagram element nested inside a container that your component renders and owns, as in the examples below. With the `floating` and `header` layouts DiagView moves the diagram element into a wrapper to place the toolbar. Frameworks that later remove that exact element themselves will fail, because it is no longer where they left it. Removing the outer container is always safe. If you would rather DiagView never touch the surrounding DOM, use `layout: "off"`; fullscreen, zoom, search and export still work, only the inline toolbar is dropped.
 
+An app can also call `init()` once and keep DiagView running across routes without `destroy()`. When a diagram leaves the page, DiagView lets go of it within about 100 ms and puts the removed markup back as the app wrote it, so an old route is not kept in memory. A diagram that comes back later gets its toolbar again. One that is moved, or taken out and put back at once, keeps it.
+
 ### React
 
 ```jsx

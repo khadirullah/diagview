@@ -830,6 +830,7 @@ DiagView.init({ rememberZoom: true });
 
 - State is keyed per `data-diagview-id`. DiagView sets this unique ID when it sets up the diagram, or when the viewer first opens it if that comes sooner. A diagram opened with `openFullscreen()` before it scrolls into view is remembered too, and keeps the same ID when it gets its toolbar
 - State is kept in memory until the page reloads or `DiagView.destroy()` runs. Nothing is written to `sessionStorage` or `localStorage`
+- A diagram that leaves the page for more than about 100 ms, as on a route change, is released, so it starts at the default view when it comes back. See [Teardown and reinitialize](#teardown-and-reinitialize)
 - It also works in private windows, where browser storage can be blocked
 
 ---
@@ -927,6 +928,8 @@ DiagView.init({ layout: "header", accentColor: "#ff6b6b" });
 ```
 
 `destroy()` returns every diagram to its pre-init state: wrappers and toolbars are removed, the `data-diagview-*` attributes DiagView added, the `dv-svg-content` class, inline styles, click handlers, error placeholders and the `--dv-*` variables on `<html>` are all cleared, in every layout and in shadow roots as well. If nothing had focus when the viewer opened, closing it focuses the diagram and gives it `tabindex="-1"` until focus leaves. `destroy()` removes that too, and the `tabindex`, `role` and `aria-label` a diagram with `layout: "off"` gets. A `tabindex`, `role` or `aria-label` the page set itself stays. A `style` or `class` attribute that DiagView added and then emptied is removed, so `<html>`, `<body>`, the diagram and its SVG get their original markup back. This holds when `destroy()` runs with the viewer open as well. Attributes the page wrote itself stay, even empty ones. The one trace left is the `diagview-canvas-hint-shown` key in `localStorage`, so the theme hint does not show again after the next `init()`. The next `init()` therefore applies its own options to all diagrams again. `destroy()` also resets the configuration to the defaults, the Canvas Theme to Auto and Text Colours to Original.
+
+A single-page app that keeps DiagView running does not need `destroy()` when it swaps a route. Within about 100 ms of a diagram leaving the page, DiagView releases it the way `destroy()` would. The removed markup gets back its own nodes, without the wrapper, toolbar, click handlers or `data-diagview-*` attributes, and DiagView holds on to none of it, so the browser can free the old route. If the page took the diagram out of its card itself, the empty card goes too. A diagram that comes back later is set up again like a new one. A diagram that is moved, or taken out and put back before those 100 ms are up, keeps its toolbar. Diagrams in a shadow root passed to `initShadowRoot()` stay set up until `destroy()`.
 
 Because of that reset, an `init()` with no options after `destroy()` uses the default `diagramSelector`. A page that set its own selector, such as `.mermaid`, then gets no toolbars, and DiagView logs a warning that names both selectors. Pass the options again, or save them with `getConfiguration()` before `destroy()`:
 

@@ -71,8 +71,9 @@ build. Set `E2E_PORT` to use a port other than 9340.
 | `verify-search-pan.spec.mjs`          | 8      | at zoom 4 a typed query with every match off screen pans the nearest to the middle, keeping the zoom, a match in view keeps the view, Enter and Shift+Enter step in reading order with a thicker current outline, also at 90 degrees, on a Mermaid label, with reduced motion and on a phone                                                                                                                                        |
 | `verify-header-title.spec.mjs`        | 12     | the header title on Mermaid 11 and 12 comes from data-title, then accTitle, then the chart title, export files take the same name, a diagram with none reads DIAGRAM, Graphviz shape tooltips, a node label, a picture in an HTML label and a figure caption do not count, markup stays text, and a long title ends in an ellipsis and shows whole on hover                                                                         |
 | `verify-host-form.spec.mjs`           | 3      | a diagram inside the page's `<form>` copies, downloads and opens fullscreen from its floating and header toolbars without submitting the form, and Enter in a field of the form submits it with the page's own button                                                                                                                                                                                                               |
+| `verify-detached-diagrams.spec.mjs`   | 4      | a route a single-page app takes out and puts back at once keeps its cards and opens fullscreen, one swapped out without `destroy()` is released with its own markup back, one put back later gets its cards again and opens fullscreen, a diagram removed from inside its card takes the empty card with it, and `destroy()` restores the rest                                                                                      |
 
-That is 317 checks per browser.
+That is 321 checks per browser.
 
 `verify-react-strictmode` loads React from unpkg, and `verify-fixes`,
 `verify-mermaid-errors` and `verify-header-title` load Mermaid from
@@ -82,9 +83,10 @@ against a published build instead of the local one. The other suites run
 offline. `verify-export-search`, `verify-search-export`, `verify-readable-text`,
 `verify-image-handler`, `verify-diagram-size`, `verify-search-lines`,
 `verify-export-fonts`, `verify-search-pan`, `verify-mermaid-errors`,
-`verify-bare-svg`, `verify-off-hint`, `verify-header-title` and
-`verify-host-form` inject the build themselves. Set
-`DV_DIST=/path/to/diagview.umd.js` to test another build with those suites.
+`verify-bare-svg`, `verify-off-hint`, `verify-header-title`,
+`verify-host-form` and `verify-detached-diagrams` inject the build
+themselves. Set `DV_DIST=/path/to/diagview.umd.js` to test another build
+with those suites.
 
 `repro.html` is the shared test page: a 2000x1200 labelled grid SVG (cells
 A1 to J6, 200 units each) so any viewport centre measurement maps to a

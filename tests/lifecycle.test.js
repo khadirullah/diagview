@@ -660,6 +660,114 @@ describe("diagrams the page renders again in place", () => {
   });
 });
 
+describe("diagrams the page removes without destroy()", () => {
+  let warnSpy;
+
+  // Let the MutationObserver see the change, then run its debounce
+  const settle = async () => {
+    await Promise.resolve();
+    jest.advanceTimersByTime(150);
+  };
+
+  let before;
+
+  beforeEach(() => {
+    document.body.innerHTML = `<main id="route"><p>Intro</p><div class="diagram">${SVG}</div></main><aside></aside>`;
+    before = document.getElementById("route").innerHTML;
+    document.head.innerHTML = "";
+    warnSpy = jest.spyOn(console, "warn").mockImplementation(() => {});
+    DiagView.init({ layout: "header" });
+  });
+
+  afterEach(async () => {
+    await DiagView.destroy();
+    jest.runAllTimers();
+    warnSpy.mockRestore();
+  });
+
+  const route = () => document.getElementById("route");
+
+  test("a route swapped out releases its diagram and gives the old markup back", async () => {
+    const main = route();
+    const el = main.querySelector(".diagram");
+    expect(el.closest(".diagview-wrapper")).not.toBeNull();
+
+    main.remove();
+    await settle();
+
+    expect(main.innerHTML).toBe(before);
+    expect(Object.keys(el.dataset)).toEqual([]);
+
+    // destroy() finds nothing of it left to restore
+    await DiagView.destroy();
+    expect(main.innerHTML).toBe(before);
+  });
+
+  test("a route put back after the observer ran gets its toolbar again", async () => {
+    const main = route();
+    const el = main.querySelector(".diagram");
+    main.remove();
+    await settle();
+    expect(el.dataset.diagviewInit).toBeUndefined();
+
+    document.body.prepend(main);
+    await settle();
+
+    expect(el.dataset.diagviewInit).toBe("1");
+    expect(el.closest(".diagview-wrapper")).not.toBeNull();
+    expect(document.querySelectorAll(".diagview-wrapper")).toHaveLength(1);
+  });
+
+  test("a route taken out and put back before the observer runs keeps its card", async () => {
+    const main = route();
+    const wrapper = main.querySelector(".diagview-wrapper");
+    main.remove();
+    await Promise.resolve();
+    jest.advanceTimersByTime(50);
+    document.body.prepend(main);
+    await settle();
+
+    expect(main.querySelector(".diagview-wrapper")).toBe(wrapper);
+    expect(document.querySelectorAll(".diagview-wrapper")).toHaveLength(1);
+  });
+
+  test("a diagram moved to another place on the page keeps its card", async () => {
+    const wrapper = document.querySelector(".diagview-wrapper");
+    document.querySelector("aside").appendChild(route());
+    await settle();
+
+    expect(document.querySelector("aside .diagview-wrapper")).toBe(wrapper);
+    expect(document.querySelector(".diagram").dataset.diagviewInit).toBe("1");
+  });
+
+  test("a diagram the page removes from inside its card takes the empty card with it", async () => {
+    const el = document.querySelector(".diagram");
+    el.remove();
+    await settle();
+
+    expect(el.isConnected).toBe(false);
+    expect(document.querySelector(".diagview-wrapper")).toBeNull();
+    expect(route().innerHTML).toBe("<p>Intro</p>");
+  });
+
+  test("a diagram that left with the error box gets it back when it returns", async () => {
+    route().innerHTML = '<div class="diagram"><svg xmlns="http://www.w3.org/2000/svg"></svg></div>';
+    await settle();
+    const main = route();
+    const el = main.querySelector(".diagram");
+    expect(el.dataset.diagviewError).toBe("1");
+
+    main.remove();
+    await settle();
+    expect(el.querySelector(".diagview-error")).toBeNull();
+    expect(el.querySelector("svg").hasAttribute("style")).toBe(false);
+
+    document.body.prepend(main);
+    await settle();
+    expect(el.querySelectorAll(".diagview-error")).toHaveLength(1);
+  });
+});
+
 describe("teardown safety and diagramSelector validation", () => {
   let warnSpy;
   let errorSpy;

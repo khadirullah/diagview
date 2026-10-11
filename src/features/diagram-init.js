@@ -564,11 +564,13 @@ export function deinitializeDiagram(element) {
   if (data) {
     const { fn, wrapper, errorDiv, svg, prev } = data;
 
-    // Always use the stored wrapper reference (bulletproof against DOM moves)
-    if (wrapper && wrapper.parentNode) {
+    // Always use the stored wrapper reference (bulletproof against DOM moves).
+    // A diagram the page has taken out of its card and off the page stays
+    // out, and only the empty card goes.
+    if (wrapper?.parentNode && (element.isConnected || wrapper.contains(element))) {
       wrapper.parentNode.insertBefore(element, wrapper);
-      wrapper.remove();
     }
+    wrapper?.remove();
 
     if (fn) fn();
     if (errorDiv) errorDiv.remove();
@@ -601,6 +603,31 @@ export function deinitializeDiagram(element) {
 export function deinitializeAllDiagrams() {
   Array.from(trackedElements).forEach((element) => deinitializeDiagram(element));
   trackedElements.clear();
+}
+
+/**
+ * Whether an element has left the page. One in a shadow root passed to
+ * initShadowRoot() never counts. The observer cannot see it come back, and
+ * DiagView keeps that shadow root anyway.
+ * @param {Element} element - A diagram or its container
+ * @returns {boolean} True when it is off the page and outside any shadow root
+ */
+function isDetached(element) {
+  if (element.isConnected) return false;
+  const root = element.getRootNode();
+  return !(root.nodeType === 11 && /** @type {ShadowRoot} */ (root).host);
+}
+
+/**
+ * Release every diagram whose element has left the page, as when a
+ * single-page app swaps a route without calling destroy(). Its card,
+ * listeners and record go, so nothing here keeps the old subtree alive. A
+ * diagram the page puts back is set up again like a new one.
+ */
+export function releaseDetachedDiagrams() {
+  trackedElements.forEach((element) => {
+    if (isDetached(element)) deinitializeDiagram(element);
+  });
 }
 
 /**

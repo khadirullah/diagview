@@ -12,6 +12,7 @@ jest.unstable_mockModule("../src/features/diagram-init.js", () => ({
   }),
   deinitializeDiagram: jest.fn(),
   recheckDiagram: jest.fn(() => false),
+  releaseDetachedDiagrams: jest.fn(),
 }));
 
 jest.unstable_mockModule("../src/ui/modal.js", () => ({
@@ -28,7 +29,7 @@ jest.unstable_mockModule("../src/features/lazy/share.js", () => ({
 const { state, resetConfig, updateConfig } = await import("../src/core/config.js");
 const { observeDiagrams, stopObserving, refreshDiagrams, resetShareLinkCheck } =
   await import("../src/core/observer.js");
-const { initializeDiagram, deinitializeDiagram, recheckDiagram } =
+const { initializeDiagram, deinitializeDiagram, recheckDiagram, releaseDetachedDiagrams } =
   await import("../src/features/diagram-init.js");
 const { openFullscreen } = await import("../src/ui/modal.js");
 
@@ -202,6 +203,22 @@ describe("Observer Module", () => {
     } finally {
       scan.mockRestore();
     }
+  });
+
+  test("a removed element has the diagrams that left the page released", async () => {
+    document.body.innerHTML = '<main><div class="diagram"><svg></svg></div></main><p id="p"></p>';
+    observeDiagrams();
+    expect(releaseDetachedDiagrams).not.toHaveBeenCalled();
+
+    // Text changes and added nodes alone do not look
+    document.getElementById("p").textContent = "a";
+    document.body.appendChild(document.createElement("p"));
+    await wait(200);
+    expect(releaseDetachedDiagrams).not.toHaveBeenCalled();
+
+    document.querySelector("main").remove();
+    await wait(200);
+    expect(releaseDetachedDiagrams).toHaveBeenCalledTimes(1);
   });
 
   test("an svg the selector matches is set up itself", () => {
