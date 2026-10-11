@@ -738,7 +738,6 @@ function _wireModalEvents(elements, viewport) {
     textSelectMobileBtn,
     searchBackBtn,
     searchInput,
-    searchClear,
     textSelectDesktopBtn,
     closeBtn,
   } = elements;
@@ -821,13 +820,7 @@ function _wireModalEvents(elements, viewport) {
       .catch(() => {});
   });
 
-  searchClear.addEventListener("click", () => {
-    searchInput.value = "";
-    loadChunk("search", () => import("../features/lazy/search.js"))
-      .then((m) => m.clearSearch())
-      .catch(() => {});
-    searchInput.focus();
-  });
+  // The clear button is wired by setupSearch(), which has the diagram copy
 
   // Modal Close
   closeBtn.addEventListener("click", () => closeModal());

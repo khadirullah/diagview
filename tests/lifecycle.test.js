@@ -136,6 +136,11 @@ describe("DiagView Lifecycle", () => {
     expect(document.getElementById("diagview-modal")).not.toBeNull();
   });
 
+  test("init() leaves the close button to the viewer's own click handler", () => {
+    init();
+    expect(document.getElementById("diagview-close").onclick).toBeNull();
+  });
+
   test("destroy() removes DOM elements and resets state", async () => {
     init();
     expect(state.isInitialized).toBe(true);

@@ -427,9 +427,7 @@ function clearHighlights(clone) {
   // CRIT-5: Use cached matches instead of expensive querySelectorAll
   // This is O(k) instead of O(n), dramatically faster for large SVGs.
   // Remove synchronously: callers reset state.searchMatches right after
-  // this call, and the clear button fires clearSearch() and handleClear()
-  // back to back, so a deferred frame would either see an empty list or be
-  // cancelled by the second call before it runs.
+  // this call, so a deferred frame would see an empty list.
   const toClean = state.searchMatches;
   state.searchMatches = []; // EVT-2: Clear state matches
   for (let i = 0; i < toClean.length; i++) {

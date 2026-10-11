@@ -152,12 +152,6 @@ function init(options = {}) {
   syncTheme(); // page buttons use the accent before the viewer first opens
   observeDiagrams();
 
-  // Attach close handler
-  const closeBtn = document.getElementById("diagview-close");
-  if (closeBtn) {
-    closeBtn.onclick = closeModal;
-  }
-
   state.isInitialized = true;
 
   // Pre-warm lazy chunks to avoid cold-load flash

@@ -486,3 +486,38 @@ describe("openFullscreen with a diagram over the size limit", () => {
     expect(state.activeSourceElement).toBe(small);
   });
 });
+
+// ---------------------------------------------------------------------------
+// The close and clear-search buttons each get one click handler
+// ---------------------------------------------------------------------------
+describe("close and clear-search buttons are wired once", () => {
+  let added;
+
+  beforeEach(() => {
+    resetConfig();
+    document.body.innerHTML = "";
+    installFakePanzoom();
+    updateConfig({ showFirstTimeThemeHint: false, animateOpen: false });
+    added = jest.spyOn(EventTarget.prototype, "addEventListener");
+    createModal();
+  });
+
+  afterEach(async () => {
+    added.mockRestore();
+    if (state.isModalOpen) await closeModal();
+    await settle();
+    delete window.Panzoom;
+  });
+
+  const clicks = (id) =>
+    added.mock.calls.filter(([type], i) => type === "click" && added.mock.contexts[i].id === id)
+      .length;
+
+  test("one click handler each once the viewer is open", async () => {
+    await openFullscreen(makeDiagram("d-wired", 0));
+    await settle();
+
+    expect(clicks("diagview-close")).toBe(1);
+    expect(clicks("diagview-search-clear")).toBe(1);
+  });
+});
