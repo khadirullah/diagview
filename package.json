@@ -123,6 +123,7 @@
   ],
   "jest": {
     "testEnvironment": "jsdom",
+    "restoreMocks": true,
     "globals": {
       "__DV_VERSION__": "1.1.0"
     },

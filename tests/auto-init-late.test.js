@@ -24,16 +24,20 @@ const SVG =
   '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 10"><rect width="5" height="5"/></svg>';
 
 document.body.innerHTML = `<div class="diagram">${SVG}</div>`;
-const warnSpy = jest.spyOn(console, "warn").mockImplementation(() => {});
 
 const DiagView = (await import("../src/index.js")).default;
 const { state } = await import("../src/core/config.js");
 
 describe("init() after auto-init", () => {
+  let warnSpy;
+
+  beforeEach(() => {
+    warnSpy = jest.spyOn(console, "warn").mockImplementation(() => {});
+  });
+
   afterAll(async () => {
     await DiagView.destroy();
     jest.runAllTimers();
-    warnSpy.mockRestore();
   });
 
   test("the warning says the options were ignored and how to stop auto-init", () => {

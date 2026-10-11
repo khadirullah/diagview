@@ -27,16 +27,20 @@ const SVG =
 // and the opt-out sits on it.
 document.body.innerHTML = `<div class="diagram">${SVG}</div>
   <script type="module" src="/assets/index-4f2a9c.js" data-diagview-no-auto-init></script>`;
-const warnSpy = jest.spyOn(console, "warn").mockImplementation(() => {});
 
 const DiagView = (await import("../src/index.js")).default;
 const { state } = await import("../src/core/config.js");
 
 describe("auto-init opt-out", () => {
+  let warnSpy;
+
+  beforeEach(() => {
+    warnSpy = jest.spyOn(console, "warn").mockImplementation(() => {});
+  });
+
   afterAll(async () => {
     await DiagView.destroy();
     jest.runAllTimers();
-    warnSpy.mockRestore();
   });
 
   test("the attribute on a script with any name stops auto-init", () => {

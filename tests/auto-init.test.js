@@ -27,16 +27,20 @@ const SVG =
 // Page state at "module evaluation" time: a diagram is present and there is
 // no opt-out attribute, so the library would auto-initialise itself.
 document.body.innerHTML = `<div class="diagram">${SVG}</div>`;
-const autoInitWarn = jest.spyOn(console, "warn").mockImplementation(() => {});
 
 const DiagView = (await import("../src/index.js")).default;
 const { state, DEFAULT_CONFIG } = await import("../src/core/config.js");
 
 describe("auto-init scheduling", () => {
+  let autoInitWarn;
+
+  beforeEach(() => {
+    autoInitWarn = jest.spyOn(console, "warn").mockImplementation(() => {});
+  });
+
   afterAll(async () => {
     await DiagView.destroy();
     jest.runAllTimers();
-    autoInitWarn.mockRestore();
   });
 
   test("a manual init() issued right after module evaluation wins over auto-init", () => {
