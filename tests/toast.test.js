@@ -249,6 +249,16 @@ describe("Toast Notification System", () => {
       expect(toast.hasAttribute("aria-live")).toBe(false);
     });
 
+    test("the notice on screen is hidden from screen readers, so it is read once", () => {
+      showWarningToast("Clipboard blocked");
+      showSuccessToast("Copied");
+      const container = document.getElementById("diagview-toast-container");
+      expect(container.getAttribute("aria-hidden")).toBe("true");
+      expect(container.querySelectorAll(".diagview-toast")).toHaveLength(2);
+      expect(container.querySelector("button, a, input, [tabindex]")).toBeNull();
+      expect(container.contains(live())).toBe(false);
+    });
+
     test("the text arrives after the region is in the page", () => {
       showSuccessToast("Link copied");
       expect(document.body.contains(live())).toBe(true);

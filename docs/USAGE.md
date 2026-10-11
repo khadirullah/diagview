@@ -650,7 +650,7 @@ A `backgroundColor` with transparency, such as `"transparent"` or `rgba(15, 23, 
 
 Warning notices, such as the one shown when a transparent JPEG is saved as PNG, are amber (`#f59e0b`). Set `warningColor` to use another colour. It accepts the same colours, and a value the browser rejects logs a console warning and keeps the amber. Success notices use the accent. Error notices are always red. DiagView picks white or near-black text for each notice so the text reaches 4.5:1 on its colour. When neither does, it darkens the colour until white text does. Warning notices stay on screen for 5 seconds, whatever `toastDuration` and `errorToastDuration` say.
 
-Screen readers read each notice from a hidden live region with the id `diagview-toast-live`. DiagView adds the region empty and writes the notice into it a tenth of a second later, since many screen readers skip text that arrives with its region. Success, info and progress notices wait until the screen reader is idle. Errors and warnings interrupt it. When a result replaces its progress notice within that tenth of a second, only the result is read.
+Screen readers read each notice from a hidden live region with the id `diagview-toast-live`. DiagView adds the region empty and writes the notice into it a tenth of a second later, since many screen readers skip text that arrives with its region. Success, info and progress notices wait until the screen reader is idle. Errors and warnings interrupt it. When a result replaces its progress notice within that tenth of a second, only the result is read. The notice on screen is marked `aria-hidden`, so a screen reader in browse mode does not find it a second time.
 
 ### WCAG contrast enforcement
 

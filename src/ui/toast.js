@@ -153,6 +153,9 @@ export function showToast(message, type = "success", duration = null, icon = nul
     container = document.createElement("div");
     container.id = "diagview-toast-container";
     container.className = "diagview-toast-container";
+    // The live region already reads each notice, so a screen reader in
+    // browse mode must not find the same text here a second time
+    container.setAttribute("aria-hidden", "true");
     targetParent.appendChild(container);
   } else if (container.parentNode !== targetParent || container.nextSibling) {
     // Re-append to ensure it's in the correct parent and on top
