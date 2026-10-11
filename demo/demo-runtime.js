@@ -84,12 +84,14 @@
         '.slice { fill: var(--pie-ink); }'
     ];
     // Pie slices and legend keys in drawing order. Mermaid colours the keys
-    // with inline styles, so only those rules need !important.
+    // with inline styles, so only those rules need !important. Mermaid 12
+    // puts the slices in a group before the keys, so the keys are counted
+    // among the legend groups only.
     var PIE = ['#ea580c', '#aab4c3', '#d7dce4'];
     for (var pi = 1; pi <= 3; pi++) {
         var pv = 'var(--pie-' + pi + ', ' + PIE[pi - 1] + ')';
         MERMAID_CSS.push('.pieCircle:nth-of-type(' + pi + ') { fill: ' + pv + '; }',
-            '.legend:nth-of-type(' + pi + ') rect { fill: ' + pv + ' !important; stroke: ' + pv + ' !important; }');
+            '.legend:nth-child(' + pi + ' of .legend) rect { fill: ' + pv + ' !important; stroke: ' + pv + ' !important; }');
     }
     var TINTS = ['Rose', 'Amber', 'Indigo', 'Teal', 'Green', 'Blue'];
     for (var ti = 0; ti < TINTS.length; ti++) {
