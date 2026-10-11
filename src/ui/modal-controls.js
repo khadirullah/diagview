@@ -169,11 +169,6 @@ export async function closeModal() {
     if (modal) {
       modal.classList.remove("open");
       modal.classList.remove("animate-open");
-
-      // Exit fullscreen if active
-      if (document.fullscreenElement) {
-        await document.exitFullscreen().catch(() => {});
-      }
     }
 
     // Reset topbar/buttons

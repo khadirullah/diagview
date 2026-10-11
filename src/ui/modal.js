@@ -218,7 +218,9 @@ function _activateModalUI(modal, viewport) {
   // Push history state so mobile back button closes modal
   pushModalHistoryState(() => closeModal());
 
-  // Sync modal with native fullscreen exits
+  // The viewer never enters the browser's fullscreen, but the page may be
+  // in it. Esc there leaves fullscreen before any key handler sees it, so
+  // close the viewer too, as the reader asked.
   addModalListener(document, "fullscreenchange", () => {
     if (!document.fullscreenElement && state.isModalOpen) {
       closeModal();

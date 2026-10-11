@@ -162,6 +162,22 @@ describe("Modal System", () => {
     expect(closeModal).toHaveBeenCalled();
   });
 
+  test("the page entering the browser's fullscreen keeps the viewer open", async () => {
+    const { addModalListener } = await import("../src/core/lifecycle.js");
+    const { closeModal } = await import("../src/ui/modal-controls.js");
+
+    await openFullscreen(container);
+    const callback = addModalListener.mock.calls.find((c) => c[1] === "fullscreenchange")[2];
+    Object.defineProperty(document, "fullscreenElement", {
+      value: document.documentElement,
+      configurable: true,
+    });
+
+    callback();
+    expect(closeModal).not.toHaveBeenCalled();
+    delete document.fullscreenElement;
+  });
+
   test("resize handler resets panzoom on significant change", async () => {
     await openFullscreen(container);
     state.activePanzoom = panzoomMock;

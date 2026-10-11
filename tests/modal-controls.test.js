@@ -34,6 +34,37 @@ describe("closeModal re-entrancy guard", () => {
   });
 });
 
+describe("closing the viewer leaves the page's fullscreen alone", () => {
+  afterEach(() => {
+    delete document.fullscreenElement;
+    delete document.exitFullscreen;
+  });
+
+  test("a page in the browser's fullscreen stays in it", async () => {
+    resetConfig();
+    document.body.innerHTML = '<div id="diagview-modal" class="open"></div>';
+    // jsdom has no Fullscreen API, so stand in for a page that entered it
+    Object.defineProperty(document, "fullscreenElement", {
+      value: document.documentElement,
+      configurable: true,
+    });
+    const exitFullscreen = jest.fn(() => Promise.resolve());
+    Object.defineProperty(document, "exitFullscreen", {
+      value: exitFullscreen,
+      configurable: true,
+    });
+    state.isModalOpen = true;
+    state.isModalClosing = false;
+
+    await closeModal();
+
+    expect(state.isModalOpen).toBe(false);
+    expect(document.getElementById("diagview-modal").classList.contains("open")).toBe(false);
+    expect(exitFullscreen).not.toHaveBeenCalled();
+    expect(document.fullscreenElement).toBe(document.documentElement);
+  });
+});
+
 describe("scroll lock leaves <body> as it found it", () => {
   const body = document.body;
 
