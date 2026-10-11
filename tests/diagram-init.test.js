@@ -1169,3 +1169,32 @@ describe("Diagram Init: offHint", () => {
     expect(el.classList.contains("diagview-off-host")).toBe(false);
   });
 });
+
+describe("Diagram Init: a diagram inside a page's form", () => {
+  afterEach(() => {
+    document.body.innerHTML = "";
+  });
+
+  test.each(["floating", "header"])(
+    "the %s toolbar buttons do their job without submitting the form",
+    async (layout) => {
+      const { openFullscreen } = await import("../src/ui/modal.js");
+      const { exportDiagram } = await import("../src/features/export.js");
+      jest.clearAllMocks();
+      document.body.innerHTML = `<form action="/save"><div class="diagram" data-diagview-layout="${layout}"><svg viewBox="0 0 10 10"><rect width="5" height="5"/></svg></div></form>`;
+      const form = document.querySelector("form");
+      const submit = jest.fn((e) => e.preventDefault());
+      form.addEventListener("submit", submit);
+
+      initializeDiagram(document.querySelector(".diagram"));
+      const buttons = [...form.querySelectorAll(".diagview-btn")];
+      expect(buttons.map((b) => b.dataset.action)).toEqual(["copy", "download", "fullscreen"]);
+      buttons.forEach((b) => b.click());
+
+      expect(buttons.every((b) => b.type === "button")).toBe(true);
+      expect(submit).not.toHaveBeenCalled();
+      expect(exportDiagram).toHaveBeenCalledTimes(2);
+      expect(openFullscreen).toHaveBeenCalledTimes(1);
+    },
+  );
+});

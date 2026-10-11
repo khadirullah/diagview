@@ -66,6 +66,13 @@ describe("Floating Menu UI", () => {
     expect(fab.getAttribute("aria-expanded")).toBe("true");
   });
 
+  test("every button in the menu is a plain button, not a submit button", () => {
+    createFloatingMenu(sourceElement, clonedSvg);
+    const buttons = [...document.querySelectorAll("#diagview-temp-menu button")];
+    expect(buttons.length).toBeGreaterThan(10);
+    expect(buttons.filter((b) => b.getAttribute("type") !== "button")).toEqual([]);
+  });
+
   test("createFloatingMenu creates the FAB and panel in the DOM", () => {
     createFloatingMenu(sourceElement, clonedSvg);
 

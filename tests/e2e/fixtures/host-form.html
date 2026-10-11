@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DiagView inside a form</title>
+<style>body{font-family:sans-serif;margin:24px;background:#fff;color:#1e293b} .diagram{width:480px;margin:24px 0}</style>
+</head>
+<body>
+<!--
+  Two diagrams inside the page's own form, as in a CMS editor. The form's
+  submit handler counts each submit and stops it, so the page stays put.
+-->
+<form id="host" action="https://example.invalid/saved" method="get">
+<div class="diagram" id="floating" data-title="Floating diagram" data-diagview-layout="floating">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 160"><rect x="20" y="40" width="160" height="80" fill="#dbeafe"/><rect x="300" y="40" width="160" height="80" fill="#dcfce7"/><path d="M180 80H300" stroke="#334155"/></svg>
+</div>
+<div class="diagram" id="header" data-title="Header diagram" data-diagview-layout="header">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 160"><rect x="160" y="40" width="160" height="80" fill="#ede9fe"/></svg>
+</div>
+<label>Title <input id="field" name="title" value="Draft"></label>
+<button id="save">Save</button>
+</form>
+<script>
+window.__submits = [];
+document.getElementById("host").addEventListener("submit", (e) => {
+  window.__submits.push(e.submitter ? e.submitter.id || e.submitter.dataset.action : "none");
+  e.preventDefault();
+});
+</script>
+</body>
+</html>

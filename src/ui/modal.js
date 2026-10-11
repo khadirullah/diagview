@@ -601,6 +601,7 @@ function _createModalTopbar(content) {
   searchClear.id = "diagview-search-clear";
   searchClear.className = "diagview-search-clear";
   searchClear.setAttribute("aria-label", "Clear search");
+  searchClear.setAttribute("type", "button");
   searchClear.textContent = "✕";
   searchWrapper.appendChild(searchClear);
 
@@ -643,6 +644,7 @@ function _createModalTopbar(content) {
   closeBtn.id = "diagview-close";
   closeBtn.title = "Close (Esc)";
   closeBtn.setAttribute("aria-label", "Close fullscreen");
+  closeBtn.setAttribute("type", "button");
   closeBtn.textContent = "✕";
   topbar.appendChild(closeBtn);
 

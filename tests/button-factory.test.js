@@ -1,9 +1,10 @@
 /**
  * Button Factory Tests
- * The success tick follows the result of the click handler.
+ * The success tick follows the result of the click handler, and a button
+ * inside a page's form leaves the form alone.
  */
 import { jest } from "@jest/globals";
-import { createButton } from "../src/ui/button-factory.js";
+import { createButton, createMenuItem } from "../src/ui/button-factory.js";
 import { TIMING } from "../src/core/constants.js";
 
 const flush = () => new Promise((r) => setTimeout(r, 0));
@@ -80,5 +81,27 @@ describe("success tick after a click", () => {
     btn.click();
     await flush();
     expect(btn.classList.contains("success")).toBe(false);
+  });
+});
+
+describe("a button inside a page's form", () => {
+  afterEach(() => {
+    document.body.innerHTML = "";
+  });
+
+  test.each([
+    ["toolbar button", () => createButton({ action: "copy", title: "Copy", icon: "<svg></svg>" })],
+    ["menu item", () => createMenuItem({ id: "dv-x", icon: "<svg></svg>", label: "Share" })],
+  ])("a %s does not submit the form", (_name, make) => {
+    const form = document.createElement("form");
+    const submit = jest.fn((e) => e.preventDefault());
+    form.addEventListener("submit", submit);
+    const btn = make();
+    form.appendChild(btn);
+    document.body.appendChild(form);
+
+    expect(btn.type).toBe("button");
+    btn.click();
+    expect(submit).not.toHaveBeenCalled();
   });
 });

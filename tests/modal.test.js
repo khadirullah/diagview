@@ -80,6 +80,12 @@ describe("Modal System", () => {
     expect(modal1).toBe(modal2);
   });
 
+  test("every button in the viewer is a plain button, not a submit button", () => {
+    const buttons = [...document.querySelectorAll("#diagview-modal button")];
+    expect(buttons.length).toBeGreaterThan(4);
+    expect(buttons.filter((b) => b.getAttribute("type") !== "button")).toEqual([]);
+  });
+
   test("openFullscreen opens modal and applies animation class if enabled", async () => {
     updateConfig({ animateOpen: true });
     await openFullscreen(container);

@@ -58,6 +58,7 @@ export function createFloatingMenu(sourceElement, clonedSvg) {
 
 function _createFAB(container) {
   const fab = document.createElement("button");
+  fab.type = "button";
   fab.className = "diagview-fab-btn";
   fab.id = "dv-toggle";
   fab.setAttribute("aria-label", "Toggle menu");
@@ -93,6 +94,7 @@ function _createZoomSection(menuPanel) {
   zoomControls.className = "dv-zoom";
 
   const zoomOutBtn = document.createElement("button");
+  zoomOutBtn.type = "button";
   zoomOutBtn.id = "dv-zoomout";
   zoomOutBtn.title = "Zoom Out (-)";
   zoomOutBtn.setAttribute("aria-label", "Zoom out");
@@ -104,12 +106,14 @@ function _createZoomSection(menuPanel) {
   zoomTag.textContent = "100%";
 
   const zoomInBtn = document.createElement("button");
+  zoomInBtn.type = "button";
   zoomInBtn.id = "dv-zoomin";
   zoomInBtn.title = "Zoom In (+)";
   zoomInBtn.setAttribute("aria-label", "Zoom in");
   zoomInBtn.textContent = "+";
 
   const resetBtn = document.createElement("button");
+  resetBtn.type = "button";
   resetBtn.id = "dv-reset";
   resetBtn.title = "Reset/Fit (Space)";
   resetBtn.setAttribute("aria-label", "Reset zoom");
@@ -294,6 +298,7 @@ function _createExportSection(menuPanel) {
     { label: "Copy Image", action: "copy" },
   ].forEach((item) => {
     const btn = document.createElement("button");
+    btn.type = "button";
     btn.dataset.action = item.action;
     btn.textContent = item.label;
     expGrid.appendChild(btn);

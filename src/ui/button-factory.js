@@ -50,6 +50,8 @@ export function createButton(config) {
 
   // Create button element
   const btn = document.createElement("button");
+  // Without a type, a button inside a page's <form> submits it
+  btn.type = "button";
   btn.className = `diagview-btn ${styleClass}`.trim();
   btn.setAttribute("data-action", action);
   btn.setAttribute("title", title);
@@ -162,6 +164,7 @@ export function createMenuItem(config) {
   }
 
   const btn = document.createElement("button");
+  btn.type = "button";
   btn.className = `dv-menu-item ${className}`.trim();
   btn.id = id;
 
