@@ -99,6 +99,12 @@ describe("Modal System", () => {
     );
   });
 
+  test("the search box has a name of its own, not just its placeholder", () => {
+    const input = document.getElementById("diagview-search");
+    expect(input.getAttribute("aria-label")).toBe("Search nodes");
+    expect(input.placeholder).toBe("Search nodes...");
+  });
+
   test("the diagram area keeps browse mode and stays out of the tab order", () => {
     const viewport = document.getElementById("diagview-modal-viewport");
     expect(viewport.hasAttribute("role")).toBe(false);

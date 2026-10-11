@@ -365,7 +365,7 @@ DiagView picks the outline colour from the canvas background. It uses `#2563eb` 
 - `Enter` moves to the next match and `Shift`+`Enter` to the one before, in reading order on screen, row by row from the top and each row from left to right. The first `Enter` picks the first match in view. The view pans only when that match is not fully in view. The current match gets a 6px outline instead of 3px, and the `aria-live` region reads "Match 2 of 5"
 - A match is measured by its label, so a large Mermaid group pans to its title. A label wider or taller than the view gets its middle in the middle of the view, and you can zoom out to see all of it
 - The pan takes `panAnimationDuration`, follows rotation, and is instant when the system asks for reduced motion
-- An `aria-live` region announces the match count to screen readers
+- Screen readers name the search box "Search nodes", also while it holds a query. An `aria-live` region announces the match count
 - Pressing `Esc` is two-stage: with a query it clears the query; with an empty query it exits search mode (the next `Esc` closes the viewer)
 - Pressing the `✕` button clears the query
 

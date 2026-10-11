@@ -615,6 +615,9 @@ function _createModalTopbar(content) {
   searchInput.id = "diagview-search";
   searchInput.className = "diagview-search-input";
   searchInput.placeholder = "Search nodes...";
+  // A placeholder alone is a weak name. Some screen readers drop it once
+  // the box holds text.
+  searchInput.setAttribute("aria-label", "Search nodes");
   searchInput.autocomplete = "off";
   searchInput.spellcheck = false;
   searchInput.setAttribute("aria-controls", "diagview-search-status");
