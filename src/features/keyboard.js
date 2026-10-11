@@ -5,6 +5,7 @@
  */
 
 import { state } from "../core/config.js";
+import { loadChunk } from "../core/lifecycle.js";
 import { PAN, TIMING } from "../core/constants.js";
 import { shouldHandleKeyboardEvent, isInputFocused } from "../ui/focus-manager.js";
 import { closeModal } from "../ui/modal-controls.js";
@@ -183,7 +184,7 @@ function handleKeyboardShortcut(e) {
     case "m":
     case "M":
       e.preventDefault();
-      import("./lazy/meeting-mode.js")
+      loadChunk("meeting mode", () => import("./lazy/meeting-mode.js"))
         .then((m) => m.toggleMeetingMode())
         .catch((err) => console.error("DiagView: Failed to load Meeting Mode", err));
       break;
@@ -199,7 +200,7 @@ function handleKeyboardShortcut(e) {
     case "r":
     case "R":
       e.preventDefault();
-      import("./lazy/rotate.js")
+      loadChunk("rotate", () => import("./lazy/rotate.js"))
         .then((m) => m.rotateDiagram())
         .catch((err) => console.error("DiagView: Failed to load Rotate", err));
       break;

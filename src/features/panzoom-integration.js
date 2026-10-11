@@ -27,7 +27,7 @@ import { state } from "../core/config.js";
 import { ZOOM, PAN, TIMING } from "../core/constants.js";
 import { checkPanzoomDependency } from "../core/utils.js";
 
-import { addModalListener, addModalCleanupFunction } from "../core/lifecycle.js";
+import { addModalListener, addModalCleanupFunction, loadChunk } from "../core/lifecycle.js";
 import { showErrorToast, showInfoToast } from "../ui/toast.js";
 import { blurActiveElement } from "../ui/focus-manager.js";
 
@@ -300,7 +300,7 @@ export function restoreZoomState(diagramId, panzoom) {
       });
     };
     if (rotation !== 0) {
-      import("./lazy/rotate.js")
+      loadChunk("rotate", () => import("./lazy/rotate.js"))
         .then((m) => {
           if (state.isModalOpen) m.applyRotationAngle(rotation);
         })

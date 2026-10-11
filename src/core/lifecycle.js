@@ -154,3 +154,25 @@ export function clearAsyncTasks(state) {
   state.asyncTasks.timeouts.clear();
   state.asyncTasks.rafs.clear();
 }
+
+// Lazy chunks that failed to load, so each warns once
+const failedChunks = new Set();
+
+/**
+ * Load a lazy chunk. A chunk that cannot load, as happens offline, under a
+ * strict Content-Security-Policy or when a CDN errors, logs one warning
+ * that names the feature. The promise still rejects.
+ * @template T
+ * @param {string} name - The feature, as the warning names it
+ * @param {() => Promise<T>} load - The import() of the chunk
+ * @returns {Promise<T>} The chunk's module
+ */
+export function loadChunk(name, load) {
+  return load().catch((e) => {
+    if (!failedChunks.has(name)) {
+      failedChunks.add(name);
+      console.warn(`DiagView: Could not load the ${name} feature, so it does not work`, e);
+    }
+    throw e;
+  });
+}

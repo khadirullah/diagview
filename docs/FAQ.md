@@ -8,7 +8,7 @@
 A: Yes. DiagView is MIT licensed, so you can use it for personal and commercial work. Attribution is not required, though it is appreciated.
 
 **Q: What does DiagView require?**  
-A: Only `@panzoom/panzoom` for the fullscreen zoom/pan feature. PDF export loads jsPDF from a CDN the first time it runs. In the ESM build, the minimap, rotation, meeting mode and Readable text load on first use, and search loads in the background after `init()`. The UMD build carries them all in one file.
+A: Only `@panzoom/panzoom` for the fullscreen zoom/pan feature. PDF export loads jsPDF from a CDN the first time it runs. In the ESM build, the minimap, rotation, meeting mode and Readable text load on first use, and search loads in the background after `init()`. The UMD build carries them all in one file. When one of these parts cannot load, for example offline or under a strict Content-Security-Policy, DiagView logs one console warning that names it, and the rest of the viewer keeps working.
 
 **Q: Which diagram libraries does DiagView support?**  
 A: Any library that outputs SVG into the DOM. That includes Mermaid.js, D3.js, Graphviz, PlantUML (rendered), Kroki, draw.io, and hand-crafted SVGs. See [Mermaid integration](USAGE.md#21-mermaid-integration).

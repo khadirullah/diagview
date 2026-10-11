@@ -44,7 +44,16 @@ function makeDiagram() {
 }
 
 describe("the minimap chunk fails to load", () => {
-  let warnSpy;
+  // Every warning in this file. The chunk warns once per page, so the count
+  // must not depend on which test opened the viewer first.
+  const warnings = [];
+  const warn = console.warn;
+  beforeAll(() => {
+    console.warn = (...args) => warnings.push(args);
+  });
+  afterAll(() => {
+    console.warn = warn;
+  });
 
   beforeEach(() => {
     resetConfig();
@@ -53,7 +62,6 @@ describe("the minimap chunk fails to load", () => {
     window.scrollTo = jest.fn();
     updateConfig({ showFirstTimeThemeHint: false, animateOpen: false });
     createModal();
-    warnSpy = jest.spyOn(console, "warn").mockImplementation(() => {});
   });
 
   afterEach(async () => {
@@ -74,5 +82,18 @@ describe("the minimap chunk fails to load", () => {
     const keys = added.mock.calls.filter(([type]) => type === "keydown");
     expect(inputs).toHaveLength(1);
     expect(keys).toHaveLength(1);
+  });
+
+  test("one warning names the feature, however often the viewer opens", async () => {
+    const diagram = makeDiagram();
+    for (let i = 0; i < 2; i++) {
+      await openFullscreen(diagram);
+      await settle();
+      await closeModal();
+    }
+
+    const named = warnings.filter(([msg]) => String(msg).includes("minimap feature"));
+    expect(named).toHaveLength(1);
+    expect(named[0][0]).toBe("DiagView: Could not load the minimap feature, so it does not work");
   });
 });

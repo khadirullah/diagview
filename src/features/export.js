@@ -5,6 +5,7 @@
  */
 
 import { state } from "../core/config.js";
+import { loadChunk } from "../core/lifecycle.js";
 import { EXPORT, COLORS, TIMING } from "../core/constants.js";
 import { detectTheme, getContrastRatio } from "../core/theme.js";
 import {
@@ -494,7 +495,7 @@ async function prepareSvgForExport(svg, modalClone, transparent) {
   };
   const textWork = bg || sourceSvg.querySelector?.("[data-dv-text-orig]");
   const exportSvg = await (textWork
-    ? import("./lazy/readable-text.js").then((m) => {
+    ? loadChunk("readable text", () => import("./lazy/readable-text.js")).then((m) => {
         const made = m.exportText(sourceSvg, bg, cloneSource);
         faint = made.faint;
         return made.clone;

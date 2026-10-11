@@ -5,6 +5,7 @@
  */
 
 import { state, addModalCleanupFunction } from "../core/config.js";
+import { loadChunk } from "../core/lifecycle.js";
 import { setCanvasTheme } from "../core/theme.js";
 import { sanitizeSVG } from "../core/utils.js";
 
@@ -235,7 +236,9 @@ function _createCanvasThemeSection(menuPanel) {
         b.setAttribute("aria-pressed", String(b === btn));
       });
       state.readableText = mode === "readable";
-      import("../features/lazy/readable-text.js").then((m) => m.syncReadableText()).catch(() => {});
+      loadChunk("readable text", () => import("../features/lazy/readable-text.js"))
+        .then((m) => m.syncReadableText())
+        .catch(() => {});
     };
     textGroup.appendChild(btn);
   });
@@ -464,9 +467,10 @@ function _setupMenuController(elements, sourceElement, clonedSvg) {
         try {
           // Use static paths so Rollup can inline them for UMD builds
           if (def.feat === "share") mod = await import("../features/lazy/share.js");
-          else if (def.feat === "rotate") mod = await import("../features/lazy/rotate.js");
+          else if (def.feat === "rotate")
+            mod = await loadChunk("rotate", () => import("../features/lazy/rotate.js"));
           else if (def.feat === "meeting-mode")
-            mod = await import("../features/lazy/meeting-mode.js");
+            mod = await loadChunk("meeting mode", () => import("../features/lazy/meeting-mode.js"));
 
           if (def.feat === "share") mod.shareLink(state.currentDiagramIndex);
           else if (def.feat === "rotate") mod.rotateDiagram();

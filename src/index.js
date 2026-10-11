@@ -19,7 +19,7 @@ import {
   runModalCleanupFunctions,
 } from "./core/config.js";
 import { isBrowser, sanitizeSVG, clearSVGContentCache } from "./core/utils.js";
-import { safeDestroy, clearAsyncTasks } from "./core/lifecycle.js";
+import { safeDestroy, clearAsyncTasks, loadChunk } from "./core/lifecycle.js";
 import {
   setupThemeWatchers,
   teardownThemeWatchers,
@@ -161,7 +161,7 @@ function init(options = {}) {
 
   // Pre-warm lazy chunks to avoid cold-load flash
   import("./features/lazy/share.js").catch(() => {});
-  import("./features/lazy/search.js").catch(() => {});
+  loadChunk("search", () => import("./features/lazy/search.js")).catch(() => {});
   // Note: Share link check is done in observer.js processDiagrams()
   return Promise.resolve();
 }

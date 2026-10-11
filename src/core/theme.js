@@ -8,7 +8,7 @@ import { state } from "./config.js";
 import { TIMING, COLORS } from "./constants.js";
 import { debounce, removeEmptyAttr } from "./utils.js";
 
-import { addManagedListener } from "./lifecycle.js";
+import { addManagedListener, loadChunk } from "./lifecycle.js";
 
 // Theme State handled via state in config.js
 const CACHE_DURATION = 1000; // 1 second
@@ -585,7 +585,9 @@ export function setCanvasTheme(mode, customColor = null) {
  */
 export function syncReadable(bg) {
   if (state.readableText) {
-    import("../features/lazy/readable-text.js").then((m) => m.syncReadableText(bg)).catch(() => {});
+    loadChunk("readable text", () => import("../features/lazy/readable-text.js"))
+      .then((m) => m.syncReadableText(bg))
+      .catch(() => {});
   }
 }
 
@@ -687,7 +689,9 @@ export function syncTheme() {
     modal.style.color = theme.text;
     // The minimap image baked in the old text colour for currentColor parts
     if (state.minimapSvg) {
-      import("../features/lazy/minimap.js").then((m) => m.refreshMinimapColour()).catch(() => {});
+      loadChunk("minimap", () => import("../features/lazy/minimap.js"))
+        .then((m) => m.refreshMinimapColour())
+        .catch(() => {});
     }
   }
 

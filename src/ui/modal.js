@@ -13,7 +13,7 @@ import {
   generateUniqueId,
   getDiagramSvg,
 } from "../core/utils.js";
-import { addModalListener, addModalCleanupFunction } from "../core/lifecycle.js";
+import { addModalListener, addModalCleanupFunction, loadChunk } from "../core/lifecycle.js";
 import { cloneSVGForModal } from "../core/svg-clone.js";
 import { BRANDING, TIMING } from "../core/constants.js";
 import { ICONS } from "./icons.js";
@@ -273,7 +273,7 @@ async function _initCoreInteractions(element, clone, viewport, options, session)
     try {
       const [shareMod, searchMod] = await Promise.all([
         import("../features/lazy/share.js"),
-        import("../features/lazy/search.js"),
+        loadChunk("search", () => import("../features/lazy/search.js")),
       ]);
 
       // Guard: If the user closed the modal while we were loading, bail out
@@ -310,7 +310,7 @@ async function _initCoreInteractions(element, clone, viewport, options, session)
     // again. Two sets of handlers made Enter skip every other match.
     if (!searchSetUp) {
       try {
-        const m = await import("../features/lazy/search.js");
+        const m = await loadChunk("search", () => import("../features/lazy/search.js"));
         if (_isSessionLive(session)) m.setupSearch(clone);
       } catch (e) {
         // Silent fallback: Search failure is non-critical for core viewing
@@ -319,7 +319,7 @@ async function _initCoreInteractions(element, clone, viewport, options, session)
 
     // Task 48: Sync minimap after zoom restore to avoid visual lag
     try {
-      const m = await import("../features/lazy/minimap.js");
+      const m = await loadChunk("minimap", () => import("../features/lazy/minimap.js"));
       if (_isSessionLive(session)) m.updateMinimap(clone, viewport, panzoom);
     } catch (e) {
       // The viewer works without the minimap
@@ -377,7 +377,7 @@ function _attachModalLifecycle(element, clone, viewport, panzoom, diagramId) {
 
     // 1. Throttled updates (Minimap)
     let updateMinimapFn = null;
-    import("../features/lazy/minimap.js")
+    loadChunk("minimap", () => import("../features/lazy/minimap.js"))
       .then((m) => {
         updateMinimapFn = throttle(() => {
           if (state.isModalOpen) m.updateMinimap(clone, viewport, panzoom);
@@ -509,7 +509,9 @@ export async function openFullscreen(element, options = {}) {
     // Readable text lasts for the page session, so every new clone gets it.
     // The modal is open and laid out by now, so labels can be measured.
     if (state.readableText) {
-      import("../features/lazy/readable-text.js").then((m) => m.syncReadableText()).catch(() => {});
+      loadChunk("readable text", () => import("../features/lazy/readable-text.js"))
+        .then((m) => m.syncReadableText())
+        .catch(() => {});
     }
 
     // Completion UI
@@ -814,12 +816,16 @@ function _wireModalEvents(elements, viewport) {
     topbar.classList.remove("search-open");
     searchIconBtn.classList.remove("active");
     searchIconBtn.setAttribute("aria-expanded", "false");
-    import("../features/lazy/search.js").then((m) => m.clearSearch()).catch(() => {});
+    loadChunk("search", () => import("../features/lazy/search.js"))
+      .then((m) => m.clearSearch())
+      .catch(() => {});
   });
 
   searchClear.addEventListener("click", () => {
     searchInput.value = "";
-    import("../features/lazy/search.js").then((m) => m.clearSearch()).catch(() => {});
+    loadChunk("search", () => import("../features/lazy/search.js"))
+      .then((m) => m.clearSearch())
+      .catch(() => {});
     searchInput.focus();
   });
 

@@ -15,6 +15,7 @@ jest.unstable_mockModule("../src/core/theme.js", () => ({
 jest.unstable_mockModule("../src/core/lifecycle.js", () => ({
   addModalListener: jest.fn(),
   addModalCleanupFunction: jest.fn(),
+  loadChunk: (name, load) => load(),
 }));
 jest.unstable_mockModule("../src/core/svg-clone.js", () => ({
   cloneSVGForModal: jest.fn((svg) => svg.cloneNode(true)),

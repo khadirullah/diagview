@@ -18,6 +18,7 @@
  */
 
 import { state } from "../../core/config.js";
+import { loadChunk } from "../../core/lifecycle.js";
 import { ZOOM } from "../../core/constants.js";
 import { showSuccessToast, showErrorToast } from "../../ui/toast.js";
 import { getClientCTM } from "../../core/utils.js";
@@ -330,7 +331,7 @@ export function applyRestoredViewState(diagram, panzoom) {
   // which also puts the SVG's user space back in the same (rotated)
   // coordinate system the shared cx/cy were captured in.
   if (rotation !== null && rotation !== 0) {
-    import("./rotate.js")
+    loadChunk("rotate", () => import("./rotate.js"))
       .then((m) => {
         if (state.isModalOpen) m.applyRotationAngle(rotation);
       })
