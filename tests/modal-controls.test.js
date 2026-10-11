@@ -115,6 +115,45 @@ describe("scroll lock leaves <body> as it found it", () => {
   });
 });
 
+describe("scroll lock gives the page its scroll-behavior back", () => {
+  const root = document.documentElement;
+  let frames, raf, caf;
+
+  // Let a restore frame left by an earlier test run first
+  beforeAll(() => new Promise((resolve) => requestAnimationFrame(resolve)));
+
+  beforeEach(() => {
+    frames = [];
+    raf = jest.spyOn(window, "requestAnimationFrame").mockImplementation((cb) => frames.push(cb));
+    caf = jest.spyOn(window, "cancelAnimationFrame").mockImplementation((id) => {
+      frames[id - 1] = () => {};
+    });
+  });
+
+  afterEach(() => {
+    raf.mockRestore();
+    caf.mockRestore();
+    root.removeAttribute("style");
+    document.body.removeAttribute("style");
+    state.modalCleanupFunctions.clear();
+  });
+
+  const runFrames = () => frames.splice(0).forEach((cb) => cb());
+
+  test("a reopen before the close has put it back keeps the page's value", () => {
+    root.style.scrollBehavior = "smooth";
+    lockBodyScroll();
+    unlockBodyScroll();
+    // Reopen before the frame that restores scroll-behavior
+    lockBodyScroll();
+    expect(root.style.scrollBehavior).toBe("auto");
+    unlockBodyScroll();
+    runFrames();
+
+    expect(root.style.scrollBehavior).toBe("smooth");
+  });
+});
+
 describe("destroy() with the viewer open leaves <html> as it found it", () => {
   const root = document.documentElement;
   let frames, raf;

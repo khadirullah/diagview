@@ -21,6 +21,9 @@ let htmlHadStyle = true;
 // too, since the shorthand reads "" when the page set only overflow-y.
 const OVERFLOW = ["overflow", "overflow-x", "overflow-y"];
 let savedOverflow = [];
+// The page's inline scroll-behavior, and the frame that puts it back
+let savedScrollBehavior = "";
+let scrollBehaviorFrame = 0;
 
 /**
  * Lock body scroll (Non-destructive version)
@@ -33,8 +36,12 @@ export function lockBodyScroll() {
   // Some browsers animate the scroll position change that can happen when
   // overflow:hidden is applied to <html>, which then shows as a jump on close.
   const htmlEl = document.documentElement;
-  // Stash whatever the page had so we can restore it on unlock.
-  htmlEl.dataset.dvPrevScrollBehavior = htmlEl.style.scrollBehavior;
+  // Stash whatever the page had so we can restore it on unlock. A reopen
+  // before the last close put it back keeps the stash, since the page
+  // value still reads "auto" then.
+  if (scrollBehaviorFrame) cancelAnimationFrame(scrollBehaviorFrame);
+  else savedScrollBehavior = htmlEl.style.scrollBehavior;
+  scrollBehaviorFrame = 0;
   htmlEl.style.scrollBehavior = "auto";
   htmlHadStyle = rootHadStyle();
 
@@ -110,10 +117,9 @@ export function unlockBodyScroll() {
   // Restore whatever scroll-behavior the page had, but only after the
   // instant scroll has been committed (next frame), so the restore itself
   // doesn't get caught by the page's smooth-scroll rules.
-  requestAnimationFrame(() => {
-    const prev = htmlEl.dataset.dvPrevScrollBehavior;
-    htmlEl.style.scrollBehavior = prev || "";
-    delete htmlEl.dataset.dvPrevScrollBehavior;
+  scrollBehaviorFrame = requestAnimationFrame(() => {
+    scrollBehaviorFrame = 0;
+    htmlEl.style.scrollBehavior = savedScrollBehavior;
     // destroy() may have removed the theme variables since, so drop the
     // style attribute this leaves empty unless the page had one
     removeEmptyAttr(htmlEl, "style", htmlHadStyle);

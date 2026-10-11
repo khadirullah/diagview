@@ -289,7 +289,6 @@ describe("openFullscreen is a no-op while the modal is already open", () => {
     resetConfig();
     document.body.innerHTML = "";
     document.documentElement.style.scrollBehavior = "";
-    delete document.documentElement.dataset.dvPrevScrollBehavior;
     clearAllZoomStates();
     instances = installFakePanzoom();
     updateConfig({ showFirstTimeThemeHint: false, animateOpen: false });
