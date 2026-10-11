@@ -35,28 +35,28 @@
 
 ## ✨ Features
 
-| Feature                      | Description                                                                            |
-| ---------------------------- | -------------------------------------------------------------------------------------- |
-| 🎨 **Auto-Theming**          | Detects Tailwind, Bootstrap, and system dark/light mode automatically                  |
-| 🔍 **Node Search**           | Outlines matching nodes, fades the rest, and pans to a match off screen                |
-| 🖼️ **Canvas Themes**         | Auto, light, dark or custom canvas; Readable mode for faint labels                     |
-| 📤 **Multi-Format Export**   | PNG, SVG, PDF, JPEG and WebP, with a transparent background option                     |
-| 📋 **Clipboard Copy**        | Copy diagrams directly to the clipboard                                                |
-| ⌨️ **Keyboard Shortcuts**    | Full keyboard navigation (zoom, pan, search, share, rotate)                            |
-| 📱 **Mobile Optimized**      | Pinch-to-zoom, double-tap to reset, Visual Viewport sync for stability                 |
-| 🗺️ **Smart Minimap**         | Accurate portrait/landscape scaling; click-to-navigate                                 |
-| 🎯 **Meeting Mode**          | Laser pointer that follows the cursor for presentations                                |
-| 🔗 **Precision Share Links** | Share exact zoom/pan position via URL parameters                                       |
-| 🔄 **Rotation**              | 90° rotation steps with correct Panzoom recalibration                                  |
-| 📝 **Text Select Mode**      | Toggle SVG text selection for copying node labels                                      |
-| 🔒 **SVG Sanitization**      | Three-tier security model (strict/permissive/off)                                      |
-| 🎭 **3 Layout Modes**        | Header toolbar, buttons that appear on hover, or click-to-open with no inline controls |
-| 🔧 **Per-Diagram Overrides** | Set layout, export scale, sanitizing and watermark per diagram via `data-*` attributes |
-| 🌐 **Shadow DOM Support**    | Works inside Shadow DOM roots                                                          |
-| 🔄 **Remember Zoom**         | Keep zoom, pan and rotation per diagram between opens, until reload                    |
-| 📦 **Minimal Dependencies**  | Only requires @panzoom/panzoom core module                                             |
-| 🚫 **Framework Agnostic**    | Works with React, Vue, Svelte, Angular, or plain HTML                                  |
-| 🏷️ **Silent Branding**       | Off by default. When on, the watermark stamps exports and never shows in the UI        |
+| Feature                      | Description                                                                                      |
+| ---------------------------- | ------------------------------------------------------------------------------------------------ |
+| 🎨 **Auto-Theming**          | Detects Tailwind, Bootstrap, and system dark/light mode automatically                            |
+| 🔍 **Node Search**           | Outlines matching nodes, fades the rest, and pans to a match off screen                          |
+| 🖼️ **Canvas Themes**         | Auto, light, dark or custom canvas; Readable mode for faint labels                               |
+| 📤 **Multi-Format Export**   | PNG, SVG, PDF, JPEG and WebP, with a transparent background option                               |
+| 📋 **Clipboard Copy**        | Copy diagrams directly to the clipboard                                                          |
+| ⌨️ **Keyboard Shortcuts**    | Full keyboard navigation (zoom, pan, search, share, rotate)                                      |
+| 📱 **Mobile Optimized**      | Pinch-to-zoom, double-tap to reset, Visual Viewport sync for stability                           |
+| 🗺️ **Smart Minimap**         | Accurate portrait/landscape scaling; click-to-navigate                                           |
+| 🎯 **Meeting Mode**          | Laser pointer that follows the cursor for presentations                                          |
+| 🔗 **Precision Share Links** | Share exact zoom/pan position via URL parameters                                                 |
+| 🔄 **Rotation**              | 90° rotation steps with correct Panzoom recalibration                                            |
+| 📝 **Text Select Mode**      | Toggle SVG text selection for copying node labels                                                |
+| 🔒 **SVG Sanitization**      | Three-tier security model (strict/permissive/off)                                                |
+| 🎭 **3 Layout Modes**        | Header toolbar, buttons that appear on hover, or click-to-open with no inline controls           |
+| 🔧 **Per-Diagram Overrides** | Set layout, off hint, export scale, sanitizing and watermark per diagram via `data-*` attributes |
+| 🌐 **Shadow DOM Support**    | Works inside Shadow DOM roots                                                                    |
+| 🔄 **Remember Zoom**         | Keep zoom, pan and rotation per diagram between opens, until reload                              |
+| 📦 **Minimal Dependencies**  | Only requires @panzoom/panzoom core module                                                       |
+| 🚫 **Framework Agnostic**    | Works with React, Vue, Svelte, Angular, or plain HTML                                            |
+| 🏷️ **Silent Branding**       | Off by default. When on, the watermark stamps exports and never shows in the UI                  |
 
 ---
 
