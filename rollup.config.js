@@ -14,6 +14,10 @@ const pkg = JSON.parse(fs.readFileSync(new URL("./package.json", import.meta.url
 const production = !process.env.ROLLUP_WATCH;
 const analyze = !!process.env.ANALYZE;
 
+// The MIT license asks for the copyright notice to stay with every copy.
+// terserConfig keeps comments that start with "/*!", so the minified file has it too.
+const banner = `/*! DiagView v${pkg.version} | (c) 2026 Khadirullah Mohammad | MIT License | github.com/khadirullah/diagview */`;
+
 // Strip comments and layout whitespace from the CSS that gets inlined into
 // the bundles. The rules stay the same. dist/diagview.css keeps the source.
 function minifyCss(css) {
@@ -74,7 +78,7 @@ const terserConfig = {
     },
   },
   format: {
-    comments: false,
+    comments: /^!/,
   },
 };
 
@@ -91,7 +95,7 @@ export default [
       format: "umd",
       name: "DiagView",
       exports: "default",
-      banner: `/*! DiagView v${pkg.version} | MIT License | github.com/khadirullah/diagview */`,
+      banner,
       inlineDynamicImports: true, // FIX: Inline dynamic imports for UMD
     })),
     plugins: [
@@ -117,7 +121,7 @@ export default [
       name: "DiagView",
       exports: "default",
       sourcemap: production,
-      banner: `/*! DiagView v${pkg.version} | MIT License */`,
+      banner,
       inlineDynamicImports: true, // FIX: Inline dynamic imports for UMD
     },
     plugins: [
@@ -150,7 +154,7 @@ export default [
       dir: "dist/esm", // Changed from file to dir for code splitting
       format: "esm",
       sourcemap: production,
-      banner: `/*! DiagView v${pkg.version} | MIT License */`,
+      banner,
       // Code splitting enabled by default for ESM
     },
     plugins: [
