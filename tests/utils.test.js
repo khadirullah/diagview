@@ -8,6 +8,7 @@ import {
   getDiagramSvg,
   hasDrawnContent,
   getDiagramTitle,
+  isClipboardAvailable,
 } from "../src/core/utils.js";
 
 describe("Utils API", () => {
@@ -410,5 +411,24 @@ describe("getDiagramTitle", () => {
     expect(getDiagramTitle(null, el)).toBe("");
     el.setAttribute("data-title", "Payments");
     expect(getDiagramTitle(null, el)).toBe("Payments");
+  });
+});
+
+describe("isClipboardAvailable", () => {
+  afterEach(() => {
+    delete global.ClipboardItem;
+    delete navigator.clipboard;
+  });
+
+  test("needs both clipboard.write and ClipboardItem", () => {
+    Object.defineProperty(navigator, "clipboard", {
+      value: { write: () => Promise.resolve() },
+      configurable: true,
+    });
+    expect(isClipboardAvailable()).toBe(false);
+    global.ClipboardItem = class {};
+    expect(isClipboardAvailable()).toBe(true);
+    Object.defineProperty(navigator, "clipboard", { value: undefined, configurable: true });
+    expect(isClipboardAvailable()).toBe(false);
   });
 });

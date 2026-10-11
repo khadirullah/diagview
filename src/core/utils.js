@@ -152,10 +152,16 @@ export function throttle(func, limit) {
 }
 
 /**
- * Check if clipboard API is available
+ * Check if the clipboard can take an image. Copy Image needs both
+ * clipboard.write and ClipboardItem, so a page that has only one gets the
+ * download in place of an error.
  */
 export function isClipboardAvailable() {
-  return isBrowser() && navigator.clipboard && typeof navigator.clipboard.write === "function";
+  return (
+    isBrowser() &&
+    typeof navigator.clipboard?.write === "function" &&
+    typeof ClipboardItem === "function"
+  );
 }
 
 /**
