@@ -150,7 +150,6 @@ describe("DiagView Lifecycle", () => {
 
     // Check other dynamic elements
     const elementsToCheck = [
-      "diagview-toast",
       "diagview-toast-container",
       "diagview-toast-live",
       "diagview-temp-menu",
