@@ -53,15 +53,6 @@
             --stage-h: 300px;
         }
 
-        /* The three node flow would fill its card at a larger scale than
-           the diagrams next to it. Room around it evens the sizes out.
-           A phone card is narrow enough that the width sets the scale. */
-        @media (min-width: 601px) {
-            .card .diagview-viewport > .mermaid.small-flow {
-                padding: 56px 110px;
-            }
-        }
-
         /* A diagram drawn for a white page keeps a white sheet on the page in
            both themes. The sheet is page CSS, so fullscreen shows the canvas. */
         .card.paper .diagram,
@@ -263,7 +254,7 @@
                     <h3>Logic flow</h3>
                     <span class="tag">Mermaid</span>
                 </div>
-                <div class="mermaid small-flow" data-title="Logic Flow">
+                <div class="mermaid" data-title="Logic Flow">
                     graph LR
                     A[Request] --> B{Valid?}
                     B -->|Yes| C[Process]
