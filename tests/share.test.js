@@ -159,6 +159,13 @@ describe("Share System", () => {
     expect(shareState.query).toBe("foo");
   });
 
+  test("restoreViewFromURL keeps the first 200 characters of a long query", () => {
+    window.location = new URL(`http://localhost/test?dv-idx=0&dv-q=${"a".repeat(5000)}b`);
+    const diagram = { id: "diag1" };
+    restoreViewFromURL([diagram]);
+    expect(getPendingShareState(diagram).query).toBe("a".repeat(200));
+  });
+
   test("restoreViewFromURL keeps the decimals of the centre", () => {
     window.location = new URL("http://localhost/test?dv-idx=0&dv-cx=62.35&dv-cy=-7.5");
     const diagram = { id: "diag1" };

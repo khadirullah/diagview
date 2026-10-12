@@ -283,7 +283,8 @@ export function restoreViewFromURL(diagrams) {
       cx: rawCx !== null && isFinite(rawCx) ? clampNum(rawCx, -100000, 100000) : null,
       cy: rawCy !== null && isFinite(rawCy) ? clampNum(rawCy, -100000, 100000) : null,
       rotation: rawRot !== null && VALID_ROTATIONS.has(rawRot) ? rawRot : null,
-      query: params.get("dv-q") || null,
+      // A label is far shorter, and a crafted link should not fill the box
+      query: params.get("dv-q")?.slice(0, 200) || null,
       themeMode,
       customColor,
     });

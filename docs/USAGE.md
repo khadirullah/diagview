@@ -503,7 +503,7 @@ Share the exact zoom level and pan position with anyone. The generated URL is th
 | `dv-cx`   | X coordinate at the viewport center, in the SVG's units after rotation, with the decimals the zoom needs |
 | `dv-cy`   | Y coordinate at the viewport center, in the SVG's units after rotation, with the decimals the zoom needs |
 | `dv-r`    | Rotation angle (90, 180 or 270), left out at 0                                                           |
-| `dv-q`    | Active search query                                                                                      |
+| `dv-q`    | Active search query. DiagView reads the first 200 characters                                             |
 | `dv-t`    | Canvas theme mode (`light`, `dark`, `custom`), left out in Auto mode                                     |
 | `dv-c`    | Custom canvas background hex value (without `#`), only with `dv-t=custom`                                |
 
