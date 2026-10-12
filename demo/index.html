@@ -1185,20 +1185,17 @@
         });
     </script>
     <script>
-        // Hero diagram: neutral line work, the DiagView node carries the accent.
+        // Hero diagram: neutral colours, the DiagView node carries the accent.
         // The rules go into the SVG so the fullscreen copy looks the same.
         // The libraries load with defer, so they are ready by DOMContentLoaded.
         document.addEventListener('DOMContentLoaded', async () => {
             mermaid.initialize(demoMermaidConfig({
-                flowchart: { curve: 'basis', padding: 12, nodeSpacing: 26, rankSpacing: 44 },
                 themeCSS: [
-                    '.cluster rect { fill: transparent; stroke-dasharray: 5 4; }',
-                    '.cluster-label .nodeLabel { color: var(--muted); font-family: var(--mono);' +
-                        ' font-size: 11px; letter-spacing: .12em; text-transform: uppercase; }',
+                    '.cluster rect { fill: transparent; }',
+                    '.cluster-label .nodeLabel { color: var(--muted); }',
                     '.node.hub polygon { fill: color-mix(in srgb, var(--accent) 12%, var(--surface));' +
-                        ' stroke: var(--accent); stroke-width: 2px; }',
-                    '.node.hub .nodeLabel { font-weight: 700; color: var(--accent-ink); }',
-                    '.node.src .nodeLabel { font-family: var(--mono); font-size: 13px; }'
+                        ' stroke: var(--accent); }',
+                    '.node.hub .nodeLabel { color: var(--accent-ink); }'
                 ].join('\n')
             }));
 
@@ -1218,8 +1215,7 @@
                 '  DV --> F["Fullscreen<br/>zoom, pan"]',
                 '  DV --> N["Minimap<br/>search, rotate"]',
                 '  DV --> E["Share link<br/>export, copy"]',
-                '  class DV hub',
-                '  class S src'
+                '  class DV hub'
             ].join('\n');
 
             try { await document.fonts.ready; } catch (e) { }

@@ -62,7 +62,7 @@
         '.node [style*="fill:"] { fill-opacity: var(--styled-fill-opacity, 1); }',
         '.node:has([style*="fill:"]) .nodeLabel { color: var(--styled-ink, #15181d); }',
         '.cluster rect { fill: color-mix(in srgb, var(--surface) 55%, transparent);' +
-            ' stroke: var(--line-strong); stroke-dasharray: 4 3; }',
+            ' stroke: var(--line-strong); }',
         '.cluster-label .nodeLabel, .cluster text { color: var(--ink-2); fill: var(--ink-2); }',
         '.flowchart-link { stroke: var(--muted); }',
         'marker path, marker circle, #arrowhead path, #crosshead path,' +
@@ -97,7 +97,7 @@
     for (var ti = 0; ti < TINTS.length; ti++) {
         var tv = '--tint-' + TINTS[ti].toLowerCase();
         MERMAID_CSS.push('.node.tint' + TINTS[ti] + ' :is(rect, circle, ellipse, polygon, path)' +
-            ' { fill: var(' + tv + '); stroke: var(' + tv + '-line); stroke-width: 1.5px; }');
+            ' { fill: var(' + tv + '); stroke: var(' + tv + '-line); }');
     }
 
     // The minimap and the PNG and SVG exports draw a diagram as a standalone
@@ -201,9 +201,8 @@
             startOnLoad: false,
             securityLevel: 'loose',
             theme: 'base',
-            fontFamily: '"Schibsted Grotesk", ui-sans-serif, system-ui, sans-serif',
             themeVariables: dark ? {
-                darkMode: true, background: '#0d2240', fontSize: '14px',
+                darkMode: true, background: '#0d2240',
                 primaryColor: '#0f2746', primaryBorderColor: '#2d4d78', primaryTextColor: '#eaf2ff',
                 lineColor: '#9fb3d1', clusterBkg: 'transparent', clusterBorder: '#2d4d78', titleColor: '#c3d3ea',
                 edgeLabelBackground: '#0d2240',
@@ -212,15 +211,15 @@
                 noteBkgColor: '#2a2b3a', noteTextColor: '#eaf2ff', noteBorderColor: '#8a5a3c',
                 pie1: '#c9541f', pie2: '#3b5c8c', pie3: '#56739c',
                 pieTitleTextColor: '#eaf2ff', pieLegendTextColor: '#eaf2ff',
-                pieSectionTextColor: '#f3f7ff', pieStrokeColor: '#0f2746', pieOuterStrokeWidth: '1px'
+                pieSectionTextColor: '#f3f7ff', pieStrokeColor: '#0f2746'
             } : {
-                background: '#fbfbfc', fontSize: '14px',
+                background: '#fbfbfc',
                 primaryColor: '#ffffff', primaryBorderColor: '#cdd2d9', primaryTextColor: '#15181d',
                 lineColor: '#5b6472', clusterBkg: 'transparent', clusterBorder: '#cdd2d9', titleColor: '#353b45',
                 edgeLabelBackground: '#fbfbfc',
                 noteBkgColor: '#fff4ec', noteTextColor: '#15181d', noteBorderColor: '#f3b58c',
                 pie1: '#ea580c', pie2: '#aab4c3', pie3: '#d7dce4',
-                pieSectionTextColor: '#15181d', pieStrokeColor: '#ffffff', pieOuterStrokeWidth: '1px'
+                pieSectionTextColor: '#15181d', pieStrokeColor: '#ffffff'
             }
         };
         config.themeCSS = MERMAID_CSS.join('\n');
