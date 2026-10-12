@@ -70,6 +70,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 - **`destroy()` Downloaded Code Only to Reset It.** In the ESM build `destroy()` loaded the minimap and meeting mode code just to reset them, even on a page that never opened the viewer. It now resets only the code that was loaded.
 - **One Failed Step Stopped `destroy()`.** `destroy()` ran its steps in one block, so an error in one step would skip the rest and leave listeners, observers or styles behind. Each step now runs on its own and logs its error.
 - **License Notice Missing From the Minified Bundle.** `diagview.umd.min.js`, the file unpkg and jsDelivr serve, had no license notice because the minifier removed it. Every bundle now starts with `/*! DiagView v1.2.0 | (c) 2026 Khadirullah Mohammad | MIT License | github.com/khadirullah/diagview */`.
+- **`require("diagview/package.json")` Failed.** The exports map did not list `./package.json`, so tools that read the version that way got `ERR_PACKAGE_PATH_NOT_EXPORTED`. The file is exported now.
 
 ---
 
