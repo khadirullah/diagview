@@ -80,6 +80,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 - **Hidden Loading Ring Kept Turning.** The loading ring kept turning at opacity 0 behind the diagram for as long as the viewer was open. It now stops while hidden.
 - **No Blur Behind the Shortcut Panel in Older Safari.** Safari before 18 showed the panel's backdrop without blur. It now has the `-webkit-backdrop-filter` line too.
 - **Menu and Shortcut Panel Taller Than the Screen in iOS Safari.** With the toolbars showing, a tall menu could reach above the screen and the shortcut panel past its edges, because `vh` counts the height with the toolbars hidden. Both now cap their height in `dvh`, with `vh` as the fallback.
+- **Shared Search Query Had No Length Limit.** A share link put its whole `dv-q` value into the search box. DiagView now reads the first 200 characters.
 
 ---
 
