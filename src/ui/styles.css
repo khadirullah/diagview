@@ -634,18 +634,20 @@
     opacity: 0;
     pointer-events: none;
     padding: 0;
-    transition:
-      max-width 0.25s cubic-bezier(0.4, 0, 0.2, 1),
-      opacity 0.2s ease,
-      flex 0.25s ease;
   }
 
+  /* Only opening slides. The buttons and the name come back at once when
+     it closes, so a box still shrinking would slide over the name. */
   .diagview-topbar.search-open .diagview-search-container {
     flex: 1;
     max-width: 600px;
     opacity: 1;
     pointer-events: auto;
     overflow: visible;
+    transition:
+      max-width 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+      opacity 0.2s ease,
+      flex 0.25s ease;
   }
 
   /* Show back button and hide search icon inside wrapper */

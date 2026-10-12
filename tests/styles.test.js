@@ -412,6 +412,14 @@ describe("styles.css: dead and contradicting rules", () => {
     expect(css).not.toContain("2147483648");
   });
 
+  test("the phone search box slides open but closes at once", () => {
+    const mobile = css.indexOf("@media (max-width: 639px)");
+    const closed = ruleBody(".diagview-topbar .diagview-search-container {", mobile);
+    const open = ruleBody(".diagview-topbar.search-open .diagview-search-container {", mobile);
+    expect(closed).not.toMatch(/transition/);
+    expect(open).toMatch(/transition:\s*max-width 0\.25s/);
+  });
+
   test("mobile closed-search rule outranks the later base rule", () => {
     const mobile = css.indexOf("@media (max-width: 639px)");
     const base = css.indexOf("\n.diagview-search-container {");
