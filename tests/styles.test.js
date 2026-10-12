@@ -440,6 +440,13 @@ describe("styles.css: dead and contradicting rules", () => {
     expect(ruleBody(".diagview-toast-spin {")).toMatch(/animation:/);
   });
 
+  test("every backdrop blur has the -webkit- line Safari before 18 needs", () => {
+    const plain = css.match(/(?<!-webkit-)backdrop-filter:[^;]+;/g);
+    const prefixed = css.match(/-webkit-backdrop-filter:[^;]+;/g);
+    expect(plain.length).toBeGreaterThan(0);
+    expect(prefixed.map((rule) => rule.replace("-webkit-", ""))).toEqual(plain);
+  });
+
   test("the loading ring stops turning once its overlay is hidden", () => {
     expect(ruleBody(".diagview-loading.hide .diagview-spinner {")).toMatch(
       /animation-play-state:\s*paused;/,
