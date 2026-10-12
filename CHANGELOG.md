@@ -68,6 +68,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 - **Enter Skipped Every Other Match When the Minimap Failed.** When the minimap code failed to load, search was set up twice, so each `Enter` moved two matches on. Search is now set up once.
 - **Lazy Features Failed Without a Word.** The ESM build loads search, the minimap, rotation, meeting mode and Readable text when they are first used. When that load failed, offline, under a strict Content-Security-Policy or after a CDN error, the feature did nothing and nothing said why. DiagView now logs one console warning that names the feature.
 - **`destroy()` Downloaded Code Only to Reset It.** In the ESM build `destroy()` loaded the minimap and meeting mode code just to reset them, even on a page that never opened the viewer. It now resets only the code that was loaded.
+- **One Failed Step Stopped `destroy()`.** `destroy()` ran its steps in one block, so an error in one step would skip the rest and leave listeners, observers or styles behind. Each step now runs on its own and logs its error.
 
 ---
 
