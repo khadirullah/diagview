@@ -10,7 +10,10 @@
 */
 
 /* ── Tokens ───────────────────────────────────────────────── */
-:root {
+/* .dv-theme-scope is a hidden box demo-runtime.js uses to read the light or
+   dark colours without switching the page */
+:root,
+.dv-theme-scope {
   --accent: #ea580c;
   --diagram-accent: var(--accent);
 

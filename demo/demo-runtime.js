@@ -106,18 +106,49 @@
     // a block of CSS for the plain value it has on the page right now. Each
     // theme or accent change bakes the colours in again.
     var probe = null;
+    var probeCache = null;
+    var themeScope = null;
     function computedValue(prop, value) {
+        var key = prop + ':' + value;
+        if (probeCache && Object.prototype.hasOwnProperty.call(probeCache, key)) return probeCache[key];
         if (!probe) {
             probe = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
             probe.setAttribute('aria-hidden', 'true');
             probe.style.cssText = 'position:absolute;width:0;height:0;overflow:hidden';
         }
-        document.documentElement.appendChild(probe);
+        var host = themeScope || document.documentElement;
+        if (probe.parentNode !== host) host.appendChild(probe);
         probe.style.setProperty(prop, value);
         var out = getComputedStyle(probe).getPropertyValue(prop).trim();
         probe.style.removeProperty(prop);
-        probe.remove();
+        if (probeCache) probeCache[key] = out; else probe.remove();
         return out;
+    }
+    // Each lookup on its own adds the probe to the page and takes it out
+    // again, which makes the browser work out the styles of the whole page.
+    // Inside resolving() the probe stays put and a value seen before comes
+    // from a cache, so a theme switch costs one style pass, not hundreds.
+    // The probe sits in a small box that carries the light or dark colours
+    // (see .dv-theme-scope in demo-styles.css) and the page's accent, so the
+    // colours of the other theme can be read without switching the page.
+    function resolving(fn, dark) {
+        var root = document.documentElement;
+        themeScope = document.createElement('div');
+        themeScope.setAttribute('aria-hidden', 'true');
+        themeScope.className = 'dv-theme-scope' + (dark ? ' dark' : '');
+        themeScope.style.cssText = root.style.cssText;
+        themeScope.style.position = 'absolute';
+        themeScope.style.width = themeScope.style.height = '0';
+        themeScope.style.overflow = 'hidden';
+        root.appendChild(themeScope);
+        probeCache = {};
+        try {
+            return fn();
+        } finally {
+            probeCache = null;
+            themeScope.remove();
+            themeScope = null;
+        }
     }
     // Browsers report color-mix() results as color(srgb ...) or oklab(...).
     // Turn anything that is not rgb() into rgb() so any renderer can read it.
@@ -168,7 +199,9 @@
     // attributes as the source of truth. This writes the resolved values
     // into the SVG and remembers the source for the next theme.
     var bakedStyles = [];
-    function bakeInlineSvgs() {
+    // Work out the baked CSS for every hand-drawn SVG in the light or dark
+    // theme, without writing it
+    function inlineSvgColours(dark) {
         var svgs = document.querySelectorAll('svg');
         for (var i = 0; i < svgs.length; i++) {
             if (svgs[i].closest('#diagview-modal')) continue;
@@ -184,10 +217,17 @@
             }
         }
         bakedStyles = bakedStyles.filter(function (b) { return document.contains(b.el); });
-        bakedStyles.forEach(function (b) {
-            var css = literalCSS(b.src);
-            if (b.tag) b.el.textContent = css; else b.el.setAttribute('style', css);
+        return resolving(function () {
+            return bakedStyles.map(function (b) { return { b: b, css: literalCSS(b.src) }; });
+        }, dark);
+    }
+    function paintInlineSvgs(colours) {
+        colours.forEach(function (c) {
+            if (c.b.tag) c.b.el.textContent = c.css; else c.b.el.setAttribute('style', c.css);
         });
+    }
+    function bakeInlineSvgs() {
+        paintInlineSvgs(inlineSvgColours(document.documentElement.classList.contains('dark')));
     }
     window.demoBakeColours = bakeInlineSvgs;
 
@@ -196,7 +236,9 @@
     // Use: mermaid.initialize(demoMermaidConfig({ flowchart: { ... } }))
     window.demoMermaidConfig = function (extra) {
         mermaidPage = { extra: extra };
-        var dark = document.documentElement.classList.contains('dark');
+        return mermaidConfig(extra, document.documentElement.classList.contains('dark'));
+    };
+    function mermaidConfig(extra, dark) {
         var config = {
             startOnLoad: false,
             securityLevel: 'loose',
@@ -234,20 +276,20 @@
                 }
             }
         }
-        config.themeCSS = literalCSS(config.themeCSS);
+        config.themeCSS = resolving(function () { return literalCSS(config.themeCSS); }, dark);
         return config;
-    };
+    }
 
     // Mermaid bakes the theme into each SVG when it renders, so a theme switch
     // has to render the diagrams again. Pages need nothing extra for this. The
-    // hooks below keep each diagram's source as mermaid.run() first sees it,
-    // and the DiagView init options, then rerenderMermaid() takes DiagView down,
-    // renders again with the new theme and starts DiagView with the same
-    // options. Pages that set up Mermaid without demoMermaidConfig are skipped.
+    // hook below keeps each diagram's source as mermaid.run() first sees it.
+    // drawAgain() renders those sources off screen with the new colours while
+    // the page still shows the old drawings, then swaps the SVGs in one go.
+    // DiagView stays up, so the cards, the scroll position and the toolbars
+    // do not move. Pages that set up Mermaid without demoMermaidConfig are
+    // skipped.
     var mermaidPage = null;     // { extra } once demoMermaidConfig has run
     var mermaidHosts = [];      // [{ el, html }] in first render order
-    var dvInitArgs = null;      // arguments of the last DiagView.init call
-    var dvActive = false;       // DiagView is running (not turned off)
     var rerenderQueue = Promise.resolve();
 
     function hookLibraries() {
@@ -267,21 +309,6 @@
             };
             m.run.dvDemoHook = run;
         }
-        var dv = window.DiagView;
-        if (dv && typeof dv.init === 'function' && !dv.init.dvDemoHook) {
-            var init = dv.init, destroy = dv.destroy;
-            dv.init = function () {
-                dvInitArgs = arguments;
-                dvActive = true;
-                return init.apply(this, arguments);
-            };
-            dv.init.dvDemoHook = init;
-            dv.destroy = function () {
-                dvActive = false;
-                return destroy.apply(this, arguments);
-            };
-            dv.destroy.dvDemoHook = destroy;
-        }
     }
     hookLibraries();
 
@@ -293,31 +320,66 @@
         if (sel && window.DiagView && window.updateSecurity) window.updateSecurity(sel.value);
     }
 
-    function rerenderOnce() {
-        var m = window.mermaid, dv = window.DiagView;
+    // Render every Mermaid diagram again with a config, in a hidden box.
+    // Resolves to a function that puts the new SVGs in place of the old ones.
+    // Mermaid only lays out a flowchart inside <body>, so the box sits there.
+    // Its drafts do not carry the hosts' classes, so DiagView does not take
+    // them for diagrams, and the box is a layout boundary, so Mermaid's text
+    // measuring does not lay out the whole page each time.
+    function drawAgain(config) {
+        var m = window.mermaid;
         var hosts = mermaidHosts.filter(function (h) { return document.contains(h.el); });
-        if (!mermaidPage || !m || !m.run.dvDemoHook || !hosts.length) return;
-        var restart = dvActive && dvInitArgs && dv;
-        // Taking DiagView down unwraps every diagram on the page, which moves
-        // the content, so put the reader back where they were afterwards
-        var y = window.scrollY;
+        if (!config || !m || !m.run.dvDemoHook || !hosts.length) {
+            return Promise.resolve(function () {});
+        }
+        var box = document.createElement('div');
+        box.setAttribute('aria-hidden', 'true');
+        box.style.cssText = 'position:absolute;left:-10000px;top:0;width:2400px;height:4000px;' +
+            'overflow:hidden;visibility:hidden;contain:strict';
+        var drafts = hosts.map(function (h) {
+            var d = document.createElement(h.el.localName);
+            d.innerHTML = h.html;
+            box.appendChild(d);
+            return d;
+        });
+        document.body.appendChild(box);
+        m.initialize(config);
+        return m.run.dvDemoHook.call(m, { nodes: drafts }).then(function () {
+            return function () {
+                hosts.forEach(function (h, i) {
+                    var fresh = drafts[i].querySelector(':scope > svg');
+                    var old = h.el.querySelector(':scope > svg');
+                    if (!fresh || !old) return;
+                    // Keep what DiagView set on the SVG it set up, such as the
+                    // name screen readers hear
+                    if (old.hasAttribute('aria-label')) fresh.setAttribute('aria-label', old.getAttribute('aria-label'));
+                    fresh.setAttribute('class', old.getAttribute('class') || '');
+                    fresh.style.transition = old.style.transition;
+                    fresh.style.color = old.style.color;
+                    old.replaceWith(fresh);
+                });
+            };
+        }).finally(function () { box.remove(); });
+    }
 
-        return Promise.resolve(restart ? dv.destroy.dvDemoHook.call(dv) : null).then(function () {
-            hosts.forEach(function (h) {
-                // Hold the height so the page does not jump while the SVG is out
-                h.el.style.minHeight = h.el.offsetHeight + 'px';
-                h.el.removeAttribute('data-processed');
-                h.el.innerHTML = h.html;
-            });
-            m.initialize(window.demoMermaidConfig(mermaidPage.extra));
-            return m.run.dvDemoHook.call(m, { nodes: hosts.map(function (h) { return h.el; }) });
-        }).then(function () {
-            hosts.forEach(function (h) { h.el.style.minHeight = ''; });
-            if (restart) {
-                return Promise.resolve(dv.init.dvDemoHook.apply(dv, dvInitArgs)).then(applySelectedSecurity);
-            }
-        }).then(function () {
-            requestAnimationFrame(function () { window.scrollTo({ top: y, behavior: 'instant' }); });
+    function rerenderOnce() {
+        if (!mermaidPage) return;
+        return drawAgain(window.demoMermaidConfig(mermaidPage.extra)).then(function (swap) { swap(); });
+    }
+
+    // Switch the theme once the diagrams are drawn in the new colours, so
+    // the page and the diagrams change in the same frame
+    var wantDark = document.documentElement.classList.contains('dark');
+    function switchTheme() {
+        var root = document.documentElement;
+        var dark = wantDark;
+        if (root.classList.contains('dark') === dark) return;
+        var colours = inlineSvgColours(dark);
+        var config = mermaidPage ? mermaidConfig(mermaidPage.extra, dark) : null;
+        return drawAgain(config).then(function (swap) {
+            root.classList.toggle('dark', dark);
+            paintInlineSvgs(colours);
+            swap();
         });
     }
 
@@ -336,21 +398,20 @@
         // Global theme toggle
         bakeInlineSvgs();
         window.toggleTheme = function () {
-            var dark = document.documentElement.classList.toggle('dark');
-            try { localStorage.setItem('dv-theme', dark ? 'dark' : 'light'); } catch (e) {}
-            bakeInlineSvgs();
-            rerenderMermaid();
+            wantDark = !wantDark;
+            try { localStorage.setItem('dv-theme', wantDark ? 'dark' : 'light'); } catch (e) {}
+            rerenderQueue = rerenderQueue.then(switchTheme).catch(function (e) {
+                console.warn('Demo: theme switch failed', e);
+            });
         };
 
         // Cross-tab sync via storage events
         window.addEventListener('storage', function (e) {
             if (e.key === 'dv-theme') {
-                var was = document.documentElement.classList.contains('dark');
-                document.documentElement.classList.toggle('dark', e.newValue === 'dark');
-                if (was !== (e.newValue === 'dark')) {
-                    bakeInlineSvgs();
-                    rerenderMermaid();
-                }
+                wantDark = e.newValue === 'dark';
+                rerenderQueue = rerenderQueue.then(switchTheme).catch(function (err) {
+                    console.warn('Demo: theme switch failed', err);
+                });
             }
             if (e.key === 'dv-accent') {
                 applyAccent(e.newValue);
