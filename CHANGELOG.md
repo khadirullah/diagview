@@ -71,6 +71,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 - **One Failed Step Stopped `destroy()`.** `destroy()` ran its steps in one block, so an error in one step would skip the rest and leave listeners, observers or styles behind. Each step now runs on its own and logs its error.
 - **License Notice Missing From the Minified Bundle.** `diagview.umd.min.js`, the file unpkg and jsDelivr serve, had no license notice because the minifier removed it. Every bundle now starts with `/*! DiagView v1.2.0 | (c) 2026 Khadirullah Mohammad | MIT License | github.com/khadirullah/diagview */`.
 - **`require("diagview/package.json")` Failed.** The exports map did not list `./package.json`, so tools that read the version that way got `ERR_PACKAGE_PATH_NOT_EXPORTED`. The file is exported now.
+- **Go to Definition Opened Missing Files.** The package shipped `.d.ts.map` files that pointed into `src/`, which is not published, so an editor's go to definition opened nothing. The maps are gone, and editors open the `.d.ts` file with its docs. The package has 34 fewer files.
 
 ---
 
