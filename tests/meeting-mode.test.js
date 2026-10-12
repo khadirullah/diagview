@@ -34,10 +34,13 @@ describe("Meeting Mode", () => {
     jest.clearAllMocks();
   });
 
-  test("enableMeetingMode sets state and shows laser", () => {
+  test("enableMeetingMode sets state and shows the laser once the pointer moves", () => {
     enableMeetingMode();
     expect(state.meetingMode).toBe(true);
     expect(viewport.classList.contains("meeting")).toBe(true);
+    // Not in the corner, nor where the last session left it
+    expect(laser.style.display).toBe("none");
+    viewport.dispatchEvent(pointerMove(500, 400));
     expect(laser.style.display).toBe("block");
     expect(showSuccessToast).toHaveBeenCalledWith(expect.stringContaining("Laser pointer active"));
   });
@@ -78,8 +81,17 @@ describe("Meeting Mode", () => {
     expect(state.laserPointer).toBeNull();
   });
 
+  test("a second start hides the dot until the pointer moves again", () => {
+    enableMeetingMode();
+    viewport.dispatchEvent(pointerMove(150, 250));
+    disableMeetingMode(true);
+    enableMeetingMode();
+    expect(laser.style.display).toBe("none");
+  });
+
   test("disableMeetingMode resets state and hides laser", () => {
     enableMeetingMode();
+    viewport.dispatchEvent(pointerMove(150, 250));
     disableMeetingMode();
     expect(state.meetingMode).toBe(false);
     expect(viewport.classList.contains("meeting")).toBe(false);

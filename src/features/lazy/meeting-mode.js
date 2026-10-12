@@ -23,16 +23,19 @@ export function enableMeetingMode() {
 
   state.meetingMode = true;
   viewport.classList.add("meeting");
-  laser.style.display = "block";
 
   // The laser is position:fixed, so clientX/Y already are its coordinates
   // (the modal is no longer counter-scaled under pinch zoom, so
   // visualViewport.scale must NOT be applied). Keep the stylesheet's
   // translate(-50%, -50%) so the dot is centred on the cursor rather than
   // hanging off its top-left corner.
+  // The dot shows only once it has a place. Shown at once, it sat in the
+  // top left corner, or where the last session left it, until the pointer
+  // moved.
   const moveLaser = (x, y) => {
     // OPT-5: Use transform instead of top/left to avoid layout thrashing
     laser.style.transform = `translate3d(${x}px, ${y}px, 0) translate(-50%, -50%)`;
+    laser.style.display = "block";
   };
 
   // Pointer events cover mouse, pen and touch. Panzoom's pointerdown calls
