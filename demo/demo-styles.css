@@ -121,6 +121,48 @@ html {
   scroll-padding-top: calc(var(--nav-h) + 24px);
 }
 
+/* ── First load ───────────────────────────────────────────────
+   demo-runtime.js keeps the page out of sight until DiagView has set up
+   the diagrams, then the page fades in with them in place. The logo
+   shows only when that takes longer than a moment. */
+html.dv-demo-loading {
+  background: var(--bg);
+}
+html.dv-demo-loading body {
+  opacity: 0;
+}
+body {
+  transition: opacity 0.25s ease;
+}
+html.dv-demo-loading::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  width: 40px;
+  height: 40px;
+  margin: auto;
+  background: url("favicon.svg") center / contain no-repeat;
+  animation: dv-demo-splash 1.4s ease-in-out 0.3s infinite both;
+}
+@keyframes dv-demo-splash {
+  0%,
+  100% {
+    opacity: 0;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  body {
+    transition: none;
+  }
+  html.dv-demo-loading::after {
+    animation: none;
+    opacity: 0.6;
+  }
+}
+
 body {
   font-family: var(--font);
   font-size: 16px;

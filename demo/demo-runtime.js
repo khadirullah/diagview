@@ -28,6 +28,17 @@
     }
     document.documentElement.classList.toggle('dark', isDark);
 
+    // The page stays out of sight until DiagView has set up the diagrams,
+    // then fades in with them in place, so nothing pops in or moves. A page
+    // that is slow to load, or never starts DiagView, shows after 5 seconds.
+    if (document.querySelector('script[src*="diagview"]')) {
+        document.documentElement.classList.add('dv-demo-loading');
+        setTimeout(revealPage, 5000);
+    }
+    function revealPage() {
+        document.documentElement.classList.remove('dv-demo-loading');
+    }
+
     // Helper: apply accent color to all CSS custom properties
     function applyAccent(color) {
         if (!color) return;
@@ -293,6 +304,17 @@
     var rerenderQueue = Promise.resolve();
 
     function hookLibraries() {
+        var dv = window.DiagView;
+        if (dv && typeof dv.init === 'function' && !dv.init.dvDemoHook) {
+            var init = dv.init;
+            dv.init = function () {
+                var out = init.apply(this, arguments);
+                // DiagView sets up the diagrams on screen in the next frame
+                requestAnimationFrame(function () { requestAnimationFrame(revealPage); });
+                return out;
+            };
+            dv.init.dvDemoHook = init;
+        }
         var m = window.mermaid;
         if (m && typeof m.run === 'function' && !m.run.dvDemoHook) {
             var run = m.run;
