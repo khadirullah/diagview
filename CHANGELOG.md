@@ -61,6 +61,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 - **The Sanitizer Kept Comments and CDATA.** `utils.sanitizeSVG()` returned comments, processing instructions and CDATA sections as written. An HTML parser ends each of them at the first `>`, so markup hidden inside one could run its event handlers once the string went into a page with `innerHTML`. Strict and permissive mode now drop comments and processing instructions and turn CDATA into plain text with the same content. Mermaid output comes out unchanged.
 - **Strict Mode Let `image-set()` Load Remote Images.** `image-set("https://example.com/a.png" 1x)` names its image with a quoted string instead of `url()`, so strict mode kept it and the fullscreen copy loaded the image. Strict mode now removes it like a remote `url()`, unless `allowRemoteResources` is on.
 - **PDF Fell Back to PNG While the Page Loaded jsPDF.** When the page had its own `<script>` for `pdfLibraryUrl`, a PDF export started before that script finished found no jsPDF and saved a PNG. The export now waits for the script, for up to 15 seconds.
+- **Closing the Viewer Cleared the Page's Overflow.** Opening the viewer stops the page from scrolling, and closing it set `overflow` on `<html>` and `<body>` back to nothing. A page with `style="overflow: hidden"` on `<body>` or `overflow-y: scroll` on `<html>` lost it, and its layout could shift. Closing now puts back the inline `overflow`, `overflow-x` and `overflow-y` the page had.
 
 ---
 
