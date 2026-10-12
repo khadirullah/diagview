@@ -483,11 +483,7 @@
         document.addEventListener('DOMContentLoaded', async () => {
             // Edge labels ("Success", "Error") get the canvas colour behind them
             // instead of Mermaid's default, which is a black box on dark pages
-            mermaid.initialize(demoMermaidConfig({
-                themeVariables: {
-                    edgeLabelBackground: document.documentElement.classList.contains('dark') ? '#0d2240' : '#fbfbfc'
-                }
-            }));
+            mermaid.initialize(demoMermaidConfig());
 
             // 1. Fetch PlantUML and inline it
             try {
