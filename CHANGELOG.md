@@ -69,6 +69,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 - **Lazy Features Failed Without a Word.** The ESM build loads search, the minimap, rotation, meeting mode and Readable text when they are first used. When that load failed, offline, under a strict Content-Security-Policy or after a CDN error, the feature did nothing and nothing said why. DiagView now logs one console warning that names the feature.
 - **`destroy()` Downloaded Code Only to Reset It.** In the ESM build `destroy()` loaded the minimap and meeting mode code just to reset them, even on a page that never opened the viewer. It now resets only the code that was loaded.
 - **One Failed Step Stopped `destroy()`.** `destroy()` ran its steps in one block, so an error in one step would skip the rest and leave listeners, observers or styles behind. Each step now runs on its own and logs its error.
+- **License Notice Missing From the Minified Bundle.** `diagview.umd.min.js`, the file unpkg and jsDelivr serve, had no license notice because the minifier removed it. Every bundle now starts with `/*! DiagView v1.2.0 | (c) 2026 Khadirullah Mohammad | MIT License | github.com/khadirullah/diagview */`.
 
 ---
 
