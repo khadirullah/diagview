@@ -78,6 +78,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 - **Emoji in the Theme Button Names.** Screen readers read the Canvas Theme buttons as "sun Light", "crescent moon Dark" and "desktop computer Auto". They are now Light, Dark and Auto, and the emoji still show.
 - **Notices on the Page Ignored Reduced Motion.** With reduced motion on, a notice after Copy or Download on a diagram card still slid and faded over 0.3 seconds. It now appears and goes at once, as notices in the viewer did.
 - **Hidden Loading Ring Kept Turning.** The loading ring kept turning at opacity 0 behind the diagram for as long as the viewer was open. It now stops while hidden.
+- **No Blur Behind the Shortcut Panel in Older Safari.** Safari before 18 showed the panel's backdrop without blur. It now has the `-webkit-backdrop-filter` line too.
 
 ---
 
