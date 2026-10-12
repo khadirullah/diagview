@@ -60,6 +60,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 - **Exports Never Finished in a Background Tab.** An export copies the diagram's styles one animation frame at a time, and a tab in the background runs no frames. An export started from code in such a tab, or one whose tab was switched away, never saved its file. A timer now takes over when no frame comes, so the export finishes, more slowly while the tab is in the background.
 - **The Sanitizer Kept Comments and CDATA.** `utils.sanitizeSVG()` returned comments, processing instructions and CDATA sections as written. An HTML parser ends each of them at the first `>`, so markup hidden inside one could run its event handlers once the string went into a page with `innerHTML`. Strict and permissive mode now drop comments and processing instructions and turn CDATA into plain text with the same content. Mermaid output comes out unchanged.
 - **Strict Mode Let `image-set()` Load Remote Images.** `image-set("https://example.com/a.png" 1x)` names its image with a quoted string instead of `url()`, so strict mode kept it and the fullscreen copy loaded the image. Strict mode now removes it like a remote `url()`, unless `allowRemoteResources` is on.
+- **PDF Fell Back to PNG While the Page Loaded jsPDF.** When the page had its own `<script>` for `pdfLibraryUrl`, a PDF export started before that script finished found no jsPDF and saved a PNG. The export now waits for the script, for up to 15 seconds.
 
 ---
 
