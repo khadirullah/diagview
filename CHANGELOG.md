@@ -75,6 +75,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 - **Diagrams Had No Name for Screen Readers.** A diagram with a `data-title`, or a Mermaid chart title without `accTitle`, was read as an image or document with no name, on the page and in the viewer. An SVG with no name of its own now gets an `aria-label` with the title that the header and export names use. A `<title>`, an `aria-label` or `aria-labelledby` from the page or Mermaid stays, and so does an SVG marked `aria-hidden` or `role="none"`. DiagView sets no role, a diagram without a title gets no label, and `destroy()` removes it.
 - **Notices Read Twice.** A screen reader in browse mode found each notice a second time in the visible toast after the live region had read it. The visible toast is now hidden from screen readers.
 - **Search Box Named by Its Placeholder.** The viewer's search box took its name from the placeholder "Search nodes...", which some screen readers drop once the box holds text. It is now named "Search nodes".
+- **Emoji in the Theme Button Names.** Screen readers read the Canvas Theme buttons as "sun Light", "crescent moon Dark" and "desktop computer Auto". They are now Light, Dark and Auto, and the emoji still show.
 
 ---
 
