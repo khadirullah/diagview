@@ -182,9 +182,10 @@ body.ready * {
 }
 
 /* The page background swaps at once. DiagView reads it on a theme change,
-   and a colour caught halfway fails its text contrast check. */
+   and a colour caught halfway fails its text contrast check. Opacity stays
+   for the fade in after the first load. */
 body.ready {
-  transition-property: color;
+  transition-property: color, opacity;
 }
 
 /* Set by demo-runtime.js for the frame a theme switch happens in */
