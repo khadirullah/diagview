@@ -433,6 +433,13 @@ describe("styles.css: dead and contradicting rules", () => {
     expect(selector).toMatch(/\.diagview-modal \*::after/);
   });
 
+  test("reduced motion stops the slide of a notice, in the viewer and on the page", () => {
+    const idx = css.indexOf("@media (prefers-reduced-motion: reduce)");
+    const selector = css.slice(idx, css.indexOf("{", css.indexOf(".diagview-modal", idx)));
+    expect(selector).toMatch(/\.diagview-toast\s*$/);
+    expect(ruleBody(".diagview-toast-spin {")).toMatch(/animation:/);
+  });
+
   test("reduced motion stops the laser pulse instead of speeding it up", () => {
     const idx = css.lastIndexOf("@media (prefers-reduced-motion: reduce)");
     expect(ruleBody(".diagview-laser::before {", idx)).toMatch(/animation:\s*none;/);

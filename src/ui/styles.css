@@ -1923,7 +1923,8 @@
   .diagview-modal *::before,
   .diagview-modal *::after,
   .diagview-wrapper *,
-  .diagview-off-hint {
+  .diagview-off-hint,
+  .diagview-toast {
     animation-duration: 0.01ms !important;
     transition-duration: 0.01ms !important;
   }
