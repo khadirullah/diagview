@@ -911,6 +911,23 @@ kbd {
   color: var(--muted);
 }
 
+/* The Mermaid version, layout and look under a Mermaid diagram, and the
+   note on a page about what the demo changes in Mermaid's output */
+.mermaid-info,
+.stage-caption .mermaid-info {
+  display: block;
+  flex-basis: 100%;
+  font-size: 0.8rem;
+}
+.card-note > .mermaid-info {
+  margin-top: 4px;
+}
+.page-hero .mermaid-note {
+  grid-column: 1 / -1;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
 /* Diagram hosts before DiagView wraps them, and with DiagView off */
 .diagram,
 .mermaid,

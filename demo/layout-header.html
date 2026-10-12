@@ -150,6 +150,9 @@
                     <a href="layout-off.html">Off</a>
                     <a href="layout-compare.html">Compare</a>
                 </nav>
+                <p class="mermaid-note">The Mermaid diagrams on this page use Mermaid 12.1.0 with the base theme
+                    and the demo's own colours. The demo CSS also colours the nodes, lines, arrowheads, pie slices and legend keys so the
+                    diagrams match the light and dark page themes.</p>
             </div>
         </section>
 
@@ -182,6 +185,7 @@
                     class DB_Master tintIndigo
                     class Cache tintAmber
                 </div>
+                <p class="card-note mermaid-info">Mermaid 12.1.0 with its default ELK layout and neo look.</p>
             </div>
 
             <!-- Sequence (Mermaid) -->
@@ -202,6 +206,54 @@
                     API-->>UI: Returns 200 OK (Report ID: 12345)
                     UI-->>User: Shows "Download Ready" Notification
                 </div>
+                <p class="card-note mermaid-info">Mermaid 12.1.0 with its default neo look. A sequence diagram has its own layout.</p>
+            </div>
+
+            <!-- One flowchart, ELK and Dagre (Mermaid) -->
+            <div class="card">
+                <div class="card-header">
+                    <h3>Order flow with ELK</h3>
+                    <span class="tag">Mermaid</span>
+                </div>
+                <div class="mermaid" data-title="Order Flow, ELK">
+                    flowchart LR
+                    A[Order placed] --> B{In stock?}
+                    B -->|Yes| C[Pack]
+                    B -->|No| D[Back order]
+                    D --> E[Restock]
+                    E --> B
+                    C --> F[Ship]
+                    C --> G[Send invoice]
+                    F --> H[Delivered]
+                </div>
+                <p class="card-note">The same flowchart as the next card. Mermaid 12 lays out a flowchart with
+                    ELK unless the diagram asks for another layout.
+                    <span class="mermaid-info">Mermaid 12.1.0 with its default ELK layout and neo look.</span></p>
+            </div>
+            <div class="card">
+                <div class="card-header">
+                    <h3>Order flow with Dagre</h3>
+                    <span class="tag">Mermaid</span>
+                </div>
+                <div class="mermaid" data-title="Order Flow, Dagre">
+                    ---
+                    config:
+                      layout: dagre
+                    ---
+                    flowchart LR
+                    A[Order placed] --> B{In stock?}
+                    B -->|Yes| C[Pack]
+                    B -->|No| D[Back order]
+                    D --> E[Restock]
+                    E --> B
+                    C --> F[Ship]
+                    C --> G[Send invoice]
+                    F --> H[Delivered]
+                </div>
+                <p class="card-note">This copy sets <code>layout: dagre</code> in its own front matter. Dagre was
+                    the default layout in Mermaid 10 and 11.
+                    <span class="mermaid-info">Mermaid 12.1.0 with the Dagre layout from this diagram's own config
+                        and the default neo look.</span></p>
             </div>
 
             <!-- State Machine (SVG) -->
@@ -320,6 +372,7 @@
                     "CSS" : 20
                     "HTML" : 10
                 </div>
+                <p class="card-note mermaid-info">Mermaid 12.1.0 with its default neo look. A pie chart has its own layout.</p>
             </div>
 
             <!-- Performance Stress Test (SVG) -->
@@ -360,7 +413,8 @@
                 </div>
                 <p class="card-note">This page sets <code>rememberZoom: true</code>. Open this diagram, zoom, pan or
                     rotate, then close it. Open it again and it comes back the same way. A page reload starts
-                    fresh.</p>
+                    fresh.
+                    <span class="mermaid-info">Mermaid 12.1.0 with its default ELK layout and neo look.</span></p>
             </div>
 
             <!-- Meeting mode and share links: keys M and L in fullscreen -->
@@ -377,7 +431,8 @@
                 </div>
                 <p class="card-note">In fullscreen, press <kbd>M</kbd> for a red dot that follows your pointer, and
                     the cursor hides. Press <kbd>L</kbd> to copy a link that opens this diagram at the same zoom,
-                    position and rotation. Both are also in the ☰ menu.</p>
+                    position and rotation. Both are also in the ☰ menu.
+                    <span class="mermaid-info">Mermaid 12.1.0 with its default ELK layout and neo look.</span></p>
             </div>
 
             <!-- Security: an SVG with an inline event handler -->
