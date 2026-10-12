@@ -64,6 +64,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 - **Closing the Viewer Cleared the Page's Overflow.** Opening the viewer stops the page from scrolling, and closing it set `overflow` on `<html>` and `<body>` back to nothing. A page with `style="overflow: hidden"` on `<body>` or `overflow-y: scroll` on `<html>` lost it, and its layout could shift. Closing now puts back the inline `overflow`, `overflow-x` and `overflow-y` the page had.
 - **Smooth Scrolling Lost After a Quick Reopen.** Closing the viewer puts back the page's `scroll-behavior` one frame later. Opening the viewer again within that frame saved DiagView's own temporary value, so a page with an inline `scroll-behavior: smooth` lost it until a reload. A quick reopen now keeps the page's value.
 - **`destroy()` Did Not Stop a Waiting Start.** With the script in `<head>`, auto-init waits for the page to load. A `destroy()` before then did not cancel it, so DiagView started anyway. The same held for an `init()` waiting for `DOMContentLoaded` or for a teardown to finish. `destroy()` now cancels any start that has not run yet.
+- **The Viewer's Copy Stayed in Memory After Closing.** Search kept a reference to the last diagram copy the viewer showed, so that copy stayed in memory after the viewer closed. Closing now lets it go.
 
 ---
 
