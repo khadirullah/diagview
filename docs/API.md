@@ -333,7 +333,7 @@ When the root element itself is one the mode removes, such as a lone `<script>` 
 The current library version string.
 
 ```javascript
-console.log(DiagView.version); // e.g. "1.1.0"
+console.log(DiagView.version); // e.g. "1.2.0"
 ```
 
 ---

@@ -6,7 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 
 ---
 
-## [Unreleased]
+## [1.2.0] - 2026-10-12
 
 ### Added
 
@@ -514,7 +514,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 
 Initial public release.
 
-[Unreleased]: https://github.com/khadirullah/diagview/compare/v1.1.0...HEAD
+[Unreleased]: https://github.com/khadirullah/diagview/compare/v1.2.0...HEAD
+[1.2.0]: https://github.com/khadirullah/diagview/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/khadirullah/diagview/compare/v1.0.12...v1.1.0
 [1.0.12]: https://github.com/khadirullah/diagview/compare/v1.0.11...v1.0.12
 [1.0.11]: https://github.com/khadirullah/diagview/compare/v1.0.10...v1.0.11
