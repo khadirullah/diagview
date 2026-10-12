@@ -84,6 +84,17 @@ async function redInMinimap() {
   };
 }
 
+/**
+ * The red box once the minimap has painted it. The browser decodes the
+ * picture after the minimap shows, and a slow WebKit can take longer than
+ * the waits in open().
+ */
+async function drawnRed() {
+  let drawn = null;
+  await expect.poll(async () => (drawn = await redInMinimap()), { timeout: 5000 }).not.toBeNull();
+  return drawn;
+}
+
 /** Where the minimap maps a diagram rectangle, in page pixels */
 const mapped = (r) =>
   page.evaluate((r) => {
@@ -110,7 +121,7 @@ const CASES = [
 for (const { id, red } of CASES) {
   test(`${id}: the minimap draws the red box where it maps it`, async () => {
     await open(id);
-    const drawn = await redInMinimap();
+    const drawn = await drawnRed();
     const want = await mapped(red);
     const detail = `drawn ${JSON.stringify(drawn)}, mapped ${JSON.stringify(want)}`;
     expect(drawn, detail).not.toBeNull();
@@ -121,7 +132,7 @@ for (const { id, red } of CASES) {
 
   test(`${id}: a click on the red box in the minimap centres it`, async () => {
     await open(id);
-    const drawn = await redInMinimap();
+    const drawn = await drawnRed();
     await page.mouse.click(
       Math.round((drawn.left + drawn.right) / 2),
       Math.round((drawn.top + drawn.bottom) / 2),
