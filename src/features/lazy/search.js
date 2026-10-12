@@ -65,10 +65,19 @@ function unmark(el, cls) {
 
 /**
  * Lower case with each run of spaces and line breaks as one space, so
- * "first release" finds a label drawn as "First   release"
+ * "first release" finds a label drawn as "First   release". Accents go,
+ * as in the browser's own find, so "munchen" finds "München". Only the
+ * Latin, Greek and Cyrillic accent marks go. NFC puts Korean syllables
+ * and Japanese voiced kana back together.
  */
 function normalise(text) {
-  return (text || "").toLowerCase().replace(/\s+/g, " ").trim();
+  return (text || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .normalize("NFC")
+    .toLowerCase()
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 const SVG_NS = "http://www.w3.org/2000/svg";

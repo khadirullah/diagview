@@ -274,6 +274,24 @@ describe("Search: phrases across line breaks", () => {
     expect(search("firewallufw")).toBe("No matches found");
   });
 
+  test("accents do not matter, as in the browser's own find", () => {
+    svg.innerHTML = `<g class="node" id="cv"><text>Résumé upload</text></g>
+      <g class="node" id="city"><text>Mu\u0308nchen office</text></g>
+      <g class="node" id="ko"><text>각 서비스</text></g>`;
+    const [cv, city] = ["#cv", "#city"].map((id) => svg.querySelector(id));
+
+    expect(search("resume")).toBe("1 match found");
+    expect(state.searchMatches).toEqual([cv]);
+    expect(search("RÉSUMÉ  upload")).toBe("1 match found");
+    // A precomposed ü finds a label written with a combining mark
+    expect(search("München")).toBe("1 match found");
+    expect(state.searchMatches).toEqual([city]);
+    expect(search("munchen")).toBe("1 match found");
+    // Korean syllables stay whole, so 가 does not match inside 각
+    expect(search("가")).toBe("No matches found");
+    expect(search("각")).toBe("1 match found");
+  });
+
   test("block elements in an HTML label count as spaces, inline ones do not", () => {
     // draw.io writes each line of a label as a div
     svg.innerHTML = `<g class="label"><foreignObject><div>
