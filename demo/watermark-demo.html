@@ -491,7 +491,9 @@
                 const svgText = await response.text();
                 const container = document.getElementById('plantuml-container');
                 if (container) {
-                    container.innerHTML = svgText;
+                    // The SVG comes from another server, so it goes through
+                    // the sanitizer before it reaches the page
+                    container.innerHTML = DiagView.utils.sanitizeSVG(svgText, 'strict');
                     paperBehind(container.querySelector('svg'));
                 }
             } catch (e) {
