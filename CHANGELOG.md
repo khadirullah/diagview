@@ -72,6 +72,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 - **License Notice Missing From the Minified Bundle.** `diagview.umd.min.js`, the file unpkg and jsDelivr serve, had no license notice because the minifier removed it. Every bundle now starts with `/*! DiagView v1.2.0 | (c) 2026 Khadirullah Mohammad | MIT License | github.com/khadirullah/diagview */`.
 - **`require("diagview/package.json")` Failed.** The exports map did not list `./package.json`, so tools that read the version that way got `ERR_PACKAGE_PATH_NOT_EXPORTED`. The file is exported now.
 - **Go to Definition Opened Missing Files.** The package shipped `.d.ts.map` files that pointed into `src/`, which is not published, so an editor's go to definition opened nothing. The maps are gone, and editors open the `.d.ts` file with its docs. The package has 34 fewer files.
+- **Diagrams Had No Name for Screen Readers.** A diagram with a `data-title`, or a Mermaid chart title without `accTitle`, was read as an image or document with no name, on the page and in the viewer. An SVG with no name of its own now gets an `aria-label` with the title that the header and export names use. A `<title>`, an `aria-label` or `aria-labelledby` from the page or Mermaid stays, and so does an SVG marked `aria-hidden` or `role="none"`. DiagView sets no role, a diagram without a title gets no label, and `destroy()` removes it.
 
 ---
 
