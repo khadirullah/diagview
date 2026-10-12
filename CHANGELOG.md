@@ -83,6 +83,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 - **Shared Search Query Had No Length Limit.** A share link put its whole `dv-q` value into the search box. DiagView now reads the first 200 characters.
 - **Laser Dot Started in the Corner.** Turning meeting mode on showed the dot in the top left corner, or where the last session left it, until the pointer moved. It now shows with the first move over the diagram.
 - **Trackpad Zoom Jumped to the Maximum.** Every wheel event zoomed a full 12% step, so half a second of a slow trackpad pinch or scroll reached the 25x maximum. Each event now zooms by its own size, and a mouse notch zooms 12% as before.
+- **Focus Left the Shortcut Panel After a Click.** A click on the panel's text moved focus to the viewer behind it, and the arrow keys no longer scrolled the list. The panel now keeps focus, and it still closes after `helpTimeout`.
 
 ---
 
