@@ -65,6 +65,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 - **Smooth Scrolling Lost After a Quick Reopen.** Closing the viewer puts back the page's `scroll-behavior` one frame later. Opening the viewer again within that frame saved DiagView's own temporary value, so a page with an inline `scroll-behavior: smooth` lost it until a reload. A quick reopen now keeps the page's value.
 - **`destroy()` Did Not Stop a Waiting Start.** With the script in `<head>`, auto-init waits for the page to load. A `destroy()` before then did not cancel it, so DiagView started anyway. The same held for an `init()` waiting for `DOMContentLoaded` or for a teardown to finish. `destroy()` now cancels any start that has not run yet.
 - **The Viewer's Copy Stayed in Memory After Closing.** Search kept a reference to the last diagram copy the viewer showed, so that copy stayed in memory after the viewer closed. Closing now lets it go.
+- **Enter Skipped Every Other Match When the Minimap Failed.** When the minimap code failed to load, search was set up twice, so each `Enter` moved two matches on. Search is now set up once.
 
 ---
 
