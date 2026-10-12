@@ -76,6 +76,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 - **Notices Read Twice.** A screen reader in browse mode found each notice a second time in the visible toast after the live region had read it. The visible toast is now hidden from screen readers.
 - **Search Box Named by Its Placeholder.** The viewer's search box took its name from the placeholder "Search nodes...", which some screen readers drop once the box holds text. It is now named "Search nodes".
 - **Emoji in the Theme Button Names.** Screen readers read the Canvas Theme buttons as "sun Light", "crescent moon Dark" and "desktop computer Auto". They are now Light, Dark and Auto, and the emoji still show.
+- **Notices on the Page Ignored Reduced Motion.** With reduced motion on, a notice after Copy or Download on a diagram card still slid and faded over 0.3 seconds. It now appears and goes at once, as notices in the viewer did.
 
 ---
 
