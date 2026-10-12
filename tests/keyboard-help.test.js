@@ -30,7 +30,7 @@ describe("Keyboard help auto-close", () => {
   const closeBtn = () => panel().querySelector(".diagview-help-close");
   const card = () => panel().querySelector(".diagview-help-content");
 
-  // The viewer that holds the panel. A click on the card's text moves focus here.
+  // The viewer that holds the panel
   let viewer;
   beforeEach(() => {
     viewer = document.createElement("div");
@@ -84,6 +84,20 @@ describe("Keyboard help auto-close", () => {
     await leaveCard();
     jest.advanceTimersByTime(60000);
     expect(isHelpVisible()).toBe(true);
+  });
+
+  test("a click on the card's text keeps focus in the card and starts the timer", async () => {
+    updateConfig({ helpTimeout: 1500 });
+    showKeyboardHelp();
+    // The card is the nearest focusable box around its text
+    expect(card().tabIndex).toBe(-1);
+    card().focus();
+    await Promise.resolve();
+    expect(document.activeElement).toBe(card());
+    jest.advanceTimersByTime(1499);
+    expect(isHelpVisible()).toBe(true);
+    jest.advanceTimersByTime(1);
+    expect(isHelpVisible()).toBe(false);
   });
 
   test("focus coming back into the card stops the timer", async () => {
@@ -201,6 +215,12 @@ describe("Keyboard help auto-close", () => {
       () => toggleKeyboardHelp(), // ?
       async () => {
         // A click on the card's text, then the timer
+        card().focus();
+        await Promise.resolve();
+        jest.advanceTimersByTime(1500);
+      },
+      async () => {
+        // A click on the viewer, then the timer
         await leaveCard();
         jest.advanceTimersByTime(1500);
       },

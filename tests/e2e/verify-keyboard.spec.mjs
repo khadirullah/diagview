@@ -2,6 +2,7 @@
 // button step into the menu instead of panning the diagram, and the open
 // shortcuts panel keeps every shortcut away from the diagram behind it. A
 // mouse resting where the panel opens does not stop it closing on its own.
+// A click on the panel's text keeps focus inside the panel.
 import { test, expect } from "@playwright/test";
 import { REPRO, newPage } from "./helpers.mjs";
 
@@ -96,6 +97,22 @@ test("the open shortcuts panel blocks every shortcut, arrows scroll its list", a
   expect(await page.evaluate(() => document.activeElement.className)).toBe("diagview-help-close");
 });
 
+test("a click on the panel's text keeps focus in it, and the arrows still scroll it", async () => {
+  if (!(await helpOpen())) await openHelp();
+  const list = ".diagview-help-content";
+  await page.$eval(list, (el) => (el.scrollTop = 0));
+  const before = await view();
+  await page.click(".diagview-help-row >> nth=2");
+  expect(await page.evaluate(() => document.activeElement.className)).toBe("diagview-help-content");
+  await page.keyboard.press("ArrowDown");
+  await page.keyboard.press("ArrowDown");
+  await page.waitForTimeout(400);
+  expect(await page.$eval(list, (el) => el.scrollTop)).toBeGreaterThan(0);
+  expect(await view()).toEqual(before);
+  await page.keyboard.press("Tab");
+  expect(await page.evaluate(() => document.activeElement.className)).toBe("diagview-help-close");
+});
+
 test("?, Escape, Enter and Space on the close button close the panel", async () => {
   for (const key of ["Shift+Slash", "Escape", "Enter", "Space"]) {
     if (!(await helpOpen())) await openHelp();
@@ -122,11 +139,11 @@ test("the panel stays open while focus or a moving mouse is on it", async () => 
   await page.waitForTimeout(2500);
   expect(await helpOpen()).toBe(true);
 
-  // A click on the card's text moves focus to the viewer, and the mouse
-  // stays on the card
+  // A click on the card's text moves focus from the close button to the
+  // card, and the mouse stays on the card
   await page.click(".diagview-help-title span");
   await page.waitForTimeout(2500);
-  expect(await page.evaluate(() => document.activeElement.id)).toBe("diagview-modal");
+  expect(await page.evaluate(() => document.activeElement.className)).toBe("diagview-help-content");
   expect(await helpOpen()).toBe(true);
   await page.mouse.move(5, 5, { steps: 4 });
   await page.waitForTimeout(2500);

@@ -882,7 +882,7 @@ The `?` panel takes focus each time it opens and keeps `Tab` inside it. While it
 
 `showKeyboardHelp` (default `true`) allows the `?` panel. `false` turns the panel off and hides the "Press ? for shortcuts" hint in the topbar. `DiagView.configure()` switches both at runtime.
 
-The `?` panel opens with focus on its close button, and it does not close by itself while focus is inside it. A keyboard or screen reader user can read it for as long as they like. A click or tap on the panel's text moves focus to the viewer, and from then on `helpTimeout` (default `8000`) is the time in milliseconds before the panel closes by itself. `0` keeps it open until you close it. A mouse moving over the panel holds the timer, and moving it off starts the timer again. A mouse that rests where the panel opens does not hold it.
+The `?` panel opens with focus on its close button, and it does not close by itself while focus is inside it. A keyboard or screen reader user can read it for as long as they like. A click or tap on the panel's text moves focus from the close button to the panel itself, so the arrow keys still scroll its list and `Tab` goes back to the close button. From then on `helpTimeout` (default `8000`) is the time in milliseconds before the panel closes by itself. `0` keeps it open until you close it. A mouse moving over the panel holds the timer, and moving it off starts the timer again. A mouse that rests where the panel opens does not hold it.
 
 ```javascript
 DiagView.init({ showKeyboardHelp: true, helpTimeout: 0 });

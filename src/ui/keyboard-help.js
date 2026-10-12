@@ -73,7 +73,9 @@ function clearAutoCloseTimer() {
  */
 function startTimerIfLeft() {
   const card = helpModal?.querySelector(".diagview-help-content");
-  if (hovering || card?.contains(document.activeElement)) clearAutoCloseTimer();
+  const active = document.activeElement;
+  // A click on the text focuses the card itself, which counts as left
+  if (hovering || (card?.contains(active) && active !== card)) clearAutoCloseTimer();
   else startAutoCloseTimer();
 }
 
@@ -131,6 +133,10 @@ function createHelpModal() {
 
   const content = document.createElement("div");
   content.className = "diagview-help-content";
+  // A click on the text keeps focus in the panel, so the arrow keys still
+  // scroll the list and Tab still reaches the close button. Without it
+  // focus went to the viewer behind the panel.
+  content.tabIndex = -1;
 
   // Title
   const title = document.createElement("div");
