@@ -176,7 +176,21 @@ test.describe("Copy Image", () => {
   });
 });
 
-test("a copy that takes longer than the click still copies", async ({ browser }) => {
+/**
+ * Playwright's own Chromium, which CI runs, refuses a clipboard write that
+ * ends after the click. Chrome takes it, so Chromium checks this in Chrome.
+ */
+const skipChromiumShell = (browserName, testInfo) =>
+  test.skip(
+    browserName === "chromium" && !testInfo.project.use.channel,
+    "Playwright's Chromium refuses a clipboard write that ends after the click",
+  );
+
+test("a copy that takes longer than the click still copies", async ({
+  browser,
+  browserName,
+}, testInfo) => {
+  skipChromiumShell(browserName, testInfo);
   // No clipboard permission here, so Chromium also needs the click. The
   // font file holds the export past the 5 seconds a click lasts.
   const page = await openPage(browser, { clipboard: false });
@@ -213,7 +227,11 @@ test("a denied write downloads the PNG", async ({ browser }) => {
   }
 });
 
-test("a Copy SVG that takes longer than the click still copies", async ({ browser }) => {
+test("a Copy SVG that takes longer than the click still copies", async ({
+  browser,
+  browserName,
+}, testInfo) => {
+  skipChromiumShell(browserName, testInfo);
   const page = await openPage(browser, { clipboard: false });
   try {
     let downloads = 0;
