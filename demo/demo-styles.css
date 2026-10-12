@@ -187,6 +187,14 @@ body.ready {
   transition-property: color;
 }
 
+/* Set by demo-runtime.js for the frame a theme switch happens in */
+.dv-theme-switching,
+.dv-theme-switching *,
+.dv-theme-switching *::before,
+.dv-theme-switching *::after {
+  transition: none !important;
+}
+
 a {
   color: inherit;
 }

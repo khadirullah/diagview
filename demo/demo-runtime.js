@@ -399,9 +399,20 @@
         var colours = inlineSvgColours(dark);
         var config = mermaidPage ? mermaidConfig(mermaidPage.extra, dark) : null;
         return drawAgain(config).then(function (swap) {
+            // Every colour changes in this one frame. The page's colour
+            // transitions are off meanwhile, or cards, text and diagrams
+            // would pass through each other's colours on the way, and
+            // DiagView takes the new colours now instead of 50 ms later.
+            root.classList.add('dv-theme-switching');
             root.classList.toggle('dark', dark);
             paintInlineSvgs(colours);
             swap();
+            var dv = window.DiagView;
+            if (dv && dv.state && dv.state.isInitialized) dv.configure({});
+            getComputedStyle(root).color;
+            requestAnimationFrame(function () {
+                requestAnimationFrame(function () { root.classList.remove('dv-theme-switching'); });
+            });
         });
     }
 
