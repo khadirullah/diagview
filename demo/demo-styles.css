@@ -864,11 +864,6 @@ kbd {
      spreads the gap difference over a subgrid's inner rows */
   margin-bottom: 20px;
 }
-/* A content-visibility: auto wrapper in a subgrid row keeps its 500px
-   placeholder height in Safari, even on screen */
-.grid > .card .diagview-wrapper {
-  content-visibility: visible;
-}
 .grid > .card > :nth-child(2):last-child {
   grid-row: span 2;
 }

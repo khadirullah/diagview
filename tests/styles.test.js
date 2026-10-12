@@ -65,6 +65,14 @@ describe("styles.css: floating toolbar", () => {
   });
 });
 
+describe("styles.css: card", () => {
+  // Chrome drops a skipped card's buttons and links from the accessibility tree
+  test("never lets the browser skip a card, so screen readers reach every diagram", () => {
+    expect(ruleBody("\n.diagview-wrapper {")).not.toMatch(/content-visibility\s*:/);
+    expect(css).not.toMatch(/content-visibility\s*:\s*(auto|hidden)/);
+  });
+});
+
 describe("styles.css: media queries", () => {
   // Chrome before 104 and Safari before 16.4 drop a whole block whose query uses `or`
   test("join conditions with a comma, which older browsers read", () => {

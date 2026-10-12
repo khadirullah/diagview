@@ -141,8 +141,9 @@
   overflow: hidden;
   transition: box-shadow 0.3s ease;
   contain: layout style paint;
-  content-visibility: auto;
-  contain-intrinsic-size: auto 500px;
+  /* The card must not use content-visibility. Chrome drops a skipped
+     card's buttons and links from the accessibility tree, so screen
+     readers could not reach diagrams far from the screen. */
 }
 
 /* Hover looks need a pointer that can hover. A touch screen keeps :hover on
