@@ -440,6 +440,12 @@ describe("styles.css: dead and contradicting rules", () => {
     expect(ruleBody(".diagview-toast-spin {")).toMatch(/animation:/);
   });
 
+  test("the loading ring stops turning once its overlay is hidden", () => {
+    expect(ruleBody(".diagview-loading.hide .diagview-spinner {")).toMatch(
+      /animation-play-state:\s*paused;/,
+    );
+  });
+
   test("reduced motion stops the laser pulse instead of speeding it up", () => {
     const idx = css.lastIndexOf("@media (prefers-reduced-motion: reduce)");
     expect(ruleBody(".diagview-laser::before {", idx)).toMatch(/animation:\s*none;/);

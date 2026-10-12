@@ -2073,6 +2073,12 @@
   pointer-events: none;
 }
 
+/* The overlay stays in the viewer at opacity 0, so a turning ring would
+   keep the browser drawing frames for as long as the viewer is open */
+.diagview-loading.hide .diagview-spinner {
+  animation-play-state: paused;
+}
+
 .diagview-spinner {
   width: 48px;
   height: 48px;
