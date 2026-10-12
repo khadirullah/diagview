@@ -1266,6 +1266,9 @@
   right: 0;
   width: min(260px, calc(100vw - 80px));
   max-height: min(70vh, calc(100vh - 120px));
+  /* vh on iOS Safari is the height with its toolbars hidden, so a tall
+     menu reached above the screen while they showed */
+  max-height: min(70dvh, calc(100dvh - 120px));
   border-radius: 20px;
   --dv-menu-shadow:
     0 24px 48px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.05) inset;
@@ -2199,6 +2202,7 @@
   max-width: 400px;
   width: 90%;
   max-height: 80vh;
+  max-height: 80dvh;
   overflow-y: auto;
   box-shadow: 0 24px 48px rgba(0, 0, 0, 0.3);
 }

@@ -447,6 +447,14 @@ describe("styles.css: dead and contradicting rules", () => {
     expect(prefixed.map((rule) => rule.replace("-webkit-", ""))).toEqual(plain);
   });
 
+  test("the menu and the shortcut panel fit the visible height, with a vh line first", () => {
+    const menu = ruleBody(".diagview-menu {");
+    expect(menu).toMatch(
+      /max-height: min\(70vh, calc\(100vh - 120px\)\);[^]*max-height: min\(70dvh, calc\(100dvh - 120px\)\);/,
+    );
+    expect(ruleBody(".diagview-help-content {")).toMatch(/max-height: 80vh;\s*max-height: 80dvh;/);
+  });
+
   test("the loading ring stops turning once its overlay is hidden", () => {
     expect(ruleBody(".diagview-loading.hide .diagview-spinner {")).toMatch(
       /animation-play-state:\s*paused;/,
