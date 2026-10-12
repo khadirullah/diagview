@@ -139,16 +139,20 @@ function _createCanvasThemeSection(menuPanel) {
   modeGroup.className = "dv-theme-modes";
 
   const modes = [
-    { label: "☀️ Light", mode: "light" },
-    { label: "🌙 Dark", mode: "dark" },
-    { label: "🖥️ Auto", mode: "auto" },
+    ["☀️", "Light", "light"],
+    ["🌙", "Dark", "dark"],
+    ["🖥️", "Auto", "auto"],
   ];
 
-  modes.forEach(({ label, mode }) => {
+  modes.forEach(([icon, label, mode]) => {
     const btn = document.createElement("button");
     btn.type = "button";
     btn.className = "dv-theme-btn";
-    btn.textContent = label;
+    // Screen readers say only the word, not "sun Light"
+    const emoji = document.createElement("span");
+    emoji.setAttribute("aria-hidden", "true");
+    emoji.textContent = `${icon} `;
+    btn.append(emoji, label);
     btn.dataset.canvas = mode;
 
     btn.onclick = () => {

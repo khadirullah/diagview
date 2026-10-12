@@ -320,6 +320,19 @@ describe("Floating Menu UI", () => {
       expect(input.getAttribute("aria-label")).toBe("Custom colour");
     });
 
+    test("theme buttons show their emoji but keep it out of their name", () => {
+      createFloatingMenu(sourceElement, clonedSvg);
+      const buttons = [...document.querySelectorAll(".dv-theme-btn[data-canvas]")];
+      expect(buttons.map((b) => b.textContent)).toEqual(["☀️ Light", "🌙 Dark", "🖥️ Auto"]);
+      const spoken = (b) =>
+        [...b.childNodes]
+          .filter((n) => n.nodeType === 3 || n.getAttribute("aria-hidden") !== "true")
+          .map((n) => n.textContent)
+          .join("")
+          .trim();
+      expect(buttons.map(spoken)).toEqual(["Light", "Dark", "Auto"]);
+    });
+
     test("theme buttons and swatches report the chosen canvas through aria-pressed", () => {
       createFloatingMenu(sourceElement, clonedSvg);
       const pressed = () =>
