@@ -66,6 +66,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 - **`destroy()` Did Not Stop a Waiting Start.** With the script in `<head>`, auto-init waits for the page to load. A `destroy()` before then did not cancel it, so DiagView started anyway. The same held for an `init()` waiting for `DOMContentLoaded` or for a teardown to finish. `destroy()` now cancels any start that has not run yet.
 - **The Viewer's Copy Stayed in Memory After Closing.** Search kept a reference to the last diagram copy the viewer showed, so that copy stayed in memory after the viewer closed. Closing now lets it go.
 - **Enter Skipped Every Other Match When the Minimap Failed.** When the minimap code failed to load, search was set up twice, so each `Enter` moved two matches on. Search is now set up once.
+- **Lazy Features Failed Without a Word.** The ESM build loads search, the minimap, rotation, meeting mode and Readable text when they are first used. When that load failed, offline, under a strict Content-Security-Policy or after a CDN error, the feature did nothing and nothing said why. DiagView now logs one console warning that names the feature.
 
 ---
 
