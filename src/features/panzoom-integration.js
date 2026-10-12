@@ -136,10 +136,21 @@ export function setupViewportInteractions(viewport, element, panzoom) {
     armWillChange();
     blurActiveElement();
 
-    // Panzoom handles wheel normalization internally for modern versions.
-    // Manual normalization with object spread ({...e}) breaks in Firefox
-    // because non-enumerable properties are lost.
-    panzoom.zoomWithWheel(e);
+    // Panzoom's zoomWithWheel zooms one full step for every event, however
+    // small. A trackpad sends dozens of small ones a second, so a slow pinch
+    // reached the maximum zoom at once. Each event now zooms by its own size,
+    // in pixels, up to that one step, so a mouse notch zooms as before.
+    // A pinch comes as ctrl + wheel with small deltas, and follows the
+    // fingers. Shift turns the wheel into deltaX on a Mac.
+    const delta = e.deltaY || e.deltaX;
+    const px = delta * (e.deltaMode === 1 ? 20 : e.deltaMode ? 400 : 1);
+    const step = Math.min(Math.abs(px) * (e.ctrlKey ? 0.01 : 0.003), panzoom.getOptions().step / 3);
+    panzoom.zoomToPoint(
+      panzoom.getScale() * Math.exp(px < 0 ? step : -step),
+      e,
+      { animate: false },
+      e,
+    );
   };
 
   // Desktop mouse down (blur inputs when starting to pan)

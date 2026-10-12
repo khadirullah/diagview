@@ -78,6 +78,70 @@ describe("Gesture-scoped will-change", () => {
   });
 });
 
+describe("wheel zoom", () => {
+  let viewport, panzoom, scale;
+
+  const wheel = (init) =>
+    viewport.dispatchEvent(new WheelEvent("wheel", { bubbles: true, cancelable: true, ...init }));
+
+  beforeEach(() => {
+    resetConfig();
+    state.isModalOpen = true;
+    document.body.innerHTML = "";
+    viewport = document.createElement("div");
+    const element = document.createElement("div");
+    viewport.appendChild(element);
+    document.body.appendChild(viewport);
+    scale = 1;
+    panzoom = {
+      getOptions: () => ({ step: 0.35 }),
+      getScale: () => scale,
+      zoomToPoint: jest.fn((to) => (scale = Math.min(to, 25))),
+    };
+    setupViewportInteractions(viewport, element, panzoom);
+  });
+
+  afterEach(() => {
+    for (const fn of Array.from(state.modalCleanupFunctions)) fn();
+    state.modalCleanupFunctions.clear();
+    state.isModalOpen = false;
+  });
+
+  test.each([
+    ["a pixel notch", { deltaY: -100 }],
+    ["a line notch", { deltaY: -3, deltaMode: 1 }],
+    ["ctrl and a notch", { deltaY: -100, ctrlKey: true }],
+    ["shift and a notch", { deltaX: -100 }],
+  ])("%s zooms one full step, as before", (_, init) => {
+    wheel(init);
+    expect(scale).toBeCloseTo(Math.exp(0.35 / 3), 6);
+  });
+
+  test("a notch down zooms out by the same step", () => {
+    wheel({ deltaY: 100 });
+    expect(scale).toBeCloseTo(Math.exp(-0.35 / 3), 6);
+  });
+
+  test("a slow trackpad pinch follows the fingers instead of jumping to the maximum", () => {
+    for (let i = 0; i < 30; i++) wheel({ deltaY: -3, ctrlKey: true, clientX: 10, clientY: 20 });
+    expect(scale).toBeCloseTo(Math.exp(0.9), 6);
+    const [, point, options] = panzoom.zoomToPoint.mock.calls[0];
+    expect([point.clientX, point.clientY]).toEqual([10, 20]);
+    expect(options).toEqual({ animate: false });
+  });
+
+  test("small trackpad scroll steps zoom a little each", () => {
+    for (let i = 0; i < 30; i++) wheel({ deltaY: -4 });
+    expect(scale).toBeCloseTo(Math.exp(30 * 4 * 0.003), 6);
+  });
+
+  test("the page does not scroll or zoom under the viewer", () => {
+    const e = new WheelEvent("wheel", { bubbles: true, cancelable: true, deltaY: -3 });
+    viewport.dispatchEvent(e);
+    expect(e.defaultPrevented).toBe(true);
+  });
+});
+
 describe("touch: tap after pinch does not reset the zoom", () => {
   let viewport, element, panzoom;
 
