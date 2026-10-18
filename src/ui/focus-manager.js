@@ -221,11 +221,13 @@ function getFocusableElements(modal) {
       // a[*|href] also matches SVG links written with xlink:href, as Mermaid 10 does
       'button:not([disabled]), a[*|href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
     ),
-  ).filter((el) => {
-    const style = window.getComputedStyle(el);
-    if (style.display === "none" || style.visibility === "hidden") return false;
-    return isRendered(el) && !isInClosedSearch(el);
-  });
+  ).filter(
+    (el) =>
+      // isRendered also covers display: none, here and on any ancestor
+      window.getComputedStyle(el).visibility !== "hidden" &&
+      isRendered(el) &&
+      !isInClosedSearch(el),
+  );
 }
 
 /**
