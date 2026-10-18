@@ -1,7 +1,7 @@
 // A share link taken on a rotated and zoomed diagram restores the rotation
 // (diagram and minimap), the zoom and the centred point for the recipient.
 import { test, expect } from "@playwright/test";
-import { REPRO, newPage } from "./helpers.mjs";
+import { REPRO, newPage, waitForShareRestore } from "./helpers.mjs";
 
 test.describe.configure({ mode: "serial" });
 
@@ -63,7 +63,7 @@ test.describe("recipient", () => {
   test("diagram DOM is rotated 90°", async ({ browser }) => {
     page2 = await newPage(browser);
     await page2.goto(REPRO + "?" + q.toString());
-    await page2.waitForTimeout(2200);
+    await waitForShareRestore(page2, q);
     st = await page2.evaluate(() => {
       const svg = document.getElementById("diagview-modal-viewport")?.querySelector("svg");
       const rotG = svg?.querySelector(":scope > g.dv-rot-g");
@@ -118,7 +118,7 @@ test("unrotated share still exact", async ({ browser }) => {
   const q2 = new URL(await page3.evaluate(() => window.__copied)).searchParams;
   const page4 = await newPage(browser);
   await page4.goto(REPRO + "?" + q2.toString());
-  await page4.waitForTimeout(2000);
+  await waitForShareRestore(page4, q2);
   const r2 = await rootCenter(page4);
   const detail = `encoded (${q2.get("dv-cx")}, ${q2.get("dv-cy")}) restored (${r2.x.toFixed(1)}, ${r2.y.toFixed(1)})`;
   expect(Math.abs(r2.x - Number(q2.get("dv-cx"))), detail).toBeLessThan(2);
@@ -146,7 +146,7 @@ test("a share link at zoom 10 lands within a pixel of the sender's view", async 
   const link = new URL(await sender.evaluate(() => window.__copied)).searchParams;
   const receiver = await newPage(browser);
   await receiver.goto(REPRO + "?" + link.toString());
-  await receiver.waitForTimeout(2000);
+  await waitForShareRestore(receiver, link);
   const got = await rootCenter(receiver);
   const off = Math.hypot(got.x - sent.x, got.y - sent.y) * pxPerUnit;
   expect(

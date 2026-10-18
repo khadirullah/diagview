@@ -1,7 +1,7 @@
 // Core geometry checks: drag and wheel on desktop, share restore, minimap
 // click, focus trap, rememberZoom, and touch on a phone-sized page.
 import { test, expect } from "@playwright/test";
-import { REPRO, newPage, centerInSVG } from "./helpers.mjs";
+import { REPRO, newPage, centerInSVG, waitForShareRestore } from "./helpers.mjs";
 
 test.describe.configure({ mode: "serial" });
 
@@ -83,7 +83,7 @@ test.describe("desktop", () => {
 
     page2 = await newPage(browser);
     await page2.goto(REPRO + "?" + q.toString());
-    await page2.waitForTimeout(1800);
+    await waitForShareRestore(page2, q);
     const restored = await centerInSVG(page2);
     const detail = `encoded (${q.get("dv-cx")}, ${q.get("dv-cy")}) restored (${restored?.x.toFixed(1)}, ${restored?.y.toFixed(1)}) at scale ${restored?.scale} (sharer was at (${sharer.x.toFixed(1)}, ${sharer.y.toFixed(1)}))`;
     expect(restored, detail).toBeTruthy();
@@ -216,7 +216,7 @@ test.describe("mobile (touch)", () => {
     const q = new URL(link).searchParams;
     const mob2 = await newPage(browser, phone(browserName));
     await mob2.goto(REPRO + "?" + q.toString());
-    await mob2.waitForTimeout(1800);
+    await waitForShareRestore(mob2, q);
     const restored = await centerInSVG(mob2);
     const detail = `encoded (${q.get("dv-cx")}, ${q.get("dv-cy")}) restored (${restored?.x.toFixed(1)}, ${restored?.y.toFixed(1)})`;
     expect(restored, detail).toBeTruthy();

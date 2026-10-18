@@ -5,7 +5,7 @@
 // in zoomed pixels there, while getBoundingClientRect() stays in layout
 // pixels.
 import { test, expect } from "@playwright/test";
-import { REPRO, newPage } from "./helpers.mjs";
+import { REPRO, newPage, waitForShareRestore } from "./helpers.mjs";
 
 // repro.html has no viewport meta tag, so a 390px phone lays it out 980px
 // wide and zooms out to fit
@@ -75,7 +75,7 @@ for (const turns of [0, 1]) {
 
     const page2 = await newPage(browser, PHONE);
     await page2.goto(REPRO + "?" + q.toString());
-    await page2.waitForTimeout(2500);
+    await waitForShareRestore(page2, q);
     const restored = await centerByRects(page2);
     const detail = `shared (${shared.x.toFixed(1)}, ${shared.y.toFixed(1)}) restored (${restored.x.toFixed(1)}, ${restored.y.toFixed(1)})`;
     expect(Math.abs(restored.x - shared.x), detail).toBeLessThan(2);

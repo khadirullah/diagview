@@ -26,3 +26,43 @@ export async function newPage(browser, options = {}) {
 
 /** Viewport centre measured in the diagram's own coordinates (see repro.html) */
 export const centerInSVG = (page) => page.evaluate(() => window.__centerInSVG());
+
+/**
+ * Wait until a share link has been applied in the viewer. The dv- parameters
+ * leave the address bar before the viewer opens, so that alone is not enough.
+ * The restore then loads the rotation code, rotates, zooms and pans to the
+ * shared point over a few frames. This waits for the viewer to open with the
+ * link's rotation and zoom, for the open animation to end, and for the pan
+ * to hold still for 300 ms, which also covers the throttled minimap update.
+ * @param {import("@playwright/test").Page} page - Page opened on the share link
+ * @param {URLSearchParams} q - The link's parameters
+ */
+export const waitForShareRestore = (page, q) =>
+  page.waitForFunction(
+    ({ r, z }) => {
+      const s = window.DiagView?.default?.state;
+      const pz = s?.activePanzoom;
+      const content = document.querySelector(".diagview-modal-content");
+      const ready =
+        s?.isModalOpen &&
+        !s.isModalOpening &&
+        pz &&
+        !window.location.search.includes("dv-") &&
+        s.rotationAngle === r &&
+        Math.abs(pz.getScale() - z) < 0.01 &&
+        content?.getAnimations().length === 0;
+      if (!ready) {
+        window.__dvRestorePan = null;
+        return false;
+      }
+      const { x, y } = pz.getPan();
+      const last = window.__dvRestorePan;
+      if (!last || last.x !== x || last.y !== y) {
+        window.__dvRestorePan = { x, y, since: performance.now() };
+        return false;
+      }
+      return performance.now() - last.since >= 300;
+    },
+    { r: Number(q.get("dv-r") || 0), z: Number(q.get("dv-z")) },
+    { polling: "raf" },
+  );
