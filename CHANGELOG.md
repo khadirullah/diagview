@@ -6,6 +6,42 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 
 ---
 
+## [Unreleased]
+
+### Changed
+
+- **Smaller ESM Build.** The ESM build in `dist/esm` targeted every browser with module support, so async functions became generator wrappers and optional chaining became long `=== void 0` chains. It now targets the same browsers as the UMD bundle, the `browserslist` in package.json, and keeps both as written. The ESM bundle drops from 54.1 kB to 48.7 kB brotlied. Bundlers that cannot parse optional chaining, such as webpack 4, need to transpile DiagView, as they already did for the UMD bundle.
+- **Smaller UMD Bundle.** Code that no caller could reach is gone, and the watermark checks, the four image exports, the clipboard fallback and the theme variables share one piece of code each. The UMD bundle drops from 48.8 kB to 47.9 kB brotlied. The unused `resetRotation()` and `EXPORT.PDF_SCALE` are removed. Watermark warnings for an unknown style or placement now list the allowed values with commas, as the position warning did.
+- **Smaller npm Package.** The ESM files shipped with source maps, about 0.9 MB of the package, though the files are not minified. The ESM build no longer has source maps, and the minified UMD bundle keeps its map. The package drops from 3.5 MB to 2.6 MB unpacked.
+- **Share Link Code Loads When Used in the ESM Build.** The code that makes, copies and applies share links is now a lazy chunk of its own. Only the small part that reads a share link on page load stays in the main chunk.
+- **Faster Viewer Open and Export.** Opening the viewer or exporting copied the whole SVG twice and serialized it twice. It now does each once.
+- **Faster Setup of Diagrams With Long Style Blocks.** Renaming ids in a diagram's `<style>` took time that grew with the square of the block's length. A 600,000 character block took over two seconds and now takes milliseconds.
+- **Smoother Panning With the Minimap.** DiagView measured the page zoom with a hidden probe about ten times a second while panning. It now measures again only when the page's zoom, size or scroll changes.
+- **Faster Silent Exports.** An export with `silent: true` and Readable off no longer checks each label against the background. That check only feeds a warning that a silent export never shows.
+- **Fonts Are Fetched Once.** Every export fetched and encoded each font file its labels use again. DiagView now keeps each embedded font until `destroy()`. A font that failed to load is tried again on the next export.
+- **PDF Export Frees Its Canvas.** The PDF export now frees its canvas memory as soon as it has the image for the page, as the PNG, JPEG and WebP exports already did.
+- **Passive Touch Listeners.** The viewer's `touchstart` listeners are passive, so the browser starts a scroll or pinch without waiting for them. The dot grid no longer looks up the diagram on every pan and zoom event.
+- **Security Reports Go Through GitHub Only.** SECURITY.md no longer suggests the email address in the npm package metadata. That address is a GitHub no-reply address and never receives mail. Report a vulnerability through a private GitHub Security Advisory.
+- **Smaller Demo Pages.** The demo pages load the minified `diagview.umd.min.js` from the same release, 56 kB gzipped instead of 145 kB.
+
+### Fixed
+
+- **The Viewer Set Up Its Own Copy.** With a selector that matches the `<svg>` itself, such as `<svg class="chart">`, the copy in the viewer keeps the class. When the page diagram was not set up yet, as with a share link or `openFullscreen()` on a diagram below the fold, DiagView set up that copy inside the viewer, and the viewer showed a card with its own toolbar. DiagView now leaves everything inside the viewer and the minimap alone, and the viewer's notices, menus and search marks no longer wake its page observer.
+- **Closing the Viewer Loads Nothing.** Closing the viewer no longer downloads the search, minimap or rotate code to clean them up. With the ESM build this fetched files the reader never opened, made the close wait on a slow network and logged "Could not load the rotate feature" offline. `R` pressed just before a close no longer turns the next diagram.
+- **PDF Export Did Not Retry jsPDF.** A jsPDF download that failed left its `<script>` in the page. After an integrity mismatch the next PDF export fell back to PNG at once, and after a network error it waited the full 15 seconds. A failed or stalled load now removes the tag, so the next export loads jsPDF again. A page's own tag that loaded without defining `window.jspdf` no longer counts as loaded.
+- **Long Diagrams Export With a Raised maxPixels.** `maxPixels` capped the area of the export canvas but not its sides. With a raised `maxPixels`, a long, flat diagram got a canvas tens of thousands of pixels wide, and Chrome and Safari failed with "Encoding failed". Each side of an image or PDF export now stays at or under 16383 pixels, the most a WebP file can hold, and DiagView logs the same "Auto-scaled" warning when it lowers the scale.
+- **data-diagview-scale on the Diagram Around the SVG.** `exportToPNG(svg)` and the other image exports read `data-diagview-scale` only from the element passed to them. Passing the `<svg>`, or the inner element of a nested match such as a `.mermaid` inside a `.diagram`, ignored the attribute on the diagram around it. Export now also looks at the diagram element that has the toolbar and at the nearest diagram selector match. The attribute on the element passed in still wins.
+- **An Invalid Layout Reset to Floating.** Every other option keeps its previous value when it gets an invalid one, but an invalid `layout` went back to `"floating"`. It now keeps the previous layout, and the warning names the three layouts.
+- **Unknown Button Style Without a Warning.** A `ui.buttons.style` such as `"Solid"` or `"outline"` matched no style, so the toolbar buttons lost their accent colour and nothing said why. A value other than `"transparent"`, `"accent"`, `"solid"` or `"neutral"` now logs a warning and keeps the previous style.
+- **shadcn Background Variable Read as a Colour.** On a page with no background on `<body>` or `<html>`, DiagView took `--background: 0 0% 100%` from shadcn and Tailwind themes as the canvas colour. The viewer got no valid background and white text on a light page. `--background`, `--bg-color` and `--body-bg` now count only when they hold a colour.
+- **Accent Colour in the Minimap and Pressed Buttons.** With a custom accent, the minimap's view box, the pressed toolbar buttons, the hovered text select button, its glow and the search box focus ring kept a fixed blue tint inside borders that already took the accent. They now use the accent at the same strength. On a light page the built-in blue looks as before. On a dark page those tints now match the lighter built-in blue `#60a5fa`. Browsers without `color-mix()` keep the old blue.
+- **`destroy()` Did Not Stop a Share Link From Opening.** A share link opens its diagram a tenth of a second after DiagView finds it, and `destroy()` in that time did not cancel the open. It does now. The `dv-` parameters leave the address bar when the diagram opens, so a framework remount with `destroy()` and `init()` still opens the link once.
+- **Search Box Keeps Focus When the Menu Closes.** With the menu open, a click into the search box closed the menu and moved focus to the viewer, so the next letters ran shortcuts such as `F`, `R` and `T`. Focus now stays in the box.
+- **JPEG and PDF Stay Disabled Mid-Export.** Ticking Transparent while a PDF or JPEG export was running left that button clickable once the export finished.
+- **Shortcuts Panel Keeps Focus.** A wheel turn or a press on the shortcuts panel moved focus to the viewer behind it, so the arrow keys stopped scrolling the list.
+- **Search Back Button Hands On Focus.** On phones, Back in the search bar left focus on itself while it hid. Focus now moves to the search button.
+- **Resize Listeners Left After `destroy()`.** DiagView added a `resize` and an `orientationchange` listener when its script loaded, and `destroy()` left them. They are now added on first use and removed by `destroy()`.
+
 ## [1.2.0] - 2026-10-12
 
 ### Added
