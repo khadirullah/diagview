@@ -14,12 +14,22 @@ export function isBrowser() {
 
 let isMobileCache = null;
 
-if (isBrowser()) {
-  const invalidate = () => {
-    isMobileCache = null;
-  };
-  window.addEventListener("resize", invalidate);
-  window.addEventListener("orientationchange", invalidate);
+let watchingViewport = false;
+
+const forgetViewport = () => (isMobileCache = null);
+
+/**
+ * Add or remove the listeners that drop the cached answers on a resize.
+ * They go on with the first cached answer.
+ * @param {boolean} on - Add them, or remove them and forget the answers
+ */
+export function watchViewport(on) {
+  if (watchingViewport === on) return;
+  watchingViewport = on;
+  ["resize", "orientationchange"].forEach((type) =>
+    window[on ? "addEventListener" : "removeEventListener"](type, forgetViewport),
+  );
+  forgetViewport();
 }
 
 /**
@@ -28,6 +38,7 @@ if (isBrowser()) {
 export function isMobileDevice() {
   if (isMobileCache !== null) return isMobileCache;
   if (!isBrowser()) return false;
+  watchViewport(true);
   isMobileCache =
     window.matchMedia?.("(pointer: coarse)").matches ||
     window.matchMedia?.("(max-width: 768px)").matches;

@@ -10,6 +10,8 @@ import {
   getDiagramTitle,
   isClipboardAvailable,
   copyText,
+  isMobileDevice,
+  watchViewport,
 } from "../src/core/utils.js";
 
 describe("Utils API", () => {
@@ -615,5 +617,56 @@ describe("copyText", () => {
     });
     expect(() => copyText("x")).toThrow("Hard fail");
     expect(document.querySelector("textarea")).toBeNull();
+  });
+});
+
+describe("isMobileDevice", () => {
+  const original = window.matchMedia;
+  let coarse;
+
+  beforeEach(() => {
+    coarse = false;
+    window.matchMedia = jest.fn((query) => ({
+      matches: query === "(pointer: coarse)" && coarse,
+    }));
+    watchViewport(false);
+  });
+
+  afterEach(() => {
+    watchViewport(false);
+    window.matchMedia = original;
+  });
+
+  test("keeps its answer until the window is resized", () => {
+    expect(isMobileDevice()).toBe(false);
+    coarse = true;
+    expect(isMobileDevice()).toBe(false);
+    window.dispatchEvent(new Event("resize"));
+    expect(isMobileDevice()).toBe(true);
+    coarse = false;
+    window.dispatchEvent(new Event("orientationchange"));
+    expect(isMobileDevice()).toBe(false);
+  });
+
+  test("adds its listeners on first use and watchViewport(false) removes them", () => {
+    const add = jest.spyOn(window, "addEventListener");
+    const remove = jest.spyOn(window, "removeEventListener");
+    try {
+      isMobileDevice();
+      isMobileDevice();
+      const added = add.mock.calls.map(([type]) => type);
+      expect(added).toEqual(["resize", "orientationchange"]);
+
+      watchViewport(false);
+      expect(remove.mock.calls).toEqual(add.mock.calls);
+
+      // Asked again after a teardown, it measures again and listens again
+      coarse = true;
+      expect(isMobileDevice()).toBe(true);
+      expect(add).toHaveBeenCalledTimes(4);
+    } finally {
+      add.mockRestore();
+      remove.mockRestore();
+    }
   });
 });

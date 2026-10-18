@@ -18,7 +18,7 @@ import {
   runCleanupFunctions,
   runModalCleanupFunctions,
 } from "./core/config.js";
-import { isBrowser, sanitizeSVG, clearSVGContentCache } from "./core/utils.js";
+import { isBrowser, sanitizeSVG, clearSVGContentCache, watchViewport } from "./core/utils.js";
 import { safeDestroy, clearAsyncTasks, loadChunk, loadedChunk } from "./core/lifecycle.js";
 import { hideToast } from "./ui/toast.js";
 import {
@@ -263,6 +263,7 @@ async function _teardown() {
     // Clear event bus and caches
     () => state.events.clear(),
     clearSVGContentCache,
+    () => watchViewport(false),
 
     // Now reset all state, after every cleanup function has run
     resetViewportState,
