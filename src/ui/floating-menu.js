@@ -503,9 +503,8 @@ function _setupMenuController(elements, sourceElement, clonedSvg) {
       },
     });
     // Meeting Mode is a toggle, so it reports its state from the start
-    if (btn && def.feat === "meeting-mode")
-      btn.setAttribute("aria-pressed", String(state.meetingMode));
-    if (btn) toolsContainer.appendChild(btn);
+    if (def.feat === "meeting-mode") btn.setAttribute("aria-pressed", String(state.meetingMode));
+    toolsContainer.appendChild(btn);
   });
 
   // Outside click handling
