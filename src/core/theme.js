@@ -303,10 +303,10 @@ function detectBackground() {
     bg = html.backgroundColor;
   }
 
-  // Try CSS variables
+  // Try CSS variables that hold a colour. shadcn's --background is a bare
+  // triplet such as "0 0% 100%".
   if (!bg || bg === "transparent" || bg === "rgba(0, 0, 0, 0)") {
-    bg =
-      getCSSVariable("--background") || getCSSVariable("--bg-color") || getCSSVariable("--body-bg");
+    bg = cssVarColor("--background") || cssVarColor("--bg-color") || cssVarColor("--body-bg");
   }
 
   return !bg || bg === "transparent" || bg === "rgba(0, 0, 0, 0)" ? null : bg;

@@ -624,7 +624,7 @@ DiagView reads these variables from your stylesheet:
 }
 ```
 
-The background comes from the computed background of `<body>`, then `<html>`. DiagView reads `--background`, then `--bg-color`, then `--body-bg` only when both are transparent. Without `--diagram-text` or `textColor`, DiagView uses `#1e293b` or `#f1f5f9`, whichever has more contrast on the canvas.
+The background comes from the computed background of `<body>`, then `<html>`. DiagView reads `--background`, then `--bg-color`, then `--body-bg` only when both are transparent, and skips a variable that holds no colour, such as shadcn's `0 0% 100%`. Without `--diagram-text` or `textColor`, DiagView uses `#1e293b` or `#f1f5f9`, whichever has more contrast on the canvas.
 
 For the accent, DiagView takes the first of these that is set: `accentColor` from `init()` or `configure()`, then the page variable `--diagram-accent`, then its built-in blue. The built-in blue is `#3b82f6` on a light page and `#60a5fa` on a dark one. DiagView picks whichever of the two stands out better on both the page and the canvas, so a white page on a computer in dark mode still gets `#3b82f6`. A page with no background of its own counts as white here, because the browser paints it white unless the page sets `color-scheme: dark` in CSS or in a `<meta name="color-scheme">` tag. `--diagram-accent` counts only if it holds a colour, so bare numbers such as `222.2 47.4% 11.2%` are skipped. DiagView does not read the site's `--primary` or `--accent-color`. Many themes set those near black or white, and the accent buttons would blend into the page.
 

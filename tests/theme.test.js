@@ -481,6 +481,19 @@ describe("Theme Module", () => {
       expect(supports).toHaveBeenCalledWith("color", "222.2 47.4% 11.2%");
     });
 
+    test("a page background variable counts only when it holds a colour", () => {
+      vars["--background"] = "0 0% 100%";
+      vars["--bg-color"] = "#0f172a";
+      const theme = detectTheme();
+      expect(theme.bg).toBe("#0f172a");
+      // isDark comes from the page's dark mode markers, such as a "dark"
+      // class or data-theme, and this page has none
+      expect(theme.isDark).toBe(false);
+      clearThemeCache();
+      delete vars["--bg-color"];
+      expect(detectTheme().bg).toBe(COLORS.BG_LIGHT);
+    });
+
     test("accentColor from config wins over page variables", () => {
       vars["--diagram-accent"] = "#aa0000";
       updateConfig({ accentColor: "#f59e0b" });
