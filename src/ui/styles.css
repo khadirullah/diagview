@@ -1321,10 +1321,9 @@
     opacity 0.2s cubic-bezier(0.16, 1, 0.3, 1),
     transform 0.2s cubic-bezier(0.16, 1, 0.3, 1),
     visibility 0s linear;
-  /* Restore scrolling when open — critical for heavy zoom levels and mobile viewports where
-     the menu content exceeds the viewport height */
+  /* Scroll when open, for heavy zoom levels and phone screens where the
+     menu is taller than the viewport */
   overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
   touch-action: pan-y;
   overscroll-behavior: contain;
 }
@@ -1628,7 +1627,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: var(--dv-surface, rgba(255, 255, 255, 0.1));
+  background: rgba(255, 255, 255, 0.1);
   font-size: 14px;
   position: relative;
   overflow: visible;
