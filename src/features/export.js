@@ -1095,7 +1095,7 @@ async function savePDF(sourceElement, filename, { transparent, modalClone, silen
     showProgressToast("Generating PDF...");
     const pdfUrl = state.config.pdfLibraryUrl;
     if (!window.jspdf) {
-      await loadScript(pdfUrl, state.config.pdfLibraryIntegrity).catch(() => {
+      await loadScript(pdfUrl, state.config.pdfLibraryIntegrity, "jspdf").catch(() => {
         // Silently handle load failure, the check below will trigger the fallback UI
       });
     }

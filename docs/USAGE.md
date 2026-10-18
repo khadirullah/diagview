@@ -484,9 +484,9 @@ DiagView.init({
 
 A custom `pdfLibraryUrl` without its own `pdfLibraryIntegrity` loads with no integrity check, so the `null` line is optional. For a file on a CDN you do not control, pass its SRI hash as `pdfLibraryIntegrity` instead.
 
-When the page has its own `<script>` with the same URL, DiagView does not add a second one. A PDF export started while that script is still loading waits for it.
+When the page has its own `<script>` with the same URL, DiagView does not add a second one. A PDF export started while that script is still loading waits for it. If that script failed, so the page has no `window.jspdf`, DiagView adds its own.
 
-If jsPDF has not loaded after 15 seconds, the export falls back to PNG with the "PDF engine unavailable" notice. A jsPDF page is at most 14400 pt on a side, so a diagram wider or taller than about 10800 px, margin included, is scaled down to fit and keeps its shape.
+If jsPDF has not loaded after 15 seconds, the export falls back to PNG with the "PDF engine unavailable" notice. The next PDF export tries to load jsPDF again. A jsPDF page is at most 14400 pt on a side, so a diagram wider or taller than about 10800 px, margin included, is scaled down to fit and keeps its shape.
 
 ---
 

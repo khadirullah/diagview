@@ -2082,7 +2082,8 @@ describe("onExport fires and exportDiagram resolves to true only after a success
   });
 
   test("a PDF that falls back to PNG because jsPDF did not load does not fire it", async () => {
-    // A script tag for the URL has already loaded, so loadScript resolves without jsPDF
+    // The page's tag for the URL has loaded without jsPDF, so DiagView adds
+    // its own, and that one fails too
     const url = "https://example.test/jspdf-missing.js";
     updateConfig({ pdfLibraryUrl: url, pdfLibraryIntegrity: null });
     const original = performance.getEntriesByName;
@@ -2090,7 +2091,13 @@ describe("onExport fires and exportDiagram resolves to true only after a success
     const script = document.createElement("script");
     script.src = url;
     document.head.appendChild(script);
-    const result = await exportDiagram(container, "pdf");
+    const pending = exportDiagram(container, "pdf");
+    let own;
+    while (!(own = [...document.scripts].find((s) => s.src === url && s !== script))) {
+      await new Promise((r) => setTimeout(r, 0));
+    }
+    own.dispatchEvent(new Event("error"));
+    const result = await pending;
     script.remove();
     performance.getEntriesByName = original;
     expect(result).toBe(false);

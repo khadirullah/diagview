@@ -266,15 +266,24 @@ export function safeQuerySelectorAll(selector, context = document) {
 const SCRIPT_PROMISES = new Map();
 
 /**
+ * Page tags for a URL that failed while loadScript waited for them
+ * @private
+ */
+const FAILED_SCRIPTS = new WeakSet();
+
+/**
  * Lazy load script with synchronization to prevent thundering herd race conditions.
  *
  * @param {string} url - Script URL
  * @param {string|null} [integrity=null] - SRI hash
+ * @param {string} [globalName] - Global the script defines, such as "jspdf".
+ *   A page tag that has loaded without it counts as failed.
  * @returns {Promise<void>} Rejects when the script fails to load or takes
  *   longer than TIMING.SCRIPT_LOAD_TIMEOUT. A <script> for the URL that the
- *   page already has resolves once it has loaded.
+ *   page already has resolves once it has loaded. A failed load leaves no
+ *   tag behind, so the next call tries again.
  */
-export function loadScript(url, integrity = null) {
+export function loadScript(url, integrity = null, globalName) {
   if (!isBrowser()) return Promise.resolve();
 
   const absoluteUrl = new URL(url, window.location.href).href;
@@ -293,13 +302,21 @@ export function loadScript(url, integrity = null) {
 
   const promise = new Promise((resolve, reject) => {
     // A tag another part of the page added. Its download has a timing
-    // entry once it is over. One still loading gets waited for.
-    let script = Array.from(document.scripts).find((s) => s.src === absoluteUrl);
+    // entry once it is over, and one that failed has an entry too, so the
+    // global it defines decides. One still loading gets waited for.
+    let script = Array.from(document.scripts).find(
+      (s) => s.src === absoluteUrl && !FAILED_SCRIPTS.has(s),
+    );
     if (script && performance.getEntriesByName?.(absoluteUrl).length) {
-      resolve();
-      return;
+      if (!globalName || globalName in window) {
+        resolve();
+        return;
+      }
+      FAILED_SCRIPTS.add(script);
+      script = undefined;
     }
 
+    const addedHere = !script;
     if (!script) {
       script = document.createElement("script");
       script.src = url;
@@ -310,23 +327,34 @@ export function loadScript(url, integrity = null) {
       }
       document.head.appendChild(script);
     }
+    // A const copy for the listeners below, as script is reassigned above
+    const tag = script;
+
+    /** @param {string} message - Why it failed */
+    const fail = (message) => {
+      clearTimeout(timer);
+      // Our own tag goes, so the next call adds a fresh one. A page tag
+      // stays, and the next call stops waiting for it.
+      if (addedHere) tag.remove();
+      else FAILED_SCRIPTS.add(tag);
+      reject(new Error(message));
+    };
 
     // A stalled download fails after a while so the caller can fall back
     const timer = setTimeout(
-      () => reject(new Error(`Timed out loading script: ${url}`)),
+      () => fail(`Timed out loading script: ${url}`),
       TIMING.SCRIPT_LOAD_TIMEOUT,
     );
-    script.addEventListener("load", () => {
+    tag.addEventListener("load", () => {
       clearTimeout(timer);
       resolve();
     });
-    script.addEventListener("error", () => {
-      clearTimeout(timer);
+    tag.addEventListener("error", () => {
       let errorMsg = `Failed to load script: ${url}`;
       if (integrity) {
         errorMsg += ". This may be due to a Subresource Integrity (SRI) mismatch.";
       }
-      reject(new Error(errorMsg));
+      fail(errorMsg);
     });
   });
 

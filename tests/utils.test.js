@@ -346,6 +346,29 @@ describe("loadScript integrity", () => {
     tagFor(url).dispatchEvent(new Event("error"));
     await expect(result).rejects.toThrow("Subresource Integrity (SRI) mismatch");
   });
+
+  test("a failed load removes its tag, so the next call loads the script again", async () => {
+    jest.useFakeTimers();
+    const url = "https://example.test/retry-after-error.js";
+    const first = loadScript(url, "sha384-abc");
+    tagFor(url).dispatchEvent(new Event("error"));
+    await expect(first).rejects.toThrow("Failed to load script");
+    expect(tagFor(url)).toBeNull();
+
+    const second = loadScript(url, "sha384-abc");
+    expect(document.querySelectorAll("script")).toHaveLength(1);
+    tagFor(url).dispatchEvent(new Event("load"));
+    await expect(second).resolves.toBeUndefined();
+  });
+
+  test("a stalled load removes its tag after the time limit", async () => {
+    jest.useFakeTimers();
+    const url = "https://example.test/retry-after-stall.js";
+    const result = loadScript(url);
+    jest.advanceTimersByTime(15000);
+    await expect(result).rejects.toThrow("Timed out loading script");
+    expect(tagFor(url)).toBeNull();
+  });
 });
 
 describe("loadScript with a <script> the page already has", () => {
@@ -396,6 +419,41 @@ describe("loadScript with a <script> the page already has", () => {
     timing([{ name: url }]);
     await expect(loadScript(url)).resolves.toBeUndefined();
     expect(jest.getTimerCount()).toBe(0);
+  });
+
+  test("one that has loaded without the global it defines gets a fresh tag", async () => {
+    timing([{ name: url }]);
+    const result = loadScript(url, null, "dvTestGlobal");
+    const tags = [...document.querySelectorAll("script")];
+    expect(tags).toHaveLength(2);
+    tags[1].dispatchEvent(new Event("load"));
+    await expect(result).resolves.toBeUndefined();
+  });
+
+  test("one that has loaded with the global it defines resolves at once", async () => {
+    timing([{ name: url }]);
+    window.dvTestGlobal = {};
+    try {
+      await expect(loadScript(url, null, "dvTestGlobal")).resolves.toBeUndefined();
+      expect(document.querySelectorAll("script")).toHaveLength(1);
+    } finally {
+      delete window.dvTestGlobal;
+    }
+  });
+
+  test("one that failed while waited for stays, and the next call adds its own", async () => {
+    timing([]);
+    const first = loadScript(url);
+    script.dispatchEvent(new Event("error"));
+    await expect(first).rejects.toThrow("Failed to load script");
+    expect(script.isConnected).toBe(true);
+
+    timing([{ name: url }]);
+    const second = loadScript(url);
+    const tags = [...document.querySelectorAll("script")];
+    expect(tags).toHaveLength(2);
+    tags[1].dispatchEvent(new Event("load"));
+    await expect(second).resolves.toBeUndefined();
   });
 });
 
