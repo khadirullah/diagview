@@ -21,7 +21,7 @@ jest.unstable_mockModule("../src/ui/modal.js", () => ({
   closeModal: jest.fn(),
 }));
 
-jest.unstable_mockModule("../src/features/lazy/share.js", () => ({
+jest.unstable_mockModule("../src/features/share-state.js", () => ({
   restoreViewFromURL: jest.fn(() => null),
 }));
 
@@ -277,7 +277,7 @@ describe("Observer Module", () => {
   });
 
   test("Auto-opens diagram from share link if present", async () => {
-    const { restoreViewFromURL } = await import("../src/features/lazy/share.js");
+    const { restoreViewFromURL } = await import("../src/features/share-state.js");
 
     // Simulate DiagView parameters in URL for the fast-path check
     const originalLocation = window.location;
@@ -469,7 +469,7 @@ describe("Observer Module: share parameters in the address bar", () => {
   };
 
   beforeEach(async () => {
-    ({ restoreViewFromURL } = await import("../src/features/lazy/share.js"));
+    ({ restoreViewFromURL } = await import("../src/features/share-state.js"));
     document.body.innerHTML = '<div class="diagram"><svg></svg></div>';
     resetConfig();
     state.observer = null;

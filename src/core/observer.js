@@ -20,7 +20,7 @@ import {
   releaseDetachedDiagrams,
 } from "../features/diagram-init.js";
 import { createModal, openFullscreen } from "../ui/modal.js";
-import { restoreViewFromURL } from "../features/lazy/share.js";
+import { restoreViewFromURL } from "../features/share-state.js";
 
 // Share Link Handling (State managed via config.js)
 
