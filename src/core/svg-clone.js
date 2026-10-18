@@ -185,9 +185,10 @@ const warnedModes = new Set();
  * @returns {{ mode: string, allowRemoteResources: boolean, allowOverrides: boolean }} Effective security settings
  */
 export function resolveElementSecurity(container, options = {}) {
-  const global = state.config.security || {};
+  // Config validation keeps security.mode one of the known modes
+  const global = state.config.security;
   const resolved = {
-    mode: SECURITY_MODES.includes(global.mode) ? global.mode : "strict",
+    mode: global.mode,
     allowRemoteResources: global.allowRemoteResources === true,
     allowOverrides: global.allowOverrides === true,
   };
@@ -233,7 +234,7 @@ export function cloneSVGForModal(svg) {
   // without "Double Prefixing".
 
   // Security: per-element override > global config, gated by allowOverrides.
-  const container = svg.closest(state.config.diagramSelector || ".diagram, .mermaid, .chart");
+  const container = svg.closest(state.config.diagramSelector);
   const security = resolveElementSecurity(container);
 
   return cloneSVG(svg, {
@@ -262,7 +263,7 @@ export function cloneSVGForModal(svg) {
  */
 export function exportSecurity(svg) {
   const container =
-    svg.closest?.(state.config.diagramSelector || ".diagram, .mermaid, .chart") ||
+    svg.closest?.(state.config.diagramSelector) ||
     (svg.closest?.("#diagview-modal") ? state.activeSourceElement : null);
   const security = resolveElementSecurity(container);
   // security.exportMode "strict" cleans every export in strict mode. Code
