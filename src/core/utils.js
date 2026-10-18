@@ -1243,3 +1243,25 @@ export function undrawnSwitch(el) {
   }
   return null;
 }
+
+/**
+ * Copy text the old way, through a hidden field and execCommand("copy"),
+ * for pages without the Clipboard API. The field is removed again even
+ * when execCommand throws.
+ * @param {string} text - Text to copy
+ * @returns {boolean|undefined} False when the browser refuses to copy,
+ *   undefined when it has no execCommand
+ */
+export function copyText(text) {
+  const field = document.createElement("textarea");
+  field.value = text;
+  field.style.position = "fixed";
+  field.style.opacity = "0";
+  document.body.appendChild(field);
+  try {
+    field.select();
+    return document.execCommand?.("copy");
+  } finally {
+    field.remove();
+  }
+}

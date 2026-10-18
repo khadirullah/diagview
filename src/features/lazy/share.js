@@ -20,7 +20,7 @@
 import { state } from "../../core/config.js";
 import { loadChunk } from "../../core/lifecycle.js";
 import { showSuccessToast, showErrorToast } from "../../ui/toast.js";
-import { getClientCTM } from "../../core/utils.js";
+import { getClientCTM, copyText } from "../../core/utils.js";
 import { setCanvasTheme } from "../../core/theme.js";
 import { shareStates } from "../share-state.js";
 
@@ -188,21 +188,13 @@ export async function shareLink(diagramIndex) {
 
   // Legacy execCommand fallback
   const previousFocus = document.activeElement;
-  const input = document.createElement("input");
   let copied = false;
   try {
-    input.value = link;
-    input.style.position = "fixed";
-    input.style.opacity = "0";
-    document.body.appendChild(input);
-    input.select();
-    // Returns false when the browser refuses to copy
-    copied = document.execCommand("copy");
+    copied = copyText(link);
   } catch (error) {
     copied = false;
   } finally {
-    // The input took focus, so hand it back or keyboard shortcuts stop working
-    input.remove();
+    // The hidden field took focus, so hand it back or keyboard shortcuts stop working
     if (previousFocus?.isConnected && previousFocus !== document.body) {
       previousFocus.focus?.({ preventScroll: true });
     }

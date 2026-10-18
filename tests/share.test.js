@@ -302,10 +302,10 @@ describe("Share System", () => {
     document.execCommand = jest.fn().mockImplementation(impl);
     const search = document.getElementById("diagview-search");
     search.focus();
-    const inputsBefore = document.querySelectorAll("input").length;
+    const inputsBefore = document.querySelectorAll("input, textarea").length;
 
     await shareLink(0);
-    expect(document.querySelectorAll("input").length).toBe(inputsBefore);
+    expect(document.querySelectorAll("input, textarea").length).toBe(inputsBefore);
     expect(document.activeElement).toBe(search);
   });
 

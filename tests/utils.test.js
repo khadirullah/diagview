@@ -9,6 +9,7 @@ import {
   hasDrawnContent,
   getDiagramTitle,
   isClipboardAvailable,
+  copyText,
 } from "../src/core/utils.js";
 
 describe("Utils API", () => {
@@ -521,5 +522,40 @@ describe("isClipboardAvailable", () => {
     expect(isClipboardAvailable()).toBe(true);
     Object.defineProperty(navigator, "clipboard", { value: undefined, configurable: true });
     expect(isClipboardAvailable()).toBe(false);
+  });
+});
+
+describe("copyText", () => {
+  afterEach(() => {
+    delete document.execCommand;
+  });
+
+  test("copies through a hidden field and removes it", () => {
+    let copied = null;
+    document.execCommand = jest.fn(() => {
+      const field = document.querySelector("textarea");
+      copied = field.value.slice(field.selectionStart, field.selectionEnd);
+      return true;
+    });
+    expect(copyText("line 1\nline 2")).toBe(true);
+    expect(document.execCommand).toHaveBeenCalledWith("copy");
+    expect(copied).toBe("line 1\nline 2");
+    expect(document.querySelector("textarea")).toBeNull();
+  });
+
+  test("returns false when the browser refuses and undefined without execCommand", () => {
+    document.execCommand = jest.fn(() => false);
+    expect(copyText("x")).toBe(false);
+    delete document.execCommand;
+    expect(copyText("x")).toBeUndefined();
+    expect(document.querySelector("textarea")).toBeNull();
+  });
+
+  test("removes the field when execCommand throws", () => {
+    document.execCommand = jest.fn(() => {
+      throw new Error("Hard fail");
+    });
+    expect(() => copyText("x")).toThrow("Hard fail");
+    expect(document.querySelector("textarea")).toBeNull();
   });
 });

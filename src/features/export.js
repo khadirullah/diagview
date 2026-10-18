@@ -18,6 +18,7 @@ import {
   getRobustDimensions,
   getDiagramTitle,
   getDiagramSvg,
+  copyText,
 } from "../core/utils.js";
 import { embedDocumentFonts } from "./export-fonts.js";
 import { cloneSVGForExportAsync, exportSecurity } from "../core/svg-clone.js";
@@ -803,15 +804,7 @@ export async function copySVGCode(sourceElement, options = {}) {
         if (err?.name !== "NotAllowedError") throw err;
       }
     } else {
-      const input = document.createElement("textarea");
-      input.value = data;
-      input.style.position = "fixed";
-      input.style.opacity = "0";
-      document.body.appendChild(input);
-      input.select();
-      // Returns false when the browser refuses to copy
-      copied = document.execCommand?.("copy");
-      input.remove();
+      copied = copyText(data);
     }
     if (copied) {
       showSuccessToast("SVG Code copied to clipboard!");
