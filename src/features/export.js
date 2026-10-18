@@ -1162,7 +1162,14 @@ async function savePDF(sourceElement, filename, { transparent, modalClone, silen
       true,
       silent,
     );
-    const imgData = canvas.toDataURL("image/png");
+    let imgData;
+    try {
+      imgData = canvas.toDataURL("image/png");
+    } finally {
+      // Release the canvas memory, as the image exports do
+      canvas.width = 0;
+      canvas.height = 0;
+    }
 
     // jsPDF caps a page side at 14400 pt, and its px unit is 96/72 pt, so
     // a side over 10800 px would lose its far end. Shrink the page and the

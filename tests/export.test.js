@@ -2621,6 +2621,28 @@ describe("PDF page size", () => {
     return [w, h];
   };
 
+  test("the canvas is released once the PNG for the page is made", async () => {
+    const drawn = [];
+    jest.spyOn(HTMLCanvasElement.prototype, "toDataURL").mockImplementation(function () {
+      drawn.push([this, this.width]);
+      return "data:image/png;base64,";
+    });
+    let type;
+    window.jspdf.jsPDF.prototype.addImage = function (data, t) {
+      type = t;
+      images.push([]);
+    };
+
+    await render(800, 400);
+
+    expect(drawn).toHaveLength(1);
+    const [canvas, width] = drawn[0];
+    expect(width).toBeGreaterThan(0);
+    expect(canvas.width).toBe(0);
+    expect(canvas.height).toBe(0);
+    expect(type).toBe("PNG");
+  });
+
   test("a diagram within the page limit keeps its size", async () => {
     await render(800, 400);
     expect(pages[0].unit).toBe("px");
