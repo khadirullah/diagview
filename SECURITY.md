@@ -48,9 +48,7 @@ No sanitization. Only for SVG content from a **fully trusted, developer-controll
 
 Please **do not** file a public GitHub Issue for security vulnerabilities.
 
-**Preferred:** Open a [Security Advisory draft](https://github.com/khadirullah/diagview/security/advisories) on GitHub (private disclosure).
-
-**Alternative:** Email the maintainer via the address in the npm package metadata.
+Open a [Security Advisory draft](https://github.com/khadirullah/diagview/security/advisories) on GitHub (private disclosure). This is the only private channel. The email address in the npm package metadata is a GitHub no-reply address and receives no mail.
 
 **Include in your report:**
 
