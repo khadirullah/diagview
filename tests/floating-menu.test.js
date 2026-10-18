@@ -170,6 +170,37 @@ describe("Floating Menu UI", () => {
     jest.useRealTimers();
   });
 
+  test("a click into the search box closes the menu and leaves focus in the box", () => {
+    jest.useFakeTimers();
+    state.isModalOpen = true;
+    const modal = document.createElement("div");
+    modal.id = "diagview-modal";
+    modal.tabIndex = -1;
+    const search = document.createElement("input");
+    modal.appendChild(search);
+    document.body.appendChild(modal);
+    createFloatingMenu(sourceElement, clonedSvg);
+    const toggle = document.getElementById("dv-toggle");
+    const panel = document.getElementById("dv-menu-panel");
+    toggle.click();
+    jest.advanceTimersByTime(100);
+
+    search.focus();
+    search.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+
+    expect(panel.classList.contains("active")).toBe(false);
+    expect(document.activeElement).toBe(search);
+
+    // Closing from inside the menu still hands focus to the viewer
+    toggle.click();
+    toggle.focus();
+    toggle.click();
+    expect(document.activeElement).toBe(modal);
+    for (const fn of Array.from(state.modalCleanupFunctions)) fn();
+    state.modalCleanupFunctions.clear();
+    jest.useRealTimers();
+  });
+
   describe("panning the diagram with the menu open", () => {
     let viewport, panel;
 

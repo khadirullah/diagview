@@ -432,10 +432,11 @@ function _setupMenuController(elements, sourceElement, clonedSvg) {
       requestAnimationFrame(() => {
         if (isOpen) menuPanel.focus();
       });
-    } else {
+    } else if (container.contains(document.activeElement)) {
       // Restore focus to the main modal instead of the FAB button.
       // This allows keyboard shortcuts (R, M, L, etc.) to resume immediately
       // without being blocked by the "interactive element" check in focus-manager.
+      // Focus the click moved elsewhere, such as into the search box, stays there.
       const modal = document.getElementById("diagview-modal");
       if (modal) {
         modal.focus();
