@@ -1,7 +1,7 @@
 /**
  * DiagView demo runtime, shared by every demo page:
  *   - Theme set before first paint (flicker-free, Firefox-safe)
- *   - toggleTheme() and updateSecurity() globals
+ *   - toggleTheme() global
  *   - Cross-tab theme and accent sync
  *   - Accent picker (#accentPicker) and Security select (#securitySelector) wiring
  *   - [data-version] text, the "ready" class on <body>
@@ -240,7 +240,6 @@
     function bakeInlineSvgs() {
         paintInlineSvgs(inlineSvgColours(document.documentElement.classList.contains('dark')));
     }
-    window.demoBakeColours = bakeInlineSvgs;
 
     // Mermaid settings that match the current page theme, plus the
     // colour rules above. An extra themeCSS string goes after the shared one.
@@ -339,7 +338,11 @@
     // another value, so this runs after every init.
     function applySelectedSecurity() {
         var sel = document.getElementById('securitySelector');
-        if (sel && window.DiagView && window.updateSecurity) window.updateSecurity(sel.value);
+        if (sel) updateSecurity(sel.value);
+    }
+
+    function updateSecurity(mode) {
+        if (window.DiagView) window.DiagView.configure({ security: { mode: mode } });
     }
 
     // Render every Mermaid diagram again with a config, in a hidden box.
@@ -455,14 +458,6 @@
             }
         });
 
-        // Global security toggle
-        window.updateSecurity = function (mode) {
-            if (window.DiagView) {
-                window.DiagView.configure({ security: { mode: mode } });
-                console.log('DiagView: Security mode changed to ' + mode);
-            }
-        };
-
         // Auto-wire accent color picker if present on page
         var picker = document.getElementById('accentPicker');
         if (picker) {
@@ -485,7 +480,7 @@
         var securitySelector = document.getElementById('securitySelector');
         if (securitySelector) {
             securitySelector.addEventListener('change', function (ev) {
-                window.updateSecurity(ev.target.value);
+                updateSecurity(ev.target.value);
             });
         }
 
