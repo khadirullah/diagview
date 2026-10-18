@@ -45,10 +45,11 @@ function parseRgbString(value) {
 /**
  * Ask the engine whether a string is a colour at all. CSS.supports() is the
  * authority where it exists; otherwise a detached element's style is used,
- * which drops values it cannot parse.
+ * which drops values it cannot parse. Bare HSL triplets such as
+ * "222.2 47.4% 11.2%" (Tailwind/shadcn) are not colours.
  * @private
  */
-function isSupportedColor(value) {
+function isColor(value) {
   if (typeof CSS !== "undefined" && typeof CSS.supports === "function") {
     return CSS.supports("color", value);
   }
@@ -86,7 +87,7 @@ function parseColorViaCanvas(value) {
  */
 function parseColorViaBrowser(value) {
   if (typeof document === "undefined") return null;
-  if (!isSupportedColor(value)) return null;
+  if (!isColor(value)) return null;
 
   if (!state.colorParserEl) {
     // Use <meta> instead of <div> and append to <html> to avoid body layout flushes
@@ -310,17 +311,6 @@ function detectBackground() {
   }
 
   return !bg || bg === "transparent" || bg === "rgba(0, 0, 0, 0)" ? null : bg;
-}
-
-/**
- * Whether a string is a CSS colour. Bare HSL triplets such as
- * "222.2 47.4% 11.2%" (Tailwind/shadcn) are not.
- * @private
- */
-function isColor(value) {
-  return typeof CSS !== "undefined" && typeof CSS.supports === "function"
-    ? CSS.supports("color", value)
-    : parseColor(value) !== null;
 }
 
 /**
@@ -631,6 +621,27 @@ function accentEdge(root, name, accent, bg, text) {
 }
 
 /**
+ * CSS variables syncTheme() writes on <html>. The first ten always get a
+ * value, in this order, and the rest only for some colours.
+ */
+const THEME_VARS = [
+  "--dv-bg",
+  "--dv-panel-bg",
+  "--dv-text-color",
+  "--dv-page-bg",
+  "--dv-page-text",
+  "--dv-page-muted",
+  "--dv-muted-text",
+  "--dv-accent",
+  "--dv-on-accent",
+  "--dv-accent-fill",
+  "--dv-accent-edge",
+  "--dv-page-edge",
+  "--dv-search-ring",
+  "--dv-toggle-track",
+];
+
+/**
  * Apply theme to CSS variables
  */
 export function syncTheme() {
@@ -638,21 +649,26 @@ export function syncTheme() {
   const root = document.documentElement;
   if (htmlHadStyle === null) htmlHadStyle = root.hasAttribute("style");
 
-  // Update CSS variables
-  root.style.setProperty("--dv-bg", theme.bg);
-  // Panels over the diagram need a solid colour so their text keeps its
-  // contrast when the canvas lets the page show through
-  root.style.setProperty("--dv-panel-bg", theme.seenBg);
-  root.style.setProperty("--dv-text-color", theme.text);
-  // The page toolbar and error box follow the page, not the canvas
-  root.style.setProperty("--dv-page-bg", theme.pageBg);
-  root.style.setProperty("--dv-page-text", theme.pageText);
-  // The header title, faded toward the page as far as it keeps 4.5:1
-  root.style.setProperty("--dv-page-muted", mutedText(theme.pageText, theme.pageBg));
-  root.style.setProperty("--dv-muted-text", mutedText(theme.text, theme.seenBg));
-  root.style.setProperty("--dv-accent", theme.accent);
-  root.style.setProperty("--dv-on-accent", theme.onAccent);
-  root.style.setProperty("--dv-accent-fill", accentFill(theme.accent));
+  // Each value goes to the THEME_VARS entry at the same index, so keep the
+  // two lists in the same order
+  [
+    theme.bg, // --dv-bg
+    // --dv-panel-bg: panels over the diagram take the solid colour seen, so
+    // their text keeps its contrast when the canvas lets the page show through
+    theme.seenBg,
+    theme.text, // --dv-text-color
+    // --dv-page-bg and --dv-page-text: the page toolbar and error box follow
+    // the page, not the canvas
+    theme.pageBg,
+    theme.pageText,
+    // --dv-page-muted: the header title, faded toward the page as far as it
+    // keeps 4.5:1
+    mutedText(theme.pageText, theme.pageBg),
+    mutedText(theme.text, theme.seenBg), // --dv-muted-text
+    theme.accent, // --dv-accent
+    theme.onAccent, // --dv-on-accent
+    accentFill(theme.accent), // --dv-accent-fill
+  ].forEach((value, i) => root.style.setProperty(THEME_VARS[i], value));
 
   // An accent under 3:1 against what it sits on hides the selected
   // buttons, the focus ring and the menu button. The colour stays, and
@@ -788,20 +804,7 @@ export function teardownThemeWatchers() {
 
   // Remove the CSS variables syncTheme() put on <html>
   const root = document.documentElement;
-  root.style.removeProperty("--dv-bg");
-  root.style.removeProperty("--dv-panel-bg");
-  root.style.removeProperty("--dv-text-color");
-  root.style.removeProperty("--dv-page-bg");
-  root.style.removeProperty("--dv-page-text");
-  root.style.removeProperty("--dv-page-muted");
-  root.style.removeProperty("--dv-muted-text");
-  root.style.removeProperty("--dv-accent");
-  root.style.removeProperty("--dv-on-accent");
-  root.style.removeProperty("--dv-accent-fill");
-  root.style.removeProperty("--dv-accent-edge");
-  root.style.removeProperty("--dv-page-edge");
-  root.style.removeProperty("--dv-search-ring");
-  root.style.removeProperty("--dv-toggle-track");
+  THEME_VARS.forEach((name) => root.style.removeProperty(name));
   removeEmptyAttr(root, "style", htmlHadStyle !== false);
   htmlHadStyle = null;
 
