@@ -5,7 +5,7 @@
  */
 
 import { state, runModalCleanupFunctions } from "../core/config.js";
-import { safeDestroy, clearAsyncTasks, loadChunk } from "../core/lifecycle.js";
+import { safeDestroy, clearAsyncTasks, loadedChunk } from "../core/lifecycle.js";
 import { removeEmptyAttr } from "../core/utils.js";
 import { rootHadStyle } from "../core/theme.js";
 import { restoreFocus } from "./focus-manager.js";
@@ -132,9 +132,8 @@ export function unlockBodyScroll() {
  */
 export async function closeModal() {
   if (!state.isModalOpen) return;
-  // Re-entrancy guard: this function awaits lazy imports, during which
-  // isModalOpen is still true — a second Escape/close-click in that window
-  // would run the whole teardown (including onClose) twice.
+  // Re-entrancy guard: a second Escape or close click during the teardown
+  // must not run it (and onClose) twice
   if (state.isModalClosing) return;
   state.isModalClosing = true;
 
@@ -146,19 +145,19 @@ export async function closeModal() {
     // 2. Stop visual viewport sync before teardown
     stopVisualViewportSync();
 
-    // 3. Cleanup features (awaited to ensure state is clean before DOM removal)
-    // We use try/catch inside each import to ensure one failure doesn't block the rest.
-    await Promise.all([
-      loadChunk("search", () => import("../features/lazy/search.js"))
-        .then((m) => m.clearSearch())
-        .catch((e) => console.warn("DiagView: Search cleanup failed", e)),
-      loadChunk("minimap", () => import("../features/lazy/minimap.js"))
-        .then((m) => m.cleanupMinimap())
-        .catch((e) => console.warn("DiagView: Minimap cleanup failed", e)),
-      loadChunk("rotate", () => import("../features/lazy/rotate.js"))
-        .then((m) => m.cleanupRotation())
-        .catch((e) => console.warn("DiagView: Rotation cleanup failed", e)),
-    ]);
+    // 3. Clean up the features this page has loaded. A chunk that never
+    // loaded has nothing to clean up, so closing never downloads one.
+    const cleanUp = (name, run) => {
+      const chunk = loadedChunk(name);
+      try {
+        if (chunk) run(chunk);
+      } catch (e) {
+        console.warn(`DiagView: ${name} cleanup failed`, e);
+      }
+    };
+    cleanUp("search", (m) => m.clearSearch());
+    cleanUp("minimap", (m) => m.cleanupMinimap());
+    cleanUp("rotate", (m) => m.cleanupRotation());
 
     // 4. Hide keyboard help and active toasts
     hideKeyboardHelp();

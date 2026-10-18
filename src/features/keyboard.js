@@ -200,9 +200,17 @@ function handleKeyboardShortcut(e) {
     case "r":
     case "R":
       e.preventDefault();
-      loadChunk("rotate", () => import("./lazy/rotate.js"))
-        .then((m) => m.rotateDiagram())
-        .catch((err) => console.error("DiagView: Failed to load Rotate", err));
+      {
+        // The viewer this key press belongs to. A new open makes a new
+        // panzoom, so a close, or a close and a new open, while the chunk
+        // loads leaves nothing to turn.
+        const pz = state.activePanzoom;
+        loadChunk("rotate", () => import("./lazy/rotate.js"))
+          .then((m) => {
+            if (state.isModalOpen && state.activePanzoom === pz) m.rotateDiagram();
+          })
+          .catch((err) => console.error("DiagView: Failed to load Rotate", err));
+      }
       break;
 
     case "f":

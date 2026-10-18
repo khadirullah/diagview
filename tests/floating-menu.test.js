@@ -228,12 +228,36 @@ describe("Floating Menu UI", () => {
   });
 
   test("Interaction: Rotate button calls rotateDiagram", async () => {
+    state.isModalOpen = true;
     createFloatingMenu(sourceElement, clonedSvg);
     const rotateBtn = document.getElementById("dv-rotate");
     rotateBtn.click();
 
     await new Promise((r) => setTimeout(r, 10));
     expect(rotateDiagram).toHaveBeenCalled();
+  });
+
+  test("a close while the rotate chunk loads turns nothing", async () => {
+    state.isModalOpen = true;
+    createFloatingMenu(sourceElement, clonedSvg);
+    document.getElementById("dv-rotate").click();
+    state.isModalOpen = false;
+
+    await new Promise((r) => setTimeout(r, 10));
+    expect(rotateDiagram).not.toHaveBeenCalled();
+  });
+
+  test("a close and a new open while the rotate chunk loads turn nothing", async () => {
+    state.isModalOpen = true;
+    state.activePanzoom = {};
+    createFloatingMenu(sourceElement, clonedSvg);
+    document.getElementById("dv-rotate").click();
+    // A new object, as a new open makes a new panzoom
+    state.activePanzoom = {};
+
+    await new Promise((r) => setTimeout(r, 10));
+    expect(rotateDiagram).not.toHaveBeenCalled();
+    state.activePanzoom = null;
   });
 
   test("Interaction: Export buttons call exportDiagram", async () => {

@@ -12,6 +12,8 @@ import {
   syncBrandingVisibility,
 } from "../src/ui/modal-controls.js";
 import { syncTheme, teardownThemeWatchers } from "../src/core/theme.js";
+import { loadChunk, loadedChunk } from "../src/core/lifecycle.js";
+import { setupKeyboardShortcuts, teardownKeyboardShortcuts } from "../src/features/keyboard.js";
 
 describe("closeModal re-entrancy guard", () => {
   test("concurrent closeModal calls run the teardown (and onClose) exactly once", async () => {
@@ -31,6 +33,57 @@ describe("closeModal re-entrancy guard", () => {
     expect(onClose).toHaveBeenCalledTimes(1);
     expect(state.isModalOpen).toBe(false);
     expect(state.isModalClosing).toBe(false);
+  });
+});
+
+describe("closing the viewer and the feature chunks", () => {
+  beforeEach(() => {
+    resetConfig();
+    document.body.innerHTML = '<div id="diagview-modal" class="open"></div>';
+    state.isModalOpen = true;
+    state.isModalClosing = false;
+  });
+
+  test("a close loads no chunk the reader never used", async () => {
+    const warn = jest.spyOn(console, "warn").mockImplementation(() => {});
+    await closeModal();
+    expect(["search", "minimap", "rotate"].filter(loadedChunk)).toEqual([]);
+    expect(warn).not.toHaveBeenCalled();
+    warn.mockRestore();
+  });
+
+  test("a chunk that has loaded is cleaned up", async () => {
+    await loadChunk("rotate", () => import("../src/features/lazy/rotate.js"));
+    state.rotationAngle = 90;
+    await closeModal();
+    expect(state.rotationAngle).toBe(0);
+  });
+
+  test("R pressed just before the close does not turn the next diagram", async () => {
+    await loadChunk("rotate", () => import("../src/features/lazy/rotate.js"));
+    state.activePanzoom = { destroy: () => {} };
+    setupKeyboardShortcuts();
+    window.dispatchEvent(new KeyboardEvent("keydown", { key: "r" }));
+    // Not awaited, so the key's chunk load finishes during the close
+    closeModal();
+    await new Promise((r) => setTimeout(r, 0));
+    teardownKeyboardShortcuts();
+    expect(state.rotationAngle).toBe(0);
+  });
+
+  test("R pressed just before a close and a new open does not turn the new diagram", async () => {
+    await loadChunk("rotate", () => import("../src/features/lazy/rotate.js"));
+    state.activePanzoom = { destroy: () => {} };
+    setupKeyboardShortcuts();
+    window.dispatchEvent(new KeyboardEvent("keydown", { key: "r" }));
+    // Not awaited, so the key's chunk load finishes after the close and
+    // the new open below
+    closeModal();
+    state.isModalOpen = true;
+    state.activePanzoom = { destroy: () => {} };
+    await new Promise((r) => setTimeout(r, 0));
+    teardownKeyboardShortcuts();
+    expect(state.rotationAngle).toBe(0);
   });
 });
 
