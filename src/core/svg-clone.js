@@ -1,5 +1,5 @@
 import { state } from "./config.js";
-import { sanitizeSVG, fixIds, generateUniqueId, inertDocument } from "./utils.js";
+import { sanitizeInPlace, fixIds, generateUniqueId, inertDocument } from "./utils.js";
 import { showErrorToast } from "../ui/toast.js";
 import { SECURITY_MODES, EXPORT } from "./constants.js";
 
@@ -136,7 +136,7 @@ export function cloneSVG(svg, options = {}) {
   // securityMode is passed from the diagram's elementConfig so that
   // per-element data-diagview-sanitize overrides reach the sanitizer.
   const removed = { scripts: 0, handlers: [], urls: 0 };
-  const clone = sanitizeSVG(rawClone, securityMode, {
+  const clone = sanitizeInPlace(rawClone, securityMode, {
     maxChars,
     allowRemoteResources: allowRemoteResources,
     allowedImageTypes: state.config.allowedImageTypes,

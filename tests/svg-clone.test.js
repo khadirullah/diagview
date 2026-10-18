@@ -6,6 +6,7 @@ import {
   resolveElementSecurity,
 } from "../src/core/svg-clone.js";
 import { state, resetConfig, updateConfig } from "../src/core/config.js";
+import { sanitizeSVG } from "../src/core/utils.js";
 
 describe("per-element security overrides in clone presets", () => {
   const ns = "http://www.w3.org/2000/svg";
@@ -574,4 +575,36 @@ describe("cloneSVGForExportAsync in a tab in the background", () => {
     expect(jest.getTimerCount()).toBe(0);
     expect(clone.querySelectorAll("rect")).toHaveLength(1200);
   });
+});
+
+describe("cloneSVG copies the SVG once", () => {
+  const markup = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 10">
+    <style>.a { fill: red; }</style><script>alert(1)</script>
+    <a href="javascript:alert(1)"><rect class="a" onclick="alert(1)" width="5" height="5"/></a>
+    <foreignObject width="10" height="10"><div xmlns="http://www.w3.org/1999/xhtml">Label</div></foreignObject>
+    <image href="https://example.com/a.png"/><text x="1">Text</text></svg>`;
+
+  test.each(["strict", "permissive", "off"])(
+    "in %s mode the copy matches what sanitizeSVG() returns",
+    (mode) => {
+      document.body.innerHTML = markup;
+      const svg = document.querySelector("svg");
+      const expected = sanitizeSVG(svg, mode, { allowRemoteResources: false });
+      const importNode = jest.spyOn(Document.prototype, "importNode");
+      try {
+        const clone = cloneSVG(svg, {
+          preserveText: false,
+          securityMode: mode,
+          skipIdFix: true,
+          warnRemoved: false,
+          allowRemoteResources: false,
+        });
+        expect(importNode).toHaveBeenCalledTimes(1);
+        const tidy = (el) => el.outerHTML.replace(/ xmlns:xlink="[^"]*"/, "");
+        expect(tidy(clone)).toBe(tidy(expected));
+      } finally {
+        importNode.mockRestore();
+      }
+    },
+  );
 });

@@ -607,6 +607,26 @@ export function inertDocument() {
  *   that belongs to no page until you insert it.
  */
 export function sanitizeSVG(input, mode = "strict", options = 0) {
+  return sanitize(input, mode, options, false);
+}
+
+/**
+ * sanitizeSVG() for a copy the caller made in inertDocument() and owns.
+ * The copy is cleaned in place, so it is not copied a second time.
+ * @param {Element} copy - The caller's copy, in no page
+ * @param {'strict'|'permissive'|'off'} mode - Sanitization mode
+ * @param {SanitizeOptions} options - As for sanitizeSVG()
+ * @returns {Element|null} The copy, or null as sanitizeSVG() returns it
+ */
+export function sanitizeInPlace(copy, mode, options) {
+  return /** @type {Element|null} */ (sanitize(copy, mode, options, true));
+}
+
+/**
+ * The work of sanitizeSVG(), which copies a Node first unless `own` is set
+ * @private
+ */
+function sanitize(input, mode, options, own) {
   // Accept a number, an options object, or null/undefined (treated as none).
   if (typeof options !== "object" || options === null) {
     options = { maxChars: typeof options === "number" ? options : 0 };
@@ -651,7 +671,7 @@ export function sanitizeSVG(input, mode = "strict", options = 0) {
   } else if (input instanceof Node) {
     // SEC-2: Ensure we never mutate the original input Node. A copy made
     // in the page would load its images and fire their onerror at once.
-    root = inertDocument().importNode(input, true);
+    root = own ? input : inertDocument().importNode(input, true);
   } else {
     return input;
   }
