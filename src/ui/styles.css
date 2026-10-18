@@ -2,6 +2,11 @@
    DiagView - Interactive Diagram Viewer
    ================================================================= */
 
+/* Accent tints come in pairs: an rgba() line in the built-in blue for
+   browsers without color-mix(), then the same tint of --dv-accent, which
+   wins where color-mix() works. Keep both lines of a pair together
+   (styles.test.js checks them). */
+
 /* Screen-reader only: visually hidden but accessible to assistive tech */
 .diagview-sr-only {
   position: absolute;
@@ -619,6 +624,7 @@
   color: var(--dv-accent, #3b82f6);
   border-color: var(--dv-accent, #3b82f6) !important;
   background: rgba(59, 130, 246, 0.1);
+  background: color-mix(in srgb, var(--dv-accent, #3b82f6) 10%, transparent);
 }
 
 /* ── Mobile: search container slides in-place on topbar ── */
@@ -712,6 +718,7 @@
   @media (hover: hover) {
     .dv-text-select-btn:hover {
       background: rgba(59, 130, 246, 0.1);
+      background: color-mix(in srgb, var(--dv-accent, #3b82f6) 10%, transparent);
       color: var(--dv-accent, #3b82f6);
       border-color: var(--dv-accent, #3b82f6) !important;
     }
@@ -721,6 +728,7 @@
     border-color: var(--dv-accent, #3b82f6) !important;
     background: var(--dv-accent, #3b82f6) !important;
     box-shadow: 0 0 12px rgba(59, 130, 246, 0.4);
+    box-shadow: 0 0 12px color-mix(in srgb, var(--dv-accent, #3b82f6) 40%, transparent);
   }
 }
 
@@ -883,6 +891,7 @@
 .diagview-search-wrapper:has(.diagview-search-input:focus-visible) {
   border-color: var(--dv-accent);
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--dv-accent, #3b82f6) 12%, transparent);
   background: var(--dv-bg);
 }
 
@@ -1759,6 +1768,7 @@
   position: absolute;
   border: 2px solid var(--dv-accent, #3b82f6) !important;
   background: rgba(59, 130, 246, 0.1);
+  background: color-mix(in srgb, var(--dv-accent, #3b82f6) 10%, transparent);
   pointer-events: none;
 }
 

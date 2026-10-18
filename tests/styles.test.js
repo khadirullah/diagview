@@ -798,3 +798,19 @@ describe("styles.css: off hint", () => {
     expect(touch).toMatch(/\.diagview-off-hint-touch \{\s*display: inline/);
   });
 });
+
+describe("styles.css: accent tints", () => {
+  test("every fixed blue tint is followed by the same tint of --dv-accent", () => {
+    const lines = css.split("\n");
+    const tints = lines
+      .map((line, i) => [line.trim(), (lines[i + 1] ?? "").trim()])
+      .filter(([line]) => line.includes("rgba(59, 130, 246,"));
+    expect(tints.length).toBe(5);
+    for (const [line, next] of tints) {
+      const [, prop, alpha] = line.match(/^([a-z-]+): .*rgba\(59, 130, 246, ([\d.]+)\)/);
+      const mix = `color-mix(in srgb, var(--dv-accent, #3b82f6) ${Math.round(alpha * 100)}%, transparent)`;
+      expect(next).toBe(line.replace(`rgba(59, 130, 246, ${alpha})`, mix));
+      expect(next.startsWith(`${prop}: `)).toBe(true);
+    }
+  });
+});
