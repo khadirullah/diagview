@@ -51,9 +51,8 @@ const babelConfig = {
     [
       "@babel/preset-env",
       {
-        targets: {
-          browsers: ["> 1%", "last 2 versions", "not dead", "not ie 11"],
-        },
+        // Both builds use the browserslist field in package.json.
+        targets: pkg.browserslist,
         modules: false,
         loose: true,
       },
@@ -163,21 +162,7 @@ export default [
         __DV_VERSION__: JSON.stringify(pkg.version),
         preventAssignment: true,
       }),
-      babel({
-        ...babelConfig,
-        presets: [
-          [
-            "@babel/preset-env",
-            {
-              targets: {
-                esmodules: true,
-              },
-              modules: false,
-              loose: true,
-            },
-          ],
-        ],
-      }),
+      babel(babelConfig),
     ],
   },
 ];
