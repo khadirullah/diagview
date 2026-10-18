@@ -1015,24 +1015,36 @@ async function processImageExport(
 }
 
 /**
+ * The public PNG, JPEG, WebP and Copy Image functions. Resolves to
+ * undefined, as they promise only that the export has finished.
+ * @private
+ * @param {HTMLElement|SVGSVGElement} sourceElement - Diagram element, or the diagram's <svg>
+ * @param {ExportOptions} options - Export options
+ * @param {"png"|"jpeg"|"webp"} format - Image format
+ * @param {boolean} [copy] - Copy to the clipboard, which ignores transparent
+ */
+async function exportImage(sourceElement, options, format, copy) {
+  const svg = resolveSourceSvg(sourceElement);
+  if (!svg) return;
+  await processImageExport(
+    sourceElement,
+    options.filename || generateFilename(svg, sourceElement),
+    format,
+    !copy && !!options.transparent, // transparent
+    !!copy, // copy
+    options.modalClone,
+    !!options.silent, // silent
+  );
+}
+
+/**
  * Export as PNG
  * @param {HTMLElement|SVGSVGElement} sourceElement - Diagram element, or the diagram's <svg>
  * @param {ExportOptions} [options={}] - Reads filename, transparent, silent and modalClone
  * @returns {Promise<void>} Resolves when the download has started
  */
-export async function exportToPNG(sourceElement, options = {}) {
-  const sourceSvg = resolveSourceSvg(sourceElement);
-  if (!sourceSvg) return;
-  const filename = options.filename || generateFilename(sourceSvg, sourceElement);
-  await processImageExport(
-    sourceElement,
-    filename,
-    "png",
-    !!options.transparent,
-    false,
-    options.modalClone,
-    !!options.silent,
-  );
+export function exportToPNG(sourceElement, options = {}) {
+  return exportImage(sourceElement, options, "png");
 }
 
 /**
@@ -1041,19 +1053,8 @@ export async function exportToPNG(sourceElement, options = {}) {
  * @param {ExportOptions} [options={}] - Reads filename, transparent, silent and modalClone
  * @returns {Promise<void>} Resolves when the download has started
  */
-export async function exportToJPEG(sourceElement, options = {}) {
-  const sourceSvg = resolveSourceSvg(sourceElement);
-  if (!sourceSvg) return;
-  const filename = options.filename || generateFilename(sourceSvg, sourceElement);
-  await processImageExport(
-    sourceElement,
-    filename,
-    "jpeg",
-    !!options.transparent,
-    false,
-    options.modalClone,
-    !!options.silent,
-  );
+export function exportToJPEG(sourceElement, options = {}) {
+  return exportImage(sourceElement, options, "jpeg");
 }
 
 /**
@@ -1062,19 +1063,8 @@ export async function exportToJPEG(sourceElement, options = {}) {
  * @param {ExportOptions} [options={}] - Reads filename, transparent, silent and modalClone
  * @returns {Promise<void>} Resolves when the download has started
  */
-export async function exportToWebP(sourceElement, options = {}) {
-  const sourceSvg = resolveSourceSvg(sourceElement);
-  if (!sourceSvg) return;
-  const filename = options.filename || generateFilename(sourceSvg, sourceElement);
-  await processImageExport(
-    sourceElement,
-    filename,
-    "webp",
-    !!options.transparent,
-    false,
-    options.modalClone,
-    !!options.silent,
-  );
+export function exportToWebP(sourceElement, options = {}) {
+  return exportImage(sourceElement, options, "webp");
 }
 
 /**
@@ -1085,19 +1075,8 @@ export async function exportToWebP(sourceElement, options = {}) {
  *   the download used when the clipboard is unavailable.
  * @returns {Promise<void>} Resolves when the image is copied or downloaded
  */
-export async function copyToClipboard(sourceElement, options = {}) {
-  const sourceSvg = resolveSourceSvg(sourceElement);
-  if (!sourceSvg) return;
-  const filename = options.filename || generateFilename(sourceSvg, sourceElement);
-  await processImageExport(
-    sourceElement,
-    filename,
-    "png",
-    false,
-    true,
-    options.modalClone,
-    !!options.silent,
-  );
+export function copyToClipboard(sourceElement, options = {}) {
+  return exportImage(sourceElement, options, "png", true);
 }
 
 /**
