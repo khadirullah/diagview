@@ -1543,8 +1543,7 @@
   }
 }
 
-.dv-exp button:disabled,
-.dv-exp button.disabled {
+.dv-exp button:disabled {
   opacity: 0.4 !important;
   cursor: not-allowed !important;
   pointer-events: none !important;

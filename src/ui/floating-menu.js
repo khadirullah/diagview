@@ -7,7 +7,7 @@
 import { state, addModalCleanupFunction } from "../core/config.js";
 import { loadChunk } from "../core/lifecycle.js";
 import { setCanvasTheme } from "../core/theme.js";
-import { sanitizeSVG } from "../core/utils.js";
+import { setSVGContent } from "../core/utils.js";
 
 import { exportDiagram } from "../features/export.js";
 import { ICONS } from "./icons.js";
@@ -75,10 +75,8 @@ function _createFAB(container) {
   fab.setAttribute("aria-label", "Toggle menu");
   fab.setAttribute("aria-expanded", "false");
   fab.setAttribute("aria-controls", "dv-menu-panel");
-  fab.style.display = "grid";
-  fab.style.placeItems = "center";
   fab.style.backgroundColor = "var(--dv-accent)"; // follows accent changes while open
-  fab.insertAdjacentHTML("afterbegin", sanitizeSVG(ICONS.menu, "permissive"));
+  setSVGContent(fab, ICONS.menu);
   container.appendChild(fab);
   return fab;
 }
@@ -128,7 +126,7 @@ function _createZoomSection(menuPanel) {
   resetBtn.id = "dv-reset";
   resetBtn.title = "Reset/Fit (Space)";
   resetBtn.setAttribute("aria-label", "Reset zoom");
-  resetBtn.insertAdjacentHTML("afterbegin", ICONS.reset);
+  setSVGContent(resetBtn, ICONS.reset);
 
   zoomControls.append(zoomOutBtn, zoomTag, zoomInBtn, resetBtn);
   zoomSec.appendChild(zoomControls);
@@ -328,11 +326,9 @@ function _createExportSection(menuPanel) {
       if (btn) {
         if (isTransparent) {
           btn.setAttribute("disabled", "true");
-          btn.classList.add("disabled");
           btn.title = "Not available with transparent background";
         } else {
           btn.removeAttribute("disabled");
-          btn.classList.remove("disabled");
           btn.removeAttribute("title");
         }
       }
@@ -434,11 +430,7 @@ function _setupMenuController(elements, sourceElement, clonedSvg) {
 
     menuPanel.classList.toggle("active", isOpen);
     fab.classList.toggle("open", isOpen);
-    fab.replaceChildren();
-    fab.insertAdjacentHTML(
-      "afterbegin",
-      sanitizeSVG(isOpen ? ICONS.close : ICONS.menu, "permissive"),
-    );
+    setSVGContent(fab, isOpen ? ICONS.close : ICONS.menu);
     fab.setAttribute("aria-expanded", isOpen);
 
     if (isOpen) {
