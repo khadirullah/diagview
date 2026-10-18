@@ -236,6 +236,60 @@ describe("Export Functionality", () => {
     expect(canvas.width).toBe(420); // (100 + 40 padding) * 3
   });
 
+  describe("data-diagview-scale on the diagram around the SVG", () => {
+    beforeEach(() => updateConfig({ diagramSelector: ".diagram, .mermaid" }));
+    afterEach(() => {
+      updateConfig({ diagramSelector: ".diagram, .chart, [data-diagram]" });
+      state.activeSourceElement = null;
+    });
+
+    test("an exported <svg> takes the scale of its container", async () => {
+      container.className = "diagram";
+      container.dataset.diagviewScale = "3";
+
+      const { scale } = await renderToCanvas(svg);
+
+      expect(scale).toBe(3);
+    });
+
+    test("a nested match takes the scale of the outer element", async () => {
+      // .diagram[data-diagview-scale] > .mermaid > svg. Init gives the
+      // toolbar to the outer element.
+      container.className = "diagram";
+      container.dataset.diagviewInit = "1";
+      container.dataset.diagviewScale = "3";
+      const inner = document.createElement("div");
+      inner.className = "mermaid";
+      inner.appendChild(svg);
+      container.appendChild(inner);
+
+      expect((await renderToCanvas(inner)).scale).toBe(3);
+      expect((await renderToCanvas(svg)).scale).toBe(3);
+    });
+
+    test("the attribute on the element passed in wins", async () => {
+      container.className = "diagram";
+      container.dataset.diagviewScale = "3";
+      const inner = document.createElement("div");
+      inner.className = "mermaid";
+      inner.dataset.diagviewScale = "5";
+      inner.appendChild(svg);
+      container.appendChild(inner);
+
+      expect((await renderToCanvas(inner)).scale).toBe(5);
+    });
+
+    test("a diagram without the attribute ignores the one open in the viewer", async () => {
+      container.className = "diagram";
+      const open = document.createElement("div");
+      open.dataset.diagviewScale = "5";
+      state.activeSourceElement = open;
+
+      expect((await renderToCanvas(container)).scale).toBe(2);
+      expect((await renderToCanvas(svg)).scale).toBe(2);
+    });
+  });
+
   test("exportToSVG(el) applies the element's data-diagview-watermark-* overrides", async () => {
     updateConfig({ watermark: { enabled: false, text: "GLOBALMARK" } });
     state.activeSourceElement = null; // no modal open: inline toolbar / public API path

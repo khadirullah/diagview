@@ -569,6 +569,32 @@ async function serializeSVGAsync(svgEl) {
   });
 }
 
+/**
+ * data-diagview-scale for an export, which overrides the global highResScale.
+ * The element passed in comes first, or the diagram open in the viewer when
+ * that is not an element. Then the diagram around the SVG, so the attribute
+ * also counts on the container of an exported <svg> and on the outer element
+ * of a nested match.
+ * @private
+ * @param {HTMLElement|SVGSVGElement} sourceElement - Element passed to the export
+ * @param {SVGSVGElement} svg - The diagram's SVG
+ * @returns {string|undefined} The attribute value, or undefined when none is set
+ */
+function scaleAttribute(sourceElement, svg) {
+  let diagram = null;
+  try {
+    diagram = svg.closest(state.config.diagramSelector);
+  } catch (_e) {
+    // A selector the browser rejects matches nothing
+  }
+  const holders = [
+    sourceElement?.dataset ? sourceElement : state.activeSourceElement,
+    svg.closest("[data-diagview-init]"),
+    diagram,
+  ];
+  return holders.find((el) => el?.dataset?.diagviewScale != null)?.dataset.diagviewScale;
+}
+
 /** Longest canvas side an export draws, in pixels */
 const MAX_CANVAS_SIDE = 16383;
 
@@ -608,10 +634,7 @@ export async function renderToCanvas(
 
   const isMobile = isMobileDevice();
 
-  // data-diagview-scale on the exported element (or the diagram open in the
-  // modal) overrides the global highResScale
-  const overrideSource = sourceElement?.dataset ? sourceElement : state.activeSourceElement;
-  const elementScale = parseInt(overrideSource?.dataset?.diagviewScale ?? "", 10);
+  const elementScale = parseInt(scaleAttribute(sourceElement, originalSvg) ?? "", 10);
   const highResScale =
     elementScale >= 1 && elementScale <= 10 ? elementScale : state.config.highResScale;
 

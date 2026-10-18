@@ -334,7 +334,7 @@ Set any of the following `data-diagview-*` attributes directly on a diagram cont
 
 > **Requires `security.allowOverrides: true`** (the default) for `data-diagview-sanitize` and `data-diagview-allow-remote` to take effect.
 
-`data-diagview-scale` and the watermark overrides apply to every export path: the inline toolbar, the fullscreen menu and the `exportTo*` functions. On touch devices and narrow screens, `mobileScale` applies instead of `data-diagview-scale`.
+`data-diagview-scale` and the watermark overrides apply to every export path: the inline toolbar, the fullscreen menu and the `exportTo*` functions. An `exportTo*` call with the `<svg>` itself, or with an inner element of a nested match, uses the `data-diagview-scale` of the diagram around it. On touch devices and narrow screens, `mobileScale` applies instead of `data-diagview-scale`.
 
 ---
 
