@@ -54,16 +54,16 @@ This runs five steps internally:
 
 ### Build outputs
 
-| File                       | Format       | Purpose                                                          |
-| -------------------------- | ------------ | ---------------------------------------------------------------- |
-| `dist/diagview.umd.js`     | UMD          | Browser `<script>` tag (unminified)                              |
-| `dist/diagview.umd.min.js` | UMD minified | Browser `<script>` tag (production)                              |
-| `dist/diagview.umd.cjs`    | UMD          | `require("diagview")` in Node, Jest and CommonJS tools           |
-| `dist/esm/index.js`        | ESM          | Bundlers (Vite, Webpack, Rollup)                                 |
-| `dist/esm/*-<hash>.js`     | ESM chunks   | Lazy-loaded features and shared code for the ESM build           |
-| `dist/diagview.css`        | CSS          | Optional stylesheet (`diagview/style`)                           |
-| `dist/index.d.ts`          | TypeScript   | Type definitions, per-module `.d.ts` files in matching folders   |
-| `dist/**/*.map`            | Source maps  | For the minified UMD bundle, the ESM files and the `.d.ts` files |
+| File                           | Format       | Purpose                                                        |
+| ------------------------------ | ------------ | -------------------------------------------------------------- |
+| `dist/diagview.umd.js`         | UMD          | Browser `<script>` tag (unminified)                            |
+| `dist/diagview.umd.min.js`     | UMD minified | Browser `<script>` tag (production)                            |
+| `dist/diagview.umd.cjs`        | UMD          | `require("diagview")` in Node, Jest and CommonJS tools         |
+| `dist/esm/index.js`            | ESM          | Bundlers (Vite, Webpack, Rollup)                               |
+| `dist/esm/*-<hash>.js`         | ESM chunks   | Lazy-loaded features and shared code for the ESM build         |
+| `dist/diagview.css`            | CSS          | Optional stylesheet (`diagview/style`)                         |
+| `dist/index.d.ts`              | TypeScript   | Type definitions, per-module `.d.ts` files in matching folders |
+| `dist/diagview.umd.min.js.map` | Source map   | For the minified UMD bundle                                    |
 
 ### Clean only
 

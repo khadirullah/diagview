@@ -150,7 +150,8 @@ export default [
     output: {
       dir: "dist/esm", // Changed from file to dir for code splitting
       format: "esm",
-      sourcemap: production,
+      // No source maps for the ESM build. Its files are not minified, so a
+      // bundler's own source map already leads to readable code.
       banner,
       // Code splitting enabled by default for ESM
     },
