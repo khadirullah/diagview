@@ -154,7 +154,7 @@ A: Increase `highResScale`:
 DiagView.init({ highResScale: 8 }); // 8× the SVG's intrinsic size
 ```
 
-On touch devices and screens up to 768 px wide, `mobileScale` (default 2) applies instead. DiagView also lowers the scale when the canvas would exceed `maxPixels`.
+On touch devices and screens up to 768 px wide, `mobileScale` (default 2) applies instead. DiagView also lowers the scale when the canvas would exceed `maxPixels` or a side would pass 16383 pixels.
 
 **Q: Can I export a specific diagram from code without opening fullscreen?**
 

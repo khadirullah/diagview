@@ -569,6 +569,9 @@ async function serializeSVGAsync(svgEl) {
   });
 }
 
+/** Longest canvas side an export draws, in pixels */
+const MAX_CANVAS_SIDE = 16383;
+
 /**
  * Render to canvas.
  * Uses the modal clone as the source when one is provided (fullscreen
@@ -616,9 +619,15 @@ export async function renderToCanvas(
     ? state.config.mobileScale || EXPORT.MOBILE_SCALE_DEFAULT
     : highResScale || EXPORT.HIGH_RES_SCALE_DEFAULT;
 
-  const targetPixels = width * scale * (height * scale);
-  if (targetPixels > state.config.maxPixels) {
-    scale = Math.sqrt(state.config.maxPixels / (width * height));
+  // maxPixels caps the area. Firefox also refuses a canvas side over 32767
+  // pixels, so with a raised maxPixels a long, flat diagram failed to
+  // export. Each side stays at or under 16383 pixels, the WebP limit.
+  const fit = Math.min(
+    Math.sqrt(state.config.maxPixels / (width * height)),
+    MAX_CANVAS_SIDE / Math.max(width, height),
+  );
+  if (scale > fit) {
+    scale = fit;
     console.warn(`DiagView: Auto-scaled to ${scale.toFixed(2)}x for safety`);
   }
 

@@ -92,7 +92,7 @@ import { deepMerge, deepFreeze } from "./state-utils.js";
  * @property {DiagViewOffHintText} offHintText - Text of the "label" and "below" hints
  * @property {number} highResScale - Export scale on desktop, 1 to 10
  * @property {number} mobileScale - Export scale on mobile, 1 to 5
- * @property {number} maxPixels - Largest export canvas in pixels
+ * @property {number} maxPixels - Largest export canvas in pixels. Each side also stays at or under 16383 pixels
  * @property {boolean} exportSearchHighlight - Exports made during a fullscreen search keep its dimming and outline, false leaves them out
  * @property {"used"|"all"|"none"} exportFonts - Page fonts to embed in exports. "used" embeds the ones the labels use, "all" every font-face rule on the page, "none" no fonts
  * @property {DiagViewUIConfig} ui - Button look and icons

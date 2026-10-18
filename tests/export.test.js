@@ -109,6 +109,33 @@ describe("Export Functionality", () => {
     expect(scale).toBeCloseTo(0.0909);
   });
 
+  test("a long, flat diagram keeps each canvas side at or under 16383 pixels", async () => {
+    // With padding 20000 x 300 is 22000 x 2300. The 256 MP maxPixels ceiling
+    // allows 2.3x, a canvas over 50000 px wide, which Firefox refuses.
+    svg.setAttribute("viewBox", "0 0 20000 300");
+    updateConfig({ highResScale: 4, maxPixels: 268435456 });
+    const warn = jest.spyOn(console, "warn").mockImplementation(() => {});
+
+    const { canvas, scale } = await renderToCanvas(container);
+
+    expect(canvas.width).toBe(16383);
+    expect(canvas.height).toBeLessThanOrEqual(16383);
+    expect(scale).toBeLessThan(1);
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining("Auto-scaled"));
+  });
+
+  test("a diagram within both limits keeps its scale", async () => {
+    // 3300 x 600 with padding, so 13200 x 2400 at 4x
+    svg.setAttribute("viewBox", "0 0 3000 300");
+    updateConfig({ highResScale: 4, maxPixels: 268435456 });
+    const warn = jest.spyOn(console, "warn").mockImplementation(() => {});
+
+    const { scale } = await renderToCanvas(container);
+
+    expect(scale).toBe(4);
+    expect(warn).not.toHaveBeenCalledWith(expect.stringContaining("Auto-scaled"));
+  });
+
   test("exportDiagram triggers download with correct format", async () => {
     // Clear previous calls
     global.URL.createObjectURL.mockClear();
