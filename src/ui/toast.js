@@ -19,13 +19,9 @@ import { ICONS } from "./icons.js";
 const toastTimers = new Set();
 
 /**
- * Toast types with colors
+ * Toast colours. Success and warning notices take theirs from the theme.
  */
 const TOAST_TYPES = {
-  success: {
-    bg: null, // Will use accent color
-    text: "#ffffff",
-  },
   error: {
     bg: "#d73d3d",
     text: "#ffffff",
@@ -195,7 +191,7 @@ export function showToast(message, type = "success", duration = null, icon = nul
     theme = detectTheme();
   } catch (e) {
     // Fallback to safe theme if detection fails during rapid transitions
-    theme = { isDark: true, accent: "#3b82f6", text: "#ffffff", onAccent: "#fff" };
+    theme = { accent: "#3b82f6" };
   }
   const toastConfig = TOAST_TYPES[type] || TOAST_TYPES.info;
   // The accent and warning colour are the developer's, so their text is
