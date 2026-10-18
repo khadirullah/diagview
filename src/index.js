@@ -331,7 +331,7 @@ function configure(options = {}) {
 
 /**
  * Get current configuration
- * @returns {DiagViewConfig} Current configuration (read-only)
+ * @returns {DiagViewConfig} A copy of the current configuration. Changing it does not change DiagView
  */
 function getConfiguration() {
   return getConfig();

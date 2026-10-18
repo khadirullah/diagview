@@ -3,7 +3,8 @@ import { deepMerge, deepFreeze } from "./state-utils.js";
 
 /**
  * Button icons. Each value is SVG markup, or null for the built-in outline
- * icon. DiagView draws custom markup as written. Use currentColor to follow
+ * icon. DiagView runs custom markup through the strict sanitizer, then
+ * draws it as written instead of as an outline. Use currentColor to follow
  * the button colour. An svg with no fill attribute is filled with it.
  * @typedef {object} DiagViewButtonIcons
  * @property {string|null} copy - Copy button icon

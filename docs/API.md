@@ -66,7 +66,7 @@ Calling `destroy()` again while a teardown is in flight returns the same promise
 
 ### `DiagView.refresh()`
 
-Scan the document for any new diagrams added after initialization and initialize them. Also re-checks for share link parameters.
+Scan the document for any new diagrams added after initialization and initialize them. Also re-checks for share link parameters. Before `init()`, it logs the warning "Not initialized. Call init() first." and does nothing.
 
 **Signature:** `refresh(): void`
 
@@ -80,7 +80,7 @@ DiagView.refresh();
 
 ### `DiagView.configure(options)`
 
-Update configuration at runtime without re-initializing. Syncs the theme, Readable text colours, the canvas grid and branding visibility immediately.
+Update configuration at runtime without re-initializing. Syncs the theme, Readable text colours, the canvas grid and branding visibility immediately. Before `init()`, it logs the warning "Not initialized. Call init() first." and ignores the options. Pass options to `init()` instead.
 
 **Signature:** `configure(options?: DiagViewOptions): void`
 
@@ -343,6 +343,8 @@ console.log(DiagView.version); // e.g. "1.2.0"
 `DiagView.state` is a read-only Proxy over the internal state object, at every depth: nested objects come back as read-only views, and collections (Sets, Arrays, Maps) as snapshots. Writes and deletes log a warning and are ignored. Two exceptions: `activePanzoom` is the live Panzoom instance while the modal is open (its methods are safe to call), and `events` exposes `on`, `off` and `emit` bound to the internal event bus.
 
 DiagView fires one event on that bus. `dv:toggle-text-select` carries no data. The `T` shortcut emits it while the viewer is open, and the viewer then turns Text Select Mode on or off. The Text Select buttons switch the mode without the event. Any other name is free for your own events.
+
+The interface below lists the useful fields. The shipped type has more internal fields.
 
 ```typescript
 interface PublicState {

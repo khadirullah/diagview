@@ -506,6 +506,8 @@ Share the exact zoom level and pan position with anyone. The generated URL is th
 | `dv-q`    | Active search query. DiagView reads the first 200 characters                                             |
 | `dv-t`    | Canvas theme mode (`light`, `dark`, `custom`), left out in Auto mode                                     |
 | `dv-c`    | Custom canvas background hex value (without `#`), only with `dv-t=custom`                                |
+| `dv-x`    | Horizontal pan in pixels from older links. DiagView uses it only when `dv-cx` and `dv-cy` are missing    |
+| `dv-y`    | Vertical pan in pixels from older links. DiagView uses it only when `dv-cx` and `dv-cy` are missing      |
 
 ### Example URL
 
