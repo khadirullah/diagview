@@ -6,7 +6,7 @@
  */
 
 import { INITIAL_CONFIG, DEFAULT_CONFIG } from "./config-defaults.js";
-import { deepMerge, deepFreeze } from "./state-utils.js";
+import { deepMerge, deepFreeze, isPlainObject } from "./state-utils.js";
 import { validateConfig } from "./config-validation.js";
 import { EventEmitter } from "./events.js";
 
@@ -107,16 +107,6 @@ const READ_ONLY_HANDLER = {
     return true;
   },
 };
-
-/**
- * @param {*} value - Candidate value
- * @returns {boolean} True for a plain object literal (not null, array or class instance)
- */
-function isPlainObject(value) {
-  if (!value || typeof value !== "object") return false;
-  const proto = Object.getPrototypeOf(value);
-  return proto === Object.prototype || proto === null;
-}
 
 /**
  * Wrap a state value so that nothing reachable from it can mutate internals.

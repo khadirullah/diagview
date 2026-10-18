@@ -1,6 +1,6 @@
 import { ZOOM, LAYOUTS, EXPORT, SECURITY_MODES, OFF_HINTS, BUTTON_STYLES } from "./constants.js";
 import { DEFAULT_CONFIG } from "./config-defaults.js";
-import { deepMerge } from "./state-utils.js";
+import { deepMerge, isPlainObject } from "./state-utils.js";
 
 /**
  * Check that a selector string can actually be used with querySelector.
@@ -16,16 +16,6 @@ function isValidSelector(selector) {
   } catch (_e) {
     return false;
   }
-}
-
-/**
- * @param {*} value - Candidate value
- * @returns {boolean} True for a plain object (not null, array or class instance)
- */
-function isPlainObject(value) {
-  if (!value || typeof value !== "object" || Array.isArray(value)) return false;
-  const proto = Object.getPrototypeOf(value);
-  return proto === Object.prototype || proto === null;
 }
 
 /**

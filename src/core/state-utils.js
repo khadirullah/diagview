@@ -20,6 +20,16 @@ export function deepFreeze(obj) {
 }
 
 /**
+ * @param {*} value - Candidate value
+ * @returns {boolean} True for a plain object (not null, array or class instance)
+ */
+export function isPlainObject(value) {
+  if (!value || typeof value !== "object") return false;
+  const proto = Object.getPrototypeOf(value);
+  return proto === Object.prototype || proto === null;
+}
+
+/**
  * Keys that reach an object's prototype instead of the object itself.
  * JSON.parse('{"__proto__": {...}}') makes "__proto__" an own key, and
  * merging it would write to Object.prototype.
