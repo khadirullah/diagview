@@ -60,7 +60,7 @@ function onPage(list) {
  * This is the list data-diagview-index and share links (dv-idx) refer to.
  * @returns {Element[]} Diagram containers in index order
  */
-export function collectAllDiagrams() {
+function collectAllDiagrams() {
   const selector = state.config.diagramSelector;
   const all = onPage(safeQuerySelectorAll(selector, document));
   state.shadowRoots.forEach((root) => {
