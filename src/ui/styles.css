@@ -1285,8 +1285,8 @@
   visibility: hidden;
   transform: translateY(10px) scale(0.95);
   transform-origin: bottom right;
-  /* MIN-4: Optimize transition to prevent GPU ghosting. 
-     Transition only specific properties and use faster timing for snappiness. */
+  /* Only these properties animate, and quickly, so the GPU leaves no
+     ghost of the menu behind while it fades. */
   transition:
     opacity 0.15s cubic-bezier(0.4, 0, 0.2, 1),
     transform 0.15s cubic-bezier(0.4, 0, 0.2, 1),
@@ -1300,8 +1300,8 @@
   background-color: var(--dv-panel-bg, var(--dv-bg));
 }
 
-/* MIN-4: Move backdrop-filter to a pseudo-element to ensure perfect 
-   synchronization between the blur and the content during opacity transitions. */
+/* The blur sits on a pseudo-element, so it fades in step with the menu
+   content during the opacity transition. */
 .diagview-menu::before {
   content: "";
   position: absolute;
@@ -1394,7 +1394,7 @@
   color: var(--dv-text-color);
   font-size: 1.25rem;
   cursor: pointer;
-  /* MIN-4: Remove 'all' transition to stop buttons from lagging behind parent opacity */
+  /* Named properties instead of 'all', so the buttons fade with their parent */
   transition:
     background 0.2s ease,
     color 0.2s ease,
@@ -1440,7 +1440,7 @@
   font-size: 0.6875rem;
   font-weight: 600;
   cursor: pointer;
-  /* MIN-4: Remove 'all' transition to stop buttons from lagging behind parent opacity */
+  /* Named properties instead of 'all', so the buttons fade with their parent */
   transition:
     background 0.2s ease,
     border-color 0.2s ease,

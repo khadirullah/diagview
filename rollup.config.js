@@ -93,7 +93,7 @@ export default [
       name: "DiagView",
       exports: "default",
       banner,
-      inlineDynamicImports: true, // FIX: Inline dynamic imports for UMD
+      inlineDynamicImports: true, // one file, so the lazy features are inlined
     })),
     plugins: [
       stringPlugin(),
@@ -119,7 +119,7 @@ export default [
       exports: "default",
       sourcemap: production,
       banner,
-      inlineDynamicImports: true, // FIX: Inline dynamic imports for UMD
+      inlineDynamicImports: true, // one file, so the lazy features are inlined
     },
     plugins: [
       stringPlugin(),
