@@ -1,5 +1,6 @@
 import { jest } from "@jest/globals";
 import { pickFontFaces, embedDocumentFonts } from "../src/features/export-fonts.js";
+import { runCleanupFunctions } from "../src/core/config.js";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 
@@ -159,6 +160,8 @@ describe("embedDocumentFonts", () => {
   });
 
   afterEach(() => {
+    // Empties the font cache, as destroy() does
+    runCleanupFunctions();
     styleEl.remove();
     delete global.CSSFontFaceRule;
     delete global.fetch;
@@ -218,6 +221,33 @@ describe("embedDocumentFonts", () => {
     expect(other.querySelector("style.dv-font-embed").textContent).toContain("fonts.example.com");
   });
 
+  test("fetches each font file once until destroy", async () => {
+    const first = svgWith(["Hello"]);
+    const second = svgWith(["Hello"]);
+    await embedDocumentFonts(first);
+    await embedDocumentFonts(second);
+    expect(fetched()).toEqual(["sans-400.woff2"]);
+    const css = (svg) => svg.querySelector("style.dv-font-embed").textContent;
+    expect(css(second)).toBe(css(first));
+    expect(css(second)).toMatch(/url\('data:font\/woff2;base64,/);
+
+    runCleanupFunctions();
+    await embedDocumentFonts(svgWith(["Hello"]));
+    expect(fetched()).toEqual(["sans-400.woff2", "sans-400.woff2"]);
+  });
+
+  test("tries a failed font file again on the next export", async () => {
+    fetchMock.mockImplementationOnce(async () => ({ ok: false }));
+    const failed = svgWith(["Hello"]);
+    await embedDocumentFonts(failed);
+    expect(failed.querySelector("style.dv-font-embed").textContent).not.toContain("data:font");
+
+    const next = svgWith(["Hello"]);
+    await embedDocumentFonts(next);
+    expect(fetched()).toEqual(["sans-400.woff2", "sans-400.woff2"]);
+    expect(next.querySelector("style.dv-font-embed").textContent).toMatch(/data:font\/woff2/);
+  });
+
   test("adds nothing when the text uses no page font", async () => {
     const svg = svgWith(["Hello", { family: "Arial, sans-serif" }]);
     await embedDocumentFonts(svg);
@@ -250,8 +280,8 @@ describe("embedDocumentFonts", () => {
         'DiagView: Can\'t read fonts from https://fonts.example.com/css?family=A. Add crossorigin="anonymous" to its <link> to embed them in exports.',
         'DiagView: Can\'t read fonts from https://fonts.example.com/css?family=B. Add crossorigin="anonymous" to its <link> to embed them in exports.',
       ]);
-      // The readable sheet still gets embedded
-      expect(fetched()).toEqual(["sans-400.woff2", "sans-400.woff2"]);
+      // The readable sheet still gets embedded, from the cache the second time
+      expect(fetched()).toEqual(["sans-400.woff2"]);
     } finally {
       warn.mockRestore();
       delete document.styleSheets;

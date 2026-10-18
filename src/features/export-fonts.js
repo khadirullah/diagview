@@ -3,6 +3,8 @@
  * @module features/export-fonts
  */
 
+import { addCleanupFunction } from "../core/config.js";
+
 /**
  * Fetch a URL and return a base64 data URI, or null on failure.
  * Used to embed fonts so export SVGs render consistently.
@@ -30,6 +32,44 @@ async function fetchAsDataURI(url, base) {
     clearTimeout(timeoutId);
     return null;
   }
+}
+
+/**
+ * Font files already embedded, from absolute URL to the pending data URI.
+ * Every export embeds the same fonts, so each file is fetched and encoded
+ * once until destroy(). A failed fetch is not kept, so the next export
+ * tries again.
+ */
+const fontCache = new Map();
+const clearFontCache = () => fontCache.clear();
+
+/**
+ * fetchAsDataURI through the cache
+ * @private
+ * @param {string} url - URL, relative ones resolve against base
+ * @param {string} base - Base URL
+ * @returns {Promise<string|null>} The data URI, or null on failure
+ */
+function cachedDataURI(url, base) {
+  let href;
+  try {
+    href = new URL(url, base).href;
+  } catch {
+    return Promise.resolve(null);
+  }
+  let uri = fontCache.get(href);
+  if (!uri) {
+    addCleanupFunction(clearFontCache);
+    const pending = fetchAsDataURI(href, base);
+    uri = pending;
+    fontCache.set(href, pending);
+    pending.then((dataURI) => {
+      // A failed fetch leaves the cache so the next export tries again,
+      // unless destroy() or a newer fetch has replaced the entry already
+      if (!dataURI && fontCache.get(href) === pending) fontCache.delete(href);
+    });
+  }
+  return uri;
 }
 
 /** Stylesheets already warned about in this page session */
@@ -166,7 +206,7 @@ export async function embedDocumentFonts(svgEl, mode, localOnly) {
       // data: URLs are left as they are.
       let result = cssText;
       for (const [match, , rawUrl] of cssText.matchAll(/url\((['"]?)(?!data:)([^'")\s]+)\1\)/gi)) {
-        const dataURI = await fetchAsDataURI(rawUrl, base);
+        const dataURI = await cachedDataURI(rawUrl, base);
         if (dataURI) {
           result = result.replace(match, `url('${dataURI}')`);
         } else if (localOnly) {
