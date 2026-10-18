@@ -193,6 +193,15 @@ describe("Core Config: validateConfig gaps", () => {
     expect(state.config.offHint).toBe("below");
   });
 
+  test("an invalid layout keeps the previous layout", () => {
+    updateConfig({ layout: "header" });
+    updateConfig({ layout: "sidebar" });
+    expect(warn).toHaveBeenCalledWith(
+      'DiagView: layout must be "header", "floating" or "off", keeping "header"',
+    );
+    expect(state.config.layout).toBe("header");
+  });
+
   test("offHintText merges a partial object over the defaults", () => {
     expect(state.config.offHintText).toEqual({ mouse: "Click to expand", touch: "Tap to expand" });
     updateConfig({ offHintText: { touch: "Tippen zum Vergrößern" } });

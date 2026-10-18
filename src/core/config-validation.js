@@ -76,8 +76,10 @@ export function validateConfig(config, previous = DEFAULT_CONFIG) {
       /** @type {string} */ (config["layout"]),
     )
   ) {
-    console.warn(`DiagView: Invalid layout "${config["layout"]}", using default`);
-    config["layout"] = defaults["layout"];
+    console.warn(
+      `DiagView: layout must be "header", "floating" or "off", keeping "${fallback("layout")}"`,
+    );
+    config["layout"] = fallback("layout");
   }
 
   if (!OFF_HINTS.includes(/** @type {string} */ (config["offHint"]))) {
