@@ -110,7 +110,7 @@ describe("Utils API", () => {
     expect(g.getAttribute("aria-describedby")).toBe("dv-1-d1 missing");
   });
 
-  test("fixIds records aria id list rewrites for restoration", () => {
+  test("fixIds rewrites an aria id list", () => {
     document.body.innerHTML = `
       <svg id="aria-svg">
         <title id="t1">Title</title>
@@ -118,11 +118,9 @@ describe("Utils API", () => {
       </svg>
     `;
     const svg = document.getElementById("aria-svg");
-    const changes = { elements: new Map(), attributes: [], styles: new Map() };
-    fixIds(svg, "dv-2", changes);
+    fixIds(svg, "dv-2");
     const g = svg.querySelector("g");
     expect(g.getAttribute("aria-labelledby")).toBe("dv-2-t1");
-    expect(changes.attributes).toEqual([{ el: g, name: "aria-labelledby", value: "t1" }]);
   });
 
   test("fixIds rewrites hex-looking ids in <style> selectors and url() refs", () => {

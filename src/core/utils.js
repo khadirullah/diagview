@@ -72,10 +72,9 @@ export function stripDiagViewParams() {
   const keysToDelete = Array.from(params.keys()).filter((key) => key.startsWith("dv-"));
 
   if (keysToDelete.length > 0) {
+    // Deleting the last parameter drops the "?" too
     keysToDelete.forEach((key) => params.delete(key));
-    // Remove trailing ? if no params left
-    const newUrl = url.toString().replace(/\?$/, "");
-    window.history.replaceState(null, "", newUrl);
+    window.history.replaceState(null, "", url.toString());
   }
 }
 
@@ -834,18 +833,17 @@ const CSS_ID_RE = /#((?:\\.|[a-zA-Z0-9_.:-])+)/g;
  * @param {string} uniqueId - Unique prefix for IDs
  * @returns {SVGElement} - The modified SVG element
  */
-export function fixIds(svg, uniqueId, changes = null) {
+export function fixIds(svg, uniqueId) {
   if (!svg || !uniqueId) return svg;
 
   const idMap = new Map();
   const idElements = svg.querySelectorAll("[id]");
 
-  // 1. Build the ID map and track original element IDs
+  // 1. Build the ID map
   if (svg.id) {
     const oldId = svg.id;
     const newId = `${uniqueId}-${oldId}`;
     idMap.set(oldId, newId);
-    if (changes && changes.elements) changes.elements.set(svg, oldId);
     svg.id = newId;
   }
 
@@ -855,10 +853,6 @@ export function fixIds(svg, uniqueId, changes = null) {
     const oldId = el.id;
     const newId = `${uniqueId}-${oldId}`;
     idMap.set(oldId, newId);
-
-    if (changes && changes.elements) {
-      changes.elements.set(el, oldId);
-    }
 
     el.id = newId;
   }
@@ -890,12 +884,7 @@ export function fixIds(svg, uniqueId, changes = null) {
           .split(/\s+/)
           .map((id) => (idMap.has(id) ? idMap.get(id) : id))
           .join(" ");
-        if (newList !== value) {
-          if (changes && changes.attributes) {
-            changes.attributes.push({ el, name: attr.name, value });
-          }
-          attr.value = newList;
-        }
+        if (newList !== value) attr.value = newList;
         continue;
       }
 
@@ -920,13 +909,7 @@ export function fixIds(svg, uniqueId, changes = null) {
         }
       }
 
-      if (newValue !== value) {
-        // Track for restoration
-        if (changes && changes.attributes) {
-          changes.attributes.push({ el, name: attr.name, value });
-        }
-        attr.value = newValue;
-      }
+      if (newValue !== value) attr.value = newValue;
     }
   });
 
@@ -969,13 +952,7 @@ export function fixIds(svg, uniqueId, changes = null) {
       return match;
     });
 
-    if (newCss !== css) {
-      // Track for restoration
-      if (changes && changes.styles) {
-        changes.styles.set(style, css);
-      }
-      style.textContent = newCss;
-    }
+    if (newCss !== css) style.textContent = newCss;
   });
 
   return svg;
