@@ -1171,6 +1171,21 @@ describe("Warning about labels that are hard to read in the file", () => {
     ]);
   });
 
+  test("a silent export skips the label check, which only feeds the warning", async () => {
+    const measure = jest.spyOn(label, "getBoundingClientRect");
+    await exportDiagram(container, "png", { silent: true });
+    await exportDiagram(container, "svg", { silent: true });
+    expect(measure).not.toHaveBeenCalled();
+
+    // Without silent, and with Readable on, the labels are checked
+    await exportDiagram(container, "png");
+    expect(measure).toHaveBeenCalled();
+    measure.mockClear();
+    state.readableText = true;
+    await exportDiagram(container, "png", { silent: true });
+    expect(measure).toHaveBeenCalled();
+  });
+
   test("a copy without silent warns", async () => {
     const stop = recordToasts();
     await exportDiagram(container, "copy");

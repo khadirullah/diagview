@@ -443,8 +443,9 @@ function showSaved(
  * @param {SVGSVGElement} svg - Original page SVG
  * @param {SVGSVGElement|null} modalClone - Modal clone, preferred as the source when present
  * @param {boolean} [transparent] - The file has no background
+ * @param {boolean} [silent] - No warnings, so no check for hard-to-read labels
  */
-async function prepareSvgForExport(svg, modalClone, transparent) {
+async function prepareSvgForExport(svg, modalClone, transparent, silent) {
   const theme = detectTheme();
   const bg = transparent ? null : theme.bg;
 
@@ -480,7 +481,8 @@ async function prepareSvgForExport(svg, modalClone, transparent) {
   // clone reads styles, so the file has no dimming or outline. The on-screen
   // search is put back before anything can repaint.
   // With Readable off, the same check finds labels straight on the
-  // background that will be hard to read in the file.
+  // background that will be hard to read in the file. A silent export shows
+  // no warning, so it skips the check.
   let hideSearch = false;
   let faint = false;
   const cloneSource = (paint) => {
@@ -493,8 +495,13 @@ async function prepareSvgForExport(svg, modalClone, transparent) {
       if (hideSearch) sourceSvg.classList.add("dv-searching");
     }
   };
-  const textWork = bg || sourceSvg.querySelector?.("[data-dv-text-orig]");
-  const exportSvg = await (textWork
+  // The readable text chunk is needed to recolour labels with Readable on,
+  // to find faint labels for the warning a silent export never shows, or
+  // to put back labels Readable has changed on the page
+  const recolour = bg && state.readableText;
+  const checkFaint = bg && !silent;
+  const restoreLabels = sourceSvg.querySelector?.("[data-dv-text-orig]");
+  const exportSvg = await (recolour || checkFaint || restoreLabels
     ? loadChunk("readable text", () => import("./lazy/readable-text.js")).then((m) => {
         const made = m.exportText(sourceSvg, bg, cloneSource);
         faint = made.faint;
@@ -606,12 +613,14 @@ const MAX_CANVAS_SIDE = 16383;
  * @param {SVGSVGElement|null} modalClone - Modal clone to render from, if open
  * @param {boolean} [transparent=false] - Skip the background fill
  * @param {boolean} [opaque=false] - The format has no transparency (JPEG, PDF)
+ * @param {boolean} [silent=false] - Skip the check for hard-to-read labels
  */
 export async function renderToCanvas(
   sourceElement,
   modalClone,
   transparent = false,
   opaque = false,
+  silent = false,
 ) {
   const originalSvg = getDiagramSvg(sourceElement);
   if (!originalSvg) throw new Error("No SVG found");
@@ -622,7 +631,7 @@ export async function renderToCanvas(
   }
 
   // Use modalClone if available to ensure export matches browser rendering
-  const result = await prepareSvgForExport(originalSvg, modalClone, transparent);
+  const result = await prepareSvgForExport(originalSvg, modalClone, transparent, silent);
   if (!result) {
     // Only the size limit gets here, and cloneSVG has already said so
     const err = new Error("SVG preparation failed");
@@ -734,7 +743,7 @@ export async function exportToSVG(sourceElement, options = {}) {
  */
 async function saveSVG(originalSvg, filename, { transparent: isTransparent, modalClone, silent }) {
   try {
-    const prepared = await prepareSvgForExport(originalSvg, modalClone, isTransparent);
+    const prepared = await prepareSvgForExport(originalSvg, modalClone, isTransparent, silent);
     // Over the size limit. cloneSVG has already shown "Diagram blocked".
     if (!prepared) return;
     const { bg, svg } = prepared;
@@ -945,7 +954,7 @@ async function processImageExport(
 
     let canvasRef = null;
     try {
-      const drawn = await renderToCanvas(sourceElement, modalClone, transparent, isJpeg);
+      const drawn = await renderToCanvas(sourceElement, modalClone, transparent, isJpeg, silent);
       const { canvas, scale, faint, linked } = drawn;
       canvasRef = canvas;
       foreign = drawn.foreign;
@@ -1151,6 +1160,7 @@ async function savePDF(sourceElement, filename, { transparent, modalClone, silen
       modalClone,
       false,
       true,
+      silent,
     );
     const imgData = canvas.toDataURL("image/png");
 
