@@ -253,6 +253,42 @@ describe("Observer Module", () => {
     expect(initializeDiagram).not.toHaveBeenCalled();
   });
 
+  test("the viewer's copy of an svg the selector matches is never set up", async () => {
+    document.body.innerHTML =
+      '<svg class="diagram" id="page-svg" xmlns="http://www.w3.org/2000/svg"><rect width="1" height="1"/></svg>' +
+      '<div id="diagview-modal"><div class="dv-rotator"></div><div id="diagview-minimap"></div></div>';
+    observeDiagrams();
+    expect(initializeDiagram.mock.calls.map(([el]) => el.id)).toEqual(["page-svg"]);
+
+    // What the viewer and the minimap do with their copies
+    const copy = document.getElementById("page-svg").cloneNode(true);
+    copy.id = "copy";
+    delete copy.dataset.diagviewIndex;
+    delete copy.dataset.diagviewInit;
+    document.querySelector(".dv-rotator").appendChild(copy);
+    document.getElementById("diagview-minimap").appendChild(copy.cloneNode(true));
+    await wait(200);
+    refreshDiagrams();
+
+    expect(initializeDiagram.mock.calls.map(([el]) => el.id)).toEqual(["page-svg"]);
+    expect(copy.dataset.diagviewIndex).toBeUndefined();
+  });
+
+  test("changes inside the viewer do not wake the observer", async () => {
+    document.body.innerHTML = '<div id="diagview-modal"><p id="toast">Saved</p></div>';
+    observeDiagrams();
+    const scan = jest.spyOn(Element.prototype, "closest");
+    try {
+      document.getElementById("toast").remove();
+      document.getElementById("diagview-modal").appendChild(document.createElement("p"));
+      await wait(200);
+      expect(scan).not.toHaveBeenCalled();
+      expect(releaseDetachedDiagrams).not.toHaveBeenCalled();
+    } finally {
+      scan.mockRestore();
+    }
+  });
+
   test("stopObserving disconnects the observer", () => {
     observeDiagrams();
     const observer = state.observer;

@@ -212,6 +212,35 @@ test("with layout off it is a button in the tab order that Enter opens", async (
   await close(page);
 });
 
+test("the viewer's copy of one never set up stays a plain svg", async ({ browser }) => {
+  // Below the fold, so lazy init has not reached it when the viewer opens
+  const far = await newPage(browser);
+  await far.goto(fixtureFile("bare-svg.html"));
+  await far.evaluate(() => {
+    localStorage.setItem("diagview-canvas-hint-shown", "true");
+    document.documentElement.setAttribute("data-diagview-no-auto-init", "");
+    document.body.insertAdjacentHTML(
+      "beforeend",
+      '<div style="height:4000px"></div><svg class="diagram" id="far" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 120" width="300" height="120"><rect x="10" y="10" width="280" height="100" fill="#e0f2fe"/><text x="150" y="65" text-anchor="middle">Far</text></svg>',
+    );
+  });
+  await far.addScriptTag({ path: DIST });
+  await far.evaluate(() => DiagView.init({ diagramSelector: ".diagram", animateOpen: false }));
+  await far.evaluate(() => DiagView.openFullscreen(document.getElementById("far")));
+  await waitOpen(far);
+  await far.waitForTimeout(500);
+  const shown = await far.evaluate(() => {
+    const modal = document.getElementById("diagview-modal");
+    return {
+      wrappers: modal.querySelectorAll(".diagview-wrapper").length,
+      setUp: modal.querySelectorAll("[data-diagview-init]").length,
+      copies: modal.querySelectorAll(".diagview-rotator > svg").length,
+    };
+  });
+  expect(shown).toEqual({ wrappers: 0, setUp: 0, copies: 1 });
+  await far.context().close();
+});
+
 test("an svg inside another svg, or inside a matched box, gets no toolbar of its own", async () => {
   const nested = await page.evaluate(() => ({
     inner: document.getElementById("inner").hasAttribute("data-diagview-init"),

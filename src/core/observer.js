@@ -32,6 +32,27 @@ let stripTimer = 0;
 let removedAny = false;
 
 /**
+ * DiagView's own viewer and minimap. The viewer's copy of an <svg> the
+ * selector matches keeps its class, and must never be set up as a diagram.
+ * @returns {Element[]} The ones on the page
+ */
+function ownElements() {
+  return ["diagview-modal", "diagview-minimap"]
+    .map((id) => document.getElementById(id))
+    .filter(Boolean);
+}
+
+/**
+ * Leave out anything inside the viewer or the minimap
+ * @param {Element[]} list - Matches
+ * @returns {Element[]} Matches on the page itself
+ */
+function onPage(list) {
+  const own = ownElements();
+  return own.length ? list.filter((el) => !own.some((o) => o.contains(el))) : list;
+}
+
+/**
  * Every diagram DiagView knows about, in a stable order: the document first,
  * then each shadow root passed to initShadowRoot() in registration order.
  * This is the list data-diagview-index and share links (dv-idx) refer to.
@@ -39,7 +60,7 @@ let removedAny = false;
  */
 export function collectAllDiagrams() {
   const selector = state.config.diagramSelector;
-  const all = [...safeQuerySelectorAll(selector, document)];
+  const all = onPage(safeQuerySelectorAll(selector, document));
   state.shadowRoots.forEach((root) => {
     if (root?.querySelectorAll) all.push(...safeQuerySelectorAll(selector, root));
   });
@@ -184,7 +205,7 @@ function skipNestedDiagrams(diagrams, selector) {
 function findDiagrams(root, selector) {
   const diagrams = root.nodeType === 1 && root.matches?.(selector) ? [root] : [];
   if (root.querySelectorAll) diagrams.push(...safeQuerySelectorAll(selector, root));
-  return diagrams;
+  return onPage(diagrams);
 }
 
 /**
@@ -310,9 +331,13 @@ export function observeDiagrams() {
   state.observer = new MutationObserver((mutations) => {
     let addedAny = false;
     const selector = state.config.diagramSelector;
+    // Changes in the viewer, its notices, menu, search marks and minimap
+    // are DiagView's own
+    const own = ownElements();
+    const ours = (node) => own.some((el) => el.contains(node));
 
     for (const mutation of mutations) {
-      if (mutation.type !== "childList") continue;
+      if (mutation.type !== "childList" || ours(mutation.target)) continue;
 
       if (!removedAny) {
         for (const node of mutation.removedNodes) {
@@ -324,7 +349,7 @@ export function observeDiagrams() {
       }
 
       for (const node of mutation.addedNodes) {
-        if (node.nodeType !== 1) continue;
+        if (node.nodeType !== 1 || ours(node)) continue;
 
         state.nodesToProcess.add(node);
         addedAny = true;
