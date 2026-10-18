@@ -54,6 +54,36 @@ describe("Diagram Init: SVG Validation (via error boundary)", () => {
     expect(icon.getAttribute("stroke-linejoin")).toBe("round");
   });
 
+  test("the error icon is a 24 px outline circle with an exclamation mark, first in the box", () => {
+    const container = document.createElement("div");
+    container.className = "diagram";
+    document.body.appendChild(container);
+
+    initializeDiagram(container);
+
+    const box = container.querySelector(".diagview-error");
+    const icon = box.firstElementChild;
+    expect(icon.namespaceURI).toBe("http://www.w3.org/2000/svg");
+    expect(icon.getAttribute("class")).toBe("diagview-error-icon");
+    const names = ["viewBox", "fill", "stroke", "stroke-width", "aria-hidden"];
+    const attrs = Object.fromEntries(names.map((n) => [n, icon.getAttribute(n)]));
+    expect(attrs).toEqual({
+      viewBox: "0 0 24 24",
+      fill: "none",
+      stroke: "currentColor",
+      "stroke-width": "2",
+      "aria-hidden": "true",
+    });
+    expect(icon.innerHTML).toBe(
+      '<circle cx="12" cy="12" r="10"></circle><path d="M12 8v4M12 16h.01"></path>',
+    );
+    expect([...box.children].map((el) => el.getAttribute("class"))).toEqual([
+      "diagview-error-icon",
+      "diagview-error-title",
+      "diagview-error-message",
+    ]);
+  });
+
   test("initializeDiagram rejects SVG with error class via error boundary", () => {
     const container = document.createElement("div");
     container.className = "diagram";

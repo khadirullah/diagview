@@ -159,19 +159,14 @@ function showErrorBoundary(element, svg) {
     }
   }
 
-  // Use DOM construction to prevent XSS from SVG text content
-  const iconSvg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-  iconSvg.classList.add("diagview-error-icon");
-  iconSvg.setAttribute("viewBox", "0 0 24 24");
-  iconSvg.setAttribute("fill", "none");
-  iconSvg.setAttribute("stroke", "currentColor");
-  iconSvg.setAttribute("stroke-width", "2");
-  // Round caps draw the zero-length path under the "!" as a dot
-  iconSvg.setAttribute("stroke-linecap", "round");
-  iconSvg.setAttribute("stroke-linejoin", "round");
-  // The title says the same in words
-  iconSvg.setAttribute("aria-hidden", "true");
-  setSVGContent(iconSvg, '<circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/>');
+  // The icon is fixed markup. The text from the SVG only ever goes in
+  // through textContent below, so it cannot add elements. Round caps draw
+  // the zero-length path under the "!" as a dot. The title says the same in
+  // words, so screen readers skip the icon.
+  setSVGContent(
+    errorDiv,
+    '<svg class="diagview-error-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>',
+  );
 
   const titleDiv = document.createElement("div");
   titleDiv.className = "diagview-error-title";
@@ -181,7 +176,6 @@ function showErrorBoundary(element, svg) {
   msgDiv.className = "diagview-error-message";
   msgDiv.textContent = errorMessage;
 
-  errorDiv.appendChild(iconSvg);
   errorDiv.appendChild(titleDiv);
   errorDiv.appendChild(msgDiv);
 
