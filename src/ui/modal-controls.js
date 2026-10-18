@@ -196,10 +196,11 @@ export async function closeModal() {
       document.getElementById("dv-search-icon-btn")?.setAttribute("aria-expanded", "false");
     }
 
-    document.getElementById("dv-text-select-btn")?.classList.remove("active");
-    document.getElementById("dv-text-select-desktop-btn")?.classList.remove("active");
-    document.getElementById("dv-text-select-btn")?.setAttribute("aria-pressed", "false");
-    document.getElementById("dv-text-select-desktop-btn")?.setAttribute("aria-pressed", "false");
+    ["dv-text-select-btn", "dv-text-select-desktop-btn"].forEach((id) => {
+      const btn = document.getElementById(id);
+      btn?.classList.remove("active");
+      btn?.setAttribute("aria-pressed", "false");
+    });
 
     // Clear async tasks related to the modal session
     clearAsyncTasks(state);
@@ -247,16 +248,6 @@ export function syncBrandingVisibility() {
   // No "Press ? for shortcuts" when ? opens nothing
   modal?.classList.toggle("dv-no-help", !state.config.showKeyboardHelp);
 
-  const elements = [modal, menu].filter((el) => !!el);
-  if (elements.length === 0) return;
-
   const shouldHide = state.config.showBranding === false;
-
-  elements.forEach((el) => {
-    if (shouldHide) {
-      el.classList.add("dv-hide-branding");
-    } else {
-      el.classList.remove("dv-hide-branding");
-    }
-  });
+  [modal, menu].forEach((el) => el?.classList.toggle("dv-hide-branding", shouldHide));
 }
