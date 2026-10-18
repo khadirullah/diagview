@@ -168,6 +168,18 @@ describe("Modal System", () => {
     expect(topbar.classList.contains("search-open")).toBe(false);
   });
 
+  test("the search Back button hands focus to the search button", () => {
+    const searchBtn = document.getElementById("dv-search-icon-btn");
+    const backBtn = document.getElementById("diagview-search-back");
+    searchBtn.click();
+    backBtn.focus();
+    backBtn.click();
+    expect(document.querySelector(".diagview-topbar").classList.contains("search-open")).toBe(
+      false,
+    );
+    expect(document.activeElement).toBe(searchBtn);
+  });
+
   test("closeModal is called on fullscreenchange if no element remains", async () => {
     const { addModalListener } = await import("../src/core/lifecycle.js");
     const { closeModal } = await import("../src/ui/modal-controls.js");

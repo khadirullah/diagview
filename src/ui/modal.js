@@ -818,6 +818,9 @@ function _wireModalEvents(elements, viewport) {
     topbar.classList.remove("search-open");
     searchIconBtn.classList.remove("active");
     searchIconBtn.setAttribute("aria-expanded", "false");
+    // The Back button hides with the search bar, so focus goes to the button
+    // that opens it again
+    searchIconBtn.focus();
     loadChunk("search", () => import("../features/lazy/search.js"))
       .then((m) => m.clearSearch())
       .catch(() => {});
