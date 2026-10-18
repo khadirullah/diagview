@@ -183,25 +183,6 @@ export function rotateDiagram() {
 }
 
 /**
- * Reset rotation
- */
-export function resetRotation() {
-  state.rotationAngle = 0;
-  cleanupRotation();
-
-  const svgEl = document.querySelector("#diagview-modal-viewport svg");
-  if (svgEl?._dvVb) {
-    svgEl.setAttribute("viewBox", svgEl._dvVb.join(" "));
-  } else if (svgEl) {
-    centerSVGViewBox(svgEl);
-  }
-
-  if (state.activePanzoom) {
-    state.activePanzoom.reset({ animate: true });
-  }
-}
-
-/**
  * Cleanup rotation on modal close
  * Architecture Fix: Unwraps the inner rotation group wrapper.
  */

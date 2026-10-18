@@ -5,7 +5,7 @@
 
 import { jest } from "@jest/globals";
 import { state, resetConfig, updateConfig } from "../src/core/config.js";
-import { rotateDiagram, resetRotation } from "../src/features/lazy/rotate.js";
+import { rotateDiagram } from "../src/features/lazy/rotate.js";
 import {
   saveZoomState,
   restoreZoomState,
@@ -52,13 +52,6 @@ describe("Rotation Logic", () => {
     expect(rotGroup.getAttribute("transform")).toContain("rotate(90");
   });
 
-  test("resetRotation resets angle to 0", () => {
-    state.rotationAngle = 180;
-    resetRotation();
-    expect(state.rotationAngle).toBe(0);
-    expect(mockPanzoom.reset).toHaveBeenCalled();
-  });
-
   test("restoreZoomState restores the rotation saveZoomState remembered", async () => {
     updateConfig({ rememberZoom: true });
     state.isModalOpen = true;
@@ -103,15 +96,6 @@ describe("Rotation viewBox", () => {
     for (let i = 0; i < 4; i++) rotateDiagram();
     expect(viewBox()).toEqual([-20, 10, 400, 200]);
     expect(svg.querySelector(".dv-rot-g").getAttribute("transform")).toBe("rotate(0, 180, 110)");
-  });
-
-  test("resetRotation restores the unrotated viewBox", () => {
-    rotateDiagram();
-    rotateDiagram();
-    rotateDiagram();
-    resetRotation();
-    expect(viewBox()).toEqual([-20, 10, 400, 200]);
-    expect(svg.querySelector(".dv-rot-g")).toBeNull();
   });
 });
 

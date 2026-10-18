@@ -39,7 +39,6 @@ export const EXPORT = {
   SVG_EXPORT_PADDING: 40,
   HIGH_RES_SCALE_DEFAULT: 4,
   MOBILE_SCALE_DEFAULT: 2,
-  PDF_SCALE: 2,
   MAX_PIXELS_DEFAULT: 16777216, // 16MP (4096×4096) — safe for all browsers including mobile
   MAX_PIXELS_LIMIT: 268435456, // 256MP (16384×16384) — ceiling for specialized high-res needs
   MIN_PIXELS_LIMIT: 1000000, // 1MP floor
