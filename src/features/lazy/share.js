@@ -22,6 +22,7 @@ import { loadChunk } from "../../core/lifecycle.js";
 import { ZOOM } from "../../core/constants.js";
 import { showSuccessToast, showErrorToast } from "../../ui/toast.js";
 import { getClientCTM } from "../../core/utils.js";
+import { setCanvasTheme } from "../../core/theme.js";
 
 /**
  * Manages view state persistence across the diagram lifecycle.
@@ -312,13 +313,7 @@ export function applyRestoredViewState(diagram, panzoom) {
 
   const { scale, x, y, cx, cy, rotation, themeMode, customColor } = shareState;
 
-  if (themeMode) {
-    import("../../core/theme.js")
-      .then((m) => {
-        m.setCanvasTheme(themeMode, customColor);
-      })
-      .catch(() => {});
-  }
+  if (themeMode) setCanvasTheme(themeMode, customColor);
 
   const applyZoomAndPan = () => {
     if (scale !== null) panzoom.zoom(scale, { animate: false });

@@ -7,6 +7,7 @@
 import { state } from "../../core/config.js";
 import { showSuccessToast } from "../../ui/toast.js";
 import { applyTransformNow, centerSVGViewBox, getClientCTM } from "../../core/utils.js";
+import { saveZoomState } from "../panzoom-integration.js";
 
 /**
  * Apply a rotation angle to the modal diagram's DOM.
@@ -177,9 +178,7 @@ export function rotateDiagram() {
   // Save state under the diagram that is open
   const active = state.activeSourceElement;
   if (active?.dataset?.diagviewId) {
-    import("../panzoom-integration.js").then((m) =>
-      m.saveZoomState(active.dataset.diagviewId, state.activePanzoom),
-    );
+    saveZoomState(active.dataset.diagviewId, state.activePanzoom);
   }
 }
 

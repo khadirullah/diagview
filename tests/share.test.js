@@ -5,6 +5,8 @@ import { state, resetConfig } from "../src/core/config.js";
 jest.unstable_mockModule("../src/ui/toast.js", () => ({
   showSuccessToast: jest.fn(),
   showErrorToast: jest.fn(),
+  // panzoom-integration.js, which rotate.js imports, uses it
+  showInfoToast: jest.fn(),
 }));
 
 const { showSuccessToast, showErrorToast } = await import("../src/ui/toast.js");
