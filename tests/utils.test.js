@@ -668,3 +668,72 @@ describe("isMobileDevice", () => {
     }
   });
 });
+
+describe("fixIds on a large <style> block", () => {
+  // The rewrite as it was written before, which tested the whole text in
+  // front of each "#" again
+  const CSS_ID_RE = /#((?:\\.|[a-zA-Z0-9_.:-])+)/g;
+  const reference = (css, ids, prefix) =>
+    css.replace(CSS_ID_RE, (match, rawId, offset) => {
+      const before = css.slice(0, offset);
+      const insideUrl = /url\s*\(\s*['"]?\s*$/i.test(before);
+      if (!insideUrl && /^(?:[0-9a-f]{3,4}|[0-9a-f]{6}|[0-9a-f]{8})$/i.test(rawId)) {
+        const declStart = Math.max(
+          before.lastIndexOf("{"),
+          before.lastIndexOf("}"),
+          before.lastIndexOf(";"),
+        );
+        if (before.slice(declStart + 1).includes(":")) return match;
+      }
+      let candidate = rawId;
+      while (candidate) {
+        const id = candidate.replace(/\\(.)/g, "$1");
+        if (ids.has(id)) return `#${prefix}-${candidate}${rawId.slice(candidate.length)}`;
+        const cut = candidate.search(/[.:](?=[^.:]*$)/);
+        if (cut <= 0 || candidate[cut - 1] === "\\") break;
+        candidate = candidate.slice(0, cut);
+      }
+      return match;
+    });
+
+  test("gives the same text as before for Mermaid style rules and odd url() spacing", () => {
+    const ids = ["m1", "fade", "cafe", "bed", "arrow", "a.b"];
+    // A seeded mix of the forms a Mermaid <style> and hand-written CSS use.
+    // The seed is fixed, so a failure comes back on the next run.
+    let seed = 7;
+    const nextRandom = () => (seed = (seed * 16807) % 2147483647);
+    const pick = (list) => list[nextRandom() % list.length];
+    const parts = [
+      "#m1 .node rect{fill:#fff;stroke:#bed;}",
+      "#m1 .edge{marker-end:url(#arrow);}",
+      ".x{fill:url( '#fade' )}",
+      '.y{fill:URL(\n\t"#cafe"  )}',
+      ".z{fill:url  (#bed)}",
+      ".q{fill:url(  \t #cafe)}",
+      "#bed{color:#1234}",
+      "#a\\.b:hover{fill:#fade}",
+      "myurl(#fade)",
+      "url(x#bed) ",
+      "#cafe;",
+      "(#bed",
+      "'#fade'",
+      "url('#m1')",
+      "#nope{fill:#abc}",
+    ];
+    const css = Array.from({ length: 4000 }, () => pick(parts)).join("\n");
+    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    ids.forEach((id) => {
+      const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+      g.id = id;
+      svg.appendChild(g);
+    });
+    const style = document.createElementNS("http://www.w3.org/2000/svg", "style");
+    style.textContent = css;
+    svg.appendChild(style);
+
+    fixIds(svg, "dv-9");
+
+    expect(style.textContent).toBe(reference(css, new Set(ids), "dv-9"));
+    expect(style.textContent).not.toBe(css);
+  });
+});

@@ -845,6 +845,31 @@ const URL_REF_RE = /(url\s*\(\s*(['"]?)\s*)#([^)'"]+)(\2\s*\))/gi;
 const CSS_ID_RE = /#((?:\\.|[a-zA-Z0-9_.:-])+)/g;
 
 /**
+ * Whether the CSS just before `end` opens a url(), with optional spaces and
+ * an optional quote, as /url\s*\(\s*['"]?\s*$/i finds in css.slice(0, end).
+ * It reads back from `end` only, so a long <style> is not scanned once per id.
+ * @private
+ * @param {string} css - Style text
+ * @param {number} end - Index of the "#"
+ * @returns {boolean} True inside url(
+ */
+function endsInUrlOpen(css, end) {
+  let i = end;
+  const skipSpace = () => {
+    while (i > 0 && /\s/.test(css[i - 1])) i--;
+  };
+  skipSpace();
+  if (css[i - 1] === '"' || css[i - 1] === "'") {
+    i--;
+    skipSpace();
+  }
+  if (css[i - 1] !== "(") return false;
+  i--;
+  skipSpace();
+  return i >= 3 && /^url$/i.test(css.slice(i - 3, i));
+}
+
+/**
  * Fix ID collisions in SVG elements using a secure DOM-walking approach.
  * Replaces the unsafe and slow outerHTML/RegExp strategy with direct attribute manipulation.
  * This prevents XSS (no innerHTML parsing) and is significantly faster.
@@ -941,8 +966,7 @@ export function fixIds(svg, uniqueId) {
 
     // Replace #id selectors and url(#id) in CSS using the idMap
     const newCss = css.replace(CSS_ID_RE, (match, rawId, offset) => {
-      const before = css.slice(0, offset);
-      const insideUrl = /url\s*\(\s*['"]?\s*$/i.test(before);
+      const insideUrl = endsInUrlOpen(css, offset);
 
       // SEC-5: hex colour detection to avoid accidental ID replacement of
       // #rgb, #rgba, #rrggbb, #rrggbbaa. Only applies in a property value
@@ -950,11 +974,11 @@ export function fixIds(svg, uniqueId) {
       // never inside url(#...), which can only be an id reference.
       if (!insideUrl && /^(?:[0-9a-f]{3,4}|[0-9a-f]{6}|[0-9a-f]{8})$/i.test(rawId)) {
         const declStart = Math.max(
-          before.lastIndexOf("{"),
-          before.lastIndexOf("}"),
-          before.lastIndexOf(";"),
+          css.lastIndexOf("{", offset - 1),
+          css.lastIndexOf("}", offset - 1),
+          css.lastIndexOf(";", offset - 1),
         );
-        if (before.slice(declStart + 1).includes(":")) return match;
+        if (css.slice(declStart + 1, offset).includes(":")) return match;
       }
 
       // Try the whole token first, then shorter prefixes ending before an
