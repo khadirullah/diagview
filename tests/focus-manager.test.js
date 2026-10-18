@@ -9,6 +9,7 @@ import {
   saveFocus,
   restoreFocus,
   resetFocusManagement,
+  setupModalFocusManagement,
 } from "../src/ui/focus-manager.js";
 
 describe("focus trap ignores unrendered and closed-search controls", () => {
@@ -234,6 +235,42 @@ describe("focus trap ignores unrendered and closed-search controls", () => {
     document.getElementById("dv-toggle").focus();
     pressTab();
     expect(document.activeElement.className).toBe("diagview-branding");
+  });
+});
+
+describe("a press on the viewer moves focus off its controls", () => {
+  let modal;
+
+  beforeEach(() => {
+    resetConfig();
+    document.body.innerHTML = '<div id="diagview-modal" tabindex="-1"></div>';
+    modal = document.getElementById("diagview-modal");
+    state.focusManagementSetup = false;
+    setupModalFocusManagement();
+    state.isModalOpen = true;
+  });
+
+  afterEach(() => {
+    for (const fn of Array.from(state.modalCleanupFunctions)) fn();
+    state.modalCleanupFunctions.clear();
+    state.isModalOpen = false;
+  });
+
+  test("a wheel on the shortcuts panel keeps focus on its close button", () => {
+    modal.innerHTML =
+      '<div class="diagview-help-modal show"><div class="diagview-help-content">' +
+      '<button class="diagview-help-close"></button><p>list</p></div></div>';
+    const close = modal.querySelector("button");
+    close.focus();
+    modal.querySelector("p").dispatchEvent(new WheelEvent("wheel", { bubbles: true }));
+    expect(document.activeElement).toBe(close);
+  });
+
+  test("a press on the diagram still hands focus to the viewer", () => {
+    modal.innerHTML = '<button id="b"></button><div id="d"></div>';
+    document.getElementById("b").focus();
+    document.getElementById("d").dispatchEvent(new MouseEvent("mousedown", { bubbles: true }));
+    expect(document.activeElement).toBe(modal);
   });
 });
 

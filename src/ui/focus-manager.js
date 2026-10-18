@@ -119,7 +119,9 @@ export function setupModalFocusManagement() {
       return;
     }
 
-    const isUI = e.target.closest(".diagview-topbar, .diagview-fab-container, .diagview-menu");
+    const isUI = e.target.closest(
+      ".diagview-topbar, .diagview-fab-container, .diagview-menu, .diagview-help-modal",
+    );
     if (!isUI) {
       lastBlurTime = now;
       blurActiveElement();
