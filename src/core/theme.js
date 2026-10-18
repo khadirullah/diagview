@@ -685,7 +685,6 @@ export function syncTheme() {
   // Update modal if exists
   const modal = document.getElementById("diagview-modal");
   if (modal) {
-    modal.style.backgroundColor = theme.bg;
     modal.style.color = theme.text;
     // The minimap image baked in the old text colour for currentColor parts
     if (state.minimapSvg) {

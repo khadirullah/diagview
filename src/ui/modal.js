@@ -5,7 +5,7 @@
  */
 
 import { state, addCleanupFunction } from "../core/config.js";
-import { detectTheme, syncTheme } from "../core/theme.js";
+import { syncTheme } from "../core/theme.js";
 import {
   throttle,
   setSVGContent,
@@ -28,7 +28,7 @@ import { setupModalFocusManagement, saveFocus, setInitialFocus } from "./focus-m
 import { closeModal, lockBodyScroll } from "./modal-controls.js";
 import { createFloatingMenu } from "./floating-menu.js";
 import { pushModalHistoryState, startVisualViewportSync } from "./viewport.js";
-import { showMenuHint } from "./toast.js";
+import { showMenuHint, showToast } from "./toast.js";
 import { keysUsed } from "../features/keyboard.js";
 import { syncCanvasGrid, updateCanvasGrid } from "./canvas-grid.js";
 
@@ -59,7 +59,6 @@ function _isSessionLive(token) {
 export function createModal() {
   if (document.getElementById("diagview-modal")) return;
 
-  const theme = detectTheme();
   const modal = document.createElement("div");
   modal.id = "diagview-modal";
   modal.className = "diagview-modal";
@@ -78,8 +77,6 @@ export function createModal() {
   instructions.textContent = "Use arrow keys to pan, plus and minus to zoom, Space to reset.";
   modal.appendChild(instructions);
   modal.setAttribute("aria-describedby", instructions.id);
-
-  modal.style.backgroundColor = theme.bg;
 
   // 1. Loading Indicator
   const loading = document.createElement("div");
@@ -102,17 +99,13 @@ export function createModal() {
     textSelectMobileBtn,
     searchBackBtn,
     searchInput,
-    searchClear,
     textSelectDesktopBtn,
     closeBtn,
   } = _createModalTopbar(content);
 
   // 4. Viewport
   // 4. Main Content Construction (Viewport, Minimap, Laser)
-  const { viewport } = _createModalMainContent(modal, content);
-
-  // Setup focus management
-  setupModalFocusManagement();
+  const viewport = _createModalMainContent(modal, content);
 
   // 5. Wire Events
   _wireModalEvents(
@@ -122,7 +115,6 @@ export function createModal() {
       textSelectMobileBtn,
       searchBackBtn,
       searchInput,
-      searchClear,
       textSelectDesktopBtn,
       closeBtn,
     },
@@ -180,10 +172,8 @@ function _activateModalUI(modal, viewport) {
   // Handles pinch-zoomed browsers by force-resetting scale.
   startVisualViewportSync();
 
-  // Re-establish focus management on every open: its teardown runs as
-  // modal-scoped cleanup on every close, but the modal DOM (and createModal's
-  // setup call) only happens once — without this, the focus trap and
-  // click-to-blur handlers are gone from the second session onward.
+  // Set up focus management on every open. Its teardown runs as modal-scoped
+  // cleanup on every close, while the modal DOM is built only once.
   setupModalFocusManagement();
 
   // Save current focus and sync theme
@@ -680,7 +670,6 @@ function _createModalTopbar(content) {
     textSelectMobileBtn,
     searchBackBtn,
     searchInput,
-    searchClear,
     textSelectDesktopBtn,
     closeBtn,
   };
@@ -689,6 +678,7 @@ function _createModalTopbar(content) {
 /**
  * Create the main modal content (viewport, minimap, laser)
  * @private
+ * @returns {HTMLDivElement} The viewport
  */
 function _createModalMainContent(modal, content) {
   const viewport = document.createElement("div");
@@ -727,7 +717,7 @@ function _createModalMainContent(modal, content) {
 
   document.body.appendChild(modal);
 
-  return { viewport, minimap };
+  return viewport;
 }
 
 /**
@@ -746,28 +736,21 @@ function _wireModalEvents(elements, viewport) {
   } = elements;
 
   function _doTextSelectToggle() {
-    if (!viewport) return;
     const on = viewport.classList.toggle("dv-text-select");
 
     try {
       if (state.activePanzoom) {
         // BUG FIX: pause()/resume() do not exist in @panzoom/panzoom.
         // We use setOptions to disable/enable interactions instead.
-        if (on) {
-          state.activePanzoom.setOptions({ disablePan: true, disableZoom: true });
-        } else {
-          state.activePanzoom.setOptions({ disablePan: false, disableZoom: false });
-        }
+        state.activePanzoom.setOptions({ disablePan: on, disableZoom: on });
       }
     } catch (err) {
       console.warn("DiagView: Failed to toggle Panzoom state", err);
     }
 
     [textSelectMobileBtn, textSelectDesktopBtn].forEach((btn) => {
-      if (btn) {
-        btn.classList.toggle("active", on);
-        btn.setAttribute("aria-pressed", String(on));
-      }
+      btn.classList.toggle("active", on);
+      btn.setAttribute("aria-pressed", String(on));
     });
 
     // Reset focus to modal so keyboard shortcuts (R, M, L, etc.) work immediately
@@ -775,18 +758,12 @@ function _wireModalEvents(elements, viewport) {
     const modal = document.getElementById("diagview-modal");
     if (modal) modal.focus();
 
-    import("./toast.js")
-      .then((m) => {
-        if (m?.showToast) {
-          m.showToast(
-            on ? "Text select ON, drag to copy" : "Text select OFF",
-            on ? "success" : "info",
-            null,
-            "textSelect",
-          );
-        }
-      })
-      .catch(() => {});
+    showToast(
+      on ? "Text select ON, drag to copy" : "Text select OFF",
+      on ? "success" : "info",
+      null,
+      "textSelect",
+    );
   }
 
   // Text Selection (keyboard "T" emits this event).
@@ -794,10 +771,7 @@ function _wireModalEvents(elements, viewport) {
   // the subscription must live for the instance and be released on destroy().
   // Registering it as modal-scoped cleanup removed it on the first close and
   // nothing re-subscribed, which silently killed the shortcut afterwards.
-  const textSelectCleanup = state.events.on("dv:toggle-text-select", () => _doTextSelectToggle());
-  addCleanupFunction(() => {
-    if (typeof textSelectCleanup === "function") textSelectCleanup();
-  });
+  addCleanupFunction(state.events.on("dv:toggle-text-select", () => _doTextSelectToggle()));
 
   textSelectMobileBtn.addEventListener("click", _doTextSelectToggle);
   textSelectDesktopBtn.addEventListener("click", _doTextSelectToggle);
