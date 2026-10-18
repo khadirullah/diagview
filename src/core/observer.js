@@ -27,6 +27,8 @@ import { restoreViewFromURL } from "../features/share-state.js";
 /** Milliseconds a share link waits for its diagram before it is removed */
 const SHARE_LINK_WAIT = 3000;
 let stripTimer = 0;
+/** Pending open of the diagram a share link points to */
+let openTimer = 0;
 
 /** Whether the page removed an element since the last run */
 let removedAny = false;
@@ -93,8 +95,13 @@ export function checkShareLink() {
       return; // Keep hasCheckedShareLink = false to try again on next mutation
     }
 
-    // Use timeout to ensure UI is ready
-    setTimeout(() => {
+    // Use timeout to ensure UI is ready. A teardown before then cancels
+    // the open and keeps the link, so the next start opens it.
+    state.hasCheckedShareLink = true;
+    openTimer = setTimeout(() => {
+      openTimer = 0;
+      // Remove the dv- parameters from the address bar once the link is handled
+      stripDiagViewParams();
       // Defensive wrapping handles both real Promises and test mocks
       Promise.resolve(openFullscreen(result.diagram)).catch((e) => {
         console.warn("DiagView: Failed to restore shared view", e);
@@ -112,12 +119,7 @@ export function checkShareLink() {
         stripDiagViewParams();
       }
     }, SHARE_LINK_WAIT);
-    return;
   }
-
-  // Remove the dv- parameters from the address bar once the link is handled
-  state.hasCheckedShareLink = true;
-  stripDiagViewParams();
 }
 
 /**
@@ -389,12 +391,13 @@ export function observeDiagrams() {
 }
 
 /**
- * Reset share link check flag and cancel a pending share link removal
+ * Reset share link check flag and cancel a pending share link open or removal
  */
 export function resetShareLinkCheck() {
   state.hasCheckedShareLink = false;
   clearTimeout(stripTimer);
-  stripTimer = 0;
+  clearTimeout(openTimer);
+  stripTimer = openTimer = 0;
 }
 
 /**

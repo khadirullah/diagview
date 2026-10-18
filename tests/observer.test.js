@@ -585,6 +585,29 @@ describe("Observer Module: share parameters in the address bar", () => {
     expect(replaceState).toHaveBeenCalledWith(null, "", "http://localhost/page");
   });
 
+  test("a teardown before the diagram opens cancels the open and keeps the link", () => {
+    useUrl("http://localhost/page?dv-idx=0");
+    const diagram = document.querySelector(".diagram");
+    restoreViewFromURL.mockReturnValue({ diagram, index: 0 });
+    jest.useFakeTimers();
+    try {
+      refreshDiagrams();
+      resetShareLinkCheck();
+      jest.advanceTimersByTime(150);
+      expect(openFullscreen).not.toHaveBeenCalled();
+      expect(replaceState).not.toHaveBeenCalled();
+
+      // A new start, as in a React StrictMode remount, opens it once
+      refreshDiagrams();
+      jest.advanceTimersByTime(150);
+    } finally {
+      jest.useRealTimers();
+    }
+
+    expect(openFullscreen).toHaveBeenCalledTimes(1);
+    expect(replaceState).toHaveBeenCalledTimes(1);
+  });
+
   test("a link to a diagram in a shadow root added after init opens it", () => {
     useUrl("http://localhost/page?dv-idx=1&dv-z=2.000");
     restoreViewFromURL.mockImplementation((all) => all[1] && { diagram: all[1], index: 1 });
