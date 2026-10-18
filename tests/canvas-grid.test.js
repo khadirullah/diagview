@@ -90,6 +90,19 @@ describe("canvasGrid", () => {
     expect(viewport.style.transition).toBe("");
   });
 
+  test("reads the transition from the diagram it is given", () => {
+    updateConfig({ canvasGrid: "dots" });
+    syncCanvasGrid();
+    const query = jest.spyOn(viewport, "querySelector");
+    clone.style.transition = "transform 300ms linear";
+    updateCanvasGrid(viewport, { x: 0, y: 0, scale: 2 }, clone);
+    expect(query).not.toHaveBeenCalled();
+    expect(viewport.style.transition).toBe(
+      "background-size 300ms linear, background-position 300ms linear",
+    );
+    query.mockRestore();
+  });
+
   test("falls back to the pan from Panzoom when the event has none", () => {
     updateConfig({ canvasGrid: "dots" });
     syncCanvasGrid();

@@ -135,7 +135,7 @@ export function setupModalFocusManagement() {
   modal.addEventListener("mousedown", handleBlur, true);
   modal.addEventListener("pointerdown", handleBlur, true);
   modal.addEventListener("wheel", handleBlur, { passive: true, capture: true });
-  modal.addEventListener("touchstart", handleBlur, true);
+  modal.addEventListener("touchstart", handleBlur, { passive: true, capture: true });
 
   // Setup focus trap and register full cleanup
   const cleanupTrap = setupFocusTrap();

@@ -16,8 +16,9 @@ const GRID_SPACING = 24;
  * a grey wash when zoomed out or thin out to nothing when zoomed in.
  * @param {HTMLElement} viewport - Modal viewport
  * @param {{x?: number, y?: number, scale?: number}} [detail] - Panzoom values
+ * @param {Element} [svg] - The diagram Panzoom moves, else looked up in the viewport
  */
-export function updateCanvasGrid(viewport, detail) {
+export function updateCanvasGrid(viewport, detail, svg) {
   const pz = state.activePanzoom;
   if (!viewport?.classList.contains("dv-grid-dots") || !pz) return;
 
@@ -33,11 +34,9 @@ export function updateCanvasGrid(viewport, detail) {
   s.setProperty("--dv-grid-y", `${pan.y * scale}px`);
 
   // Follow a zoom button or reset while the diagram animates to it
-  const t = viewport.querySelector("svg")?.style.transition || "";
-  s.transition =
-    t && t !== "none"
-      ? `background-size${t.replace(/^\S+/, "")}, background-position${t.replace(/^\S+/, "")}`
-      : "";
+  const t = (svg || viewport.querySelector("svg"))?.style.transition || "";
+  const timing = t.replace(/^\S+/, "");
+  s.transition = t && t !== "none" ? `background-size${timing}, background-position${timing}` : "";
 }
 
 /**

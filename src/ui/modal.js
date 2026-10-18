@@ -354,7 +354,7 @@ function _attachModalLifecycle(element, clone, viewport, panzoom, diagramId) {
   // Dot grid. Not throttled, so the dots move in the same frame as the diagram.
   syncCanvasGrid();
   if (panzoom) {
-    addModalListener(clone, "panzoomchange", (e) => updateCanvasGrid(viewport, e.detail));
+    addModalListener(clone, "panzoomchange", (e) => updateCanvasGrid(viewport, e.detail, clone));
   }
 
   // Create floating menu
@@ -696,7 +696,7 @@ function _createModalMainContent(modal, content) {
   };
   viewport.addEventListener("pointerdown", stopPropIfTextSelect, true);
   viewport.addEventListener("mousedown", stopPropIfTextSelect, true);
-  viewport.addEventListener("touchstart", stopPropIfTextSelect, true);
+  viewport.addEventListener("touchstart", stopPropIfTextSelect, { passive: true, capture: true });
 
   content.appendChild(viewport);
 

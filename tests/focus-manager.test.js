@@ -266,6 +266,18 @@ describe("a press on the viewer moves focus off its controls", () => {
     expect(document.activeElement).toBe(close);
   });
 
+  test("the touch listener never blocks scrolling", () => {
+    for (const fn of Array.from(state.modalCleanupFunctions)) fn();
+    state.modalCleanupFunctions.clear();
+    const add = jest.spyOn(modal, "addEventListener");
+    setupModalFocusManagement();
+    expect(add).toHaveBeenCalledWith("touchstart", expect.any(Function), {
+      passive: true,
+      capture: true,
+    });
+    add.mockRestore();
+  });
+
   test("a press on the diagram still hands focus to the viewer", () => {
     modal.innerHTML = '<button id="b"></button><div id="d"></div>';
     document.getElementById("b").focus();
