@@ -79,16 +79,33 @@ function resolveSourceSvg(sourceElement) {
   return svg;
 }
 
-const WATERMARK_STYLES = ["corner", "background", "both"];
-const WATERMARK_POSITIONS = [
-  "top-left",
-  "top-right",
-  "bottom-left",
-  "bottom-right",
-  "center",
-  "four-sides",
-];
-const WATERMARK_PLACEMENTS = ["diagram", "margin"];
+/**
+ * A number, or a string that holds one. NaN for anything else, "" included.
+ * @private
+ */
+const toNumber = (v) =>
+  typeof v === "number" || (typeof v === "string" && v.trim()) ? Number(v) : NaN;
+
+/**
+ * One of the allowed watermark values, case and spaces ignored. A missing
+ * or empty value gives the first one, the default. An unknown value logs a
+ * warning and gives the default too.
+ * @private
+ * @param {*} value - Value from the config or an attribute
+ * @param {string[]} list - Allowed values, the default first
+ * @param {string} name - Setting name for the warning
+ * @returns {string} The value to use
+ */
+function oneOf(value, list, name) {
+  const v = String(value || list[0])
+    .trim()
+    .toLowerCase();
+  if (list.includes(v)) return v;
+  console.warn(
+    `DiagView: Unknown watermark ${name} "${value}", expected ${list.join(", ")}. Using ${list[0]}.`,
+  );
+  return list[0];
+}
 
 /**
  * Resolve the watermark style, position, placement and opacity. An unknown
@@ -99,55 +116,24 @@ const WATERMARK_PLACEMENTS = ["diagram", "margin"];
  * @private
  */
 function resolveWatermark(config) {
-  let style = String(config.style || "corner")
-    .trim()
-    .toLowerCase();
-  if (!WATERMARK_STYLES.includes(style)) {
-    console.warn(
-      `DiagView: Unknown watermark style "${config.style}", expected corner, background or both. Using corner.`,
-    );
-    style = "corner";
-  }
+  // The first value in each list is the default
+  const style = oneOf(config.style, ["corner", "background", "both"], "style");
+  const pos = oneOf(
+    config.position,
+    ["bottom-right", "bottom-left", "top-right", "top-left", "center", "four-sides"],
+    "position",
+  );
+  const placement = oneOf(config.placement, ["diagram", "margin"], "placement");
 
-  let pos = String(config.position || "bottom-right")
-    .trim()
-    .toLowerCase();
-  if (!WATERMARK_POSITIONS.includes(pos)) {
+  const raw = config.opacity;
+  let opacity = raw == null || (typeof raw === "string" && !raw.trim()) ? 0.2 : toNumber(raw);
+  // NaN fails both tests, so input that is not a number lands here too
+  if (!(opacity >= 0 && opacity <= 1)) {
+    const fixed = isNaN(opacity) ? 0.2 : Math.min(1, Math.max(0, opacity));
     console.warn(
-      `DiagView: Unknown watermark position "${config.position}", expected ${WATERMARK_POSITIONS.join(", ")}. Using bottom-right.`,
+      `DiagView: Watermark opacity "${raw}" should be a number from 0 to 1. Using ${fixed}.`,
     );
-    pos = "bottom-right";
-  }
-
-  let placement = String(config.placement || "diagram")
-    .trim()
-    .toLowerCase();
-  if (!WATERMARK_PLACEMENTS.includes(placement)) {
-    console.warn(
-      `DiagView: Unknown watermark placement "${config.placement}", expected diagram or margin. Using diagram.`,
-    );
-    placement = "diagram";
-  }
-
-  const isEmpty =
-    config.opacity == null || (typeof config.opacity === "string" && config.opacity.trim() === "");
-  let opacity = isEmpty ? 0.2 : config.opacity;
-  const isNumeric =
-    (typeof opacity === "number" && !isNaN(opacity)) ||
-    (typeof opacity === "string" && opacity.trim() !== "" && !isNaN(Number(opacity)));
-  if (!isNumeric) {
-    console.warn(
-      `DiagView: Watermark opacity "${opacity}" should be a number from 0 to 1. Using 0.2.`,
-    );
-    opacity = 0.2;
-  } else if (Number(opacity) < 0 || Number(opacity) > 1) {
-    const clamped = Math.min(1, Math.max(0, Number(opacity)));
-    console.warn(
-      `DiagView: Watermark opacity "${opacity}" should be a number from 0 to 1. Using ${clamped}.`,
-    );
-    opacity = clamped;
-  } else {
-    opacity = Number(opacity);
+    opacity = fixed;
   }
 
   return { style, pos, placement, opacity };
@@ -188,12 +174,12 @@ function injectWatermark(svg, d, sourceSvg = null, pad = 0) {
     if (dataset.diagviewWatermarkPlacement) {
       config.placement = dataset.diagviewWatermarkPlacement;
     }
-    if (dataset.diagviewWatermarkOpacity) {
-      const raw = dataset.diagviewWatermarkOpacity.trim();
-      const n = Number(raw);
-      if (raw !== "" && !isNaN(n)) {
+    const raw = dataset.diagviewWatermarkOpacity?.trim();
+    if (raw) {
+      const n = toNumber(raw);
+      if (!isNaN(n)) {
         config.opacity = n;
-      } else if (raw !== "") {
+      } else {
         console.warn(
           `DiagView: data-diagview-watermark-opacity "${raw}" should be a number from 0 to 1. Using the config opacity.`,
         );

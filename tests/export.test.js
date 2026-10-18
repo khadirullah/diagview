@@ -387,6 +387,35 @@ describe("Export Functionality", () => {
       expect(markup()).toContain('text-anchor="end"'); // bottom-right
     });
 
+    test("each bad value logs one warning, in the order of the settings", async () => {
+      updateConfig({
+        watermark: {
+          enabled: true,
+          text: "MARK",
+          style: "Fancy",
+          position: "middle",
+          placement: "outside",
+          opacity: "2",
+        },
+      });
+
+      await exportToSVG(container, { filename: "wm" });
+
+      expect(warnings()).toEqual([
+        'DiagView: Unknown watermark style "Fancy", expected corner, background, both. Using corner.',
+        'DiagView: Unknown watermark position "middle", expected bottom-right, bottom-left, top-right, top-left, center, four-sides. Using bottom-right.',
+        'DiagView: Unknown watermark placement "outside", expected diagram, margin. Using diagram.',
+        'DiagView: Watermark opacity "2" should be a number from 0 to 1. Using 1.',
+      ]);
+      // Case and spaces do not matter, and a good value logs nothing
+      warn.mockClear();
+      updateConfig({
+        watermark: { style: " BOTH ", position: "Top-Left", placement: "", opacity: " 0.5 " },
+      });
+      await exportToSVG(container, { filename: "wm" });
+      expect(warnings()).toEqual([]);
+    });
+
     test('"both" writes its scaled opacities rounded to three decimals', async () => {
       updateConfig({ watermark: { enabled: true, text: "MARK", style: "both", opacity: 0.2 } });
 
@@ -782,7 +811,7 @@ describe("Export Functionality", () => {
     test("an unknown placement warns once and uses diagram", async () => {
       const found = marks(await exportWith({ position: "four-sides", placement: "outside" }));
       expect(warnings()).toEqual([
-        'DiagView: Unknown watermark placement "outside", expected diagram or margin. Using diagram.',
+        'DiagView: Unknown watermark placement "outside", expected diagram, margin. Using diagram.',
       ]);
       for (const m of found) expect(inDiagram(m)).toBe(true);
     });
