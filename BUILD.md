@@ -213,8 +213,10 @@ This will:
 The `prepublishOnly` script runs automatically before `npm publish`:
 
 ```bash
-npm run lint && npm test && npm run build
+npm run lint && npm test && npm run build && npm run typecheck && npm run test:entries && npm run size
 ```
+
+`publish.yml` relies on it for these checks, so a local publish and the workflow run the same ones. The workflow first stops when the release tag without its leading `v` differs from the version in `package.json`.
 
 ---
 
