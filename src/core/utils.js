@@ -14,22 +14,32 @@ export function isBrowser() {
 
 let isMobileCache = null;
 
+// Cached screenToClientMatrix() result and the view it was measured in
+let _screenFix;
+let _screenView = "";
+
 let watchingViewport = false;
 
-const forgetViewport = () => (isMobileCache = null);
+const forgetViewport = () => {
+  isMobileCache = null;
+  _screenFix = undefined;
+};
 
 /**
- * Add or remove the listeners that drop the cached answers on a resize.
- * They go on with the first cached answer.
- * @param {boolean} on - Add them, or remove them and forget the answers
+ * Start or stop watching the window for a resize or a turn of the device.
+ * isMobileDevice() and getClientCTM() call watchViewport(true) when they
+ * first cache an answer, and a resize then drops their cached answers.
+ * watchViewport(false), run by destroy(), removes the listeners and drops
+ * the cached answers too.
+ * @param {boolean} on - true to listen, false to stop and forget the answers
  */
 export function watchViewport(on) {
+  if (!on) forgetViewport();
   if (watchingViewport === on) return;
   watchingViewport = on;
   ["resize", "orientationchange"].forEach((type) =>
     window[on ? "addEventListener" : "removeEventListener"](type, forgetViewport),
   );
-  forgetViewport();
 }
 
 /**
@@ -1173,9 +1183,6 @@ export function centerSVGViewBox(svg) {
   svg.setAttribute("preserveAspectRatio", "xMidYMid meet");
 }
 
-// Cached screenToClientMatrix() result, cleared at the end of the task
-let _screenFix;
-
 /**
  * Screen pixels -> client pixels, or null when the two already agree.
  *
@@ -1247,10 +1254,25 @@ export function applyTransformNow(pz, el) {
 export function getClientCTM(el) {
   const ctm = el?.getScreenCTM?.();
   if (!ctm) return null;
-  // Probe once per task, callers read several CTMs back to back
-  if (_screenFix === undefined) {
+  // The probe forces a layout, and panning with the minimap reads CTMs many
+  // times a second. Its result only changes with the zoom, size or scroll
+  // of the page, so it is measured again only when one of those changed.
+  const vv = window.visualViewport;
+  const view = [
+    window.scrollX,
+    window.scrollY,
+    window.innerWidth,
+    window.innerHeight,
+    window.devicePixelRatio,
+    vv?.scale,
+    vv?.offsetLeft,
+    vv?.offsetTop,
+    vv?.width,
+    vv?.height,
+  ].join();
+  if (_screenFix === undefined || view !== _screenView) {
     _screenFix = screenToClientMatrix();
-    queueMicrotask(() => (_screenFix = undefined));
+    _screenView = view;
   }
   const svg = el.ownerSVGElement || el;
   if (!_screenFix || !svg.createSVGMatrix) return ctm;

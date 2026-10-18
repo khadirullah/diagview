@@ -233,6 +233,8 @@ describe("getClientCTM", () => {
     proto.getBoundingClientRect = () => probeRect;
     document.body.innerHTML = "<svg><g></g></svg>";
     el = document.querySelector("g");
+    // Forget the probe result of the test before
+    watchViewport(false);
   });
 
   afterEach(() => {
@@ -241,23 +243,17 @@ describe("getClientCTM", () => {
     delete proto.getBoundingClientRect;
   });
 
-  // Let the per-task cache clear between calls
-  const tick = () => Promise.resolve();
-
-  test("returns null without a CTM", async () => {
-    await tick();
+  test("returns null without a CTM", () => {
     el.getScreenCTM = () => null;
     expect(getClientCTM(el)).toBeNull();
   });
 
-  test("keeps the CTM when screen and client pixels agree", async () => {
-    await tick();
+  test("keeps the CTM when screen and client pixels agree", () => {
     const m = getClientCTM(el);
     expect([m.a, m.d, m.e, m.f]).toEqual([2, 2, 40, 60]);
   });
 
-  test("maps a page-zoomed screen CTM back to client pixels", async () => {
-    await tick();
+  test("maps a page-zoomed screen CTM back to client pixels", () => {
     // WebKit at a 0.4 page zoom reports screen pixels as client pixels times 0.4
     probeCTM = new Mat(0.4, 0, 0, 0.4, 0, 0);
     const real = new Mat(2, 0, 0, 2, 40, 60);
@@ -271,8 +267,31 @@ describe("getClientCTM", () => {
     expect(m.f).toBeCloseTo(60);
   });
 
+  test("probes again only after the page zoom, size or scroll changed", async () => {
+    const probes = jest.spyOn(document.documentElement, "appendChild");
+    const vv = { scale: 1, offsetLeft: 0, offsetTop: 0, width: 1024, height: 768 };
+    window.visualViewport = vv;
+    try {
+      getClientCTM(el);
+      await Promise.resolve();
+      getClientCTM(el);
+      expect(probes).toHaveBeenCalledTimes(1);
+
+      vv.scale = 0.5;
+      getClientCTM(el);
+      expect(probes).toHaveBeenCalledTimes(2);
+
+      // A teardown forgets it
+      watchViewport(false);
+      getClientCTM(el);
+      expect(probes).toHaveBeenCalledTimes(3);
+    } finally {
+      probes.mockRestore();
+      delete window.visualViewport;
+    }
+  });
+
   test("removes the probe again", async () => {
-    await tick();
     probeCTM = new Mat(0.5, 0, 0, 0.5, 0, 0);
     const before = document.documentElement.childElementCount;
     getClientCTM(el);
