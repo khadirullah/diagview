@@ -36,7 +36,7 @@ export function createFloatingMenu(sourceElement, clonedSvg) {
   // 3. Sections
   const zoomElements = _createZoomSection(menuPanel);
   const markCanvas = _createCanvasThemeSection(menuPanel);
-  const { transChk, expGrid } = _createExportSection(menuPanel);
+  const { transChk, expGrid, updateDisabledStates } = _createExportSection(menuPanel);
   const toolsContainer = _createToolsSection(menuPanel);
   _createMenuFooter(menuPanel);
 
@@ -49,7 +49,17 @@ export function createFloatingMenu(sourceElement, clonedSvg) {
 
   // 4. Setup Logic & Wiring
   _setupMenuController(
-    { container, fab, menuPanel, zoomElements, transChk, expGrid, toolsContainer, markCanvas },
+    {
+      container,
+      fab,
+      menuPanel,
+      zoomElements,
+      transChk,
+      expGrid,
+      updateDisabledStates,
+      toolsContainer,
+      markCanvas,
+    },
     sourceElement,
     clonedSvg,
   );
@@ -334,7 +344,7 @@ function _createExportSection(menuPanel) {
   expSec.appendChild(expGrid);
   menuPanel.appendChild(expSec);
 
-  return { transChk, expGrid };
+  return { transChk, expGrid, updateDisabledStates };
 }
 
 function _createToolsSection(menuPanel) {
@@ -383,8 +393,17 @@ function _createMenuFooter(menuPanel) {
  * @private
  */
 function _setupMenuController(elements, sourceElement, clonedSvg) {
-  const { container, fab, menuPanel, zoomElements, transChk, expGrid, toolsContainer, markCanvas } =
-    elements;
+  const {
+    container,
+    fab,
+    menuPanel,
+    zoomElements,
+    transChk,
+    expGrid,
+    updateDisabledStates,
+    toolsContainer,
+    markCanvas,
+  } = elements;
   const { zoomInBtn, zoomOutBtn, resetBtn } = zoomElements;
 
   let isOpen = false;
@@ -554,6 +573,8 @@ function _setupMenuController(elements, sourceElement, clonedSvg) {
       () => {
         btn.removeAttribute("aria-busy");
         btn.disabled = false;
+        // Transparent may have been ticked while this export ran
+        updateDisabledStates();
       },
     );
 

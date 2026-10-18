@@ -323,6 +323,25 @@ describe("Floating Menu UI", () => {
     expect(jpegBtn.hasAttribute("disabled")).toBe(false);
     expect(pdfBtn.hasAttribute("disabled")).toBe(false);
   });
+
+  test("a PDF export that ends after Transparent was ticked leaves PDF disabled", async () => {
+    let finish;
+    exportDiagram.mockImplementationOnce(() => new Promise((r) => (finish = r)));
+    createFloatingMenu(sourceElement, clonedSvg);
+    const transChk = document.getElementById("dv-exp-trans");
+    const pdfBtn = document.querySelector('[data-action="pdf"]');
+
+    pdfBtn.click();
+    expect(pdfBtn.disabled).toBe(true);
+    transChk.checked = true;
+    transChk.dispatchEvent(new Event("change"));
+    finish();
+    await new Promise((r) => setTimeout(r, 0));
+
+    expect(pdfBtn.disabled).toBe(true);
+    expect(pdfBtn.hasAttribute("aria-busy")).toBe(false);
+  });
+
   describe("Canvas theme selection", () => {
     const selected = () =>
       [
