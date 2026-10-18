@@ -179,44 +179,32 @@ describe("SVG Cloning Utilities", () => {
     consoleSpy.mockRestore();
   });
 
-  test("sanitizer-removed nodes do not shift baked styles onto wrong elements", () => {
-    // A blocked tag (<animate>, removed in strict mode) sits BEFORE the
-    // styled elements. With post-sanitization positional matching, its
-    // removal shifted every subsequent original<->clone pair by one.
-    const ns = "http://www.w3.org/2000/svg";
-    const dirty = document.createElementNS(ns, "svg");
-    dirty.setAttribute("viewBox", "0 0 100 100");
+  test("the copy keeps every text attribute and <style> text, with labels on one line", () => {
+    document.body.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+      <style>.a { fill: red; } #t:hover { fill: blue; }</style>
+      <animate attributeName="x" />
+      <text id="t" class="a" x="1" y="2" dx="3" dy="4" textLength="50" lengthAdjust="spacing"
+        text-anchor="middle" dominant-baseline="central" rotate="5" transform="translate(1 2)"
+        >Label<tspan x="1" dy="1.2em">Second</tspan></text>
+    </svg>`;
+    const svg = document.querySelector("svg");
+    const attrs = (el) => [...el.attributes].map((a) => [a.name, a.value]);
 
-    const animate = document.createElementNS(ns, "animate");
-    animate.setAttribute("attributeName", "x");
-    dirty.appendChild(animate);
+    const clone = cloneSVG(svg, { securityMode: "strict", skipIdFix: true });
 
-    const circleA = document.createElementNS(ns, "circle");
-    circleA.setAttribute("class", "a");
-    dirty.appendChild(circleA);
-    const circleB = document.createElementNS(ns, "circle");
-    circleB.setAttribute("class", "b");
-    dirty.appendChild(circleB);
-    document.body.appendChild(dirty);
-
-    window.getComputedStyle = jest.fn((el) => ({
-      getPropertyValue: (prop) => {
-        if (prop !== "fill") return "";
-        if (el === circleA) return "rgb(1, 1, 1)";
-        if (el === circleB) return "rgb(2, 2, 2)";
-        return "";
-      },
-    }));
-
-    const clone = cloneSVG(dirty, { preserveStyles: true, securityMode: "strict" });
-    document.body.removeChild(dirty);
-
-    expect(clone.querySelector("animate")).toBeNull(); // removed by sanitizer
-    expect(clone.querySelector(".a").style.fill).toBe("rgb(1, 1, 1)");
-    expect(clone.querySelector(".b").style.fill).toBe("rgb(2, 2, 2)");
+    expect(clone.querySelector("animate")).toBeNull();
+    expect(clone.querySelector("style").textContent).toBe(svg.querySelector("style").textContent);
+    ["text", "tspan"].forEach((tag) => {
+      const copy = clone.querySelector(tag);
+      expect(attrs(copy).filter(([name]) => name !== "style")).toEqual(
+        attrs(svg.querySelector(tag)),
+      );
+      expect(copy.style.whiteSpace).toBe("nowrap");
+      expect(copy.style.overflow).toBe("visible");
+    });
   });
 
-  test("style content removed by the sanitizer is not re-injected by copyStyleElements", () => {
+  test("style content removed by the sanitizer stays out of the copy", () => {
     const ns = "http://www.w3.org/2000/svg";
     const dirty = document.createElementNS(ns, "svg");
     dirty.setAttribute("viewBox", "0 0 10 10");

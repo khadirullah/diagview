@@ -1,10 +1,10 @@
 import { state } from "./config.js";
 import { sanitizeSVG, fixIds, generateUniqueId, inertDocument } from "./utils.js";
-import { showErrorToast, showInfoToast } from "../ui/toast.js";
-import { SECURITY_MODES } from "./constants.js";
+import { showErrorToast } from "../ui/toast.js";
+import { SECURITY_MODES, EXPORT } from "./constants.js";
 
 /**
- * CSS style properties to preserve when cloning
+ * CSS style properties an export copies into inline styles
  */
 const DEFAULT_STYLE_PROPS = [
   "fill",
@@ -41,9 +41,6 @@ const DEFAULT_STYLE_PROPS = [
 
 /**
  * Maximum number of nodes whose computed styles are captured for export.
- * A node count, deliberately decoupled from performance.largeFileThreshold
- * (which is measured in characters); keeps the previous effective cap so
- * large diagrams still export fully styled. The sync path has its own cap.
  * @private
  */
 const MAX_EXPORT_STYLED_NODES = 1_000_000;
@@ -66,145 +63,6 @@ function normalizeUrlInStyle(value) {
   return value.replace(/url\(['"]?[^'"#)]*#([^'"#)\s]+)['"]?\)/g, "url(#$1)");
 }
 // ─────────────────────────────────────────────────────────────────────────────
-
-/**
- * SVG/Text attributes to preserve
- */
-const TEXT_ATTRIBUTES = [
-  "x",
-  "y",
-  "dx",
-  "dy",
-  "textLength",
-  "lengthAdjust",
-  "text-anchor",
-  "dominant-baseline",
-  "alignment-baseline",
-  "rotate",
-  "transform",
-];
-
-/**
- * Copy computed styles from original elements to cloned elements
- * @private
- */
-function copyComputedStyles(originalNodes, clonedNodes, styleProps) {
-  const len = originalNodes.length;
-  const propLen = styleProps.length;
-
-  // PERF-1: Safety cap for extremely large diagrams to prevent main thread lockup.
-  const MAX_STYLED_NODES = 5000;
-  const nodeCount = Math.min(len, MAX_STYLED_NODES);
-
-  if (len > MAX_STYLED_NODES) {
-    console.warn(`DiagView: Styling ${MAX_STYLED_NODES}/${len} nodes (Performance Cap)`);
-  }
-
-  const cache = new Map();
-  const computedData = new Array(nodeCount);
-
-  // PHASE 1: BATCHED READS
-  for (let i = 0; i < nodeCount; i++) {
-    const original = originalNodes[i];
-    if (!original) continue;
-
-    const tag = original.tagName?.toLowerCase();
-    if (tag === "defs" || tag === "metadata") continue;
-
-    const inlineStyle = original.getAttribute("style") || "";
-    const className = original.className?.baseVal || original.className || "";
-    if (tag === "g" && !className && !inlineStyle) continue;
-
-    // MAJ-2: Improve cache key to include parent styling context (tag + class + style)
-    // to prevent "Style Bleeding" from inherited properties.
-    const parent = original.parentNode;
-    const parentInfo =
-      parent && parent.getAttribute
-        ? `${parent.tagName}\x1F${parent.className?.baseVal || ""}\x1F${parent.getAttribute("style") || ""}`
-        : "";
-
-    // Only cache if the element has explicit styling (class or inline style).
-    // Plain elements rely too heavily on deep inheritance to be safely cached by parent context alone.
-    const canCache = (className || inlineStyle) && parent;
-    const cacheKey = canCache ? `${tag}\x1F${className}\x1F${inlineStyle}\x1F${parentInfo}` : null;
-
-    let stylesToApply = cacheKey ? cache.get(cacheKey) : undefined;
-
-    if (stylesToApply === undefined) {
-      stylesToApply = {};
-      const computedStyle = window.getComputedStyle(original);
-
-      for (let j = 0; j < propLen; j++) {
-        const prop = styleProps[j];
-        // ── FIX: normalise absolute url() refs returned by getComputedStyle ──
-        const value = normalizeUrlInStyle(computedStyle.getPropertyValue(prop));
-
-        if (value) {
-          if (value === "normal" || value === "auto" || value === "0px") continue;
-          // Do NOT filter "none" — explicit fill:none must be preserved
-          stylesToApply[prop] = value;
-        }
-      }
-
-      if (cacheKey) {
-        cache.set(cacheKey, stylesToApply);
-      }
-    }
-    computedData[i] = stylesToApply;
-  }
-
-  // PHASE 2: BATCHED WRITES
-  // Now we apply all cached styles without performing any new reads.
-  for (let i = 0; i < nodeCount; i++) {
-    const cloned = clonedNodes[i];
-    const stylesToApply = computedData[i];
-
-    if (cloned && stylesToApply) {
-      for (const prop in stylesToApply) {
-        cloned.style[prop] = stylesToApply[prop];
-      }
-    }
-  }
-}
-
-/**
- * Copy text attributes and calculate textLength for preservation
- * @private
- */
-function preserveTextAttributes(originalTexts, clonedTexts) {
-  originalTexts.forEach((original, i) => {
-    const cloned = clonedTexts[i];
-    if (!cloned) return;
-
-    // Copy all text-specific attributes
-    TEXT_ATTRIBUTES.forEach((attr) => {
-      if (original.hasAttribute(attr)) {
-        cloned.setAttribute(attr, original.getAttribute(attr));
-      }
-    });
-
-    // OPT-1: Avoid getBBox() in loops as it triggers layout thrashing.
-    // Instead of forcing textLength, we rely on white-space: nowrap and
-    // overflow: visible to ensure text labels remain intact during modal transitions.
-    cloned.style.whiteSpace = "nowrap";
-    cloned.style.overflow = "visible";
-  });
-}
-
-/**
- * Copy style elements from original to clone
- * @private
- */
-function copyStyleElements(originalSvg, clonedSvg) {
-  const originalStyles = originalSvg.querySelectorAll("style");
-  const clonedStyles = clonedSvg.querySelectorAll("style");
-
-  originalStyles.forEach((original, i) => {
-    if (clonedStyles[i]) {
-      clonedStyles[i].textContent = original.textContent;
-    }
-  });
-}
 
 /** Diagrams already warned about, so each one warns once per page load */
 const warnedCode = new WeakSet();
@@ -233,39 +91,23 @@ function warnRemovedCode(svg, mode, { scripts, handlers, urls }) {
 }
 
 /**
- * Rewrite IDs in a cloned SVG to prevent collisions on multi-diagram pages.
- * @private
- */
-/**
- * Clone SVG with optional text and style preservation
- * Unified function that replaces modal.js cloneSVGWithTextPreservation and export.js cloneSVGWithStyles
+ * Clone an SVG, sanitize the copy and give its IDs a unique prefix
  *
  * @param {SVGElement} svg - Original SVG element to clone
  * @param {object} options - Cloning options
- * @param {boolean} options.preserveText - Preserve text attributes and dimensions (default: true)
- * @param {boolean} options.preserveStyles - Copy computed styles to inline (default: false)
- * @param {Array<string>} options.styleProps - Style properties to copy (default: DEFAULT_STYLE_PROPS)
- * @param {boolean} options.preserveStyleElements - Copy <style> tags (default: true)
+ * @param {boolean} options.preserveText - Keep labels on one line in the copy (default: true)
  * @param {'strict'|'permissive'|'off'} options.securityMode - SVG sanitization mode (default: 'strict')
  * @param {number} options.maxChars - Hard size limit in serialized chars (default: performance.criticalFileLimit)
  * @param {boolean} options.warnRemoved - Warn when the sanitizer removed code (default: true)
  * @returns {SVGElement|null} Cloned SVG element, or null when blocked by the size limit
  */
 export function cloneSVG(svg, options = {}) {
-  // Security & Performance: Get thresholds from config
-  const { performance = {} } = state.config;
-  const largeFileThreshold = performance.largeFileThreshold || 1000000;
-  const criticalFileLimit = performance.criticalFileLimit || 50000000;
-
   const {
     preserveText = true,
-    preserveStyles = false,
-    styleProps = DEFAULT_STYLE_PROPS,
-    preserveStyleElements = true,
     securityMode = "strict",
     skipIdFix = false,
     allowRemoteResources = state.config.security.allowRemoteResources,
-    maxChars = criticalFileLimit,
+    maxChars = state.config.performance?.criticalFileLimit || EXPORT.CRITICAL_FILE_LIMIT_DEFAULT,
     warnRemoved = true,
   } = options;
 
@@ -276,42 +118,18 @@ export function cloneSVG(svg, options = {}) {
 
   // Copy into a document with no window. A copy made in the page starts
   // loading its images at once, so an onerror handler would run before the
-  // sanitizer removes it.
+  // sanitizer removes it. The deep copy already holds every attribute and
+  // the text of every <style>.
   const rawClone = inertDocument().importNode(svg, true);
 
-  // Performance Bypass: If SVG is very large, skip the expensive computed style loop
-  let effectivePreserveStyles = preserveStyles;
-  const svgSize = svg.innerHTML?.length || 0;
-
-  if (preserveStyles && svgSize > largeFileThreshold) {
-    effectivePreserveStyles = false;
-    showInfoToast("Large diagram: Performance optimizations applied");
-  }
-
-  // All original<->clone operations pair nodes POSITIONALLY, so they must run
-  // on the raw clone, whose node list matches the original 1:1 by
-  // construction. Running them after sanitization (which can remove nodes)
-  // shifts every subsequent pair, copying styles and text attributes onto the
-  // wrong elements — and, worse, re-injecting <style> content the sanitizer
-  // removed. Sanitizing LAST also means inlined computed styles get scrubbed.
-
-  // Copy style elements
-  if (preserveStyleElements) {
-    copyStyleElements(svg, rawClone);
-  }
-
-  // Preserve text attributes and dimensions
+  // Labels stay on one line and uncut while the viewer opens and scales.
+  // These two styles do it without getBBox(), which would force a layout
+  // for every label.
   if (preserveText) {
-    const originalTexts = svg.querySelectorAll("text, tspan");
-    const clonedTexts = rawClone.querySelectorAll("text, tspan");
-    preserveTextAttributes(originalTexts, clonedTexts);
-  }
-
-  // Copy computed styles to inline styles (for exports)
-  if (effectivePreserveStyles) {
-    const originalNodes = svg.querySelectorAll("*");
-    const clonedNodes = rawClone.querySelectorAll("*");
-    copyComputedStyles(originalNodes, clonedNodes, styleProps);
+    rawClone.querySelectorAll("text, tspan").forEach((text) => {
+      text.style.whiteSpace = "nowrap";
+      text.style.overflow = "visible";
+    });
   }
 
   // Sanitize to prevent XSS — always the FINAL content transformation.
@@ -420,8 +238,6 @@ export function cloneSVGForModal(svg) {
 
   return cloneSVG(svg, {
     preserveText: true,
-    preserveStyles: false,
-    preserveStyleElements: true,
     securityMode: security.mode,
     skipIdFix: false, // SVG-1: Isolate IDs even for modal to prevent cross-diagram filter breakage
     allowRemoteResources: security.allowRemoteResources,
@@ -500,9 +316,7 @@ function nextFrame(fn) {
 export function cloneSVGForExportAsync(svg, paint = null) {
   return new Promise((resolve) => {
     const originalNodes = Array.from(svg.querySelectorAll("*"));
-    // Safety cap on the number of nodes whose computed styles are read.
-    // This is a node count, distinct from performance.largeFileThreshold
-    // (which is measured in characters).
+    // Safety cap on the number of nodes whose computed styles are read
     const nodeCount = Math.min(originalNodes.length, MAX_EXPORT_STYLED_NODES);
     if (originalNodes.length > MAX_EXPORT_STYLED_NODES) {
       console.warn(
@@ -558,8 +372,6 @@ export function cloneSVGForExportAsync(svg, paint = null) {
     const { mode, allowRemoteResources, warn } = exportSecurity(svg);
     const clone = cloneSVG(svg, {
       preserveText: true,
-      preserveStyles: false,
-      preserveStyleElements: true,
       securityMode: mode,
       allowRemoteResources,
       skipIdFix: true,
