@@ -33,26 +33,7 @@ if (fs.existsSync("docs")) {
   }
 }
 
-// 3. Fix README duplicate keys in configuration example
-const readmePath = "README.md";
-if (fs.existsSync(readmePath)) {
-  const readme = fs.readFileSync(readmePath, "utf8");
-
-  // Remove the redundant 'rememberZoom' and 'animateOpen' under 'Feature toggles'
-  // as they are already defined under 'Features'.
-  const redundantBlock =
-    "  // Feature toggles\n  showMinimap: true,            // Toggle minimap visibility\n  rememberZoom: false,         // Remember zoom per diagram\n  animateOpen: true,\n\n";
-  const cleanBlock =
-    "  // Feature toggles\n  showMinimap: true,            // Toggle minimap visibility\n\n";
-
-  const newReadme = readme.replaceAll(redundantBlock, cleanBlock);
-  if (readme !== newReadme) {
-    fs.writeFileSync(readmePath, newReadme);
-    console.log("Fixed duplicate keys in README.md");
-  }
-}
-
-// 4. Sync the jest global __DV_VERSION__ in package.json itself.
+// 3. Sync the jest global __DV_VERSION__ in package.json itself.
 // Without this it silently drifts every release (it sat at 1.0.6 through
 // three releases) and tests assert DiagView.version against a stale value.
 if (pkg.jest?.globals && pkg.jest.globals.__DV_VERSION__ !== version) {
@@ -61,7 +42,7 @@ if (pkg.jest?.globals && pkg.jest.globals.__DV_VERSION__ !== version) {
   console.log("Updated jest global __DV_VERSION__ in package.json");
 }
 
-// 5. Update CDN script tags in all demo HTML files
+// 4. Update CDN script tags in all demo HTML files
 const demoDir = "demo";
 if (fs.existsSync(demoDir)) {
   const files = fs.readdirSync(demoDir);
