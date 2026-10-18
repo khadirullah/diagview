@@ -202,6 +202,21 @@ describe("Core Config: validateConfig gaps", () => {
     expect(state.config.layout).toBe("header");
   });
 
+  test("ui.buttons.style takes the four styles and keeps the previous one otherwise", () => {
+    ["transparent", "solid", "neutral", "accent"].forEach((style) =>
+      updateConfig({ ui: { buttons: { style } } }),
+    );
+    updateConfig({ ui: { buttons: { style: "solid" } } });
+    expect(warn).not.toHaveBeenCalled();
+
+    updateConfig({ ui: { buttons: { style: "Solid" } } });
+    expect(warn).toHaveBeenCalledWith(
+      'DiagView: ui.buttons.style must be "transparent", "accent", "solid" or "neutral", keeping "solid"',
+    );
+    expect(state.config.ui.buttons.style).toBe("solid");
+    expect(state.config.ui.buttons.icons).toEqual({ copy: null, download: null, fullscreen: null });
+  });
+
   test("offHintText merges a partial object over the defaults", () => {
     expect(state.config.offHintText).toEqual({ mouse: "Click to expand", touch: "Tap to expand" });
     updateConfig({ offHintText: { touch: "Tippen zum Vergrößern" } });

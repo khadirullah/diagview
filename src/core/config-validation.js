@@ -1,4 +1,4 @@
-import { ZOOM, LAYOUTS, EXPORT, SECURITY_MODES, OFF_HINTS } from "./constants.js";
+import { ZOOM, LAYOUTS, EXPORT, SECURITY_MODES, OFF_HINTS, BUTTON_STYLES } from "./constants.js";
 import { DEFAULT_CONFIG } from "./config-defaults.js";
 import { deepMerge } from "./state-utils.js";
 
@@ -128,6 +128,17 @@ export function validateConfig(config, previous = DEFAULT_CONFIG) {
       text[key] = keep;
     }
   });
+
+  // An unknown button style would leave the toolbar buttons unstyled
+  const { buttons } = config["ui"];
+  const style = buttons?.style;
+  if (isPlainObject(buttons) && style != null && !Object.values(BUTTON_STYLES).includes(style)) {
+    const keep = fallback("ui")?.buttons?.style ?? BUTTON_STYLES.ACCENT;
+    console.warn(
+      `DiagView: ui.buttons.style must be "transparent", "accent", "solid" or "neutral", keeping "${keep}"`,
+    );
+    buttons.style = keep;
+  }
 
   // An unknown mode would work as strict, so say so and store that
   const { mode } = config["security"];
