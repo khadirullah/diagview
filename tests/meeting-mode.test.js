@@ -76,11 +76,6 @@ describe("Meeting Mode", () => {
     }
   });
 
-  test("does not write the unused state.laserPointer", () => {
-    enableMeetingMode();
-    expect(state.laserPointer).toBeNull();
-  });
-
   test("a second start hides the dot until the pointer moves again", () => {
     enableMeetingMode();
     viewport.dispatchEvent(pointerMove(150, 250));

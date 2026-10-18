@@ -260,8 +260,7 @@ async function _teardown() {
     removeStyles,
     // Forget remembered zoom, pan and rotation
     clearAllZoomStates,
-    // Clear event bus and caches
-    () => state.events.clear(),
+    // Clear caches. resetConfig() below clears the event bus.
     clearSVGContentCache,
     () => watchViewport(false),
 

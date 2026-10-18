@@ -36,16 +36,11 @@ function createInitialState() {
     currentDiagramIndex: -1,
 
     // Touch state for mobile handling
-    touchState: {
-      isPinching: false,
-      lastTouchCount: 0,
-      initialDistance: 0,
-    },
+    touchState: { isPinching: false },
 
     // UI state
     lastActiveElement: null,
     meetingMode: false,
-    laserPointer: null,
     minimapSvg: null,
     searchMatches: [],
     searchRafId: null,
@@ -228,37 +223,11 @@ export function updateConfig(options = {}) {
  * Reset configuration and state to defaults
  */
 export function resetConfig() {
-  // CRIT-2: Remove the color parser element from the DOM before nulling the reference
-  if (state.colorParserEl && state.colorParserEl.parentNode) {
-    state.colorParserEl.parentNode.removeChild(state.colorParserEl);
-  }
-
-  const freshState = createInitialState();
-
-  // 1. Preserve and clear the EventEmitter instance
+  // The colour parser and the listeners belong to the old state. The event
+  // bus itself stays, since modules hold on to it.
+  state.colorParserEl?.remove();
   state.events.clear();
-  const eventBus = state.events;
-
-  // 2. Reset all top-level properties from fresh state
-  // This is robust: adding new properties to createInitialState()
-  // will now automatically be covered by resetConfig().
-  /** @type {any} */
-  const target = state;
-  /** @type {any} */
-  const source = freshState;
-
-  Object.keys(freshState).forEach((key) => {
-    if (key === "events") return; // Handled above
-    target[key] = source[key];
-  });
-
-  state.events = eventBus;
-
-  // 3. Reset cleanup collections
-  state.cleanupFunctions = new Set();
-  state.modalCleanupFunctions = new Set();
-  state.searchCache = new WeakMap();
-  state.searchShapeCache = new WeakMap();
+  Object.assign(state, { ...createInitialState(), events: state.events });
 }
 
 /**
@@ -336,10 +305,9 @@ export { DEFAULT_CONFIG, INITIAL_CONFIG };
  * @property {boolean} hasCheckedShareLink - Share link check flag
  * @property {boolean} isInitialProcessDone - Initial scan completed flag
  * @property {Set<ShadowRoot>} shadowRoots - Shadow roots passed to initShadowRoot()
- * @property {{isPinching:boolean,lastTouchCount:number,initialDistance:number}} touchState - Touch gesture state
+ * @property {{isPinching:boolean}} touchState - Touch gesture state
  * @property {Element|null} lastActiveElement - Element focused before modal opened
  * @property {boolean} meetingMode - Whether laser pointer is active
- * @property {null} laserPointer - Unused and always null (internal)
  * @property {SVGElement|null} minimapSvg - Minimap SVG clone element
  * @property {Element[]} searchMatches - Current search match elements
  * @property {number|null} searchRafId - RAF id for search batching

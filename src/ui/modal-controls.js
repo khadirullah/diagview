@@ -212,11 +212,7 @@ export async function closeModal() {
     state.isModalOpening = false;
     state.isModalClosing = false;
     state.activeSourceElement = null;
-    state.touchState = {
-      isPinching: false,
-      lastTouchCount: 0,
-      initialDistance: 0,
-    };
+    state.touchState = { isPinching: false };
 
     // Restore body scroll
     unlockBodyScroll();
