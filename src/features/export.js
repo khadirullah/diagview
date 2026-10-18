@@ -202,7 +202,7 @@ function injectWatermark(svg, d, sourceSvg = null, pad = 0) {
   }
 
   // Final validation before processing
-  if (!config || !config.enabled || !config.text || !d || d.w <= 0 || d.h <= 0) return;
+  if (!config.enabled || !config.text || !d || d.w <= 0 || d.h <= 0) return;
 
   // Detect theme for contrasting color
   const theme = detectTheme();
@@ -468,8 +468,6 @@ async function prepareSvgForExport(svg, modalClone, transparent, silent) {
   const height = Math.ceil(d.h + padding * 2);
   const vx = d.x - (width - d.w) / 2;
   const vy = d.y - (height - d.h) / 2;
-  const vw = width;
-  const vh = height;
 
   // CRITICAL FIX: Use sourceSvg (modalClone if in fullscreen)
   // With Readable on, a file with a background gets the colours Readable
@@ -527,9 +525,9 @@ async function prepareSvgForExport(svg, modalClone, transparent, silent) {
   );
 
   // Set explicit dimensions as ATTRIBUTES (not CSS — CSS "100%" breaks img intrinsic size)
-  exportSvg.setAttribute("viewBox", `${vx} ${vy} ${vw} ${vh}`);
-  exportSvg.setAttribute("width", String(Math.round(width)));
-  exportSvg.setAttribute("height", String(Math.round(height)));
+  exportSvg.setAttribute("viewBox", `${vx} ${vy} ${width} ${height}`);
+  exportSvg.setAttribute("width", String(width));
+  exportSvg.setAttribute("height", String(height));
   exportSvg.setAttribute("xmlns", "http://www.w3.org/2000/svg");
   exportSvg.setAttribute("xmlns:xlink", "http://www.w3.org/1999/xlink");
 
@@ -678,8 +676,8 @@ export async function renderToCanvas(
   img.crossOrigin = "anonymous";
 
   // Set explicit dimensions on the img element to guarantee correct natural size
-  img.width = Math.round(width);
-  img.height = Math.round(height);
+  img.width = width;
+  img.height = height;
 
   const load = (src) =>
     new Promise((resolve, reject) => {
@@ -751,8 +749,8 @@ async function saveSVG(originalSvg, filename, { transparent: isTransparent, moda
     // Add bg rect for non-transparent SVG
     if (!isTransparent) {
       const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
-      const vb = svg.getAttribute("viewBox");
-      const vbParts = vb ? vb.split(/\s+|,/).map(parseFloat) : [0, 0];
+      // prepareSvgForExport always sets the viewBox
+      const vbParts = svg.getAttribute("viewBox").split(" ").map(parseFloat);
       rect.setAttribute("x", vbParts[0] || 0);
       rect.setAttribute("y", vbParts[1] || 0);
       rect.setAttribute("width", "100%");
@@ -919,7 +917,7 @@ async function processImageExport(
   let clip = null;
   try {
     const isWebP = format === "webp";
-    const isJpeg = format === "jpeg" || format === "jpg";
+    const isJpeg = format === "jpeg";
 
     // Determine mime type and extension
     let mime = "image/png";
@@ -947,7 +945,7 @@ async function processImageExport(
       showProgressToast(`Processing ${label}...`);
     }
 
-    if (copy && !isWebP) clip = startCopy(mime);
+    if (copy) clip = startCopy(mime);
 
     // Small delay to ensure toast renders before heavy canvas work
     await new Promise((resolve) => setTimeout(resolve, TIMING.RENDER_DELAY));
