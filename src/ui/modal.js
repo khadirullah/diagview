@@ -103,7 +103,6 @@ export function createModal() {
     closeBtn,
   } = _createModalTopbar(content);
 
-  // 4. Viewport
   // 4. Main Content Construction (Viewport, Minimap, Laser)
   const viewport = _createModalMainContent(modal, content);
 
