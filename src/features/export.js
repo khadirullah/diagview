@@ -1114,8 +1114,8 @@ async function savePDF(sourceElement, filename, { transparent, modalClone, silen
     const { canvas, width, height, faint, linked } = await renderToCanvas(
       sourceElement,
       modalClone,
-      false,
-      true,
+      false, // transparent
+      true, // opaque
       silent,
     );
     let imgData;
@@ -1206,8 +1206,8 @@ export async function exportDiagram(sourceElement, mode, options = {}) {
         sourceElement,
         filename,
         "png",
-        false,
-        true,
+        false, // transparent
+        true, // copy
         modalClone,
         silent,
       );
@@ -1222,8 +1222,8 @@ export async function exportDiagram(sourceElement, mode, options = {}) {
         sourceElement,
         filename,
         known ? mode : "png",
-        known && isTransparent,
-        false,
+        known && isTransparent, // transparent
+        false, // copy
         modalClone,
         silent,
       );
