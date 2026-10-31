@@ -92,7 +92,7 @@ describe("styles.css: diagram size on the page", () => {
   });
 
   test("the SVG keeps its own size, centred and capped at the card width", () => {
-    const body = ruleBody("\n.diagview-viewport svg {");
+    const body = ruleBody("\n.diagview-viewport svg:not(svg *) {");
     expect(body).toMatch(/width:\s*auto !important/);
     expect(body).toMatch(/margin-inline:\s*auto/);
     expect(body).not.toMatch(/(^|[^-])width:\s*100%/);
@@ -100,13 +100,13 @@ describe("styles.css: diagram size on the page", () => {
 
   test("Mermaid's inline max-width still applies", () => {
     // An inline style beats any stylesheet rule that is not !important
-    const body = ruleBody("\n.diagview-viewport svg {");
+    const body = ruleBody("\n.diagview-viewport svg:not(svg *) {");
     expect(body).toMatch(/max-width:\s*100%;/);
     expect(body).not.toMatch(/max-width:[^;]*!important/);
   });
 
   test("a tall diagram keeps its own height unless the page sets --dv-max-height", () => {
-    const body = ruleBody("\n.diagview-viewport svg {");
+    const body = ruleBody("\n.diagview-viewport svg:not(svg *) {");
     expect(body).toMatch(/max-height:\s*var\(--dv-max-height, none\) !important;/);
     expect(body).not.toMatch(/max-height:\s*\d/);
   });
@@ -143,6 +143,16 @@ describe("styles.css: diagram size on the page", () => {
     ]) {
       expect(body).toMatch(/padding:\s*\d+px var\(--dv-card-padding, 0\);/);
     }
+  });
+
+  // Mermaid draws a label icon as an <svg> inside the diagram
+  test("the size rules on the page and in the viewer leave an SVG inside the diagram alone", () => {
+    expect(ruleBody("\n.diagview-viewport svg:not(svg *) {")).toMatch(/width:\s*auto !important/);
+    expect(ruleBody("\n.diagview-modal-viewport svg:not(svg *) {")).toMatch(
+      /width:\s*100% !important/,
+    );
+    expect(css).not.toContain("\n.diagview-viewport svg {");
+    expect(css).not.toContain("\n.diagview-modal-viewport svg {");
   });
 });
 

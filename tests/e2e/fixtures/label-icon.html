@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DiagView Mermaid icons</title>
+<style>body{font-family:sans-serif;margin:0 auto;padding:16px;max-width:760px;background:#fff;color:#1e293b}</style>
+</head>
+<body>
+<!--
+  The same Mermaid flowchart twice, with an icon in a label and an icon
+  shape. Mermaid draws each icon as an <svg> inside the diagram. The suite
+  registers a one-icon pack and renders both blocks with Mermaid 12. Only
+  the second one is a DiagView diagram, the first shows the size Mermaid
+  gives the icons.
+-->
+<div class="plain">
+<pre class="mermaid" id="plain">flowchart LR
+  A["fa:fa-user Person"] --> B@{ icon: "fa:user", form: "square", label: "User" }</pre>
+</div>
+
+<div class="diagram" id="icons">
+<pre class="mermaid">flowchart LR
+  A["fa:fa-user Person"] --> B@{ icon: "fa:user", form: "square", label: "User" }</pre>
+</div>
+</body>
+</html>

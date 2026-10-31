@@ -195,7 +195,9 @@
   display: block;
 }
 
-.diagview-viewport svg {
+/* The diagram's own root SVG only. An <svg> inside it, such as a Mermaid
+   label icon, keeps the size the diagram gives it. */
+.diagview-viewport svg:not(svg *) {
   /* The SVG's own size, centred and never wider than the card. max-width is
      not !important, so Mermaid's inline max-width keeps its size too. */
   width: auto !important;
@@ -1192,7 +1194,9 @@
   cursor: text !important;
 }
 
-.diagview-modal-viewport svg {
+/* The root SVG fills the viewer. An <svg> inside the diagram, such as a
+   Mermaid label icon, keeps its own size. */
+.diagview-modal-viewport svg:not(svg *) {
   width: 100% !important;
   height: 100% !important;
   max-width: 100% !important;

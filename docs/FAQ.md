@@ -108,13 +108,13 @@ A: With Mermaid 12 it does. Mermaid 12 puts its parser message into the error pi
 A: In the floating and header layouts DiagView shows each diagram at its own size, centred in the card and never wider than it. To make every diagram fill the card, add this CSS:
 
 ```css
-.diagview-wrapper .diagview-viewport svg {
+.diagview-wrapper .diagview-viewport svg:not(svg *) {
   width: 100% !important;
   max-width: 100% !important;
 }
 ```
 
-Keep `.diagview-wrapper` in the selector, or DiagView's own rule wins. The card has no padding at the sides, so a diagram that fills it is as wide as the column, the same as with `layout: "off"`. Set `--dv-card-padding`, such as `24px`, on `.diagview-wrapper` to add room at the sides. A tall diagram that fills the card grows taller too. Add `:root { --dv-max-height: 80vh; }` to stop it at 80% of the window. See [Diagram size](USAGE.md#diagram-size) for chosen diagrams only and for shadow roots.
+Keep `.diagview-wrapper` in the selector, or DiagView's own rule wins. `:not(svg *)` keeps an icon inside the diagram, such as a Mermaid icon in a label, at its own size. The card has no padding at the sides, so a diagram that fills it is as wide as the column, the same as with `layout: "off"`. Set `--dv-card-padding`, such as `24px`, on `.diagview-wrapper` to add room at the sides. A tall diagram that fills the card grows taller too. Add `:root { --dv-max-height: 80vh; }` to stop it at 80% of the window. See [Diagram size](USAGE.md#diagram-size) for chosen diagrams only and for shadow roots.
 
 ---
 

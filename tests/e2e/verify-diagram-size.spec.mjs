@@ -5,11 +5,13 @@
 // layout "off". A wrapper between the diagram element and its SVG does not
 // change that size, and a caption sits under the diagram. A page rule can still
 // make every diagram, or chosen ones, fill the card, --dv-max-height caps
-// the height, and fullscreen ignores both.
+// the height, and fullscreen ignores both. An icon Mermaid draws as an
+// <svg> inside the diagram keeps its size on the page and in fullscreen.
 //
-// Runs offline: the page is file:// and the Mermaid diagram is static
-// Mermaid output, so no Mermaid is loaded. DV_DIST=/path/to/diagview.umd.js
-// tests another build.
+// The pages are file://. The size checks use static Mermaid output, so no
+// Mermaid is loaded. Only the icon check loads Mermaid 12 from jsdelivr and
+// needs network access. DV_DIST=/path/to/diagview.umd.js tests another
+// build.
 import { test, expect } from "@playwright/test";
 import { DIST, newPage, fixtureFile } from "./helpers.mjs";
 
@@ -31,8 +33,9 @@ const IDS = Object.keys(DIAGRAMS);
 
 // The longer selector beats DiagView's own rule, which it adds at init
 const FULL_WIDTH =
-  ".diagview-wrapper .diagview-viewport svg { width: 100% !important; max-width: 100% !important; }";
-const BIG = ".diagview-viewport .big svg { width: 100% !important; max-width: 100% !important; }";
+  ".diagview-wrapper .diagview-viewport svg:not(svg *) { width: 100% !important; max-width: 100% !important; }";
+const BIG =
+  ".diagview-viewport .big svg:not(svg *) { width: 100% !important; max-width: 100% !important; }";
 // The height cap a page can bring back, set on the page, a card, a viewport
 // or the diagram element
 const CAPS = {
@@ -310,6 +313,73 @@ test("a tall diagram keeps its own height, and fullscreen still fits it to the s
   expect(full.width, "tall fullscreen width").toBeLessThanOrEqual(innerWidth);
   // Fitted to the screen height, not left at a sliver
   expect(full.height, "tall fullscreen height").toBeGreaterThan(innerHeight / 2);
+});
+
+test("Mermaid 12 icons keep their size on the page and in fullscreen", async ({ browser }) => {
+  const iconPage = await newPage(browser);
+  await iconPage.goto(fixtureFile("label-icon.html"));
+  await iconPage.evaluate(() => {
+    localStorage.setItem("diagview-canvas-hint-shown", "true");
+    document.documentElement.setAttribute("data-diagview-no-auto-init", "");
+  });
+  await iconPage.addScriptTag({
+    url: "https://cdn.jsdelivr.net/npm/mermaid@12/dist/mermaid.min.js",
+  });
+  await iconPage.evaluate(async () => {
+    mermaid.initialize({ startOnLoad: false });
+    // One square icon, so no icon CDN is needed
+    mermaid.registerIconPacks([
+      {
+        name: "fa",
+        icons: {
+          prefix: "fa",
+          width: 24,
+          height: 24,
+          icons: {
+            user: { body: '<rect x="3" y="3" width="18" height="18" fill="currentColor"/>' },
+          },
+        },
+      },
+    ]);
+    await mermaid.run({ querySelector: ".mermaid" });
+  });
+  await iconPage.addScriptTag({ path: DIST });
+  await iconPage.evaluate(() => DiagView.init({ diagramSelector: ".diagram", animateOpen: false }));
+  await iconPage.waitForSelector("#icons[data-diagview-init]");
+
+  // Size of each icon in the diagram's own units, so the zoom does not count
+  const iconSizes = (root) =>
+    iconPage.evaluate((root) => {
+      const svg = document.querySelector(root);
+      const scale = svg.getScreenCTM().a;
+      return [...svg.querySelectorAll("svg")].map((icon) => {
+        const box = icon.getBoundingClientRect();
+        return {
+          label: icon.classList.contains("label-icon"),
+          width: box.width / scale,
+          height: box.height / scale,
+        };
+      });
+    }, root);
+
+  const own = await iconSizes("#plain > svg");
+  // The label icon and the icon shape
+  expect(own.map((icon) => icon.label)).toEqual([true, false]);
+  const sameAsOwn = (icons, where) =>
+    own.forEach((icon, i) => {
+      near(icons[i].width, icon.width, `icon ${i} width ${where}`);
+      near(icons[i].height, icon.height, `icon ${i} height ${where}`);
+    });
+  sameAsOwn(await iconSizes("#icons svg:not(svg *)"), "in the card");
+
+  await iconPage.evaluate(() => DiagView.openFullscreen(document.getElementById("icons")));
+  const root = "#diagview-modal .diagview-rotator > svg";
+  await expect(iconPage.locator(root)).toBeVisible();
+  await iconPage.waitForTimeout(500);
+  const full = await iconSizes(root);
+  sameAsOwn(full, "in fullscreen");
+  // The label icon is about one line high, not the size of the whole label
+  expect(full[0].height, "label icon height").toBeLessThan(30);
 });
 
 test("--dv-max-height on the page, a card, a viewport or a diagram caps the height", async ({

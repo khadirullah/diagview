@@ -278,13 +278,13 @@ In the floating and header layouts a diagram shows at its own size, centred in t
 To make every diagram fill the card, as earlier versions did, add this rule to the page:
 
 ```css
-.diagview-wrapper .diagview-viewport svg {
+.diagview-wrapper .diagview-viewport svg:not(svg *) {
   width: 100% !important;
   max-width: 100% !important;
 }
 ```
 
-DiagView adds its stylesheet at the end of `<head>` when it starts, after the page's own CSS, so keep `.diagview-wrapper` in the selector. The shorter `.diagview-viewport svg` loses to DiagView's `width` rule. To enlarge only some diagrams, put a class such as `big` on the diagram element and use `.diagview-viewport .big svg` as the selector.
+DiagView adds its stylesheet at the end of `<head>` when it starts, after the page's own CSS, so keep `.diagview-wrapper` in the selector. The shorter `.diagview-viewport svg` loses to DiagView's `width` rule. `:not(svg *)` leaves an `<svg>` inside the diagram alone, such as a Mermaid icon in a label, so it keeps its own size. To enlarge only some diagrams, put a class such as `big` on the diagram element and use `.diagview-viewport .big svg:not(svg *)` as the selector.
 
 To cap the height, set `--dv-max-height` on the page. A diagram taller than the cap shrinks until it fits, and a shorter one keeps its size. `80vh` is the cap earlier versions used:
 
