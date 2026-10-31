@@ -257,10 +257,45 @@ describe("styles.css: zoom buttons", () => {
 
 describe("styles.css: desktop tooltip", () => {
   test("is placed below the element so the topbar button's tooltip is not clipped", () => {
-    const body = ruleBody("[data-tooltip]::after");
+    const body = ruleBody(".diagview-topbar [data-tooltip]::after");
     expect(body).not.toBeNull();
     expect(body).toMatch(/top:\s*calc\(100% \+ 8px\)/);
     expect(body).not.toMatch(/bottom:\s*calc/);
+  });
+
+  test("styles only the viewer topbar, not a page element with its own data-tooltip", () => {
+    const selectors = css.match(/[^{};/]*\[data-tooltip\][^{]*\{/g);
+    expect(selectors).toHaveLength(3);
+    for (const sel of selectors) expect(sel.trim()).toMatch(/^\.diagview-topbar \[data-tooltip\]/);
+  });
+});
+
+describe("styles.css: host page", () => {
+  // Every selector in the sheet, without comments and keyframe steps
+  function allSelectors() {
+    let text = css.replace(/\/\*[\s\S]*?\*\//g, "");
+    for (let at = text.indexOf("@keyframes"); at !== -1; at = text.indexOf("@keyframes")) {
+      let depth = 0;
+      let end = text.indexOf("{", at);
+      do {
+        if (text[end] === "{") depth++;
+        if (text[end] === "}") depth--;
+        end++;
+      } while (depth > 0);
+      text = text.slice(0, at) + text.slice(end);
+    }
+    return [...text.matchAll(/([^{};]+)\{/g)]
+      .map((m) => m[1].trim())
+      .filter((sel) => !sel.startsWith("@"))
+      .flatMap((sel) => sel.split(/,(?![^(]*\))/).map((part) => part.trim()));
+  }
+
+  test("every rule names a DiagView class, id or attribute, so page elements keep their look", () => {
+    const selectors = allSelectors();
+    expect(selectors.length).toBeGreaterThan(100);
+    // :root only holds the --dv- custom properties
+    const foreign = selectors.filter((sel) => sel !== ":root" && !/diagview|\bdv-/.test(sel));
+    expect(foreign).toEqual([]);
   });
 });
 

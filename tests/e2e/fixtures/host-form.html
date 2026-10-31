@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>DiagView inside a form</title>
-<style>body{font-family:sans-serif;margin:24px;background:#fff;color:#1e293b} .diagram{width:480px;margin:24px 0}</style>
+<style>body{font-family:sans-serif;margin:24px;background:#fff;color:#1e293b} .diagram{width:480px;margin:24px 0} .to-top{position:fixed;right:20px;bottom:20px}</style>
 </head>
 <body>
 <!--
@@ -21,6 +21,8 @@
 <label>Title <input id="field" name="title" value="Draft"></label>
 <button id="save">Save</button>
 </form>
+<!-- The page's own "Top" button, with a data-tooltip for the page's own tooltip code -->
+<button type="button" class="to-top" id="top" data-tooltip="Back to top">Top</button>
 <script>
 window.__submits = [];
 document.getElementById("host").addEventListener("submit", (e) => {

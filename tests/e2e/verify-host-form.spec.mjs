@@ -2,6 +2,8 @@
 // copy, download and fullscreen buttons do their job without submitting
 // that form, in the floating and the header layout. Enter in a field of
 // the form submits it through the page's own button, not a DiagView one.
+// A page button with its own data-tooltip keeps its fixed place and gets
+// no DiagView tooltip.
 //
 // Runs offline on a file:// fixture. DV_DIST=/path/to/diagview.umd.js tests
 // another build.
@@ -61,4 +63,24 @@ test("Enter in a field of the form submits it with the page's own button", async
   // The first submit button in the form gets the press. Before, that was
   // the copy button of the first diagram.
   await expect.poll(() => page.evaluate(() => window.__submits)).toEqual(["save"]);
+});
+
+test("a fixed page button with data-tooltip keeps its place and gets no DiagView tooltip", async () => {
+  const top = page.locator("#top");
+  const after = (el) => getComputedStyle(el, "::after").content;
+  await expect(top).toHaveCSS("position", "fixed");
+  const box = await top.boundingBox();
+  const { innerWidth, innerHeight } = await page.evaluate(() => ({ innerWidth, innerHeight }));
+  expect(box.x + box.width, "right edge").toBeCloseTo(innerWidth - 20, 0);
+  expect(box.y + box.height, "bottom edge").toBeCloseTo(innerHeight - 20, 0);
+  await top.hover();
+  expect(await top.evaluate(after)).toBe("none");
+
+  // The viewer's own topbar button still gets its tooltip
+  await page.evaluate(() => DiagView.openFullscreen(document.getElementById("header")));
+  const textSelect = page.locator("#dv-text-select-desktop-btn");
+  await expect(textSelect).toBeVisible();
+  expect(await textSelect.evaluate(after)).toBe('"Text select to copy SVG labels (T)"');
+  await page.evaluate(() => DiagView.closeModal());
+  await expect(page.locator("#diagview-modal.open")).toHaveCount(0);
 });
