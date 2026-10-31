@@ -89,7 +89,7 @@ DiagView.init({ layout: "off", offHint: "icon" });
 A: Yes. With `<svg class="diagram">` and the default selector, DiagView puts that SVG in a card with the toolbar, in the place where it stood. It keeps its id, classes, attributes and inline style, shows at its own size and fits a phone screen. `layout: "off"` puts the SVG itself in the `Tab` order. An `<svg>` drawn inside another SVG is part of that drawing and gets no toolbar. An empty `<svg>` waits until a script draws something in it. In React or another framework, keep such an SVG inside a container your component renders, as for any diagram element (see [Framework integration](USAGE.md#20-framework-integration)).
 
 **Q: My selector matches a diagram and the box around it. Do I get two toolbars?**  
-A: No. When one match sits inside another, the outer match gets the toolbar if it holds a single diagram, since it carries `data-title` and the `data-diagview-*` settings. If it holds two or more diagrams, each inner match keeps its own toolbar and the outer one gets none. Every match still counts in the share link numbering.
+A: No. When one match sits inside another, the outer match gets the toolbar if it holds a single diagram, and its `data-title` names the diagram. Each `data-diagview-*` setting counts on the outer match first. The scale, sanitizer and watermark settings can also sit on the inner match, which counts when the outer one leaves that setting out. Layout and off hint count only on the outer match. If it holds two or more diagrams, each inner match keeps its own toolbar and the outer one gets none. Every match still counts in the share link numbering.
 
 **Q: Can I use custom icons for the buttons?**
 

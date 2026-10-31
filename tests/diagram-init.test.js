@@ -591,6 +591,27 @@ describe("Diagram Init: readElementOverrides", () => {
     initializeDiagram(container);
     // Again, internal state check is hard but we cover the branch
   });
+
+  test("a wrapper warns about the scale and sanitize values its inner diagram uses", async () => {
+    // .diagram > .mermaid > svg. The outer .diagram gets set up and leaves
+    // both attributes to the inner .mermaid.
+    const { updateConfig } = await import("../src/core/config.js");
+    updateConfig({ diagramSelector: ".diagram, .mermaid" });
+    const inner = document.createElement("div");
+    inner.className = "mermaid";
+    inner.appendChild(container.querySelector("svg"));
+    container.appendChild(inner);
+    inner.dataset.diagviewScale = "99";
+    inner.dataset.diagviewSanitize = "off";
+    const warnSpy = jest.spyOn(console, "warn").mockImplementation(() => {});
+
+    initializeDiagram(container);
+
+    const said = warnSpy.mock.calls.map(([m]) => m);
+    warnSpy.mockRestore();
+    expect(said).toContainEqual(expect.stringContaining('data-diagview-scale "99"'));
+    expect(said).toContainEqual(expect.stringContaining('data-diagview-sanitize="off"'));
+  });
 });
 
 describe("Diagram Init: SVG Validation Edge Cases", () => {

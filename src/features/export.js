@@ -21,7 +21,12 @@ import {
   copyText,
 } from "../core/utils.js";
 import { embedDocumentFonts } from "./export-fonts.js";
-import { cloneSVGForExportAsync, exportSecurity } from "../core/svg-clone.js";
+import {
+  cloneSVGForExportAsync,
+  exportSecurity,
+  settingHolders,
+  readSetting,
+} from "../core/svg-clone.js";
 import {
   showSuccessToast,
   showErrorToast,
@@ -153,38 +158,30 @@ function injectWatermark(svg, d, sourceSvg = null, pad = 0) {
   const config = { ...state.config.watermark };
 
   // 2. Apply element-level overrides if available (A1)
-  // Resolve the diagram container from the SVG being exported so the inline
+  // Resolve the diagram from the page SVG being exported so the inline
   // toolbar and the public exportTo*(el) API see the same overrides as the
-  // modal; state.activeSourceElement is only set while the modal is open.
-  let el = null;
-  if (sourceSvg?.closest) {
-    try {
-      el = sourceSvg.closest(state.config.diagramSelector);
-    } catch (_e) {
-      el = null;
-    }
-    el = el || sourceSvg.parentElement;
-  }
-  el = el || state.activeSourceElement;
-  if (el && el.dataset) {
-    const dataset = el.dataset;
-    if (dataset.diagviewWatermark) config.enabled = dataset.diagviewWatermark === "true";
-    if (dataset.diagviewWatermarkText) config.text = dataset.diagviewWatermarkText;
-    if (dataset.diagviewWatermarkStyle) config.style = dataset.diagviewWatermarkStyle;
-    if (dataset.diagviewWatermarkPos) config.position = dataset.diagviewWatermarkPos;
-    if (dataset.diagviewWatermarkPlacement) {
-      config.placement = dataset.diagviewWatermarkPlacement;
-    }
-    const raw = dataset.diagviewWatermarkOpacity?.trim();
-    if (raw) {
-      const n = toNumber(raw);
-      if (!isNaN(n)) {
-        config.opacity = n;
-      } else {
-        console.warn(
-          `DiagView: data-diagview-watermark-opacity "${raw}" should be a number from 0 to 1. Using the config opacity.`,
-        );
-      }
+  // modal. Each attribute comes from the outer match first, then the inner
+  // one. An SVG in no match reads its parent; state.activeSourceElement is
+  // only set while the modal is open.
+  const holders = settingHolders(sourceSvg);
+  if (!holders.length) holders.push(sourceSvg?.parentElement || state.activeSourceElement);
+  const read = (key) => readSetting(holders, key);
+
+  const enabled = read("diagviewWatermark");
+  if (enabled) config.enabled = enabled === "true";
+  config.text = read("diagviewWatermarkText") || config.text;
+  config.style = read("diagviewWatermarkStyle") || config.style;
+  config.position = read("diagviewWatermarkPos") || config.position;
+  config.placement = read("diagviewWatermarkPlacement") || config.placement;
+  const raw = read("diagviewWatermarkOpacity")?.trim();
+  if (raw) {
+    const n = toNumber(raw);
+    if (!isNaN(n)) {
+      config.opacity = n;
+    } else {
+      console.warn(
+        `DiagView: data-diagview-watermark-opacity "${raw}" should be a number from 0 to 1. Using the config opacity.`,
+      );
     }
   }
 
@@ -564,27 +561,17 @@ async function serializeSVGAsync(svgEl) {
 /**
  * data-diagview-scale for an export, which overrides the global highResScale.
  * The element passed in comes first, or the diagram open in the viewer when
- * that is not an element. Then the diagram around the SVG, so the attribute
- * also counts on the container of an exported <svg> and on the outer element
- * of a nested match.
+ * that is not an element. Then the diagrams around the SVG, outer match
+ * first, so the attribute also counts on the container of an exported <svg>
+ * and on either element of a nested match.
  * @private
  * @param {HTMLElement|SVGSVGElement} sourceElement - Element passed to the export
  * @param {SVGSVGElement} svg - The diagram's SVG
  * @returns {string|undefined} The attribute value, or undefined when none is set
  */
 function scaleAttribute(sourceElement, svg) {
-  let diagram = null;
-  try {
-    diagram = svg.closest(state.config.diagramSelector);
-  } catch (_e) {
-    // A selector the browser rejects matches nothing
-  }
-  const holders = [
-    sourceElement?.dataset ? sourceElement : state.activeSourceElement,
-    svg.closest("[data-diagview-init]"),
-    diagram,
-  ];
-  return holders.find((el) => el?.dataset?.diagviewScale != null)?.dataset.diagviewScale;
+  const passed = sourceElement?.dataset ? sourceElement : state.activeSourceElement;
+  return readSetting([passed, ...settingHolders(svg)], "diagviewScale");
 }
 
 /** Longest canvas side an export draws, in pixels */

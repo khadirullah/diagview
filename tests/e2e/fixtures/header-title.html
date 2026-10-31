@@ -46,6 +46,15 @@ flowchart LR
   accTitle: Checkout steps
   A[Cart] --> B[Pay]</pre>
 
+<!-- 5b. A wrapper around one diagram: its settings come first, and the
+     diagram fills in the ones the wrapper leaves out -->
+<div class="diagram" id="m-wrap" data-title="Wrapped" data-diagview-sanitize="permissive"
+  data-diagview-watermark="true" data-diagview-watermark-text="WRAPMARK">
+<pre class="mermaid" data-diagview-sanitize="strict" data-diagview-watermark-text="INNERMARK"
+  data-diagview-watermark-style="corner">flowchart LR
+  A[Cart] --> B[Pay]</pre>
+</div>
+
 <!-- 6. A <title> on the SVG, with Graphviz shape tooltips inside -->
 <div class="diagram" id="gv"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 120" width="240" height="120"><title>Build pipeline</title><g id="graph0" class="graph"><title>G</title><g id="node1" class="node"><title>compile</title><ellipse cx="60" cy="60" rx="50" ry="22" fill="none" stroke="#000"/><text x="60" y="64" text-anchor="middle" font-size="14">compile</text></g><g id="node2" class="node"><title>test</title><ellipse cx="180" cy="60" rx="50" ry="22" fill="none" stroke="#000"/><text x="180" y="64" text-anchor="middle" font-size="14">test</text></g></g></svg></div>
 

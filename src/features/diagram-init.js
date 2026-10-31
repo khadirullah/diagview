@@ -16,7 +16,7 @@ import {
   removeEmptyAttr,
   sanitizeSVG,
 } from "../core/utils.js";
-import { resolveElementSecurity } from "../core/svg-clone.js";
+import { resolveElementSecurity, settingHolders, readSetting } from "../core/svg-clone.js";
 import { ICONS } from "../ui/icons.js";
 import { LAYOUTS, BUTTON_STYLES, OFF_HINTS } from "../core/constants.js";
 import { createButtonGroup } from "../ui/button-factory.js";
@@ -234,14 +234,16 @@ function getIcon(key, defaultIcon, styleClass) {
 
 /**
  * Read per-element data-diagview-* overrides and merge over global config.
- * Only layout and offHint are merged. Scale, sanitize and allow-remote are
- * checked here for warnings. Export reads scale and the
+ * Only layout and offHint are merged, from the element itself. Scale,
+ * sanitize and allow-remote are checked here for warnings, from the same
+ * elements export and the viewer read them from. Export reads scale and the
  * data-diagview-watermark-* attributes itself when it runs.
  *
  * @param {HTMLElement} element - Diagram container element
+ * @param {SVGSVGElement|null} svg - The element's SVG, if it has one
  * @returns {object} A local config snapshot for this element only
  */
-function readElementOverrides(element) {
+function readElementOverrides(element, svg) {
   // Start from a shallow copy of global config so we never mutate state
   const cfg = Object.assign({}, state.config);
 
@@ -267,14 +269,16 @@ function readElementOverrides(element) {
     }
   }
 
+  // The outer match of a nested pair first, then the inner one
+  const holders = svg ? settingHolders(svg) : [element];
+
   // data-diagview-scale="4" (integer 1 to 10). Export reads the attribute
   // itself, so this only warns about a bad value once, at init.
-  if (dataset.diagviewScale) {
-    const n = parseInt(dataset.diagviewScale, 10);
+  const scale = readSetting(holders, "diagviewScale");
+  if (scale) {
+    const n = parseInt(scale, 10);
     if (isNaN(n) || n < 1 || n > 10) {
-      console.warn(
-        `DiagView: data-diagview-scale "${dataset.diagviewScale}" must be 1 to 10, ignoring.`,
-      );
+      console.warn(`DiagView: data-diagview-scale "${scale}" must be 1 to 10, ignoring.`);
     }
   }
 
@@ -288,7 +292,7 @@ function readElementOverrides(element) {
   // modal and the exporter resolve them themselves through the same gate
   // (see svg-clone.js) at the moment the SVG is cloned. The call here only
   // serves to emit the "override ignored" warnings once, at init time.
-  resolveElementSecurity(element, { warn: true });
+  resolveElementSecurity(holders, { warn: true });
 
   return cfg;
 }
@@ -358,7 +362,7 @@ export function initializeDiagram(element, precalculatedIndex = -1) {
   trackedElements.add(element);
 
   // Resolve config for this element: global config + any data-diagview-* overrides (A1)
-  const elementConfig = readElementOverrides(element);
+  const elementConfig = readElementOverrides(element, svg);
 
   // Error boundary: Check for valid SVG
   if (!svg || !isValidSvg(svg)) {

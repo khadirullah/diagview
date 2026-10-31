@@ -15,6 +15,8 @@ test.describe.configure({ mode: "serial" });
 
 const MERMAID = ["m-title", "m-acc", "m-plain", "m-pie", "m-data"];
 const OTHERS = ["gv", "gv-shapes", "fig", "markup", "long", "deep"];
+// A .diagram wrapper around one .mermaid
+const WRAPPED = "m-wrap";
 
 /** Open the fixture, render it with this Mermaid and set DiagView up */
 async function load(browser, version) {
@@ -30,6 +32,13 @@ async function load(browser, version) {
   await page.evaluate(async () => {
     mermaid.initialize({ startOnLoad: false });
     await mermaid.run({ querySelector: ".mermaid" });
+    // An animation, which strict mode removes and permissive mode keeps
+    const svg = document.querySelector("#m-wrap svg");
+    const animate = document.createElementNS("http://www.w3.org/2000/svg", "animate");
+    animate.setAttribute("attributeName", "opacity");
+    animate.setAttribute("values", "1;0.5;1");
+    animate.setAttribute("dur", "2s");
+    svg.querySelector("g").appendChild(animate);
   });
   await page.addScriptTag({ path: DIST });
   await page.evaluate(() => {
@@ -41,7 +50,7 @@ async function load(browser, version) {
       onExport: (format, name) => window.__names.push(name),
     });
   });
-  for (const id of [...MERMAID, ...OTHERS]) {
+  for (const id of [...MERMAID, ...OTHERS, WRAPPED]) {
     await page.locator(`#${id}`).scrollIntoViewIfNeeded();
     await page.waitForSelector(`#${id}[data-diagview-init]`);
   }
@@ -135,6 +144,47 @@ for (const version of [11, 12]) {
           shown[id] === "DIAGRAM" ? "diagram_export" : shown[id].toLowerCase().replace(/ /g, "_");
         expect(names[id], id).toBe(expected);
       }
+    });
+
+    test("a wrapper's title and settings come first, and its diagram fills in the rest", async () => {
+      expect(await labels(page, [WRAPPED])).toEqual({ [WRAPPED]: "WRAPPED" });
+      const exported = await page.evaluate(async (id) => {
+        const el = document.getElementById(id);
+        let href = "";
+        const click = HTMLAnchorElement.prototype.click;
+        HTMLAnchorElement.prototype.click = function () {
+          href = this.href;
+        };
+        try {
+          await DiagView.exportToSVG(el, { silent: true });
+        } finally {
+          HTMLAnchorElement.prototype.click = click;
+        }
+        const text = href.startsWith("data:")
+          ? decodeURIComponent(href.split(",")[1])
+          : await (await fetch(href)).text();
+        const doc = new DOMParser().parseFromString(text, "image/svg+xml");
+        const marks = [...doc.querySelectorAll("text")].filter((t) => /MARK$/.test(t.textContent));
+        await DiagView.openFullscreen(el);
+        const viewerAnimates = document.querySelectorAll("#diagview-modal-viewport svg animate");
+        const result = {
+          marks: [...new Set(marks.map((t) => t.textContent))],
+          rotated: marks.some((t) => t.hasAttribute("transform")),
+          fileAnimates: doc.querySelectorAll("animate").length,
+          viewerAnimates: viewerAnimates.length,
+        };
+        DiagView.closeModal();
+        return result;
+      }, WRAPPED);
+      // The text and the permissive mode come from the wrapper, the corner
+      // style from the diagram, as the wrapper does not set one
+      expect(exported).toEqual({
+        marks: ["WRAPMARK"],
+        rotated: false,
+        fileAnimates: 1,
+        viewerAnimates: 1,
+      });
+      await page.waitForFunction(() => !DiagView.state.isModalOpen);
     });
   });
 }

@@ -1,5 +1,11 @@
 import { state } from "./config.js";
-import { sanitizeInPlace, fixIds, generateUniqueId, inertDocument } from "./utils.js";
+import {
+  sanitizeInPlace,
+  fixIds,
+  generateUniqueId,
+  inertDocument,
+  getDiagramSvg,
+} from "./utils.js";
 import { showErrorToast } from "../ui/toast.js";
 import { SECURITY_MODES, EXPORT } from "./constants.js";
 
@@ -171,20 +177,55 @@ export function cloneSVG(svg, options = {}) {
 const warnedModes = new Set();
 
 /**
- * Resolve the effective security settings for one diagram container.
+ * The elements a diagram's data-diagview-* settings are read from, in the
+ * order they count. With a match inside another match, such as a .mermaid
+ * inside a .diagram, init sets up the outer one and marks it with
+ * data-diagview-init. The outer element comes first, as it has the
+ * toolbar. The inner match next to the SVG comes second, so a setting the
+ * outer element leaves out can still be set there. A single match is both,
+ * and is listed once.
+ * @param {Element|null|undefined} svg - The diagram's SVG on the page
+ * @returns {Element[]} The elements, outer first, without repeats
+ */
+export function settingHolders(svg) {
+  let inner = null;
+  try {
+    inner = svg?.closest?.(state.config.diagramSelector) ?? null;
+  } catch (_e) {
+    // A selector the browser rejects matches nothing
+  }
+  const outer = svg?.closest?.("[data-diagview-init]") ?? null;
+  return [...new Set([outer, inner])].filter(Boolean);
+}
+
+/**
+ * One data-diagview-* setting, from the first element that sets it. An
+ * empty or blank attribute counts as not set.
+ * @param {Array<Element|null|undefined>} holders - Elements in the order they count
+ * @param {string} key - The dataset name, such as "diagviewSanitize"
+ * @returns {string|undefined} The value, or undefined when none sets it
+ */
+export function readSetting(holders, key) {
+  return holders.find((el) => el?.dataset?.[key]?.trim())?.dataset[key];
+}
+
+/**
+ * Resolve the effective security settings for one diagram.
  *
  * Per-element `data-diagview-sanitize` / `data-diagview-allow-remote`
  * attributes are honoured ONLY when `security.allowOverrides` is true, and
  * only with a recognised value. Anything else falls back to the global config.
+ * Each attribute comes from the first element in holders that sets it.
  * This is the single gate for both init-time and modal-time resolution so the
  * modal can never be more permissive than the documented rules allow.
  *
- * @param {Element|null|undefined} container - Diagram container (may be null)
+ * @param {Element|Array<Element|null>|null|undefined} holders - The diagram
+ *   element, or the elements from settingHolders() in the order they count
  * @param {{ warn?: boolean }} [options] - warn: emit console warnings for
  *   "off" and for unrecognised values (init-time only, to avoid log spam)
  * @returns {{ mode: string, allowRemoteResources: boolean, allowOverrides: boolean }} Effective security settings
  */
-export function resolveElementSecurity(container, options = {}) {
+export function resolveElementSecurity(holders, options = {}) {
   // Config validation keeps security.mode one of the known modes
   const global = state.config.security;
   const resolved = {
@@ -194,11 +235,12 @@ export function resolveElementSecurity(container, options = {}) {
   };
 
   if (!resolved.allowOverrides) return resolved;
-  const dataset = container?.dataset;
-  if (!dataset) return resolved;
+  const list = Array.isArray(holders) ? holders : [holders];
+  const sanitize = readSetting(list, "diagviewSanitize");
+  const allowRemote = readSetting(list, "diagviewAllowRemote");
 
-  if (dataset.diagviewSanitize) {
-    const v = String(dataset.diagviewSanitize).toLowerCase();
+  if (sanitize) {
+    const v = sanitize.toLowerCase();
     if (SECURITY_MODES.includes(v)) {
       resolved.mode = v;
       if (v === "off" && options.warn) {
@@ -208,13 +250,13 @@ export function resolveElementSecurity(container, options = {}) {
       }
     } else if (options.warn && warnedModes.size < warnedModes.add(v).size) {
       console.warn(
-        `DiagView: Unknown data-diagview-sanitize "${dataset.diagviewSanitize}", using "${resolved.mode}"`,
+        `DiagView: Unknown data-diagview-sanitize "${sanitize}", using "${resolved.mode}"`,
       );
     }
   }
 
-  if (dataset.diagviewAllowRemote) {
-    resolved.allowRemoteResources = String(dataset.diagviewAllowRemote).toLowerCase() === "true";
+  if (allowRemote) {
+    resolved.allowRemoteResources = allowRemote.toLowerCase() === "true";
   }
 
   return resolved;
@@ -234,8 +276,10 @@ export function cloneSVGForModal(svg) {
   // without "Double Prefixing".
 
   // Security: per-element override > global config, gated by allowOverrides.
-  const container = svg.closest(state.config.diagramSelector);
-  const security = resolveElementSecurity(container);
+  // The outer and inner matches come first, then the element the viewer
+  // opened, which counts when the SVG sits in no match at all. The viewer
+  // export reads the same elements, so both sanitize alike.
+  const security = resolveElementSecurity([...settingHolders(svg), state.activeSourceElement]);
 
   return cloneSVG(svg, {
     preserveText: true,
@@ -256,16 +300,16 @@ export function cloneSVGForModal(svg) {
  * The sanitizer settings an export of svg uses. Security: per-element
  * override > global config, gated by allowOverrides (same resolution as the
  * modal preset so both paths sanitize alike). The fullscreen copy sits in
- * the viewer, so it takes the open diagram's.
+ * the viewer, outside any match, so it reads the elements around the page
+ * SVG of the open diagram.
  * @param {SVGElement} svg - SVG being exported
  * @returns {{mode: string, allowRemoteResources: boolean, warn: boolean}} Mode, remote rule, and
  *   whether removed code is worth a warning
  */
 export function exportSecurity(svg) {
-  const container =
-    svg.closest?.(state.config.diagramSelector) ||
-    (svg.closest?.("#diagview-modal") ? state.activeSourceElement : null);
-  const security = resolveElementSecurity(container);
+  const open = svg.closest?.("#diagview-modal") ? state.activeSourceElement : null;
+  const pageSvg = open ? getDiagramSvg(open) : svg;
+  const security = resolveElementSecurity([...settingHolders(pageSvg), open]);
   // security.exportMode "strict" cleans every export in strict mode. Code
   // it removes only for the file is what the site asked for, so it does
   // not warn.

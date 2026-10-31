@@ -99,6 +99,137 @@ describe("per-element security overrides in clone presets", () => {
   });
 });
 
+describe("security attributes on a diagram inside a wrapper", () => {
+  // .diagram[data-diagview-init] > .mermaid > svg. Init sets up the outer
+  // .diagram, as it holds one diagram, and the viewer opens that element.
+  const ns = "http://www.w3.org/2000/svg";
+  let outer, inner, svg;
+
+  beforeEach(() => {
+    updateConfig({ diagramSelector: ".mermaid, .diagram" });
+    outer = document.createElement("div");
+    outer.className = "diagram";
+    outer.dataset.diagviewInit = "1";
+    inner = document.createElement("div");
+    inner.className = "mermaid";
+    svg = document.createElementNS(ns, "svg");
+    svg.setAttribute("viewBox", "0 0 10 10");
+    const style = document.createElementNS(ns, "style");
+    style.textContent = "@import url(https://fonts.googleapis.com/css?family=Inter);";
+    svg.appendChild(style);
+    const animate = document.createElementNS(ns, "animate");
+    animate.setAttribute("attributeName", "x");
+    animate.setAttribute("values", "0;1");
+    svg.appendChild(animate);
+    inner.appendChild(svg);
+    outer.appendChild(inner);
+    document.body.appendChild(outer);
+  });
+
+  afterEach(() => {
+    state.activeSourceElement = null;
+    resetConfig();
+    document.body.innerHTML = "";
+  });
+
+  const hasRemoteImport = (clone) =>
+    Array.from(clone.querySelectorAll("style")).some((s) => s.textContent.includes("@import"));
+  const kept = (clone) => ({
+    animate: clone.querySelector("animate") !== null,
+    remote: hasRemoteImport(clone),
+  });
+
+  // The viewer copy, an export of the page SVG and an export of the viewer copy
+  const paths = {
+    "the viewer copy": () => {
+      state.activeSourceElement = outer;
+      return cloneSVGForModal(svg);
+    },
+    "an export": () => cloneSVGForExportAsync(svg),
+    "an export from the viewer": () => {
+      state.activeSourceElement = outer;
+      const modal = document.createElement("div");
+      modal.id = "diagview-modal";
+      modal.appendChild(cloneSVGForModal(svg));
+      document.body.appendChild(modal);
+      return cloneSVGForExportAsync(modal.firstChild);
+    },
+  };
+
+  const cases = [
+    ["the outer element alone", { sanitize: "permissive", remote: "true" }, {}, true, true],
+    ["the inner element alone", {}, { sanitize: "permissive", remote: "true" }, true, true],
+    [
+      "both, where the outer element wins",
+      { sanitize: "strict", remote: "false" },
+      { sanitize: "permissive", remote: "true" },
+      false,
+      false,
+    ],
+    [
+      "both the other way round",
+      { sanitize: "permissive", remote: "true" },
+      { sanitize: "strict", remote: "false" },
+      true,
+      true,
+    ],
+    [
+      "sanitize on the outer, allow-remote on the inner",
+      { sanitize: "permissive" },
+      { remote: "true" },
+      true,
+      true,
+    ],
+    [
+      "allow-remote on the outer, sanitize on the inner",
+      { remote: "true" },
+      { sanitize: "permissive" },
+      true,
+      true,
+    ],
+  ];
+
+  const set = (el, { sanitize, remote }) => {
+    if (sanitize) el.dataset.diagviewSanitize = sanitize;
+    if (remote) el.dataset.diagviewAllowRemote = remote;
+  };
+
+  for (const [path, run] of Object.entries(paths)) {
+    test.each(cases)(`${path} reads %s`, async (_name, onOuter, onInner, animate, remote) => {
+      set(outer, onOuter);
+      set(inner, onInner);
+      expect(kept(await run())).toEqual({ animate, remote });
+    });
+  }
+
+  test("a wrapper around two diagrams leaves each inner diagram its own settings", async () => {
+    // Init sets up each .mermaid here, and the wrapper gets no toolbar
+    delete outer.dataset.diagviewInit;
+    inner.dataset.diagviewInit = "1";
+    const second = inner.cloneNode(true);
+    outer.appendChild(second);
+    outer.dataset.diagviewSanitize = "permissive";
+    second.dataset.diagviewSanitize = "permissive";
+
+    expect(kept(await cloneSVGForExportAsync(svg)).animate).toBe(false);
+    expect(kept(await cloneSVGForExportAsync(second.querySelector("svg"))).animate).toBe(true);
+  });
+
+  test("allowOverrides false ignores the attributes on both elements", async () => {
+    updateConfig({ security: { allowOverrides: false } });
+    set(outer, { sanitize: "permissive" });
+    set(inner, { remote: "true" });
+    expect(kept(cloneSVGForModal(svg))).toEqual({ animate: false, remote: false });
+    expect(kept(await cloneSVGForExportAsync(svg))).toEqual({ animate: false, remote: false });
+  });
+
+  test("an empty attribute on the outer element leaves the inner one in charge", () => {
+    outer.dataset.diagviewSanitize = "";
+    inner.dataset.diagviewSanitize = "permissive";
+    expect(resolveElementSecurity([outer, inner]).mode).toBe("permissive");
+  });
+});
+
 describe("SVG Cloning Utilities", () => {
   let svg;
 

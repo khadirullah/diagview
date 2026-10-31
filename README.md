@@ -447,7 +447,7 @@ With Mermaid 12 the error placeholder also shows Mermaid's parser message, such 
 
 The selector can match the `<svg>` itself, as in `<svg class="diagram">`, with no container around it. That SVG gets the same card and toolbar where it stood, and `destroy()` puts it back as it was. An `<svg>` drawn inside another SVG is part of that drawing and gets no toolbar.
 
-When the selector matches both a diagram and a wrapper around it, for example `.mermaid, .diagram` with a `.mermaid` inside a `.diagram`, each diagram still gets one toolbar. A wrapper around a single diagram keeps the toolbar, so its `data-title` and `data-diagview-*` settings apply, and the `data-title` names its export files. A wrapper around two or more diagrams gets none, and each inner diagram keeps its own.
+When the selector matches both a diagram and a wrapper around it, for example `.mermaid, .diagram` with a `.mermaid` inside a `.diagram`, each diagram still gets one toolbar. A wrapper around a single diagram keeps the toolbar, and its `data-title` names the header and the export files. DiagView reads `data-diagview-scale`, `data-diagview-sanitize`, `data-diagview-allow-remote` and the `data-diagview-watermark-*` attributes from the wrapper first. If the wrapper leaves one out, the inner diagram's value counts, so a page that sets them on the `.mermaid` keeps working. `data-diagview-layout` and `data-diagview-off-hint` count only on the wrapper. A wrapper around two or more diagrams gets no toolbar, and each inner diagram keeps its own toolbar and settings.
 
 ---
 

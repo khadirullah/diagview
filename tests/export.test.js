@@ -290,6 +290,123 @@ describe("Export Functionality", () => {
     });
   });
 
+  describe("data-diagview-watermark-* on a diagram inside a wrapper", () => {
+    // .diagram[data-diagview-init] > .mermaid > svg. Init sets up the outer
+    // .diagram, as it holds one diagram.
+    let inner;
+
+    beforeEach(() => {
+      updateConfig({
+        diagramSelector: ".diagram, .mermaid",
+        watermark: { enabled: true, text: "GLOBALMARK" },
+      });
+      container.className = "diagram";
+      container.dataset.diagviewInit = "1";
+      inner = document.createElement("div");
+      inner.className = "mermaid";
+      inner.appendChild(svg);
+      container.appendChild(inner);
+    });
+
+    afterEach(() => {
+      updateConfig({
+        diagramSelector: ".diagram, .chart, [data-diagram]",
+        watermark: { enabled: false, text: "" },
+      });
+      state.activeSourceElement = null;
+      document.getElementById("diagview-modal")?.remove();
+    });
+
+    // The SVG file the export downloads
+    const exportedMarkup = async (element, options = {}) => {
+      let downloaded = "";
+      const click = jest
+        .spyOn(HTMLAnchorElement.prototype, "click")
+        .mockImplementation(function () {
+          downloaded = this.href;
+        });
+      try {
+        await exportToSVG(element, { filename: "wm", ...options });
+      } finally {
+        click.mockRestore();
+      }
+      return decodeURIComponent(downloaded.replace(/^data:image\/svg\+xml;charset=utf-8,/, ""));
+    };
+
+    // From the inline toolbar, and from the viewer with its copy open
+    const paths = {
+      "an export": () => exportedMarkup(container),
+      "an export from the viewer": () => {
+        const modal = document.createElement("div");
+        modal.id = "diagview-modal";
+        const modalClone = svg.cloneNode(true);
+        modal.appendChild(modalClone);
+        document.body.appendChild(modal);
+        state.activeSourceElement = container;
+        return exportedMarkup(container, { modalClone });
+      },
+    };
+
+    const cases = [
+      ["the outer element alone", { diagviewWatermark: "false" }, {}, null],
+      ["the inner element alone", {}, { diagviewWatermark: "false" }, null],
+      [
+        "both, where the outer element wins",
+        { diagviewWatermarkText: "OUTERMARK" },
+        { diagviewWatermark: "false", diagviewWatermarkText: "INNERMARK" },
+        null,
+      ],
+      [
+        "both, where the outer element wins the other way",
+        { diagviewWatermark: "true", diagviewWatermarkText: "OUTERMARK" },
+        { diagviewWatermark: "false", diagviewWatermarkText: "INNERMARK" },
+        "OUTERMARK",
+      ],
+      [
+        "the switch on the outer, the text on the inner",
+        { diagviewWatermark: "true" },
+        { diagviewWatermarkText: "INNERMARK" },
+        "INNERMARK",
+      ],
+      [
+        "the text on the outer, the switch on the inner",
+        { diagviewWatermarkText: "OUTERMARK" },
+        { diagviewWatermark: "true" },
+        "OUTERMARK",
+      ],
+    ];
+
+    for (const [path, run] of Object.entries(paths)) {
+      test.each(cases)(`${path} reads %s`, async (_name, onOuter, onInner, mark) => {
+        Object.assign(container.dataset, onOuter);
+        Object.assign(inner.dataset, onInner);
+        const markup = await run();
+        for (const text of ["GLOBALMARK", "OUTERMARK", "INNERMARK"]) {
+          expect(markup.includes(text)).toBe(text === mark);
+        }
+      });
+    }
+
+    test("each attribute comes from the element that sets it", async () => {
+      container.dataset.diagviewWatermarkText = "OUTERMARK";
+      container.dataset.diagviewWatermarkStyle = "corner";
+      inner.dataset.diagviewWatermarkStyle = "background";
+      inner.dataset.diagviewWatermarkOpacity = "0.42";
+
+      const markup = await exportedMarkup(container);
+
+      // The diagram has no text of its own, so every <text> is a mark
+      const marks = new DOMParser().parseFromString(markup, "text/html").querySelectorAll("text");
+      expect(marks.length).toBeGreaterThan(0);
+      for (const mark of marks) {
+        expect(mark.textContent).toBe("OUTERMARK");
+        expect(mark.getAttribute("fill-opacity")).toBe("0.42");
+        // A corner mark is not rotated, a background one is
+        expect(mark.hasAttribute("transform")).toBe(false);
+      }
+    });
+  });
+
   test("exportToSVG(el) applies the element's data-diagview-watermark-* overrides", async () => {
     updateConfig({ watermark: { enabled: false, text: "GLOBALMARK" } });
     state.activeSourceElement = null; // no modal open: inline toolbar / public API path
