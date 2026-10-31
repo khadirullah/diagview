@@ -75,10 +75,12 @@ function isValidSvg(svg) {
     }
   }
 
-  // 4. Check for specific library error IDs (Mermaid v10+)
-  if (svg.querySelector('[id*="mermaid-"][id*="-error"]')) return false;
+  // Element ids are no sign of an error. Mermaid 11 and later put the SVG id
+  // in front of each node id, so a valid node named errorHandler gets the id
+  // "mermaid-1-flowchart-errorHandler-0". Mermaid's own error picture has no
+  // id with "error" in it, and the checks above already catch it.
 
-  // 5. Check for zero dimensions in an explicit viewBox (empty content area).
+  // 4. Check for zero dimensions in an explicit viewBox (empty content area).
   // Only when the attribute is present: without one, viewBox.baseVal is a
   // 0x0 SVGRect in browsers, which rejected every width/height-only SVG.
   const vb = (svg.getAttribute("viewBox") || "")
@@ -87,7 +89,7 @@ function isValidSvg(svg) {
     .map(Number);
   if (vb.length === 4 && (vb[2] === 0 || vb[3] === 0)) return false;
 
-  // 6. Check for text-only error fragments (often returned by failed backend renders)
+  // 5. Check for text-only error fragments (often returned by failed backend renders)
   const shapes = svg.querySelector("path, rect, circle, line, polygon, polyline");
   if (!shapes) {
     const textElements = svg.querySelectorAll("text");

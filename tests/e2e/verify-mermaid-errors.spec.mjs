@@ -4,7 +4,8 @@
 // or hot reload does, the diagram gets its toolbar without a refresh().
 // A working diagram that the page renders again with an error gives up its
 // toolbar for the error box, also while the viewer is open, and destroy()
-// and init() after all that leave one toolbar.
+// and init() after all that leave one toolbar. A working diagram whose
+// node names contain "error" gets its toolbar, not the error box.
 //
 // Mermaid 12, 11 and 10 come from jsdelivr, so this needs network access.
 // DV_DIST=/path/to/diagview.umd.js tests another build.
@@ -15,20 +16,28 @@ test.describe.configure({ mode: "serial" });
 
 const BROKEN = "flowchart TD\n  A[Start] --> B{Check\n";
 const FIXED = "flowchart TD\n  A[Start] --> B{Check}\n  B --> C[Done]\n";
+// Mermaid 11 and 12 give these nodes ids like mermaid-1-flowchart-errorHandler-1
+const ERROR_NAMES =
+  "flowchart LR\n  A[Request] --> errorHandler[Error handler]\n  errorHandler --> api-error[API error]\n";
 
 /**
  * Open the fixture with Mermaid `version` and set DiagView up. With `start`
  * Mermaid renders the broken code itself on load, otherwise render() does,
- * through mermaid.run() with `suppressErrors`.
+ * through mermaid.run() with `suppressErrors`. `code` replaces the broken
+ * code for render().
  */
-async function load(browser, version, { start = false, suppressErrors = true, options = {} } = {}) {
+async function load(
+  browser,
+  version,
+  { start = false, suppressErrors = true, options = {}, code = BROKEN } = {},
+) {
   const page = await newPage(browser, options);
   const errors = [];
   page.on("pageerror", (e) => errors.push(String(e.message)));
   await page.goto(`${fixtureFile("mermaid-errors.html")}?v=${version}${start ? "&start=1" : ""}`);
   await page.waitForFunction(() => window.mermaid);
   if (start) await page.waitForSelector("#live svg");
-  else await page.evaluate(([code, quiet]) => window.render(code, quiet), [BROKEN, suppressErrors]);
+  else await page.evaluate(([text, quiet]) => window.render(text, quiet), [code, suppressErrors]);
   await page.evaluate(() => {
     localStorage.setItem("diagview-canvas-hint-shown", "true");
     document.documentElement.setAttribute("data-diagview-no-auto-init", "");
@@ -88,6 +97,21 @@ for (const version of ["12", "11", "10"]) {
     await page.context().close();
   });
 }
+
+test("a working diagram with nodes named errorHandler and api-error gets its toolbar", async ({
+  browser,
+}) => {
+  for (const version of ["12", "11", "10"]) {
+    const { page, errors } = await load(browser, version, { code: ERROR_NAMES });
+    await page.waitForSelector("#live[data-diagview-id], #live[data-diagview-error]");
+    expect(await look(page), `Mermaid ${version}`).toMatchObject({
+      ...WORKING,
+      roleDescription: "flowchart-v2",
+    });
+    expect(errors, `Mermaid ${version}`).toEqual([]);
+    await page.context().close();
+  }
+});
 
 test("a working diagram that breaks shows the error box, and recovers", async ({ browser }) => {
   const { page, errors } = await load(browser, "12");

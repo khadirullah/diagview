@@ -616,19 +616,6 @@ describe("Diagram Init: SVG Validation Edge Cases", () => {
     initializeDiagram(container);
     expect(container.dataset.diagviewError).toBe("1");
   });
-
-  test("rejects Mermaid explicit error ID", () => {
-    const container = document.createElement("div");
-    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-    const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
-    svg.appendChild(rect);
-    const err = document.createElement("div");
-    err.id = "mermaid-123-error";
-    svg.appendChild(err);
-    container.appendChild(svg);
-    initializeDiagram(container);
-    expect(container.dataset.diagviewError).toBe("1");
-  });
 });
 
 function mountSvg(markup) {
@@ -800,6 +787,51 @@ describe("Diagram Init: Mermaid syntax errors", () => {
     expect(container.querySelector(".diagview-error-title").textContent).toBe("Syntax Error");
     expect(container.closest(".diagview-wrapper")).toBeNull();
     expect(svg.style.display).toBe("none");
+  });
+
+  test("a Mermaid syntax error drawn under an id with -error in it gets the error box", () => {
+    const { container } = mountSvg(mermaidError.replace('id="mermaid-1"', 'id="mermaid-error"'));
+
+    initializeDiagram(container);
+
+    expect(container.dataset.diagviewError).toBe("1");
+    expect(container.querySelector(".diagview-error-title").textContent).toBe("Syntax Error");
+    expect(container.closest(".diagview-wrapper")).toBeNull();
+  });
+
+  // A working Mermaid 11 or 12 flowchart, cut down. Mermaid puts the SVG id
+  // in front of each marker, edge and node id.
+  const flowchart = (svgId, { edge, node }) =>
+    `<svg id="${svgId}" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 80" role="graphics-document document" aria-roledescription="flowchart-v2">
+    <marker id="${svgId}_flowchart-v2-pointEnd"><path d="M0 0L10 5L0 10z"/></marker>
+    <g class="edgePaths"><path id="${svgId}-${edge}" d="M80 40L200 40"/></g>
+    <g class="nodes"><g class="node default" id="${svgId}-${node}"><rect width="80" height="40"/><text>Error handler</text></g></g></svg>`;
+
+  test.each([
+    ["a node named errorHandler", "mermaid-1", "L_A_errorHandler_0", "flowchart-errorHandler-1"],
+    ["a node named api-error", "mermaid-1", "L_A_api-error_0", "flowchart-api-error-1"],
+    ["an edge with the id api-error", "mermaid-1", "api-error", "flowchart-B-1"],
+    ["the render id mermaid-error-demo", "mermaid-error-demo", "L_A_B_0", "flowchart-B-1"],
+  ])("a Mermaid flowchart with %s gets a toolbar", (_, svgId, edge, node) => {
+    const { container, svg } = mountSvg(flowchart(svgId, { edge, node }));
+
+    initializeDiagram(container);
+
+    expect(container.dataset.diagviewError).toBeUndefined();
+    expect(container.querySelector(".diagview-error")).toBeNull();
+    expect(container.closest(".diagview-wrapper")).not.toBeNull();
+    expect(svg.style.display).not.toBe("none");
+  });
+
+  test("a Mermaid state diagram with a state named error gets a toolbar", () => {
+    const { container } = mountSvg(
+      '<svg id="mermaid-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 60" aria-roledescription="stateDiagram"><g class="node statediagram-state" id="mermaid-1-state-error-1"><rect width="80" height="40"/><text>error</text></g></svg>',
+    );
+
+    initializeDiagram(container);
+
+    expect(container.dataset.diagviewError).toBeUndefined();
+    expect(container.closest(".diagview-wrapper")).not.toBeNull();
   });
 
   test("a Mermaid flowchart with an error node still gets a toolbar", () => {
