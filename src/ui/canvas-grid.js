@@ -27,11 +27,12 @@ export function updateCanvasGrid(viewport, detail, svg) {
   const size = GRID_SPACING * scale * 2 ** -Math.floor(Math.log2((GRID_SPACING * scale) / 16));
 
   // Panzoom scales about the diagram's centre, which sits at the viewport
-  // centre, so a dot at the centre moves by the scaled pan
+  // centre, so a dot at the centre moves by the scaled pan. The values go
+  // straight into the background. Custom properties would inherit, and
+  // every pan frame would then restyle the whole diagram.
   const s = viewport.style;
-  s.setProperty("--dv-grid-size", `${size}px`);
-  s.setProperty("--dv-grid-x", `${pan.x * scale}px`);
-  s.setProperty("--dv-grid-y", `${pan.y * scale}px`);
+  s.backgroundSize = `${size}px ${size}px`;
+  s.backgroundPosition = `calc(50% + ${pan.x * scale}px) calc(50% + ${pan.y * scale}px)`;
 
   // Follow a zoom button or reset while the diagram animates to it
   const t = (svg || viewport.querySelector("svg"))?.style.transition || "";
@@ -50,8 +51,9 @@ export function syncCanvasGrid() {
   if (on) {
     updateCanvasGrid(viewport);
   } else {
-    ["--dv-grid-size", "--dv-grid-x", "--dv-grid-y", "transition"].forEach((p) =>
-      viewport.style.removeProperty(p),
-    );
+    const s = viewport.style;
+    s.backgroundSize = "";
+    s.backgroundPosition = "";
+    s.transition = "";
   }
 }

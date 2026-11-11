@@ -29,11 +29,21 @@ describe("canvasGrid", () => {
     state.activePanzoom = null;
   });
 
-  const vars = () => ({
-    size: viewport.style.getPropertyValue("--dv-grid-size"),
-    x: viewport.style.getPropertyValue("--dv-grid-x"),
-    y: viewport.style.getPropertyValue("--dv-grid-y"),
+  // jsdom drops a calc() in background-position, so record what the grid
+  // writes there
+  let position;
+  beforeEach(() => {
+    position = "";
+    Object.defineProperty(viewport.style, "backgroundPosition", {
+      configurable: true,
+      get: () => position,
+      set: (value) => {
+        position = value;
+      },
+    });
   });
+
+  const grid = () => ({ size: viewport.style.backgroundSize, position });
 
   test("is off by default and leaves the viewport alone", () => {
     expect(state.config.canvasGrid).toBe("none");
@@ -48,19 +58,22 @@ describe("canvasGrid", () => {
     updateConfig({ canvasGrid: "dots" });
     syncCanvasGrid();
     expect(viewport.classList.contains("dv-grid-dots")).toBe(true);
-    expect(vars()).toEqual({ size: "24px", x: "0px", y: "0px" });
+    expect(grid()).toEqual({ size: "24px 24px", position: "calc(50% + 0px) calc(50% + 0px)" });
 
     updateConfig({ canvasGrid: "none" });
     syncCanvasGrid();
     expect(viewport.classList.contains("dv-grid-dots")).toBe(false);
-    expect(vars()).toEqual({ size: "", x: "", y: "" });
+    expect(grid()).toEqual({ size: "", position: "" });
   });
 
   test("the grid moves with the pan and scales with the zoom", () => {
     updateConfig({ canvasGrid: "dots" });
     syncCanvasGrid();
     updateCanvasGrid(viewport, { x: 10, y: -4, scale: 1.25 });
-    expect(vars()).toEqual({ size: "30px", x: "12.5px", y: "-5px" });
+    expect(grid()).toEqual({
+      size: "30px 30px",
+      position: "calc(50% + 12.5px) calc(50% + -5px)",
+    });
   });
 
   test.each([
@@ -74,7 +87,7 @@ describe("canvasGrid", () => {
     updateConfig({ canvasGrid: "dots" });
     syncCanvasGrid();
     updateCanvasGrid(viewport, { x: 0, y: 0, scale: s });
-    expect(parseFloat(vars().size)).toBeCloseTo(expected, 5);
+    expect(parseFloat(grid().size)).toBeCloseTo(expected, 5);
   });
 
   test("follows an animated zoom and stays instant otherwise", () => {
@@ -108,7 +121,16 @@ describe("canvasGrid", () => {
     syncCanvasGrid();
     pan = { x: 8, y: 2 };
     updateCanvasGrid(viewport, { scale: 2 });
-    expect(vars()).toEqual({ size: "24px", x: "16px", y: "4px" });
+    expect(grid()).toEqual({ size: "24px 24px", position: "calc(50% + 16px) calc(50% + 4px)" });
+  });
+
+  test("a pan writes no custom property the diagram would inherit", () => {
+    // A change to an inherited property restyles every element of the
+    // diagram, on each pan frame
+    updateConfig({ canvasGrid: "dots" });
+    syncCanvasGrid();
+    updateCanvasGrid(viewport, { x: 10, y: -4, scale: 1.25 });
+    expect(viewport.getAttribute("style")).not.toMatch(/--/);
   });
 
   test("an unknown value keeps the previous setting", () => {
