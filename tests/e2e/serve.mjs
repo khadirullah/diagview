@@ -57,6 +57,7 @@ const TYPES = {
   ".map": "application/json",
   ".jpg": "image/jpeg",
   ".png": "image/png",
+  ".woff": "font/woff",
 };
 
 const server = http.createServer((req, res) => {

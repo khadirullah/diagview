@@ -198,6 +198,8 @@ A: DiagView could not embed the page font, so the exported file falls back to a 
 />
 ```
 
+A font stylesheet from another origin pulled in with `@import url(...)` stays hidden even with CORS, so load it with a `<link>` like the one above.
+
 `exportFonts` sets which fonts go into the file. `"used"` (the default) embeds only the font files the labels use. `"all"` embeds every `@font-face` rule on the page, which can make an SVG ten times larger. `"none"` embeds no fonts. Use it when a font's licence does not allow embedding, which is common with paid fonts. An SVG file then names the font, and viewers without it see a fallback. PNG, JPEG, WebP, PDF and Copy Image files show those labels in a font installed on your computer, since an SVG drawn as an image cannot use the page's web fonts.
 
 **Q: An image in my diagram is missing from the PNG or PDF. Why?**  

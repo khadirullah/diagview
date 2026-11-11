@@ -77,8 +77,9 @@ build. Set `E2E_PORT` to use a port other than 9340.
 | `verify-svg-shapes.spec.mjs`          | 4      | an SVG drawn only with an `<ellipse>`, an `<image>`, a `<use>` of a page sprite or a `<foreignObject>`, in a container or matched itself, gets its card and toolbar, opens in the viewer and exports as SVG and PNG, while an empty SVG, a zero-sized viewBox and an error message with no shapes, as text or as HTML, still get the error box                                                                                                                                                                                                           |
 | `verify-reduced-motion.spec.mjs`      | 2      | with the system set to reduce motion, an animated Mermaid edge keeps its slow crawl in a card and in the viewer, as it does with layout "off", while the viewer, its menu and the toolbar buttons do not animate                                                                                                                                                                                                                                                                                                                                         |
 | `verify-canvas-grid.spec.mjs`         | 3      | `canvasGrid: "dots"` follows a drag and a zoom, the diagram inherits none of the grid's values, so a pan does not restyle it, and turning the grid off clears it                                                                                                                                                                                                                                                                                                                                                                                         |
+| `verify-export-font-rules.spec.mjs`   | 1      | SVG export embeds fonts declared inside `@layer`, `@media` and `@supports` blocks and in `@import` sheets, resolves an imported sheet's `url()` against that sheet, and leaves out a `@media print` font the screen does not use                                                                                                                                                                                                                                                                                                                         |
 
-That is 351 checks per browser.
+That is 352 checks per browser.
 
 `verify-react-strictmode` loads React from unpkg, and `verify-fixes`,
 `verify-mermaid-errors` and `verify-header-title` load Mermaid from
@@ -88,11 +89,11 @@ jsdelivr, so these four need network access. So does the icon check in
 and `verify-fixes` against a published build instead of the local one. The
 other suites run offline. `verify-export-search`, `verify-search-export`, `verify-readable-text`,
 `verify-image-handler`, `verify-diagram-size`, `verify-search-lines`,
-`verify-export-fonts`, `verify-search-pan`, `verify-mermaid-errors`,
-`verify-bare-svg`, `verify-off-hint`, `verify-header-title`,
-`verify-host-form`, `verify-detached-diagrams`, `verify-copy-image`,
-`verify-export-fallbacks`, `verify-svg-shapes` and `verify-reduced-motion` inject the
-build themselves. Set
+`verify-export-fonts`, `verify-export-font-rules`, `verify-search-pan`,
+`verify-mermaid-errors`, `verify-bare-svg`, `verify-off-hint`,
+`verify-header-title`, `verify-host-form`, `verify-detached-diagrams`,
+`verify-copy-image`, `verify-export-fallbacks`, `verify-svg-shapes` and
+`verify-reduced-motion` inject the build themselves. Set
 `DV_DIST=/path/to/diagview.umd.js` to test another build with those suites.
 
 `repro.html` is the shared test page: a 2000x1200 labelled grid SVG (cells

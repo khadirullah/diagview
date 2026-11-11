@@ -1,0 +1,7 @@
+/* Imported by export-fonts-nested.html. The url() is relative to this file. */
+@layer base {
+  @font-face {
+    font-family: "DV Import";
+    src: url("dv-sans.woff") format("woff");
+  }
+}

@@ -145,6 +145,68 @@ export function pickFontFaces(faces, svgEl) {
 }
 
 /**
+ * True when an @media, @import or @supports condition holds on the page now.
+ * The export shows the diagram as the screen does, so a font face in a
+ * @media print block stays out like it stays off the screen.
+ * @private
+ */
+const applies = (rule) =>
+  rule.media
+    ? matchMedia(rule.media.mediaText).matches
+    : !(rule instanceof CSSSupportsRule) || CSS.supports(rule.conditionText);
+
+/**
+ * Add the font face rules of a stylesheet to faces, with the ones inside
+ * @layer, @media and @supports blocks and @import sheets
+ * @private
+ * @param {CSSStyleSheet} sheet - Stylesheet
+ * @param {object[]} faces - Font face descriptors found so far
+ * @param {Set<string>} seen - Stylesheet links read so far, as an @import
+ *   can point back at a sheet that imports it
+ */
+function readFontFaces(sheet, faces, seen) {
+  const href = sheet.href;
+  if (href) {
+    if (seen.has(href)) return;
+    seen.add(href);
+  }
+  try {
+    // Relative url()s inside a rule resolve against the stylesheet that
+    // declares it (or the page for inline <style> blocks), not the export.
+    // An @import sheet has a link of its own.
+    const base = href || document.baseURI;
+    const walk = (rules) => {
+      for (const rule of rules) {
+        if (rule instanceof CSSFontFaceRule) {
+          const d = (p) => rule.style?.getPropertyValue(p) || "";
+          faces.push({
+            cssText: rule.cssText,
+            base,
+            family: unquote(d("font-family")),
+            weight: d("font-weight"),
+            style: d("font-style"),
+            range: d("unicode-range"),
+          });
+        } else if (applies(rule)) {
+          if (rule.styleSheet) readFontFaces(rule.styleSheet, faces, seen);
+          else if (rule.cssRules) walk(rule.cssRules);
+        }
+      }
+    };
+    walk(sheet.cssRules);
+  } catch {
+    // Only a cross-origin stylesheet loaded without CORS gets here, or one
+    // pulled in with @import, which never uses CORS. Say once per stylesheet
+    // why its fonts are missing from the export.
+    if (href && warned.size < warned.add(href).size) {
+      console.warn(
+        `DiagView: Can't read fonts from ${href}. Load it with a <link crossorigin="anonymous"> to embed them in exports.`,
+      );
+    }
+  }
+}
+
+/**
  * Collect font face rules from loaded document stylesheets
  * and embed referenced font files as base64 data URIs.
  * Mutates the SVG element's first/new <style> block.
@@ -160,35 +222,8 @@ export async function embedDocumentFonts(svgEl, mode, localOnly) {
   await document.fonts.ready;
 
   let fontFaceRules = [];
-  for (const sheet of document.styleSheets) {
-    try {
-      // Relative url()s inside a rule resolve against the stylesheet that
-      // declares it (or the page for inline <style> blocks), not the export.
-      const base = sheet.href || document.baseURI;
-      for (const rule of sheet.cssRules) {
-        if (rule instanceof CSSFontFaceRule) {
-          const d = (p) => rule.style?.getPropertyValue(p) || "";
-          fontFaceRules.push({
-            cssText: rule.cssText,
-            base,
-            family: unquote(d("font-family")),
-            weight: d("font-weight"),
-            style: d("font-style"),
-            range: d("unicode-range"),
-          });
-        }
-      }
-    } catch {
-      // Only a cross-origin stylesheet loaded without CORS gets here. Say
-      // once per stylesheet why its fonts are missing from the export.
-      const href = sheet.href;
-      if (href && warned.size < warned.add(href).size) {
-        console.warn(
-          `DiagView: Can't read fonts from ${href}. Add crossorigin="anonymous" to its <link> to embed them in exports.`,
-        );
-      }
-    }
-  }
+  const seen = new Set();
+  for (const sheet of document.styleSheets) readFontFaces(sheet, fontFaceRules, seen);
 
   // Only embed the faces the text uses, so the file stays small
   if (mode != "all") {

@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>DiagView export fonts below the top level</title>
+    <!--
+      fonts/dv-sans.woff is the Latin DV Sans 400 subset from export-fonts.html
+      (Quicksand, SIL Open Font License 1.1). Each family below loads it from
+      another place in the stylesheets, the way Tailwind v4 and other tools
+      write them. DV Print sits in a @media print block, so the page and the
+      export show its label in the fallback font.
+    -->
+    <style>
+      @import url("fonts/import.css");
+      @font-face {
+        font-family: "DV Top";
+        src: url("fonts/dv-sans.woff") format("woff");
+      }
+      @layer theme, base;
+      @layer base {
+        @font-face {
+          font-family: "DV Layer";
+          src: url("fonts/dv-sans.woff") format("woff");
+        }
+      }
+      @media all {
+        @font-face {
+          font-family: "DV Media";
+          src: url("fonts/dv-sans.woff") format("woff");
+        }
+      }
+      @supports (display: grid) {
+        @font-face {
+          font-family: "DV Supports";
+          src: url("fonts/dv-sans.woff") format("woff");
+        }
+      }
+      @media print {
+        @font-face {
+          font-family: "DV Print";
+          src: url("fonts/dv-sans.woff") format("woff");
+        }
+      }
+      text {
+        font-size: 22px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="diagram" id="nested" data-title="Nested fonts">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 300" width="200" height="300">
+        <text x="10" y="40" font-family="'DV Top', serif">Mermaid</text>
+        <text x="10" y="80" font-family="'DV Layer', serif">Mermaid</text>
+        <text x="10" y="120" font-family="'DV Media', serif">Mermaid</text>
+        <text x="10" y="160" font-family="'DV Supports', serif">Mermaid</text>
+        <text x="10" y="200" font-family="'DV Import', serif">Mermaid</text>
+        <text x="10" y="240" font-family="'DV Print', serif">Mermaid</text>
+      </svg>
+    </div>
+  </body>
+</html>

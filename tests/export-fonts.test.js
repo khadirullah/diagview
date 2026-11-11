@@ -277,8 +277,8 @@ describe("embedDocumentFonts", () => {
       await embedDocumentFonts(svgWith(["Hello"]));
       await embedDocumentFonts(svgWith(["Hello"]));
       expect(warn.mock.calls.map((c) => c[0])).toEqual([
-        'DiagView: Can\'t read fonts from https://fonts.example.com/css?family=A. Add crossorigin="anonymous" to its <link> to embed them in exports.',
-        'DiagView: Can\'t read fonts from https://fonts.example.com/css?family=B. Add crossorigin="anonymous" to its <link> to embed them in exports.',
+        'DiagView: Can\'t read fonts from https://fonts.example.com/css?family=A. Load it with a <link crossorigin="anonymous"> to embed them in exports.',
+        'DiagView: Can\'t read fonts from https://fonts.example.com/css?family=B. Load it with a <link crossorigin="anonymous"> to embed them in exports.',
       ]);
       // The readable sheet still gets embedded, from the cache the second time
       expect(fetched()).toEqual(["sans-400.woff2"]);
@@ -286,5 +286,109 @@ describe("embedDocumentFonts", () => {
       warn.mockRestore();
       delete document.styleSheets;
     }
+  });
+
+  describe("font faces below the top level of a stylesheet", () => {
+    // jsdom can't parse @layer and has no matchMedia, CSS.supports or
+    // CSSSupportsRule, so the sheets here are plain objects holding real
+    // @font-face rules
+    class SupportsRule {}
+
+    /** A real @font-face rule for one family, its file under /f/ */
+    const faceRule = (family, src = `url(/f/${family}.woff2)`) => {
+      const el = document.createElement("style");
+      el.textContent = `@font-face { font-family: ${family}; src: ${src}; }`;
+      document.head.appendChild(el);
+      const [rule] = el.sheet.cssRules;
+      el.remove();
+      return rule;
+    };
+    const media = (mediaText, ...cssRules) => ({ media: { mediaText }, cssRules });
+    const supports = (conditionText, ...cssRules) =>
+      Object.assign(new SupportsRule(), { conditionText, cssRules });
+    const layer = (...cssRules) => ({ name: "base", cssRules });
+    const imported = (styleSheet, mediaText = "") => ({ media: { mediaText }, styleSheet });
+    const useSheets = (...sheets) =>
+      Object.defineProperty(document, "styleSheets", { get: () => sheets, configurable: true });
+
+    beforeEach(() => {
+      global.CSSSupportsRule = SupportsRule;
+      global.CSS = { supports: (condition) => condition == "(display: grid)" };
+      window.matchMedia = (query) => ({ matches: query != "print" });
+    });
+
+    afterEach(() => {
+      delete global.CSSSupportsRule;
+      delete global.CSS;
+      delete window.matchMedia;
+      delete document.styleSheets;
+    });
+
+    test("reads @layer, @media and @supports blocks that apply to the page", async () => {
+      useSheets({
+        href: null,
+        cssRules: [
+          layer(faceRule("layered"), layer(faceRule("deeper"))),
+          media("all", faceRule("screen")),
+          media("print", faceRule("print")),
+          supports("(display: grid)", faceRule("grid")),
+          supports("(display: nope)", faceRule("nope")),
+        ],
+      });
+      await embedDocumentFonts(svgWith(["Hello"]), "all");
+      // The page does not use the fonts of a print or unsupported block, so
+      // the export leaves them out too
+      expect(fetched()).toEqual(["layered.woff2", "deeper.woff2", "screen.woff2", "grid.woff2"]);
+    });
+
+    test("reads @import sheets, with url()s relative to the imported sheet", async () => {
+      const fonts = {
+        href: "https://cdn.example.com/css/fonts.css",
+        cssRules: [faceRule("imported", "url(../files/imported.woff2)")],
+      };
+      const printOnly = { href: "https://example.com/print.css", cssRules: [faceRule("print")] };
+      useSheets({
+        href: "https://example.com/site.css",
+        cssRules: [imported(fonts), imported(printOnly, "print")],
+      });
+      const svg = svgWith(["Hello", { family: "imported" }]);
+      await embedDocumentFonts(svg);
+      expect(fetchMock.mock.calls.map((c) => String(c[0]))).toEqual([
+        "https://cdn.example.com/files/imported.woff2",
+      ]);
+      expect(svg.querySelector("style.dv-font-embed").textContent).toMatch(/data:font\/woff2/);
+    });
+
+    test("reads a sheet once when @import goes round in a loop", async () => {
+      const a = { href: "https://example.com/a.css", cssRules: [] };
+      const b = { href: "https://example.com/b.css", cssRules: [imported(a), faceRule("b")] };
+      a.cssRules.push(imported(b), faceRule("a"));
+      useSheets(a, { href: null, cssRules: [imported(b)] });
+      await embedDocumentFonts(svgWith(["Hello"]), "all");
+      expect(fetched()).toEqual(["b.woff2", "a.woff2"]);
+    });
+
+    test("warns about an @import sheet it can't read and embeds the rest", async () => {
+      const locked = {
+        href: "https://fonts.example.com/css?family=C",
+        get cssRules() {
+          throw new DOMException("Cannot access rules", "SecurityError");
+        },
+      };
+      useSheets({
+        href: null,
+        cssRules: [imported(locked), layer(faceRule("'Brand Sans'", "url(/f/brand.woff2)"))],
+      });
+      const warn = jest.spyOn(console, "warn").mockImplementation(() => {});
+      try {
+        await embedDocumentFonts(svgWith(["Hello"]));
+        expect(warn.mock.calls.map((c) => c[0])).toEqual([
+          'DiagView: Can\'t read fonts from https://fonts.example.com/css?family=C. Load it with a <link crossorigin="anonymous"> to embed them in exports.',
+        ]);
+        expect(fetchMock).toHaveBeenCalledTimes(1);
+      } finally {
+        warn.mockRestore();
+      }
+    });
   });
 });
