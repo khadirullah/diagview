@@ -489,9 +489,20 @@ describe("styles.css: dead and contradicting rules", () => {
     const open = css.indexOf("{", css.indexOf(".diagview-modal", idx));
     const selector = css.slice(idx, open);
     expect(selector).toMatch(/\.diagview-modal,/);
-    expect(selector).toMatch(/\.diagview-modal \*:not\(\.diagview-spinner\)/);
-    expect(selector).toMatch(/\.diagview-modal \*::before/);
-    expect(selector).toMatch(/\.diagview-modal \*::after/);
+    expect(selector).toMatch(/\.diagview-modal \*:not\(\.diagview-spinner, \.diagview-toast-spin,/);
+    expect(selector).toMatch(/\.diagview-modal \*:not\(svg \*\)::before/);
+    expect(selector).toMatch(/\.diagview-modal \*:not\(svg \*\)::after/);
+  });
+
+  test("reduced motion leaves the diagram's own animations to the diagram", () => {
+    // Squeezed to 0.01ms, an endless animation such as a Mermaid animated
+    // edge lands on a random frame each time and flickers
+    const idx = css.indexOf("@media (prefers-reduced-motion: reduce)");
+    const open = css.indexOf("{", idx);
+    const list = css.slice(open + 1, css.indexOf("{", open + 1)).split(",\n");
+    const everything = list.filter((selector) => selector.includes("*"));
+    expect(everything.length).toBeGreaterThan(3);
+    for (const selector of everything) expect(selector).toMatch(/:not\([^)]*\bsvg \*\)/);
   });
 
   test("reduced motion stops the slide of a notice, in the viewer and on the page", () => {

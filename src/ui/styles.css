@@ -1936,12 +1936,15 @@
 /* Accessibility */
 /* The spinners are excluded: a loading indicator must keep moving (it is */
 /* slowed down further below instead of frozen).                           */
+/* The diagram's own SVG content moves as it does without DiagView. An     */
+/* endless animation there, such as a Mermaid animated edge, squeezed to   */
+/* 0.01ms lands on a random frame each time and flickers.                  */
 @media (prefers-reduced-motion: reduce) {
   .diagview-modal,
-  .diagview-modal *:not(.diagview-spinner):not(.diagview-toast-spin),
-  .diagview-modal *::before,
-  .diagview-modal *::after,
-  .diagview-wrapper *,
+  .diagview-modal *:not(.diagview-spinner, .diagview-toast-spin, svg *),
+  .diagview-modal *:not(svg *)::before,
+  .diagview-modal *:not(svg *)::after,
+  .diagview-wrapper *:not(svg *),
   .diagview-off-hint,
   .diagview-toast {
     animation-duration: 0.01ms !important;

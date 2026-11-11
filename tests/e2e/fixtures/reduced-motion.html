@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>DiagView reduced motion</title>
+    <style>
+      body {
+        font-family: sans-serif;
+        margin: 24px;
+        background: #fff;
+        color: #1e293b;
+      }
+      .diagram {
+        width: 480px;
+        margin: 24px 0;
+      }
+    </style>
+  </head>
+  <body>
+    <!--
+  The same diagram twice, with an animated edge written the way Mermaid 12
+  writes `e1@{ animate: true }`. The first is a DiagView card, the second
+  has layout "off" and shows how the edge moves without DiagView.
+-->
+    <div class="diagram" id="card" data-title="Animated edge">
+      <svg id="mermaid-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 120">
+        <style>
+          #mermaid-1 .edge-animation-fast {
+            stroke-dasharray: 9, 5 !important;
+            stroke-dashoffset: 900;
+            animation: dash 20s linear infinite;
+            stroke-linecap: round;
+          }
+          @keyframes dash {
+            to {
+              stroke-dashoffset: 0;
+            }
+          }
+        </style>
+        <rect x="20" y="30" width="140" height="60" fill="#dbeafe" />
+        <rect x="320" y="30" width="140" height="60" fill="#dcfce7" />
+        <path
+          class="flowchart-link edge-animation-fast"
+          d="M160,60L320,60"
+          stroke="#334155"
+          stroke-width="2"
+        />
+      </svg>
+    </div>
+    <div class="diagram" id="off" data-diagview-layout="off">
+      <svg id="mermaid-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 120">
+        <style>
+          #mermaid-2 .edge-animation-fast {
+            stroke-dasharray: 9, 5 !important;
+            stroke-dashoffset: 900;
+            animation: dash 20s linear infinite;
+            stroke-linecap: round;
+          }
+          @keyframes dash {
+            to {
+              stroke-dashoffset: 0;
+            }
+          }
+        </style>
+        <rect x="20" y="30" width="140" height="60" fill="#dbeafe" />
+        <rect x="320" y="30" width="140" height="60" fill="#dcfce7" />
+        <path
+          class="flowchart-link edge-animation-fast"
+          d="M160,60L320,60"
+          stroke="#334155"
+          stroke-width="2"
+        />
+      </svg>
+    </div>
+    <script>
+      // Dash offset of an edge on each of the next 20 frames
+      window.__dashes = (selector) =>
+        new Promise((resolve) => {
+          const values = [];
+          const tick = () => {
+            const path = document.querySelector(selector);
+            values.push(parseFloat(getComputedStyle(path).strokeDashoffset));
+            if (values.length < 20) requestAnimationFrame(tick);
+            else resolve({ duration: getComputedStyle(path).animationDuration, values });
+          };
+          requestAnimationFrame(tick);
+        });
+    </script>
+  </body>
+</html>

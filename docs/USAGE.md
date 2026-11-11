@@ -1250,6 +1250,8 @@ DiagView.init({
 - `zoomAnimationDuration` (default `200`) is how many milliseconds zoom in, zoom out and every reset take to animate. That covers the reset button, `0` and `Space`, a double click or double tap, and the reset after the window grows or shrinks by more than a fifth. `0` turns the animation off.
 - `panAnimationDuration` (default `200`) is how many milliseconds one arrow key pan takes to animate. `0` turns the animation off.
 
+With reduced motion on, DiagView's viewer, menus and notices change at once instead of animating. Animations inside the diagram are left alone. A Mermaid edge with `animate: true` crawls on the page and in fullscreen just as it does without DiagView.
+
 ---
 
 ## 23. Programmatic control
