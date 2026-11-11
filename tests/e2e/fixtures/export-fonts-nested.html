@@ -8,7 +8,8 @@
       (Quicksand, SIL Open Font License 1.1). Each family below loads it from
       another place in the stylesheets, the way Tailwind v4 and other tools
       write them. DV Print sits in a @media print block, so the page and the
-      export show its label in the fallback font.
+      export show its label in the fallback font. DV Sources lists several
+      sources, of which the browser uses the first it reads that loads.
     -->
     <style>
       @import url("fonts/import.css");
@@ -41,6 +42,14 @@
           src: url("fonts/dv-sans.woff") format("woff");
         }
       }
+      @font-face {
+        font-family: "DV Sources";
+        src:
+          url("fonts/dv-sans.eot") format("embedded-opentype"),
+          url("fonts/missing.woff2") format("woff2"),
+          url("fonts/dv-sans.woff?first") format("woff"),
+          url("fonts/dv-sans.woff?second") format("woff");
+      }
       text {
         font-size: 22px;
       }
@@ -55,6 +64,12 @@
         <text x="10" y="160" font-family="'DV Supports', serif">Mermaid</text>
         <text x="10" y="200" font-family="'DV Import', serif">Mermaid</text>
         <text x="10" y="240" font-family="'DV Print', serif">Mermaid</text>
+      </svg>
+    </div>
+
+    <div class="diagram" id="sources" data-title="Font sources">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 60" width="200" height="60">
+        <text x="10" y="40" font-family="'DV Sources', serif">Mermaid</text>
       </svg>
     </div>
   </body>

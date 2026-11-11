@@ -207,6 +207,20 @@ function readFontFaces(sheet, faces, seen) {
 }
 
 /**
+ * True when the browser can use a font source with this format() and tech().
+ * Every browser DiagView supports reads the four common formats, and
+ * CSS.supports() answers for the rest in newer browsers.
+ * @private
+ * @param {string} [format] - format() value without quotes
+ * @param {string} [tech] - tech() list
+ */
+const usable = (format, tech) =>
+  (!format ||
+    /^(woff2?|truetype|opentype)(-variations)?$/i.test(format) ||
+    CSS.supports(`font-format(${format})`)) &&
+  (!tech || tech.split(",").every((t) => CSS.supports(`font-tech(${t.trim()})`)));
+
+/**
  * Collect font face rules from loaded document stylesheets
  * and embed referenced font files as base64 data URIs.
  * Mutates the SVG element's first/new <style> block.
@@ -235,20 +249,31 @@ export async function embedDocumentFonts(svgEl, mode, localOnly) {
   // Fetch and inline font files referenced by url(...)
   const inlined = await Promise.all(
     fontFaceRules.map(async ({ cssText, base }) => {
-      // Replace each url(...) with a base64 data URI. Relative and
-      // root-relative references (self-hosted fonts) are made absolute
-      // first: copied verbatim they cannot resolve inside a data:/blob: image.
-      // data: URLs are left as they are.
+      // Replace the url(...) the browser would use with a base64 data URI.
+      // That is the first source with a format and tech it reads whose file
+      // loads, so later sources are not fetched. Relative and root-relative
+      // references (self-hosted fonts) are made absolute first: copied
+      // verbatim they cannot resolve inside a data:/blob: image. A data:
+      // URL is left as it is, and when it comes first nothing is fetched.
       let result = cssText;
-      for (const [match, , rawUrl] of cssText.matchAll(/url\((['"]?)(?!data:)([^'")\s]+)\1\)/gi)) {
-        const dataURI = await cachedDataURI(rawUrl, base);
+      let embedded = false;
+      const sources = cssText.matchAll(
+        /(url\((['"]?)([^'")\s]+)\2\))(?:\s*format\(\s*['"]?([^'")]*)['"]?\s*\))?(?:\s*tech\(([^)]*)\))?/gi,
+      );
+      for (const [, link, , rawUrl, format, tech] of sources) {
+        if (rawUrl.startsWith("data:")) {
+          embedded = embedded || usable(format, tech);
+          continue;
+        }
+        const dataURI = !embedded && usable(format, tech) && (await cachedDataURI(rawUrl, base));
         if (dataURI) {
-          result = result.replace(match, `url('${dataURI}')`);
+          embedded = true;
+          result = result.replace(link, `url('${dataURI}')`);
         } else if (localOnly) {
           // Strict mode keeps other servers out of the file. An empty
           // data: URL fails like the link would, so the browser moves on
           // to the next source or the fallback font.
-          result = result.replace(match, "url(data:,)");
+          result = result.replace(link, "url(data:,)");
         }
       }
       return result;

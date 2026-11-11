@@ -248,6 +248,75 @@ describe("embedDocumentFonts", () => {
     expect(next.querySelector("style.dv-font-embed").textContent).toMatch(/data:font\/woff2/);
   });
 
+  describe("a font with several sources", () => {
+    /** Export "Hello" in a family whose only rule has this src list */
+    async function exportSources(src, localOnly) {
+      styleEl.textContent += `\n@font-face { font-family: 'Sources'; src: ${src}; }`;
+      const svg = svgWith(["Hello", { family: "Sources" }]);
+      await embedDocumentFonts(svg, "used", localOnly);
+      return svg.querySelector("style.dv-font-embed").textContent;
+    }
+
+    beforeEach(() => {
+      // jsdom has no CSS.supports. This browser knows no color fonts.
+      global.CSS = { supports: (condition) => !/embedded|svg\)|color/i.test(condition) };
+    });
+
+    afterEach(() => {
+      delete global.CSS;
+    });
+
+    test("embeds only the first source the browser can use", async () => {
+      const css = await exportSources(
+        "url(/f/a.eot) format('embedded-opentype'), url(/f/a.woff2) format('woff2'), " +
+          "url(/f/a.woff) format('woff'), url(/f/a.ttf)",
+      );
+      expect(fetched()).toEqual(["a.woff2"]);
+      expect(css.match(/data:font/g)).toHaveLength(1);
+      // The other sources stay as they were, as other modes allow links
+      expect(css).toContain("url(/f/a.woff) format('woff')");
+    });
+
+    test("strict mode empties the sources it did not embed", async () => {
+      const css = await exportSources("url(/f/a.woff2) format('woff2'), url(/f/a.woff)", true);
+      expect(fetched()).toEqual(["a.woff2"]);
+      expect(css).toMatch(
+        /src: url\('data:font\/woff2;base64,[^']+'\) format\('woff2'\), url\(data:,\)/,
+      );
+    });
+
+    test("moves on to the next source when a fetch fails", async () => {
+      fetchMock.mockImplementationOnce(async () => ({ ok: false }));
+      const css = await exportSources(
+        "url(/f/gone.woff2) format('woff2'), url(/f/a.woff) format('woff'), url(/f/a.ttf)",
+      );
+      expect(fetched()).toEqual(["gone.woff2", "a.woff"]);
+      expect(css.match(/data:font/g)).toHaveLength(1);
+    });
+
+    test("skips a source whose format or tech the browser lacks", async () => {
+      await exportSources(
+        "url(/f/colr.woff2) format(woff2) tech(color-COLRv1), url(/f/a.svg) format('svg'), " +
+          "url(/f/vf.woff2) format('woff2-variations'), url(/f/a.woff)",
+      );
+      expect(fetched()).toEqual(["vf.woff2"]);
+    });
+
+    test("fetches nothing when a data: URL comes first", async () => {
+      const css = await exportSources(
+        "url(data:font/woff2;base64,QUJD) format('woff2'), url(/f/a.woff)",
+      );
+      expect(fetchMock).not.toHaveBeenCalled();
+      expect(css).toContain("data:font/woff2;base64,QUJD");
+    });
+
+    test("keeps local() and embeds the first url after it", async () => {
+      const css = await exportSources("local('Sources'), url(/f/a.woff2), url(/f/a.woff)");
+      expect(fetched()).toEqual(["a.woff2"]);
+      expect(css).toMatch(/local\(['"]?Sources['"]?\), url\('data:font/);
+    });
+  });
+
   test("adds nothing when the text uses no page font", async () => {
     const svg = svgWith(["Hello", { family: "Arial, sans-serif" }]);
     await embedDocumentFonts(svg);

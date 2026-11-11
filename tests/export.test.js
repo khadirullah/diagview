@@ -1447,7 +1447,8 @@ describe("Export embeds self-hosted fonts referenced by relative urls", () => {
     });
 
     fetchMock = jest.fn(async (url) => {
-      if (url.includes("cdn.example.com")) throw new TypeError("Failed to fetch");
+      // The first source fails, so export moves on to the second
+      if (url.includes("x.woff2")) return { ok: false };
       return { ok: true, blob: async () => new Blob(["font"], { type: "font/woff2" }) };
     });
     global.fetch = fetchMock;
@@ -1472,11 +1473,12 @@ describe("Export embeds self-hosted fonts referenced by relative urls", () => {
   test("relative and root-relative urls are resolved against the page and inlined", async () => {
     await copySVGCode(container);
 
-    const requested = fetchMock.mock.calls.map((c) => c[0]);
-    expect(requested).toContain("http://localhost/fonts/x.woff2");
-    expect(requested).toContain("http://localhost/fonts/y.woff");
-    // data: URLs are never fetched
-    expect(requested.some((u) => u.startsWith("data:"))).toBe(false);
+    // Fetching stops at the first source that loads, so the data: URL and
+    // the remote one after it are never fetched
+    expect(fetchMock.mock.calls.map((c) => c[0])).toEqual([
+      "http://localhost/fonts/x.woff2",
+      "http://localhost/fonts/y.woff",
+    ]);
 
     const text = navigator.clipboard.writeText.mock.calls[0][0];
     expect(text).toContain("@font-face");
@@ -1485,10 +1487,10 @@ describe("Export embeds self-hosted fonts referenced by relative urls", () => {
     expect(text).toMatch(/url\('data:font\/woff2;base64,[A-Za-z0-9+/=]+'\)/);
     // the pre-existing data: URL is kept untouched
     expect(text).toContain("data:font/woff2;base64,QUJD");
-    // a failed fetch does not fail the export, and strict mode empties that
-    // url so the file loads nothing from another server
+    // a failed fetch does not fail the export, and strict mode empties the
+    // urls it did not embed so the file loads nothing from another server
     expect(text).not.toContain("cdn.example.com");
-    expect(text).toContain("url(data:,)");
+    expect(text.match(/url\(data:,\)/g)).toHaveLength(2);
   });
 });
 
