@@ -244,13 +244,20 @@ export function getDiagramSvg(element) {
 }
 
 /**
+ * SVG elements that draw a shape or a picture. A <use> draws a copy of a
+ * shape, often from a sprite elsewhere on the page.
+ */
+export const SHAPES = "path, rect, circle, ellipse, line, polygon, polyline, image, use";
+
+/**
  * Whether anything is drawn in the SVG yet. An <svg> matched by the
  * selector can sit on the page empty until a library such as D3 fills it.
+ * A <foreignObject> draws the HTML inside it.
  * @param {Element} svg - The diagram's SVG
  * @returns {boolean} True once the SVG holds a shape, text or group
  */
 export function hasDrawnContent(svg) {
-  return !!svg.querySelector("g, path, rect, circle, text, line, polygon, polyline");
+  return !!svg.querySelector(`g, text, foreignObject, ${SHAPES}`);
 }
 
 /**

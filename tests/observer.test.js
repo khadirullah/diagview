@@ -244,6 +244,15 @@ describe("Observer Module", () => {
     expect(initializeDiagram).toHaveBeenCalledWith(svg, 0);
   });
 
+  test("an svg the selector matches with only an ellipse in it is set up", () => {
+    document.body.innerHTML =
+      '<svg class="diagram" id="oval" xmlns="http://www.w3.org/2000/svg"><ellipse rx="4" ry="2"/></svg>';
+
+    observeDiagrams();
+
+    expect(initializeDiagram).toHaveBeenCalledWith(document.getElementById("oval"), 0);
+  });
+
   test("an svg drawn inside another svg is part of that drawing, not a diagram", () => {
     document.body.innerHTML =
       '<svg xmlns="http://www.w3.org/2000/svg"><svg class="diagram"><rect width="1" height="1"/></svg></svg>';

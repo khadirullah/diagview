@@ -1327,9 +1327,9 @@ DiagView shows a placeholder titled "Syntax Error", "Parse Error" or "Diagram Er
 
 - contains a `<parsererror>` element
 - is a diagram library's error output, for example a Mermaid syntax error
-- has no `g`, `path`, `rect`, `circle`, `text`, `line`, `polygon` or `polyline` element
+- has no `g`, `text`, `foreignObject`, `path`, `rect`, `circle`, `ellipse`, `line`, `polygon`, `polyline`, `image` or `use` element
 - declares a `viewBox` with zero width or height
-- has text but no shapes, and the text contains "error" or "failed"
+- has text but no `path`, `rect`, `circle`, `ellipse`, `line`, `polygon`, `polyline`, `image` or `use` element, and the text contains "error" or "failed". HTML in a `foreignObject` counts as text here.
 
 A container without an `<svg>` gets no placeholder. DiagView leaves it alone and sets it up once an `<svg>` appears in it. The same goes for an empty `<svg>` that the selector matches itself. For such an SVG the placeholder goes right after it, since an SVG cannot hold it.
 

@@ -521,6 +521,16 @@ describe("hasDrawnContent", () => {
     document.body.innerHTML = '<svg id="a"><text>Hi</text></svg>';
     expect(hasDrawnContent(document.getElementById("a"))).toBe(true);
   });
+
+  test.each([
+    ["an ellipse", '<ellipse cx="50" cy="25" rx="40" ry="20"/>'],
+    ["an image", '<image href="data:image/png;base64,AAAA" width="10" height="10"/>'],
+    ["a use of a sprite on the page", '<use href="#sprite-box"/>'],
+    ["a foreignObject", '<foreignObject width="10" height="10"><div>Box</div></foreignObject>'],
+  ])("is true for an svg drawn with only %s", (_, shape) => {
+    document.body.innerHTML = `<svg id="a" viewBox="0 0 100 50">${shape}</svg>`;
+    expect(hasDrawnContent(document.getElementById("a"))).toBe(true);
+  });
 });
 
 describe("getDiagramTitle", () => {

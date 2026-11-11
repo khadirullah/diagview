@@ -13,6 +13,7 @@ import {
   getDiagramTitle,
   getDiagramSvg,
   hasDrawnContent,
+  SHAPES,
   removeEmptyAttr,
   sanitizeSVG,
 } from "../core/utils.js";
@@ -89,10 +90,11 @@ function isValidSvg(svg) {
     .map(Number);
   if (vb.length === 4 && (vb[2] === 0 || vb[3] === 0)) return false;
 
-  // 5. Check for text-only error fragments (often returned by failed backend renders)
-  const shapes = svg.querySelector("path, rect, circle, line, polygon, polyline");
+  // 5. Check for text-only error fragments (often returned by failed backend renders).
+  // HTML in a <foreignObject> is text too.
+  const shapes = svg.querySelector(SHAPES);
   if (!shapes) {
-    const textElements = svg.querySelectorAll("text");
+    const textElements = svg.querySelectorAll("text, foreignObject");
     if (textElements.length > 0) {
       const allText = Array.from(textElements)
         .map((t) => t.textContent)

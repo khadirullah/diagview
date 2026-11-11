@@ -74,8 +74,9 @@ build. Set `E2E_PORT` to use a port other than 9340.
 | `verify-detached-diagrams.spec.mjs`   | 4      | a route a single-page app takes out and puts back at once keeps its cards and opens fullscreen, one swapped out without `destroy()` is released with its own markup back, one put back later gets its cards again and opens fullscreen, a diagram removed from inside its card takes the empty card with it, and `destroy()` restores the rest                                                                                                                                                                                                           |
 | `verify-copy-image.spec.mjs`          | 7      | Copy Image from the viewer menu and the page button and Copy SVG from the viewer menu call `clipboard.write` inside the click and copy, Chromium reads back a PNG the size of the PNG download and the SVG markup, a copy of either held past 5 seconds by a slow font file still copies, and a denied write downloads the PNG or the .svg file                                                                                                                                                                                                          |
 | `verify-export-fallbacks.spec.mjs`    | 4      | a WebP export in a browser whose canvas makes a PNG instead, as Safari does, downloads a .png file with a PNG inside, warns that it saved a PNG and reports `png` to `onExport`, a browser that makes WebP still saves a .webp file, a PNG export started from code with no animation frames, as in a tab in the background, still downloads, and a PDF export waits for the page's own jsPDF `<script>` that is still loading                                                                                                                           |
+| `verify-svg-shapes.spec.mjs`          | 4      | an SVG drawn only with an `<ellipse>`, an `<image>`, a `<use>` of a page sprite or a `<foreignObject>`, in a container or matched itself, gets its card and toolbar, opens in the viewer and exports as SVG and PNG, while an empty SVG, a zero-sized viewBox and an error message with no shapes, as text or as HTML, still get the error box                                                                                                                                                                                                           |
 
-That is 342 checks per browser.
+That is 346 checks per browser.
 
 `verify-react-strictmode` loads React from unpkg, and `verify-fixes`,
 `verify-mermaid-errors` and `verify-header-title` load Mermaid from
@@ -87,8 +88,8 @@ other suites run offline. `verify-export-search`, `verify-search-export`, `verif
 `verify-image-handler`, `verify-diagram-size`, `verify-search-lines`,
 `verify-export-fonts`, `verify-search-pan`, `verify-mermaid-errors`,
 `verify-bare-svg`, `verify-off-hint`, `verify-header-title`,
-`verify-host-form`, `verify-detached-diagrams`, `verify-copy-image` and
-`verify-export-fallbacks` inject the build themselves. Set
+`verify-host-form`, `verify-detached-diagrams`, `verify-copy-image`,
+`verify-export-fallbacks` and `verify-svg-shapes` inject the build themselves. Set
 `DV_DIST=/path/to/diagview.umd.js` to test another build with those suites.
 
 `repro.html` is the shared test page: a 2000x1200 labelled grid SVG (cells

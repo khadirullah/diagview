@@ -639,6 +639,61 @@ describe("Diagram Init: SVG Validation Edge Cases", () => {
   });
 });
 
+describe("Diagram Init: what counts as a drawn diagram", () => {
+  afterEach(() => {
+    document.body.innerHTML = "";
+  });
+
+  const shows = (markup) => {
+    const { container, svg } = mountSvg(markup);
+    initializeDiagram(container);
+    return {
+      error: container.dataset.diagviewError === "1",
+      wrapped: !!container.closest(".diagview-wrapper"),
+      hidden: svg.style.display === "none",
+    };
+  };
+  const DIAGRAM = { error: false, wrapped: true, hidden: false };
+  const ERROR_BOX = { error: true, wrapped: false, hidden: true };
+
+  test.each([
+    ["an ellipse", '<ellipse cx="50" cy="25" rx="40" ry="20"/>'],
+    ["an image", '<image href="data:image/png;base64,AAAA" width="100" height="50"/>'],
+    ["a use of a sprite on the page", '<use href="#sprite-box" width="50" height="50"/>'],
+    [
+      "a foreignObject",
+      '<foreignObject width="100" height="50"><div xmlns="http://www.w3.org/1999/xhtml">Box</div></foreignObject>',
+    ],
+  ])("an svg drawn with only %s gets a toolbar", (_, shape) => {
+    expect(shows(`<svg viewBox="0 0 100 50">${shape}</svg>`)).toEqual(DIAGRAM);
+  });
+
+  test("an ellipse labelled with the word error is a diagram, as a rect is", () => {
+    expect(
+      shows('<svg viewBox="0 0 100 50"><ellipse rx="40" ry="20"/><text>Error</text></svg>'),
+    ).toEqual(DIAGRAM);
+  });
+
+  test("text alone that reads as a diagram gets a toolbar", () => {
+    expect(shows('<svg viewBox="0 0 100 50"><g><text>Start</text></g></svg>')).toEqual(DIAGRAM);
+  });
+
+  test.each([
+    ["a text", "<text>Render failed: timeout</text>"],
+    ["a text in a group", "<g><text>Error 500</text></g>"],
+    [
+      "an HTML message",
+      '<foreignObject width="100" height="50"><div xmlns="http://www.w3.org/1999/xhtml">Error: render failed</div></foreignObject>',
+    ],
+  ])("an error message drawn as %s with no shapes gets the error box", (_, message) => {
+    expect(shows(`<svg viewBox="0 0 100 50">${message}</svg>`)).toEqual(ERROR_BOX);
+  });
+
+  test("an ellipse in a zero-sized viewBox still gets the error box", () => {
+    expect(shows('<svg viewBox="0 0 0 50"><ellipse rx="40" ry="20"/></svg>')).toEqual(ERROR_BOX);
+  });
+});
+
 function mountSvg(markup) {
   const container = document.createElement("div");
   container.className = "diagram";
