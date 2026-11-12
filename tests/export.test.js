@@ -1035,6 +1035,77 @@ describe("Export keeps the author's text colours", () => {
   });
 });
 
+describe("Export keeps each shape's fill opacity", () => {
+  const SVG_NS = "http://www.w3.org/2000/svg";
+  let container, pageStyle;
+
+  // A node whose rect sits in a group with the given class
+  const addNode = (svg, className) => {
+    const group = document.createElementNS(SVG_NS, "g");
+    group.setAttribute("class", `node ${className}`);
+    const rect = document.createElementNS(SVG_NS, "rect");
+    rect.setAttribute("width", "40");
+    rect.setAttribute("height", "20");
+    group.appendChild(rect);
+    svg.appendChild(group);
+  };
+
+  const copiedRects = async () => {
+    await copySVGCode(container);
+    const copied = navigator.clipboard.writeText.mock.calls[0][0];
+    const doc = new DOMParser().parseFromString(copied, "text/html");
+    return Array.from(doc.querySelectorAll("rect"));
+  };
+
+  beforeEach(() => {
+    container = document.createElement("div");
+    const svg = document.createElementNS(SVG_NS, "svg");
+    svg.setAttribute("viewBox", "0 0 100 100");
+    // The diagram's own rule fades a shape that has a fill in its style
+    // attribute, which the export writes on every shape
+    const own = document.createElementNS(SVG_NS, "style");
+    own.textContent = '.node [style*="fill:"] { fill-opacity: 0.22; }';
+    svg.appendChild(own);
+    addNode(svg, "plain");
+    addNode(svg, "faded");
+    container.appendChild(svg);
+    document.body.appendChild(container);
+
+    // Page rules outside the SVG, which the exported file does not carry.
+    // A browser reports fill-opacity 1 for a shape nothing fades, but jsdom
+    // has no default values, so the solid shape sets its 1 here.
+    pageStyle = document.createElement("style");
+    pageStyle.textContent =
+      ".node.plain rect { fill: rgb(15, 39, 70); fill-opacity: 1; }\n" +
+      ".node.faded rect { fill: rgb(200, 0, 0); fill-opacity: 0.3; }";
+    document.head.appendChild(pageStyle);
+
+    Object.defineProperty(navigator, "clipboard", {
+      value: { writeText: jest.fn(() => Promise.resolve()) },
+      configurable: true,
+    });
+    Object.defineProperty(window, "isSecureContext", { value: true, configurable: true });
+    updateConfig({ security: { mode: "strict" } });
+  });
+
+  afterEach(() => {
+    container.remove();
+    pageStyle.remove();
+    jest.clearAllMocks();
+  });
+
+  test("a solid shape stays solid when the diagram's CSS matches on the style attribute", async () => {
+    const [plain] = await copiedRects();
+    expect(plain.style.getPropertyValue("fill-opacity")).toBe("1");
+  });
+
+  test("a fill opacity set by page CSS outside the SVG is kept", async () => {
+    const [, faded] = await copiedRects();
+    expect(faded.style.getPropertyValue("fill")).toBe("rgb(200, 0, 0)");
+    expect(faded.style.getPropertyValue("fill-opacity")).toBe("0.3");
+  });
+});
+
 describe("Exports follow the Readable text colours", () => {
   const NS = "http://www.w3.org/2000/svg";
   let container, label, downloads, clickSpy, imageSrcs;

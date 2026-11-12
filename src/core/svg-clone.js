@@ -14,6 +14,7 @@ import { SECURITY_MODES, EXPORT } from "./constants.js";
  */
 const DEFAULT_STYLE_PROPS = [
   "fill",
+  "fill-opacity",
   "stroke",
   "stroke-width",
   "opacity",
