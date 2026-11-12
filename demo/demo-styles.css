@@ -36,8 +36,6 @@
   --pie-2: #aab4c3;
   --pie-3: #d7dce4;
   --pie-ink: #15181d;
-  --styled-fill-opacity: 1;
-  --styled-ink: #15181d;
   /* Boxes of the 2,500 node stress grid */
   --stress-fill: color-mix(in srgb, var(--accent) 14%, var(--surface));
   --stress-line: color-mix(in srgb, var(--accent) 70%, var(--line-strong));
@@ -86,8 +84,6 @@
   --pie-2: #3b5c8c;
   --pie-3: #56739c;
   --pie-ink: #f3f7ff;
-  --styled-fill-opacity: 0.22;
-  --styled-ink: var(--ink);
   --stress-fill: color-mix(in srgb, var(--accent) 24%, var(--surface));
   --stress-line: color-mix(in srgb, var(--accent) 80%, var(--ink));
   --tint-rose: #37294a;

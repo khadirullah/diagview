@@ -64,14 +64,10 @@
     // minimap and exports all show the colours of the current theme.
     //
     // Tint a single node with `class LB tintRose` in the diagram source.
-    // Nodes still coloured by a `style X fill:...` line are thinned out on
-    // the dark theme so they read as a tint of the navy.
     var MERMAID_CSS = [
         '.node rect, .node circle, .node ellipse, .node polygon, .node path' +
             ' { fill: var(--surface); stroke: var(--line-strong); }',
         '.nodeLabel, .label text { color: var(--ink); fill: var(--ink); }',
-        '.node [style*="fill:"] { fill-opacity: var(--styled-fill-opacity, 1); }',
-        '.node:has([style*="fill:"]) .nodeLabel { color: var(--styled-ink, #15181d); }',
         '.cluster rect { fill: color-mix(in srgb, var(--surface) 55%, transparent);' +
             ' stroke: var(--line-strong); }',
         '.cluster-label .nodeLabel, .cluster text { color: var(--ink-2); fill: var(--ink-2); }',
