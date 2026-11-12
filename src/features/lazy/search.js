@@ -480,13 +480,20 @@ export function performSearch(clone, query, reveal = false) {
   state.searchRafId = requestAnimationFrame(() => {
     state.searchRafId = null;
     if (gen !== searchGeneration) return;
-    mark(clone, "dv-searching");
 
+    // Measure every match before the first class change. A box read after
+    // a class change makes the browser lay the diagram out again, so
+    // reading between the marks did that once per match.
+    const found = candidates.filter((item) => item.text.includes(lq));
     const shapes = new Set();
+    for (const item of found) {
+      const shape = findShapeForText(clone, item);
+      if (shape) shapes.add(shape);
+    }
 
-    // Single loop for O(1) DOM updates utilizing CSS fading architecture.
-    // A label drawn as several <text> lines marks each line and counts once.
-    const found = [];
+    // Then mark the matches, and CSS dims the rest. A label drawn as
+    // several <text> lines marks each line and counts once.
+    mark(clone, "dv-searching");
     for (let i = 0; i < candidates.length; i++) {
       const item = candidates[i];
       const isMatch = item.text.includes(lq);
@@ -499,11 +506,6 @@ export function performSearch(clone, query, reveal = false) {
         } else if (isSearchMatch) {
           unmark(el, "dv-search-match");
         }
-      }
-      if (isMatch) {
-        found.push(item);
-        const shape = findShapeForText(clone, item);
-        if (shape) shapes.add(shape);
       }
     }
 

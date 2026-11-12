@@ -823,6 +823,72 @@ describe("Search: shapes behind plain SVG text", () => {
 
     expect(svg.outerHTML).toBe(before);
   });
+
+  // A box read after a class change makes the browser lay the diagram out
+  // again, so one search that reads after each mark lays it out once per match
+  function logReadsAndWrites() {
+    const log = [];
+    const read = (obj, name) => {
+      const real = obj[name];
+      obj[name] = function (...args) {
+        log.push("read");
+        return real.apply(this, args);
+      };
+    };
+    for (const el of [svg, ...svg.querySelectorAll("*")]) {
+      if (Object.hasOwn(el, "getBoundingClientRect")) read(el, "getBoundingClientRect");
+    }
+    read(svg, "getScreenCTM");
+    read(svg, "getBBox");
+    const style = window.getComputedStyle.getMockImplementation();
+    window.getComputedStyle.mockImplementation((el) => {
+      log.push("read");
+      return style(el);
+    });
+    for (const name of ["add", "remove", "toggle"]) {
+      const real = DOMTokenList.prototype[name];
+      jest.spyOn(DOMTokenList.prototype, name).mockImplementation(function (...args) {
+        log.push("write");
+        return real.apply(this, args);
+      });
+    }
+    for (const name of ["setAttribute", "removeAttribute"]) {
+      const real = Element.prototype[name];
+      jest.spyOn(Element.prototype, name).mockImplementation(function (attr, ...rest) {
+        if (attr === "class") log.push("write");
+        return real.call(this, attr, ...rest);
+      });
+    }
+    return log;
+  }
+
+  test("a search measures every match before it marks any", () => {
+    drawMixedDiagram();
+    const log = logReadsAndWrites();
+
+    performSearch(svg, "auth");
+    flushRaf();
+
+    expect(marked().length).toBe(3);
+    expect(log).toContain("read");
+    expect(log.lastIndexOf("read")).toBeLessThan(log.indexOf("write"));
+  });
+
+  test("a search after a turn measures before it changes the marks", () => {
+    drawMixedDiagram();
+    performSearch(svg, "auth");
+    flushRaf();
+    view.angle = 90;
+    state.rotationAngle = 90;
+    const log = logReadsAndWrites();
+
+    performSearch(svg, "billing");
+    flushRaf();
+
+    expect(marked().length).toBe(2);
+    expect(log).toContain("read");
+    expect(log.lastIndexOf("read")).toBeLessThan(log.indexOf("write"));
+  });
 });
 
 describe("Search: bringing a match into view", () => {
