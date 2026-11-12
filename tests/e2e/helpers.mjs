@@ -8,8 +8,13 @@ export const REPRO = `${SITE}/tests/e2e/repro.html`;
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 export const ROOT = path.resolve(here, "..", "..");
-/** Build under test. DV_DIST points the fixture suites at another build. */
-export const DIST = process.env.DV_DIST || path.join(ROOT, "dist", "diagview.umd.js");
+/**
+ * Build under test. DV_DIST points every suite at another build, such as
+ * dist/diagview.umd.min.js. serve.mjs reads it too.
+ */
+export const DIST = process.env.DV_DIST
+  ? path.resolve(process.env.DV_DIST)
+  : path.join(ROOT, "dist", "diagview.umd.js");
 
 /** file:// URL of a fixture in the repo, for suites that need a file:// page */
 export const fixtureFile = (name) => pathToFileURL(path.join(here, "fixtures", name)).href;

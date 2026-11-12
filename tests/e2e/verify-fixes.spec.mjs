@@ -9,13 +9,14 @@
 // refs, <style>-block refs, a per-element sanitizer override and a Mermaid
 // diagram (Mermaid comes from jsdelivr, so this needs network access).
 // Set DV_CDN to a version (e.g. DV_CDN=1.0.11) to run the sweep against that
-// published build and see which checks it fails.
+// published build and see which checks it fails. DV_DIST runs it against
+// another local build.
 import { test, expect } from "@playwright/test";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
-import { newPage, fixtureFile } from "./helpers.mjs";
+import { DIST, ROOT, newPage, fixtureFile } from "./helpers.mjs";
 
 test.describe.configure({ mode: "serial" });
 
@@ -23,17 +24,28 @@ const TITLES = ["Attr refs", "Style refs", "CSS refs", "Sanitize off", "Mermaid"
 
 function pageUrl() {
   const url = fixtureFile("fix-sweep.html");
-  if (!process.env.DV_CDN) return url;
-  // Same page, loading the published build from unpkg instead of ../../../dist
-  const html = fs
-    .readFileSync(fileURLToPath(url), "utf8")
-    .replace(/\.\.\/\.\.\/\.\.\/dist\//g, `https://unpkg.com/diagview@${process.env.DV_CDN}/dist/`)
-    .replace(
-      "../../../node_modules/@panzoom/panzoom/dist/panzoom.min.js",
-      "https://cdn.jsdelivr.net/npm/@panzoom/panzoom@4.5.1/dist/panzoom.min.js",
-    );
-  const file = path.join(os.tmpdir(), "diagview-fix-sweep-cdn.html");
-  fs.writeFileSync(file, html);
+  if (!process.env.DV_CDN && !process.env.DV_DIST) return url;
+  const html = fs.readFileSync(fileURLToPath(url), "utf8");
+  let copy;
+  if (process.env.DV_CDN) {
+    // Same page, loading the published build from unpkg instead of ../../../dist
+    copy = html
+      .replace(
+        /\.\.\/\.\.\/\.\.\/dist\//g,
+        `https://unpkg.com/diagview@${process.env.DV_CDN}/dist/`,
+      )
+      .replace(
+        "../../../node_modules/@panzoom/panzoom/dist/panzoom.min.js",
+        "https://cdn.jsdelivr.net/npm/@panzoom/panzoom@4.5.1/dist/panzoom.min.js",
+      );
+  } else {
+    // Same page, loading the DV_DIST build and the rest from the repo
+    copy = html
+      .replace("../../../dist/diagview.umd.js", pathToFileURL(DIST).href)
+      .replace(/\.\.\/\.\.\/\.\.\//g, `${pathToFileURL(ROOT).href}/`);
+  }
+  const file = path.join(os.tmpdir(), "diagview-fix-sweep-copy.html");
+  fs.writeFileSync(file, copy);
   return pathToFileURL(file).href;
 }
 

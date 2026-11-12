@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en" data-diagview-no-auto-init>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DiagView published bundles</title>
+<link rel="icon" href="data:,">
+<!--
+  Two plain diagrams with text labels. verify-bundles loads a published
+  bundle into this page itself. The page has a light and a dark theme, so
+  the viewer's Auto canvas has a page theme to follow.
+-->
+<style>
+  body { font-family: sans-serif; margin: 24px; background: #ffffff; color: #1e293b; }
+  html[data-theme="dark"] body { background: #0f172a; color: #e2e8f0; }
+  .diagram { width: 640px; margin-bottom: 24px; }
+</style>
+</head>
+<body>
+
+<div class="diagram" id="orders" data-title="Orders">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 200" width="600" height="200">
+  <rect x="20" y="60" width="150" height="80" rx="8" fill="#dbeafe" stroke="#1e3a8a"/>
+  <rect x="225" y="60" width="150" height="80" rx="8" fill="#fef3c7" stroke="#92400e"/>
+  <rect x="430" y="60" width="150" height="80" rx="8" fill="#dcfce7" stroke="#166534"/>
+  <path d="M170 100 H225 M375 100 H430" stroke="#334155" stroke-width="2"/>
+  <text x="95" y="105" text-anchor="middle" fill="#1e293b">Order</text>
+  <text x="300" y="105" text-anchor="middle" fill="#1e293b">Payment</text>
+  <text x="505" y="105" text-anchor="middle" fill="#1e293b">Invoice</text>
+</svg>
+</div>
+
+<div class="diagram" id="team" data-title="Team">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 160" width="400" height="160">
+  <circle cx="100" cy="80" r="50" fill="#ede9fe" stroke="#5b21b6"/>
+  <circle cx="300" cy="80" r="50" fill="#fee2e2" stroke="#991b1b"/>
+  <path d="M150 80 H250" stroke="#334155" stroke-width="2"/>
+  <text x="100" y="85" text-anchor="middle" fill="#1e293b">Design</text>
+  <text x="300" y="85" text-anchor="middle" fill="#1e293b">Review</text>
+</svg>
+</div>
+
+</body>
+</html>

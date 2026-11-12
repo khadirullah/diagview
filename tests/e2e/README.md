@@ -38,6 +38,20 @@ npx playwright test verify-share-rotation # one file
 127.0.0.1. The demo pages get their unpkg diagview tag pointed at the local
 build. Set `E2E_PORT` to use a port other than 9340.
 
+The suites run `dist/diagview.umd.js`. A `<script>` tag from unpkg or
+jsDelivr loads `dist/diagview.umd.min.js`. To run them all on that file:
+
+```bash
+DV_DIST=dist/diagview.umd.min.js npm run test:e2e -- --project=chromium
+```
+
+`DV_DIST` names the build every suite loads. `serve.mjs` serves it as
+`dist/diagview.umd.js`, the suites that inject the build load it, and
+`verify-fixes` puts it in its file:// page. Playwright reuses a test server
+that is already running on the port, so stop it first or the old build
+stays. `verify-bundles` always loads the minified file and the ESM build,
+whatever `DV_DIST` says.
+
 | File                                  | Checks | Covers                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
 | ------------------------------------- | ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `final-verify.spec.mjs`               | 9      | share restore, minimap click, drag 1:1, wheel zoom, focus trap, rememberZoom, mobile touch                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
@@ -78,8 +92,9 @@ build. Set `E2E_PORT` to use a port other than 9340.
 | `verify-reduced-motion.spec.mjs`      | 2      | with the system set to reduce motion, an animated Mermaid edge keeps its slow crawl in a card and in the viewer, as it does with layout "off", while the viewer, its menu and the toolbar buttons do not animate                                                                                                                                                                                                                                                                                                                                         |
 | `verify-canvas-grid.spec.mjs`         | 3      | `canvasGrid: "dots"` follows a drag and a zoom, the diagram inherits none of the grid's values, so a pan does not restyle it, and turning the grid off clears it                                                                                                                                                                                                                                                                                                                                                                                         |
 | `verify-export-font-rules.spec.mjs`   | 2      | SVG export embeds fonts declared inside `@layer`, `@media` and `@supports` blocks and in `@import` sheets, resolves an imported sheet's `url()` against that sheet, leaves out a `@media print` font the screen does not use, and of a font with several sources fetches only the first one that loads, from the cache on the next export                                                                                                                                                                                                                |
+| `verify-bundles.spec.mjs`             | 11     | the minified UMD file that a CDN `<script>` tag loads, and the ESM build through `<script type="module">`, each set up two diagrams with the same CSS rules as `dist/diagview.css`, open the viewer, zoom, pan, rotate, show the minimap, mark a search match, export a real SVG and PNG, follow the page theme and leave the page as it was after `destroy()`, with no console error or warning, and every file of the ESM build links in the browser                                                                                                   |
 
-That is 353 checks per browser.
+That is 364 checks per browser.
 
 `verify-react-strictmode` loads React from unpkg, and `verify-fixes`,
 `verify-mermaid-errors` and `verify-header-title` load Mermaid from
@@ -93,8 +108,7 @@ other suites run offline. `verify-export-search`, `verify-search-export`, `verif
 `verify-mermaid-errors`, `verify-bare-svg`, `verify-off-hint`,
 `verify-header-title`, `verify-host-form`, `verify-detached-diagrams`,
 `verify-copy-image`, `verify-export-fallbacks`, `verify-svg-shapes` and
-`verify-reduced-motion` inject the build themselves. Set
-`DV_DIST=/path/to/diagview.umd.js` to test another build with those suites.
+`verify-reduced-motion` inject the build themselves.
 
 `repro.html` is the shared test page: a 2000x1200 labelled grid SVG (cells
 A1 to J6, 200 units each) so any viewport centre measurement maps to a

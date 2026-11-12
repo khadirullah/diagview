@@ -9,6 +9,8 @@
  *   node_modules/@panzoom/panzoom/   Panzoom for the test pages
  *
  *   node tests/e2e/serve.mjs [port]   (default 9340, or E2E_PORT)
+ *
+ * DV_DIST names a build to serve as dist/diagview.umd.js instead.
  */
 import http from "node:http";
 import fs from "node:fs";
@@ -36,6 +38,14 @@ copy("demo");
 copy("tests/e2e/repro.html");
 copy("tests/e2e/fixtures");
 copy("node_modules/@panzoom/panzoom/dist");
+
+// DV_DIST=dist/diagview.umd.min.js runs every page on that build, since
+// the pages and the demo tags below all load dist/diagview.umd.js
+const build = process.env.DV_DIST ? path.resolve(process.env.DV_DIST) : null;
+if (build) {
+  fs.copyFileSync(build, path.join(site, "dist", "diagview.umd.js"));
+  console.log(`dist/diagview.umd.js serves ${build}`);
+}
 
 // Load the local build instead of the published one from unpkg
 const UNPKG =

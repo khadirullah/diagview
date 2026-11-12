@@ -171,6 +171,12 @@ npm run test:e2e
 
 The suites in `tests/e2e/` measure pan, zoom, share, minimap, export and search behaviour in Chromium, Firefox and WebKit. CI runs them on every pull request. See `tests/e2e/README.md`.
 
+The suites load `dist/diagview.umd.js`. To run them on the minified file that a CDN `<script>` tag loads:
+
+```bash
+DV_DIST=dist/diagview.umd.min.js npm run test:e2e -- --project=chromium
+```
+
 ---
 
 ## Commit Message Convention
