@@ -460,6 +460,18 @@ describe("loadScript with a <script> the page already has", () => {
     }
   });
 
+  test("one with the global it defines but no timing entry resolves at once", async () => {
+    timing([]);
+    window.dvTestGlobal = {};
+    try {
+      await expect(loadScript(url, null, "dvTestGlobal")).resolves.toBeUndefined();
+      expect(document.querySelectorAll("script")).toHaveLength(1);
+      expect(jest.getTimerCount()).toBe(0);
+    } finally {
+      delete window.dvTestGlobal;
+    }
+  });
+
   test("one that failed while waited for stays, and the next call adds its own", async () => {
     timing([]);
     const first = loadScript(url);

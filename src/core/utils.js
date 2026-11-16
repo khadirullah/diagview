@@ -307,7 +307,8 @@ const FAILED_SCRIPTS = new WeakSet();
  *   A page tag that has loaded without it counts as failed.
  * @returns {Promise<void>} Rejects when the script fails to load or takes
  *   longer than TIMING.SCRIPT_LOAD_TIMEOUT. A <script> for the URL that the
- *   page already has resolves once it has loaded. A failed load leaves no
+ *   page already has resolves once it has loaded, or at once when the
+ *   global it defines is there. A failed load leaves no
  *   tag behind, so the next call tries again.
  */
 export function loadScript(url, integrity = null, globalName) {
@@ -334,8 +335,14 @@ export function loadScript(url, integrity = null, globalName) {
     let script = Array.from(document.scripts).find(
       (s) => s.src === absoluteUrl && !FAILED_SCRIPTS.has(s),
     );
+    // The global alone shows the tag has run, as a page that calls
+    // performance.clearResourceTimings() leaves no timing entry.
+    if (script && globalName && globalName in window) {
+      resolve();
+      return;
+    }
     if (script && performance.getEntriesByName?.(absoluteUrl).length) {
-      if (!globalName || globalName in window) {
+      if (!globalName) {
         resolve();
         return;
       }
