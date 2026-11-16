@@ -248,6 +248,29 @@ describe("embedDocumentFonts", () => {
     expect(next.querySelector("style.dv-font-embed").textContent).toMatch(/data:font\/woff2/);
   });
 
+  test("gives up on a font file whose body stalls after the headers", async () => {
+    jest.useFakeTimers();
+    try {
+      // The headers arrive at once, then the body never does. Like a
+      // browser, the body read fails only when the fetch is aborted.
+      fetchMock.mockImplementation(async (url, { signal }) => ({
+        ok: true,
+        blob: () =>
+          new Promise((resolve, reject) => {
+            signal.addEventListener("abort", () => reject(new DOMException("", "AbortError")));
+          }),
+      }));
+      const svg = svgWith(["Hello"]);
+      const done = embedDocumentFonts(svg);
+      await jest.advanceTimersByTimeAsync(5000);
+      await done;
+      expect(svg.querySelector("style.dv-font-embed").textContent).not.toContain("data:font");
+      expect(jest.getTimerCount()).toBe(0);
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
   describe("a font with several sources", () => {
     /** Export "Hello" in a family whose only rule has this src list */
     async function exportSources(src, localOnly) {

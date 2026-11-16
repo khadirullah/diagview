@@ -14,23 +14,25 @@ import { addCleanupFunction } from "../core/config.js";
  */
 async function fetchAsDataURI(url, base) {
   const controller = new AbortController();
+  // The time limit covers the whole download and read, since a server can
+  // send the headers at once and then stall on the font file itself
   const timeoutId = setTimeout(() => controller.abort(), 5000);
 
   try {
     const resp = await fetch(new URL(url, base).href, { mode: "cors", signal: controller.signal });
-    clearTimeout(timeoutId);
-
     if (!resp.ok) return null;
     const blob = await resp.blob();
-    return new Promise((res) => {
+    return await new Promise((res) => {
       const reader = new FileReader();
       reader.onload = () => res(reader.result);
       reader.onerror = () => res(null);
+      controller.signal.addEventListener("abort", () => res(null));
       reader.readAsDataURL(blob);
     });
   } catch {
-    clearTimeout(timeoutId);
     return null;
+  } finally {
+    clearTimeout(timeoutId);
   }
 }
 
