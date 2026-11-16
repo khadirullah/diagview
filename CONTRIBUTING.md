@@ -101,8 +101,9 @@ npm run build
 npm run lint
 npm run lint:fix
 
-# Format
+# Format, or only check the formatting as CI does
 npm run format
+npm run format:check
 
 # Check bundle size against limits
 npm run size

@@ -70,9 +70,7 @@ test("typing into the search box on a touch phone keeps them hidden", async ({
   await expect(page.locator("#diagview-modal")).not.toHaveClass(/\bdv-keys\b/);
 });
 
-test("a desktop shows the key badges and the shortcut hint from the start", async ({
-  browser,
-}) => {
+test("a desktop shows the key badges and the shortcut hint from the start", async ({ browser }) => {
   const page = await openViewer(browser, {});
   await expect(page.locator(".diagview-shortcut-hint")).toBeVisible();
   await page.locator("#dv-toggle").click();

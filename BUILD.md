@@ -135,15 +135,18 @@ config files in the repo root.
 ### Format
 
 ```bash
-npm run format       # runs Prettier on the .js files in src/, tests/ and the repo root
+npm run format       # runs Prettier on the JavaScript in src/, tests/, scripts/ and the repo root
+npm run format:check # reports files Prettier would change, without changing them
 ```
+
+CI runs `npm run format:check` and fails when a file is not formatted.
 
 ### Pre-commit hook
 
 `npm install` sets up a Husky pre-commit hook that runs `lint-staged` on
 the staged files. It runs ESLint with `--fix` and Prettier on
-`src/**/*.js`, and Prettier on `tests/**/*.js` and on JSON, Markdown, CSS
-and YAML files.
+`src/**/*.js`, and Prettier on the JavaScript in `tests/` and `scripts/`
+and on JSON, Markdown, CSS and YAML files.
 
 ### Bundle size check
 

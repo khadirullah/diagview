@@ -34,7 +34,8 @@
     "build:analyze": "npm run clean && ANALYZE=1 rollup -c && npm run build:types",
     "build:types": "tsc --declaration --emitDeclarationOnly --outDir dist",
     "version:sync": "node scripts/sync-version.js",
-    "format": "prettier --write \"src/**/*.js\" \"tests/**/*.js\" \"*.js\"",
+    "format": "prettier --write \"src/**/*.js\" \"tests/**/*.{js,mjs}\" \"scripts/**/*.{js,cjs}\" \"*.js\"",
+    "format:check": "prettier --check \"src/**/*.js\" \"tests/**/*.{js,mjs}\" \"scripts/**/*.{js,cjs}\" \"*.js\"",
     "typecheck": "tsc -p tests/types/tsconfig.json",
     "lint": "eslint \"src/**/*.js\" \"tests/**/*.{js,mjs}\" \"scripts/**/*.{js,cjs}\" \"*.js\"",
     "lint:fix": "eslint \"src/**/*.js\" \"tests/**/*.{js,mjs}\" \"scripts/**/*.{js,cjs}\" \"*.js\" --fix",
@@ -153,7 +154,10 @@
       "eslint --fix",
       "prettier --write"
     ],
-    "tests/**/*.js": [
+    "tests/**/*.{js,mjs}": [
+      "prettier --write"
+    ],
+    "scripts/**/*.{js,cjs}": [
       "prettier --write"
     ],
     "*.{json,md,css,yml}": [
