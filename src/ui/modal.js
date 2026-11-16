@@ -163,11 +163,37 @@ function _prepareViewportContent(originalSvg, viewport) {
 }
 
 /**
+ * The element the viewer must sit in to be seen. While a page element is in
+ * the browser's fullscreen, the browser draws only that element and what is
+ * inside it, so a viewer left on <body> would open unseen.
+ * @private
+ * @returns {Element|null} The fullscreen element, or null when the viewer can stay on <body>
+ */
+function _fullscreenHost() {
+  const host = document.fullscreenElement;
+  if (!host || host === document.documentElement || host === document.body) return null;
+  // A shadow host shows its shadow tree and these elements show no children,
+  // so the viewer would be as hidden inside them as outside
+  if (host.shadowRoot || /^(VIDEO|AUDIO|IFRAME|IMG|CANVAS|OBJECT|EMBED)$/.test(host.tagName)) {
+    return null;
+  }
+  return host;
+}
+
+/**
  * PHASE 2: UI Activation
  * Handles modal visibility, body scroll-locking, and history state.
  * @private
  */
 function _activateModalUI(modal, viewport) {
+  // Sit inside a page element that is in the browser's fullscreen, and go
+  // back to <body> when the viewer closes
+  const host = _fullscreenHost();
+  if (host && modal.parentNode !== host) {
+    host.appendChild(modal);
+    addModalCleanupFunction(() => document.body.appendChild(modal));
+  }
+
   // 0. Sync UI elements to visual viewport BEFORE locking body
   // Handles pinch-zoomed browsers by force-resetting scale.
   startVisualViewportSync();

@@ -593,3 +593,52 @@ describe("the loading cover on each open", () => {
     expect(loading.classList.contains("hide")).toBe(true);
   });
 });
+
+// ---------------------------------------------------------------------------
+// A page element in the browser's fullscreen hides everything outside it
+// ---------------------------------------------------------------------------
+describe("viewer opened while a page element is in fullscreen", () => {
+  const setFullscreenElement = (element) =>
+    Object.defineProperty(document, "fullscreenElement", { value: element, configurable: true });
+
+  beforeEach(() => {
+    resetConfig();
+    document.body.innerHTML = "";
+    installFakePanzoom();
+    createModal();
+  });
+
+  afterEach(async () => {
+    await closeModal();
+    delete document.fullscreenElement;
+    resetConfig();
+  });
+
+  test("the viewer moves into that element and back to the body on close", async () => {
+    const slide = document.createElement("section");
+    document.body.appendChild(slide);
+    const diagram = makeDiagram("in-slide");
+    slide.appendChild(diagram);
+    setFullscreenElement(slide);
+
+    await openFullscreen(diagram);
+    await settle();
+    const modal = document.getElementById("diagview-modal");
+    expect(modal.parentNode).toBe(slide);
+
+    await closeModal();
+    expect(modal.parentNode).toBe(document.body);
+  });
+
+  test.each([
+    ["the whole page", () => document.documentElement],
+    ["a video", () => document.body.appendChild(document.createElement("video"))],
+  ])("the viewer stays on the body when %s is in fullscreen", async (_name, pick) => {
+    const diagram = makeDiagram("on-page");
+    setFullscreenElement(pick());
+
+    await openFullscreen(diagram);
+    await settle();
+    expect(document.getElementById("diagview-modal").parentNode).toBe(document.body);
+  });
+});
