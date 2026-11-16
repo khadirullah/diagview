@@ -371,13 +371,19 @@ function _attachModalLifecycle(element, clone, viewport, panzoom, diagramId) {
     const zoomTag = document.getElementById("dv-zoom-tag");
 
     // 1. Throttled updates (Minimap)
+    // An update that lands after a close, or after a close and a new open,
+    // must do nothing. It would attach click handlers for the old panzoom,
+    // and the next session's minimap would keep them.
     let updateMinimapFn = null;
     loadChunk("minimap", () => import("../features/lazy/minimap.js"))
       .then((m) => {
-        updateMinimapFn = throttle(() => {
-          if (state.isModalOpen) m.updateMinimap(clone, viewport, panzoom);
-        }, TIMING.MINIMAP_THROTTLE);
-        requestAnimationFrame(() => m.updateMinimap(clone, viewport, panzoom));
+        const updateThisSession = () => {
+          if (state.isModalOpen && state.activePanzoom === panzoom) {
+            m.updateMinimap(clone, viewport, panzoom);
+          }
+        };
+        updateMinimapFn = throttle(updateThisSession, TIMING.MINIMAP_THROTTLE);
+        requestAnimationFrame(updateThisSession);
       })
       .catch(() => {});
 

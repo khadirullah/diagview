@@ -523,6 +523,43 @@ describe("close and clear-search buttons are wired once", () => {
 });
 
 // ---------------------------------------------------------------------------
+// A minimap update that lands after a close does nothing
+// ---------------------------------------------------------------------------
+describe("the minimap's first update after a fast close", () => {
+  beforeEach(() => {
+    resetConfig();
+    document.body.innerHTML = "";
+    clearAllZoomStates();
+    installFakePanzoom();
+    updateConfig({ showFirstTimeThemeHint: false, animateOpen: false });
+    createModal();
+  });
+
+  afterEach(async () => {
+    if (state.isModalOpen) await closeModal();
+    await settle();
+    delete window.Panzoom;
+  });
+
+  test("leaves no listeners, and the next open wires the minimap click", async () => {
+    const el = makeDiagram("d-minimap");
+    const minimap = document.getElementById("diagview-minimap");
+
+    // Close before the first minimap frame runs
+    await openFullscreen(el);
+    await closeModal();
+    await settle();
+    expect(state.modalCleanupFunctions.size).toBe(0);
+
+    const added = jest.spyOn(minimap, "addEventListener");
+    await openFullscreen(el);
+    await settle();
+    expect(added.mock.calls.filter(([type]) => type === "click")).toHaveLength(1);
+    added.mockRestore();
+  });
+});
+
+// ---------------------------------------------------------------------------
 // The loading cover shows on every open, not only the first
 // ---------------------------------------------------------------------------
 describe("the loading cover on each open", () => {
