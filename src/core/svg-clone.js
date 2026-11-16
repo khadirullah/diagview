@@ -19,15 +19,19 @@ const DEFAULT_STYLE_PROPS = [
   "stroke-width",
   "opacity",
   "color",
+  "background-color",
   "font-family",
   "font-size",
   "font-weight",
   "font-style",
   "letter-spacing",
   "word-spacing",
+  "line-height",
+  "text-decoration",
   "text-anchor",
   "dominant-baseline",
   "alignment-baseline",
+  "display",
   "visibility",
   "clip-path",
   "filter",
@@ -52,6 +56,18 @@ const DEFAULT_STYLE_PROPS = [
  * stroke-width: 0, which hides a stroke that is 1px by default.
  */
 const ZERO_BY_DEFAULT = new Set(["letter-spacing", "word-spacing", "stroke-dashoffset"]);
+
+/**
+ * Initial values of properties that apply to nearly every element. The
+ * copy has them anyway, so an export leaves them out and the file stays
+ * small. Chrome reports text-decoration with its style and colour, as in
+ * "none solid rgb(0, 0, 0)".
+ */
+const INITIAL_VALUE = {
+  display: /^inline$/,
+  "background-color": /^(rgba\(0, 0, 0, 0\)|transparent)$/,
+  "text-decoration": /^none\b/,
+};
 
 /**
  * Maximum number of nodes whose computed styles are captured for export.
@@ -409,6 +425,7 @@ export function cloneSVGForExportAsync(svg, paint = null) {
           if (!val) continue;
           if (val === "normal" || val === "auto") continue;
           if (val === "0px" && ZERO_BY_DEFAULT.has(prop)) continue;
+          if (INITIAL_VALUE[prop]?.test(val)) continue;
           // Keep "none" for fills if explicitly set (prevents white → transparent)
           styles[prop] = val;
         }

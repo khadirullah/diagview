@@ -304,6 +304,38 @@ describe("SVG Cloning Utilities", () => {
     expect(clonedRect.style.getPropertyValue("word-spacing")).toBe("");
   });
 
+  test("cloneSVGForExportAsync copies display, background, decoration and line height", async () => {
+    const computed = {
+      rect: {
+        display: "none",
+        "background-color": "rgb(255, 255, 0)",
+        "text-decoration": "underline solid rgb(0, 0, 0)",
+        "line-height": "24px",
+      },
+      // The initial values, as a browser reports them
+      text: {
+        display: "inline",
+        "background-color": "rgba(0, 0, 0, 0)",
+        "text-decoration": "none solid rgb(0, 0, 0)",
+        "line-height": "normal",
+      },
+    };
+    window.getComputedStyle = jest.fn((el) => ({
+      getPropertyValue: (prop) => computed[el.tagName]?.[prop] || "",
+    }));
+    const clone = await cloneSVGForExportAsync(svg);
+
+    const rect = clone.querySelector(".test-rect").style;
+    expect(rect.getPropertyValue("display")).toBe("none");
+    expect(rect.getPropertyValue("background-color")).toBe("rgb(255, 255, 0)");
+    expect(rect.getPropertyValue("text-decoration")).toMatch(/^underline/);
+    expect(rect.getPropertyValue("line-height")).toBe("24px");
+    // Initial values stay out, so the file does not grow
+    expect(clone.querySelector("text").style.cssText).not.toMatch(
+      /display|background|decoration|line-height/,
+    );
+  });
+
   test("text preservation adds textLength for consistent rendering", () => {
     // Mock getBBox for text element
     const textEl = svg.querySelector("text");
