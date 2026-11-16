@@ -877,7 +877,7 @@ The mouse wheel zooms about 12% per notch, at the pointer. A trackpad pinch or a
 
 `Tab` also reaches the links inside the diagram, after the topbar and before the ☰ menu button, and `Enter` or `Space` follows the focused link. Chrome and Firefox draw an accent outline around it. Safari draws no outline on SVG links, so there the focused link shows no ring.
 
-The button with keyboard focus shows a ring in the accent colour, on the page toolbar and in the viewer. Windows High Contrast and other forced colour modes leave that ring out, so there the button gets an outline in the system highlight colour instead.
+The button with keyboard focus shows a ring in the accent colour, on the page toolbar and in the viewer. Windows High Contrast and other forced colour modes leave that ring out, so there the button gets an outline in the system highlight colour instead. In those modes a selected button also takes the system highlight colours, and the canvas swatches keep their own colours with an edge around each.
 
 Screen readers announce the viewer as a dialog named "Diagram viewer" when it opens, and read the pan, zoom and reset keys as its description. The keys work wherever focus is in the viewer. A screen reader in browse mode uses most of these keys itself, so switch it to focus mode to use them, with `NVDA+Space` in NVDA for example. Browse mode reads the labels and links in the diagram.
 

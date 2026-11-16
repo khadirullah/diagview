@@ -2383,4 +2383,45 @@
   .diagview-modal .diagview-menu:focus-visible {
     outline: none !important;
   }
+
+  /* A swatch is its colour, so it keeps it, with an edge that shows on
+     any system background */
+  .dv-swatch-btn[data-canvas] {
+    forced-color-adjust: none;
+    border: 1px solid CanvasText;
+  }
+
+  .dv-swatch-btn.active {
+    outline-color: Highlight;
+  }
+
+  /* The accent fill and glow of a selected button are dropped here. It
+     takes the system highlight colours instead. Its edge turns the same
+     colour, so it still stands out where a browser drops the fill. */
+  .dv-icon-btn.active,
+  .dv-text-select-btn.active,
+  .dv-theme-btn.active,
+  .dv-menu-item.active {
+    background: Highlight !important;
+    color: HighlightText !important;
+    border-color: Highlight !important;
+  }
+
+  /* A menu item has no border, so its edge is an outline. The focus ring
+     replaces it while the item has focus. */
+  .dv-menu-item.active:not(:focus-visible) {
+    outline: 2px solid Highlight;
+    outline-offset: -2px;
+  }
+
+  .dv-menu-item.active kbd {
+    color: HighlightText !important;
+    border-color: HighlightText !important;
+  }
+
+  /* The off hint icon is a mask filled with the text colour, and the
+     forced background would paint it in the page colour */
+  .diagview-off-hint::before {
+    background: CanvasText;
+  }
 }

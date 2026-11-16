@@ -629,6 +629,28 @@ describe("styles.css: keyboard focus ring", () => {
     expect(ruleBody(".diagview-modal *:focus-visible")).toMatch(/outline:\s*none !important/);
   });
 
+  test("forced colours keep the swatch colours, the off hint icon and every selected state", () => {
+    const at = css.indexOf("@media (forced-colors: active) {");
+    // The swatches keep their own colour and get an edge in the system text colour
+    const swatch = ruleBody(".dv-swatch-btn[data-canvas] {", at);
+    expect(swatch).toMatch(/forced-color-adjust:\s*none/);
+    expect(swatch).toMatch(/border:\s*1px solid CanvasText/);
+    expect(ruleBody(".dv-swatch-btn.active {", at)).toMatch(/outline-color:\s*Highlight/);
+    // Selected buttons use system colours, which forced colours keep
+    const selected = ruleBody(
+      ".dv-icon-btn.active,\n  .dv-text-select-btn.active,\n  .dv-theme-btn.active,\n  .dv-menu-item.active {",
+      at,
+    );
+    expect(selected).toMatch(/background:\s*Highlight !important/);
+    expect(selected).toMatch(/color:\s*HighlightText !important/);
+    expect(selected).toMatch(/border-color:\s*Highlight !important/);
+    expect(ruleBody(".dv-menu-item.active:not(:focus-visible) {", at)).toMatch(
+      /outline:\s*2px solid Highlight/,
+    );
+    // The masked icon is filled with a system colour, not the forced background
+    expect(ruleBody(".diagview-off-hint::before {", at)).toMatch(/background:\s*CanvasText/);
+  });
+
   test("keeps each control's own corners instead of its parent's", () => {
     const body = ruleBody(".diagview-menu *:focus-visible {");
     expect(body).toMatch(/box-shadow:/);
