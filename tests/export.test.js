@@ -13,6 +13,7 @@ import {
   generateFilename,
 } from "../src/features/export.js";
 import { hideToast } from "../src/ui/toast.js";
+import { clearThemeCache } from "../src/core/theme.js";
 import { state, updateConfig } from "../src/core/config.js";
 
 // A new notice replaces the last one, so keep every notice that was shown
@@ -429,6 +430,41 @@ describe("Export Functionality", () => {
     );
     expect(markup).toContain("LOCALMARK");
     expect(markup).not.toContain("GLOBALMARK");
+  });
+
+  test("the watermark colour follows the page background, not the OS setting", async () => {
+    updateConfig({ watermark: { enabled: true, text: "MARK" } });
+    state.activeSourceElement = null;
+    const originalMatchMedia = window.matchMedia;
+    window.matchMedia = (query) => ({ matches: query === "(prefers-color-scheme: dark)" });
+    let downloaded = "";
+    const click = jest.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(function () {
+      downloaded = this.href;
+    });
+    const fillOn = async (pageBg) => {
+      document.body.style.backgroundColor = pageBg;
+      clearThemeCache();
+      await exportToSVG(container, { filename: "wm" });
+      const markup = decodeURIComponent(
+        downloaded.replace(/^data:image\/svg\+xml;charset=utf-8,/, ""),
+      );
+      const doc = new DOMParser().parseFromString(markup, "text/html");
+      const mark = [...doc.querySelectorAll("text")].find((t) => t.textContent === "MARK");
+      return mark?.getAttribute("fill");
+    };
+    try {
+      // A white page on a dark OS gets a dark mark
+      expect(await fillOn("rgb(255, 255, 255)")).toBe("#000000");
+      // A dark page with no dark mode markers gets a light one
+      window.matchMedia = () => ({ matches: false });
+      expect(await fillOn("rgb(15, 23, 42)")).toBe("#ffffff");
+    } finally {
+      click.mockRestore();
+      window.matchMedia = originalMatchMedia;
+      document.body.style.backgroundColor = "";
+      clearThemeCache();
+      updateConfig({ watermark: { enabled: false, text: "" } });
+    }
   });
 
   test("an SVG file's viewBox is the same whole size as its width and height", async () => {

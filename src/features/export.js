@@ -188,10 +188,14 @@ function injectWatermark(svg, d, sourceSvg = null, pad = 0) {
   // Final validation before processing
   if (!config.enabled || !config.text || !d || d.w <= 0 || d.h <= 0) return;
 
-  // Detect theme for contrasting color
-  const theme = detectTheme();
-  const mainColor = theme.isDark ? "#ffffff" : "#000000";
-  const contrastColor = theme.isDark ? "#000000" : "#ffffff";
+  // Black or white, whichever stands out more on the colour the file is
+  // drawn on. isDark alone follows a dark OS even on a white page.
+  const { seenBg, isDark } = detectTheme();
+  const onWhite = getContrastRatio(seenBg, "#fff");
+  const onBlack = getContrastRatio(seenBg, "#000");
+  const light = onWhite > onBlack || (onWhite === onBlack && isDark);
+  const mainColor = light ? "#ffffff" : "#000000";
+  const contrastColor = light ? "#000000" : "#ffffff";
 
   const { style, pos, placement, opacity } = resolveWatermark(config);
 

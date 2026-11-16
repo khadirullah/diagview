@@ -451,7 +451,7 @@ A: It does not run past the edge of the diagram. DiagView measures the text in t
 A: Set `watermark.placement` to `"margin"`, or add `data-diagview-watermark-placement="margin"` to that diagram. The corner and side text then goes in the blank margin around the diagram and never covers a shape. The trade-off is that a crop to the diagram's edge removes it. The default, `"diagram"`, keeps the text on the diagram, where nobody can crop it off without cutting the diagram. The large centred mark of the `background` and `both` styles stays on the diagram either way. See [Placement](USAGE.md#placement).
 
 **Q: What if my diagram has a yellow or dark background?**  
-A: The watermark text has a thin outline in the opposite color. It is black with a white outline on a light theme and white with a black outline on a dark theme, so it stays legible on light and dark fills.
+A: The watermark text has a thin outline in the opposite color. It is black with a white outline on a light export background and white with a black outline on a dark one, so it stays legible on light and dark fills. The export background decides, not the system dark mode setting.
 
 **Q: Does "four-sides" put text on all 4 corners?**  
 A: No, it puts them on the center of each edge (Top, Bottom, Left, Right) to maximize visibility while preventing the diagram from looking cluttered.
