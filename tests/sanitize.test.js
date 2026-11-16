@@ -262,6 +262,35 @@ describe("sanitizeSVG CSS escape and syntax variants (strict, remote blocked)", 
   });
 });
 
+describe("sanitizeSVG attributes read as CSS (strict)", () => {
+  test.each([
+    ["fill", "url(https://evil.com/p.svg#p)"],
+    ["stroke", "url('//evil.com/p.svg#p')"],
+    ["cursor", "url(https://evil.com/c.png), auto"],
+    ["filter", "url(&quot;https://evil.com/f.svg#f&quot;)"],
+    ["mask", "url(/\\\\evil.com/m.svg#m)"],
+    ["clip-path", "url(\\68ttps://evil.com/c.svg#c)"],
+    ["marker-end", "url(https://evil.com/m.svg#m)"],
+  ])("removes %s that loads a remote file", (name, value) => {
+    const out = sanitizeToString(wrap(`<rect ${name}="${value}" width="1"/>`));
+    expect(out).not.toContain("evil.com");
+    expect(out).toContain('width="1"');
+  });
+
+  test("keeps local references, colours and transforms", () => {
+    const own = `${location.origin}/page#arrowhead`;
+    const attrs = `fill="url(#grad)" stroke="rgb(1, 2, 3)" marker-end="url(${own})" transform="translate(1, 2)"`;
+    const out = sanitizeToString(wrap(`<rect ${attrs}/>`));
+    expect(out).toContain(`<rect ${attrs}/>`);
+  });
+
+  test("keeps them with allowRemoteResources and in permissive mode", () => {
+    const rect = '<rect fill="url(https://example.com/p.svg#p)"/>';
+    expect(sanitizeToString(wrap(rect), "strict", { allowRemoteResources: true })).toContain(rect);
+    expect(sanitizeToString(wrap(rect), "permissive")).toContain(rect);
+  });
+});
+
 describe("sanitizeSVG decodes CSS before it checks it (strict)", () => {
   // Same CSS in a <style> block and in a style attribute, as the browser
   // would read it

@@ -739,6 +739,7 @@ DiagView.init({ security: { mode: "off", exportMode: "strict" } });
 | `href` on a `<use>` that points to another origin                                                                                                                          | Yes      | No           | No    |
 | A `style` attribute with `expression()`, `javascript:` or `vbscript:`, also when hidden by CSS escapes or comments, or with `@import` or a remote `url()` or `image-set()` | Yes      | No           | No    |
 | A `<style>` block with the same patterns. The whole block goes                                                                                                             | Yes      | No           | No    |
+| `fill`, `stroke`, `cursor`, `filter`, `mask` or another attribute read as CSS, when its `url()` is remote                                                                  | Yes      | No           | No    |
 
 A URL is remote when the browser would load it from another origin than the page. `https://`, `http://` and `//` links to another host count, and so do backslash forms such as `/\host` or `\\host`, which the browser reads as `//host`. Relative paths, `#id` references, `data:` URLs and links to the page's own origin do not.
 

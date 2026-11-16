@@ -870,6 +870,12 @@ function sanitize(input, mode, options, own) {
           continue;
         }
       }
+
+      // Strict only: fill, stroke, cursor, filter, mask and the other
+      // attributes read as CSS load a remote file through url() too
+      if (isStrict && !allowRemote && name !== "style" && value.includes("(")) {
+        if (loadsRemoteCSS(readableCSS(value))) el.removeAttribute(attr.name);
+      }
     }
 
     // Strict only: sanitize <style> block textContent for CSS-based injection.
