@@ -279,7 +279,7 @@ function removeEverything() {
     removeStyles,
     // Forget remembered zoom, pan and rotation
     clearAllZoomStates,
-    // Clear caches. resetConfig() below clears the event bus.
+    // Clear caches
     clearSVGContentCache,
     () => watchViewport(false),
 

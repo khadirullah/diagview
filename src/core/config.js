@@ -236,10 +236,10 @@ export function updateConfig(options = {}) {
  * Reset configuration and state to defaults
  */
 export function resetConfig() {
-  // The colour parser and the listeners belong to the old state. The event
-  // bus itself stays, since modules hold on to it.
+  // The colour parser belongs to the old state. The event bus stays, since
+  // modules hold on to it, and so do the page's own listeners on it.
+  // DiagView's own listeners are cleanup functions, and destroy() runs those.
   state.colorParserEl?.remove();
-  state.events.clear();
   Object.assign(state, { ...createInitialState(), events: state.events });
 }
 

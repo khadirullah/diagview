@@ -217,6 +217,18 @@ describe("DiagView Lifecycle", () => {
     expect(state.mediaQueryList).not.toBeNull();
   });
 
+  test("the page's own event listeners stay through destroy() and init()", async () => {
+    const listener = jest.fn();
+    const off = DiagView.state.events.on("app:diagram-shared", listener);
+    init();
+    await destroy();
+    init();
+
+    DiagView.state.events.emit("app:diagram-shared", 7);
+    expect(listener).toHaveBeenCalledWith(7);
+    off();
+  });
+
   test("destroy() forgets remembered zoom states", async () => {
     init({ rememberZoom: true });
     const pz = {
