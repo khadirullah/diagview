@@ -689,7 +689,7 @@ The Canvas Theme section of the fullscreen menu changes only the background behi
 - **Original** (default) keeps the diagram's text in the author's colours.
 - **Readable** recolours text whose contrast against what sits behind it is under 4.5:1 (WCAG AA).
 
-DiagView checks a label against its own background first, as with Mermaid edge labels. If the label has none, it uses the filled shape under the text, then the canvas. A dark label inside a light node stays as it is. A dark message label drawn straight on a dark canvas turns light. The new colour keeps the hue, so red text on a dark canvas becomes a lighter red rather than white. DiagView changes the lightness until the label reaches 7:1 (WCAG AAA). If no shade of that hue gets there, it uses white or black.
+DiagView checks a label against its own background first, as with Mermaid edge labels. If the label has none, it uses the filled shape under the text, then the canvas. A dark label inside a light node stays as it is. A dark message label drawn straight on a dark canvas turns light. The new colour keeps the hue, so red text on a dark canvas becomes a lighter red rather than white. DiagView changes the lightness until the label reaches 7:1 (WCAG AAA). If no shade of that hue gets there, it uses white or black. A label or shape faded with `opacity`, on itself or on a group around it, is checked as it looks on screen. The fade stays after a recolour, so a faint label may turn white or black.
 
 Readable works on any SVG, including HTML labels inside `<foreignObject>` (Mermaid, draw.io). It skips text painted with a gradient and text over a gradient-filled shape. Lines, arrows and shape outlines keep their colours.
 

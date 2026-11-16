@@ -62,6 +62,7 @@ function computed(el) {
       el.getAttribute?.("fill") ||
       (el.localName === "tspan" ? computed(el.parentNode).fill : "rgb(0, 0, 0)"),
     fillOpacity: el.getAttribute?.("fill-opacity") || "1",
+    opacity: inline("opacity") || el.getAttribute?.("opacity") || "1",
     color: inline("color") || el.getAttribute?.("data-color") || "rgb(0, 0, 0)",
     backgroundColor: inline("background-color") || el.getAttribute?.("data-bg") || "",
     getPropertyValue: () => "",
@@ -136,6 +137,30 @@ describe("Readable text: which labels change", () => {
 
     expect(applyReadableText(svg, DARK)).toBe(1);
     expect(label.style.getPropertyValue("fill")).not.toBe("");
+  });
+
+  test("the opacity of a node's group lets the canvas show through", () => {
+    const group = add("g", { opacity: "0.1" }, svg);
+    place(add("rect", { fill: "#ffffff" }, group), 100, 100, 200, 80);
+    const label = place(add("text", { fill: "#333333" }, svg), 150, 130, 100, 20);
+
+    expect(applyReadableText(svg, DARK)).toBe(1);
+    expect(label.style.getPropertyValue("fill")).not.toBe("");
+  });
+
+  test("a label faded by its group is checked as it is seen", () => {
+    const group = add("g", { opacity: "0.4" }, svg);
+    const label = place(add("text", { fill: "#cccccc" }, group), 10, 10, 60, 12);
+
+    expect(applyReadableText(svg, DARK)).toBe(1);
+    // The opacity stays, so only the brightest shade comes close
+    expect(label.style.getPropertyValue("fill")).toBe("rgb(255, 255, 255)");
+  });
+
+  test("a label with opacity 0 is left alone", () => {
+    place(add("text", { fill: "#333333", opacity: "0" }, svg), 10, 10, 60, 12);
+
+    expect(applyReadableText(svg, DARK)).toBe(0);
   });
 
   test("an HTML label inside a foreignObject is recoloured through color", () => {

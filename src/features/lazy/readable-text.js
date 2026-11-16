@@ -129,18 +129,43 @@ function fromHsl([h, s, l]) {
  * a dark canvas turns light red instead of white.
  * @param {number[]} fg - Label colour [r, g, b, a]
  * @param {number[]} bg - Opaque background [r, g, b]
+ * @param {number} [opacity=1] - Opacity the label keeps after the recolour,
+ *   from its own opacity and that of the groups around it
  * @returns {number[]} Opaque [r, g, b]
  */
-function readableShade(fg, bg) {
+function readableShade(fg, bg, opacity = 1) {
   const lighter = contrast(WHITE, bg) >= contrast(BLACK, bg);
   const [h, s, l] = toHsl(fg);
   let next = l;
   while (lighter ? next < 1 : next > 0) {
     next = lighter ? Math.min(1, next + LIGHTNESS_STEP) : Math.max(0, next - LIGHTNESS_STEP);
     const rgb = fromHsl([h, s, next]);
-    if (contrast(rgb, bg) >= TARGET_CONTRAST) return rgb;
+    if (contrast(blend([...rgb, opacity], bg), bg) >= TARGET_CONTRAST) return rgb;
   }
   return lighter ? WHITE : BLACK;
+}
+
+/**
+ * Reads how opaque an element is drawn, from its own opacity and that of
+ * every group around it inside the SVG. The SVG root and the page above it
+ * are left out, since the viewer fades in when it opens. Each element is read
+ * once per reader.
+ * @param {SVGElement} svg - Diagram SVG
+ * @returns {(el: Element) => number} Opacity from 0 to 1
+ */
+function opacityReader(svg) {
+  const seen = new Map();
+  const opacityOf = (el) => {
+    if (!el || el === svg) return 1;
+    let alpha = seen.get(el);
+    if (alpha === undefined) {
+      const own = parseFloat(getComputedStyle(el).opacity);
+      alpha = (own >= 0 && own < 1 ? own : 1) * opacityOf(el.parentElement);
+      seen.set(el, alpha);
+    }
+    return alpha;
+  };
+  return opacityOf;
 }
 
 /**
@@ -187,9 +212,10 @@ function collectLabels(svg) {
  * Filled shapes with their screen boxes. A shape painted with a gradient or
  * pattern keeps paint null, since its colour behind a label is unknown.
  * @param {SVGElement} svg - Diagram SVG
+ * @param {(el: Element) => number} opacityOf - Reads how opaque an element is drawn
  * @returns {Array<{box: DOMRect, area: number, paint: number[]|null}>} Measured shapes
  */
-function measureShapes(svg) {
+function measureShapes(svg, opacityOf) {
   const shapes = [];
   for (const el of svg.querySelectorAll(SHAPE_SELECTOR)) {
     if (el.closest(NOT_DRAWN) || undrawnSwitch(el)) continue;
@@ -201,6 +227,7 @@ function measureShapes(svg) {
       if (!paint) continue;
       const opacity = parseFloat(style.fillOpacity);
       if (opacity >= 0 && opacity < 1) paint[3] *= opacity;
+      paint[3] *= opacityOf(el);
       if (!paint[3]) continue;
     }
     const box = el.getBoundingClientRect();
@@ -287,8 +314,9 @@ function planText(svg, canvasBg) {
   if (!canvasRgba) return changes;
   const canvas = blend(canvasRgba, WHITE);
 
+  const opacityOf = opacityReader(svg);
   let shapes = null;
-  const getShapes = () => shapes || (shapes = measureShapes(svg));
+  const getShapes = () => shapes || (shapes = measureShapes(svg, opacityOf));
 
   // Read everything first and write afterwards, so the loop never forces a
   // fresh layout per label
@@ -300,11 +328,17 @@ function planText(svg, canvasBg) {
     const prop = paintProp(el);
     const fg = toRgba(getComputedStyle(el)[prop]);
     if (!fg) continue;
+    // A recolour replaces the colour but keeps the opacity of the label and
+    // the groups around it
+    const opacity = opacityOf(el);
+    if (!opacity) continue;
+    const seen = [fg[0], fg[1], fg[2], fg[3] * opacity];
 
     const bg = backgroundOf(el, prop, box, canvas, getShapes);
-    if (!bg || contrast(blend(fg, bg), bg) >= MIN_CONTRAST) continue;
+    if (!bg || contrast(blend(seen, bg), bg) >= MIN_CONTRAST) continue;
 
-    changes.push({ el, prop, value: toCss(readableShade(fg, bg)), onCanvas: bg === canvas });
+    const value = toCss(readableShade(fg, bg, opacity));
+    changes.push({ el, prop, value, onCanvas: bg === canvas });
   }
   return changes;
 }
