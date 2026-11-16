@@ -172,6 +172,29 @@ export const publicState = new Proxy(state, {
 });
 
 /**
+ * Copy an option group with only the keys its defaults have, so a typo such
+ * as watermark.enable warns instead of doing nothing. A value that is not a
+ * group comes back as it is, for validateConfig() to check.
+ * @param {*} value - Option value
+ * @param {*} defaults - Default value at the same place
+ * @param {string} path - Key path, for the warning
+ * @returns {*} The value without unknown keys
+ */
+function dropUnknownKeys(value, defaults, path) {
+  if (!isPlainObject(value) || !isPlainObject(defaults)) return value;
+  /** @type {Record<string, *>} */
+  const known = {};
+  for (const key in value) {
+    if (Object.prototype.hasOwnProperty.call(defaults, key)) {
+      known[key] = dropUnknownKeys(value[key], defaults[key], `${path}.${key}`);
+    } else {
+      console.warn(`DiagView: Unknown config key "${path}.${key}" ignored.`);
+    }
+  }
+  return known;
+}
+
+/**
  * Update configuration with validation
  * @param {Record<string, *>} options - New configuration options
  */
@@ -183,7 +206,7 @@ export function updateConfig(options = {}) {
   // so "__proto__", "constructor" and "toString" are unknown keys.
   for (const key in options) {
     if (Object.prototype.hasOwnProperty.call(DEFAULT_CONFIG, key)) {
-      sanitized[key] = options[key];
+      sanitized[key] = dropUnknownKeys(options[key], DEFAULT_CONFIG[key], key);
     } else {
       console.warn(`DiagView: Unknown config key "${key}" ignored.`);
     }

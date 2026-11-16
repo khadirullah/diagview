@@ -30,9 +30,26 @@ describe("Core Config", () => {
   });
 
   test("updateConfig merges nested ui values", () => {
-    updateConfig({ ui: { theme: "dark" } });
-    expect(state.config.ui.theme).toBe("dark");
+    updateConfig({ ui: { buttons: { icons: { copy: "<svg></svg>" } } } });
+    expect(state.config.ui.buttons.icons.copy).toBe("<svg></svg>");
+    expect(state.config.ui.buttons.icons.download).toBeNull(); // Default preserved
     expect(state.config.ui.buttons.style).toBe("accent"); // Default preserved
+  });
+
+  test("updateConfig warns about unknown keys inside a group and ignores them", () => {
+    const spy = jest.spyOn(console, "warn").mockImplementation(() => {});
+    updateConfig({
+      watermark: { enable: true, text: "Draft" },
+      ui: { theme: "dark", buttons: { colour: "red" } },
+    });
+    expect(spy).toHaveBeenCalledWith('DiagView: Unknown config key "watermark.enable" ignored.');
+    expect(spy).toHaveBeenCalledWith('DiagView: Unknown config key "ui.theme" ignored.');
+    expect(spy).toHaveBeenCalledWith('DiagView: Unknown config key "ui.buttons.colour" ignored.');
+    expect(state.config.watermark).not.toHaveProperty("enable");
+    expect(state.config.watermark.text).toBe("Draft");
+    expect(state.config.ui).not.toHaveProperty("theme");
+    expect(state.config.ui.buttons).not.toHaveProperty("colour");
+    spy.mockRestore();
   });
 
   test("getConfig returns a copy", () => {
