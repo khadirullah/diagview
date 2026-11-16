@@ -620,7 +620,7 @@ export function deinitializeAllDiagrams() {
  * @param {Element} element - A diagram or its container
  * @returns {boolean} True when it is off the page and outside any shadow root
  */
-function isDetached(element) {
+export function isDetached(element) {
   if (element.isConnected) return false;
   const root = element.getRootNode();
   return !(root.nodeType === 11 && /** @type {ShadowRoot} */ (root).host);

@@ -13,6 +13,7 @@ jest.unstable_mockModule("../src/features/diagram-init.js", () => ({
   deinitializeDiagram: jest.fn(),
   recheckDiagram: jest.fn(() => false),
   releaseDetachedDiagrams: jest.fn(),
+  isDetached: jest.fn((el) => !el.isConnected),
 }));
 
 jest.unstable_mockModule("../src/ui/modal.js", () => ({
@@ -395,6 +396,37 @@ describe("Observer Module", () => {
       expect(initializeDiagram).toHaveBeenCalledTimes(1);
       expect(recheckDiagram).not.toHaveBeenCalled();
       expect(releaseDetachedDiagrams).not.toHaveBeenCalled();
+    } finally {
+      window.IntersectionObserver = realObserver;
+    }
+  });
+
+  test("a diagram that leaves before it comes into view is no longer watched", async () => {
+    const watched = new Set();
+    const realObserver = window.IntersectionObserver;
+    window.IntersectionObserver = class {
+      observe(el) {
+        watched.add(el);
+      }
+      unobserve(el) {
+        watched.delete(el);
+      }
+      disconnect() {}
+    };
+    try {
+      document.body.innerHTML =
+        '<main><div class="diagram" id="gone"><svg></svg></div></main><div class="diagram" id="kept"><svg></svg></div>';
+      observeDiagrams();
+      const gone = document.getElementById("gone");
+      const kept = document.getElementById("kept");
+      expect([...watched]).toEqual([gone, kept]);
+
+      document.querySelector("main").remove();
+      await wait(200);
+
+      expect([...watched]).toEqual([kept]);
+      expect(gone.dataset.diagviewIndex).toBeUndefined();
+      expect(kept.dataset.diagviewIndex).toBe("0");
     } finally {
       window.IntersectionObserver = realObserver;
     }

@@ -16,6 +16,7 @@ import {
 import {
   initializeDiagram,
   deinitializeDiagram,
+  isDetached,
   recheckDiagram,
   releaseDetachedDiagrams,
 } from "../features/diagram-init.js";
@@ -126,6 +127,18 @@ export function checkShareLink() {
   }
 }
 
+/** Diagrams the lazy observer watches until they come near the viewport */
+const waiting = new Set();
+
+/**
+ * Stop watching a diagram for lazy setup
+ * @param {Element} diagram - Diagram container
+ */
+function stopWaiting(diagram) {
+  state.lazyObserver?.unobserve(diagram);
+  waiting.delete(diagram);
+}
+
 /**
  * Get or create the global IntersectionObserver for lazy initialization.
  * OPT-2: Defers initialization until diagrams are near the viewport.
@@ -144,7 +157,7 @@ function getLazyObserver() {
           const diagram = entry.target;
           const index = parseInt(diagram.dataset.diagviewIndex ?? "-1", 10);
           initializeDiagram(diagram, index);
-          state.lazyObserver?.unobserve(diagram);
+          stopWaiting(diagram);
           if (diagram.dataset.diagviewError) errorBox = true;
         }
       });
@@ -275,7 +288,7 @@ function setUpDiagrams(diagrams, renumber = false) {
     const index = indexMap.get(diagram) ?? -1;
 
     if (skipped.has(diagram)) {
-      state.lazyObserver?.unobserve(diagram);
+      stopWaiting(diagram);
       // Set up earlier under the other rule, before a diagram was added or
       // removed next to it
       deinitializeDiagram(diagram);
@@ -294,6 +307,7 @@ function setUpDiagrams(diagrams, renumber = false) {
       const observer = getLazyObserver();
       if (observer) {
         observer.observe(diagram);
+        waiting.add(diagram);
       } else {
         // Fallback for environments without IntersectionObserver support
         initializeDiagram(diagram, index);
@@ -330,6 +344,14 @@ export function observeDiagrams() {
       if (removedAny) {
         removedAny = false;
         releaseDetachedDiagrams();
+        // A diagram that left before it came into view is no longer watched,
+        // and gets its markup back the way a released one does
+        waiting.forEach((diagram) => {
+          if (!isDetached(diagram)) return;
+          stopWaiting(diagram);
+          delete diagram.dataset.diagviewIndex;
+          delete diagram.dataset.diagviewId;
+        });
       }
       const renumber = removedDiagram;
       removedDiagram = false;
@@ -451,6 +473,7 @@ export function stopObserving() {
     state.lazyObserver.disconnect();
     state.lazyObserver = null;
   }
+  waiting.clear();
   // Cancel any pending debounce timer to prevent ghost callbacks
   if (state.debouncedProcess) {
     state.debouncedProcess.cancel();
