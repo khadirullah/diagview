@@ -177,7 +177,8 @@ The `version:sync` script updates version strings in:
 
 - `demo/demo-runtime.js` (`var DV_VERSION = '...'`)
 - `README.md` and `docs/*.md` (all `diagview@x.y.z` CDN references)
-- `demo/*.html` (`unpkg.com/diagview@...` script tags)
+- `demo/*.html` (`unpkg.com/diagview@...` script tags, and the `unpkg.com/<wbr>diagview@...` code samples)
+- `.github/ISSUE_TEMPLATE/bug_report.md` (the example `DiagView.version`)
 - `package.json` (the Jest global `__DV_VERSION__`)
 
 ```bash

@@ -42,7 +42,8 @@ if (pkg.jest?.globals && pkg.jest.globals.__DV_VERSION__ !== version) {
   console.log("Updated jest global __DV_VERSION__ in package.json");
 }
 
-// 4. Update CDN script tags in all demo HTML files
+// 4. Update CDN script tags in all demo HTML files, and the code samples
+// on the pages that break the URL with <wbr> as in unpkg.com/<wbr>diagview@
 const demoDir = "demo";
 if (fs.existsSync(demoDir)) {
   const files = fs.readdirSync(demoDir);
@@ -50,9 +51,16 @@ if (fs.existsSync(demoDir)) {
     if (file.endsWith(".html")) {
       updateFile(
         `${demoDir}/${file}`,
-        /unpkg\.com\/diagview@[0-9.]+/g,
-        `unpkg.com/diagview@${version}`,
+        /(unpkg\.com\/(?:<wbr>)?diagview@)[0-9.]+/g,
+        (match, prefix) => prefix + version,
       );
     }
   }
 }
+
+// 5. Update the example version in the bug report template
+updateFile(
+  ".github/ISSUE_TEMPLATE/bug_report.md",
+  /(\(`DiagView\.version`\) \[e\.g\. )[0-9]+\.[0-9]+\.[0-9]+/,
+  (match, prefix) => prefix + version,
+);
