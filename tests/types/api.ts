@@ -304,6 +304,8 @@ function stateAndEvents(): void {
 
   // @ts-expect-error state is read-only
   state.isModalOpen = true;
+  // @ts-expect-error the config is frozen
+  state.config.layout = "floating";
   // @ts-expect-error clear() stays internal
   state.events.clear();
 }

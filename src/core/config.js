@@ -306,7 +306,7 @@ export { DEFAULT_CONFIG, INITIAL_CONFIG };
 
 /**
  * @typedef {object} DiagViewState
- * @property {Record<string, *>} config - Current effective configuration
+ * @property {Readonly<Record<string, *>>} config - Current effective configuration, frozen
  * @property {ReturnType<typeof EventEmitter>} events - Instance-based event bus
  * @property {object|null} activePanzoom - Active Panzoom instance
  * @property {MutationObserver|null} observer - Diagram mutation observer

@@ -342,7 +342,7 @@ console.log(DiagView.version); // e.g. "1.2.0"
 
 ## State (read-only)
 
-`DiagView.state` is a read-only Proxy over the internal state object, at every depth: nested objects come back as read-only views, and collections (Sets, Arrays, Maps) as snapshots. Writes and deletes log a warning and are ignored. Two exceptions: `activePanzoom` is the live Panzoom instance while the modal is open (its methods are safe to call), and `events` exposes `on`, `off` and `emit` bound to the internal event bus.
+`DiagView.state` is a read-only Proxy over the internal state object, at every depth: nested objects come back as read-only views, and collections (Sets, Arrays, Maps) as snapshots. Writes and deletes log a warning and are ignored. Two exceptions: `activePanzoom` is the live Panzoom instance while the modal is open (its methods are safe to call), and `events` exposes `on`, `off` and `emit` bound to the internal event bus. `config` comes back frozen, with no warning on a write. A write or delete inside `DiagView.state.config` throws a `TypeError` in strict mode, which ES modules and classes always use, and does nothing elsewhere.
 
 DiagView fires one event on that bus. `dv:toggle-text-select` carries no data. The `T` shortcut emits it while the viewer is open, and the viewer then turns Text Select Mode on or off. The Text Select buttons switch the mode without the event. Any other name is free for your own events. Your listeners stay through `destroy()` and a later `init()`. Remove them with `off()` or with the function `on()` returns.
 
@@ -377,7 +377,7 @@ console.log(DiagView.state.rotationAngle); // 0 | 90 | 180 | 270
 console.log(DiagView.state.searchMatches.length);
 ```
 
-> **Do not attempt to mutate `DiagView.state` directly.** Writes are ignored with a warning. Use `configure()`, `openFullscreen()`, and other API methods to change behaviour.
+> **Do not attempt to mutate `DiagView.state` directly.** Writes are ignored with a warning, and writes inside `state.config` throw in strict mode. Use `configure()`, `openFullscreen()`, and other API methods to change behaviour.
 
 ---
 
