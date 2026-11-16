@@ -31,6 +31,11 @@ import { addModalListener, addModalCleanupFunction, loadChunk } from "../core/li
 import { showErrorToast, showInfoToast } from "../ui/toast.js";
 import { blurActiveElement } from "../ui/focus-manager.js";
 
+// Finger travel in pixels past which a touch is a pan, not a tap
+const TAP_SLOP = 10;
+// Farthest apart in pixels the two taps of a double tap may land
+const DOUBLE_TAP_SLOP = 40;
+
 /**
  * Initialize Panzoom on element
  */
@@ -91,6 +96,13 @@ export function setupViewportInteractions(viewport, element, panzoom) {
   if (!panzoom) return;
 
   let lastTapTime = 0;
+  let lastTapX = 0;
+  let lastTapY = 0;
+  // Where the current one-finger touch started, and whether it has moved
+  // far enough since to be a pan
+  let touchX = 0;
+  let touchY = 0;
+  let touchMoved = false;
 
   // Helper to check if text select mode is ON
   const isTextSelectActive = () => viewport.classList.contains("dv-text-select");
@@ -169,6 +181,11 @@ export function setupViewportInteractions(viewport, element, panzoom) {
 
   // Mobile touch handlers
   const handleTouchStart = (e) => {
+    if (e.touches.length === 1) {
+      touchX = e.touches[0].clientX;
+      touchY = e.touches[0].clientY;
+      touchMoved = false;
+    }
     if (isTextSelectActive()) return;
     armWillChange();
     blurActiveElement();
@@ -183,6 +200,9 @@ export function setupViewportInteractions(viewport, element, panzoom) {
     // scrolling/gesturing, but we let Panzoom's native listeners handle the math.
     if (e.touches.length >= 2) {
       if (e.cancelable) e.preventDefault();
+    } else if (e.touches.length === 1) {
+      const { clientX, clientY } = e.touches[0];
+      if (Math.hypot(clientX - touchX, clientY - touchY) > TAP_SLOP) touchMoved = true;
     }
   };
 
@@ -198,15 +218,26 @@ export function setupViewportInteractions(viewport, element, panzoom) {
       return;
     }
 
+    // A finger that moved panned the diagram. That is no tap, and the next
+    // tap starts a new double tap.
+    if (touchMoved) {
+      touchMoved = false;
+      lastTapTime = 0;
+      return;
+    }
+
     const now = Date.now();
     const gap = now - lastTapTime;
+    const near = Math.hypot(touchX - lastTapX, touchY - lastTapY) <= DOUBLE_TAP_SLOP;
 
-    // Double tap to reset
-    if (gap < 300 && gap > 0) {
+    // Double tap to reset, with both taps in about the same place
+    if (gap < 300 && gap > 0 && near) {
       panzoom.reset({ animate: true });
       lastTapTime = 0;
     } else {
       lastTapTime = now;
+      lastTapX = touchX;
+      lastTapY = touchY;
     }
   };
 

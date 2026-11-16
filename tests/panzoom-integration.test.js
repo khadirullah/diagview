@@ -199,6 +199,84 @@ describe("touch: tap after pinch does not reset the zoom", () => {
   });
 });
 
+describe("touch: a pan is not a tap", () => {
+  let viewport, panzoom;
+
+  // One finger. touchend lists no finger still down.
+  const finger = (type, x, y) => {
+    const ev = new Event(type, { bubbles: true, cancelable: true });
+    ev.touches = type === "touchend" ? [] : [{ clientX: x, clientY: y }];
+    viewport.dispatchEvent(ev);
+  };
+  const tap = (x, y) => {
+    finger("touchstart", x, y);
+    finger("touchend", x, y);
+  };
+  const flick = (x, y) => {
+    finger("touchstart", x, y);
+    finger("touchmove", x + 60, y);
+    finger("touchend", x + 60, y);
+  };
+
+  beforeEach(() => {
+    jest.useFakeTimers();
+    resetConfig();
+    resetTouchState();
+    state.isModalOpen = true;
+    document.body.innerHTML = "";
+    viewport = document.createElement("div");
+    const element = document.createElement("div");
+    viewport.appendChild(element);
+    document.body.appendChild(viewport);
+    panzoom = { reset: jest.fn(), getScale: jest.fn(() => 1) };
+    setupViewportInteractions(viewport, element, panzoom);
+  });
+
+  afterEach(() => {
+    for (const fn of Array.from(state.modalCleanupFunctions)) fn();
+    state.modalCleanupFunctions.clear();
+    state.isModalOpen = false;
+    jest.useRealTimers();
+  });
+
+  test("two quick flicks do not reset the zoom", () => {
+    flick(100, 100);
+    jest.advanceTimersByTime(120);
+    flick(100, 100);
+    expect(panzoom.reset).not.toHaveBeenCalled();
+  });
+
+  test("a flick then a tap do not reset the zoom", () => {
+    flick(100, 100);
+    jest.advanceTimersByTime(120);
+    tap(100, 100);
+    expect(panzoom.reset).not.toHaveBeenCalled();
+  });
+
+  test("a tap then a flick do not reset the zoom", () => {
+    tap(100, 100);
+    jest.advanceTimersByTime(120);
+    flick(100, 100);
+    expect(panzoom.reset).not.toHaveBeenCalled();
+  });
+
+  test("two quick taps far apart do not reset the zoom", () => {
+    tap(100, 100);
+    jest.advanceTimersByTime(120);
+    tap(300, 100);
+    expect(panzoom.reset).not.toHaveBeenCalled();
+  });
+
+  test("two quick taps in the same place reset, a small wobble included", () => {
+    finger("touchstart", 100, 100);
+    finger("touchmove", 104, 103);
+    finger("touchend", 104, 103);
+    jest.advanceTimersByTime(120);
+    tap(110, 108);
+    expect(panzoom.reset).toHaveBeenCalledTimes(1);
+  });
+});
+
 describe("taps reach links and click handlers", () => {
   let handleStartEvent;
 
