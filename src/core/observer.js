@@ -138,14 +138,21 @@ function getLazyObserver() {
 
   state.lazyObserver = new IntersectionObserver(
     (entries) => {
+      let errorBox = false;
       entries.forEach((entry) => {
         if (entry.isIntersecting) {
           const diagram = entry.target;
           const index = parseInt(diagram.dataset.diagviewIndex ?? "-1", 10);
           initializeDiagram(diagram, index);
           state.lazyObserver?.unobserve(diagram);
+          if (diagram.dataset.diagviewError) errorBox = true;
         }
       });
+      // The page's own changes reach the MutationObserver before this runs,
+      // so the changes waiting now are the cards just built. Drop them, so
+      // they do not queue another run. An error box called the page's
+      // onError, whose changes must still be seen.
+      if (!errorBox) state.observer?.takeRecords();
     },
     {
       rootMargin: "200px", // Boot up 200px before they enter viewport for zero perceived delay

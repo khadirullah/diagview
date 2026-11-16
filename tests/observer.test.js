@@ -365,6 +365,41 @@ describe("Observer Module", () => {
     }
   });
 
+  test("the card built around a diagram as it scrolls into view does not wake the observer", async () => {
+    let reveal;
+    const realObserver = window.IntersectionObserver;
+    window.IntersectionObserver = class {
+      constructor(callback) {
+        reveal = (el) => callback([{ isIntersecting: true, target: el }]);
+      }
+      observe() {}
+      unobserve() {}
+      disconnect() {}
+    };
+    try {
+      document.body.innerHTML = '<div class="diagram" id="d"><svg></svg></div>';
+      observeDiagrams();
+      const diagram = document.getElementById("d");
+      // What setup does in the card layout
+      initializeDiagram.mockImplementationOnce((el) => {
+        el.dataset.diagviewInit = "true";
+        const card = document.createElement("div");
+        card.className = "diagview-wrapper";
+        el.before(card);
+        card.appendChild(el);
+      });
+
+      reveal(diagram);
+      await wait(200);
+
+      expect(initializeDiagram).toHaveBeenCalledTimes(1);
+      expect(recheckDiagram).not.toHaveBeenCalled();
+      expect(releaseDetachedDiagrams).not.toHaveBeenCalled();
+    } finally {
+      window.IntersectionObserver = realObserver;
+    }
+  });
+
   test("stopObserving disconnects the observer", () => {
     observeDiagrams();
     const observer = state.observer;
