@@ -915,3 +915,21 @@ describe("styles.css: accent tints", () => {
     }
   });
 });
+
+describe("styles.css: print", () => {
+  test("leaves out every DiagView control, also the ones that sit on <body>", () => {
+    const body = ruleBody("@media print {");
+    for (const cls of [
+      ".diagview-controls",
+      ".diagview-off-hint",
+      ".diagview-menu",
+      ".diagview-modal",
+      ".diagview-toast-container",
+      ".diagview-help-modal",
+      ".diagview-fab-container",
+    ]) {
+      expect(body).toContain(cls);
+    }
+    expect(body).toContain("display: none !important");
+  });
+});

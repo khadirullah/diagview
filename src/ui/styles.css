@@ -1964,11 +1964,16 @@
   }
 }
 
+/* Notices, the shortcut panel and the menu button can sit on <body>
+   outside the viewer, so they are listed on their own */
 @media print {
   .diagview-controls,
   .diagview-off-hint,
   .diagview-menu,
-  .diagview-modal {
+  .diagview-modal,
+  .diagview-toast-container,
+  .diagview-help-modal,
+  .diagview-fab-container {
     display: none !important;
   }
 }
