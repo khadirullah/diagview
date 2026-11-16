@@ -534,6 +534,75 @@ describe("Diagram Init: Interaction Handlers", () => {
   });
 });
 
+describe("Diagram Init: clicks the diagram leaves to the page", () => {
+  const NODES =
+    '<svg viewBox="0 0 10 10">' +
+    '<a xlink:href="https://example.com" target="_blank"><rect class="link-node"/></a>' +
+    '<a href="#details"><rect class="href-node"/></a>' +
+    '<g class="node clickable"><rect class="callback-node"/></g>' +
+    '<rect class="inline-node" onclick="void 0"/>' +
+    '<rect class="plain-node"/>' +
+    "</svg>";
+  let openFullscreen;
+
+  const setup = (layout) => {
+    document.body.innerHTML = `<div class="diagram" data-diagview-layout="${layout}">${NODES}</div>`;
+    initializeDiagram(document.querySelector(".diagram"));
+  };
+
+  const click = (selector, init = {}) => {
+    const e = new MouseEvent("click", { bubbles: true, cancelable: true, ...init });
+    document.querySelector(selector).dispatchEvent(e);
+  };
+
+  beforeEach(async () => {
+    const { resetConfig } = await import("../src/core/config.js");
+    resetConfig();
+    ({ openFullscreen } = await import("../src/ui/modal.js"));
+    jest.clearAllMocks();
+  });
+
+  describe.each(["off", "floating", "header"])("layout %s", (layout) => {
+    beforeEach(() => setup(layout));
+
+    test("a click on a plain part of the diagram opens the viewer", () => {
+      click(".plain-node");
+      expect(openFullscreen).toHaveBeenCalledTimes(1);
+    });
+
+    test.each([".link-node", ".href-node", ".callback-node", ".inline-node"])(
+      "a click on %s does not open the viewer",
+      (selector) => {
+        click(selector);
+        expect(openFullscreen).not.toHaveBeenCalled();
+      },
+    );
+
+    test.each(["ctrlKey", "metaKey", "shiftKey", "altKey"])(
+      "a click with %s held does not open the viewer",
+      (key) => {
+        click(".plain-node", { [key]: true });
+        expect(openFullscreen).not.toHaveBeenCalled();
+      },
+    );
+
+    test("a click the page already handled does not open the viewer", () => {
+      document
+        .querySelector(".plain-node")
+        .addEventListener("click", (e) => e.preventDefault(), { once: true });
+      click(".plain-node");
+      expect(openFullscreen).not.toHaveBeenCalled();
+    });
+  });
+
+  test("a link around the whole page diagram does not stop it opening", () => {
+    document.body.innerHTML = `<a href="#page"><div class="diagram"><svg viewBox="0 0 10 10"><rect class="plain-node"/></svg></div></a>`;
+    initializeDiagram(document.querySelector(".diagram"));
+    click(".plain-node");
+    expect(openFullscreen).toHaveBeenCalledTimes(1);
+  });
+});
+
 describe("Diagram Init: readElementOverrides", () => {
   let container;
 

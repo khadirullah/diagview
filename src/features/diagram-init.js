@@ -33,6 +33,25 @@ const trackedElements = new Set();
 // data-diagview-accent is gone, so point to its replacement once per page
 let accentWarned = false;
 
+// Parts of a diagram that act on a click themselves. Mermaid gives every node
+// with a click line the class "clickable", and draws a link as an <a>.
+// a[*|href] also matches the older xlink:href links.
+const OWN_CLICK = "a[*|href], [onclick], .clickable";
+
+/**
+ * Whether a click on a diagram should open the viewer. A click the page
+ * already handled, one with a modifier key held, and one on a link or a
+ * clickable node inside the diagram are left to the page and the browser.
+ * @param {MouseEvent} e - The click
+ * @param {Element} area - The element the click listener sits on
+ * @returns {boolean} True to open the viewer
+ */
+function clickOpensViewer(e, area) {
+  if (e.defaultPrevented || e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) return false;
+  const own = e.target.closest?.(OWN_CLICK);
+  return !own || own === area || !area.contains(own);
+}
+
 /**
  * Check if SVG is valid and renderable
  */
@@ -411,6 +430,9 @@ export function initializeDiagram(element, precalculatedIndex = -1) {
   // cursor a card has.
   if (isOff) {
     const openHandler = () => openFullscreen(element);
+    const clickHandler = (e) => {
+      if (clickOpensViewer(e, element)) openHandler();
+    };
     // Only a key on the diagram itself. Enter on a link inside follows it.
     const keyHandler = (e) => {
       if (e.target === element && (e.key === "Enter" || e.key === " ")) {
@@ -418,7 +440,7 @@ export function initializeDiagram(element, precalculatedIndex = -1) {
         openHandler();
       }
     };
-    element.addEventListener("click", openHandler);
+    element.addEventListener("click", clickHandler);
     element.addEventListener("keydown", keyHandler);
 
     // A button must not hold links, so a diagram with its own links is a
@@ -447,7 +469,7 @@ export function initializeDiagram(element, precalculatedIndex = -1) {
 
     // Store cleanup for this specific element (no wrapper in 'off' layout)
     record.fn = () => {
-      element.removeEventListener("click", openHandler);
+      element.removeEventListener("click", clickHandler);
       element.removeEventListener("keydown", keyHandler);
       added.forEach(([name]) => element.removeAttribute(name));
       hint?.remove();
@@ -541,7 +563,7 @@ export function initializeDiagram(element, precalculatedIndex = -1) {
 
   // Click viewport to open fullscreen
   const viewportHandler = (e) => {
-    if (!e.target.closest(".diagview-controls")) {
+    if (!e.target.closest(".diagview-controls") && clickOpensViewer(e, viewport)) {
       openFullscreen(element);
     }
   };

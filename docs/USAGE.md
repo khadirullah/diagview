@@ -165,6 +165,8 @@ await mermaid.run();
 
 ## 4. Layout modes
 
+In every layout a click on the diagram opens the fullscreen viewer. A click on a link or a Mermaid `click` node inside the diagram only does what that link or node does. A click with `Ctrl`, `Shift`, `Alt` or `Cmd` held leaves the viewer closed, and so does a click that a handler inside the diagram has already cancelled with `preventDefault()`.
+
 ### Floating (default)
 
 The floating layout keeps the diagram area clean. On hover, the buttons fade in at the bottom of the card. On touch screens they are always shown and grow from 36px to 44px, so a finger hits them. They use the same `ui.buttons.style` as the header layout, so see [Button style](#button-style) to change their look. In fullscreen, a FAB (Floating Action Button) at the bottom-right gives access to export, share, rotate, and meeting mode.
