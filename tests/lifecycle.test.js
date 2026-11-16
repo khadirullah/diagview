@@ -192,6 +192,31 @@ describe("DiagView Lifecycle", () => {
     errorSpy.mockRestore();
   });
 
+  test("init() that throws partway leaves nothing behind, and the next init() works", () => {
+    const matchMedia = window.matchMedia;
+    window.matchMedia = () => {
+      throw new Error("no media queries here");
+    };
+    try {
+      expect(() => init({ layout: "header" })).toThrow("no media queries here");
+    } finally {
+      window.matchMedia = matchMedia;
+    }
+
+    expect(state.isInitialized).toBe(false);
+    expect(document.getElementById("diagview-modal")).toBeNull();
+    expect(document.getElementById("diagview-styles")).toBeNull();
+    expect(state.themeObserver).toBeNull();
+    expect(state.config.layout).toBe(DEFAULT_CONFIG.layout);
+
+    init();
+    expect(state.isInitialized).toBe(true);
+    expect(document.getElementById("diagview-modal")).not.toBeNull();
+    expect(document.getElementById("diagview-styles")).not.toBeNull();
+    // The theme watchers start again, including the OS dark mode one
+    expect(state.mediaQueryList).not.toBeNull();
+  });
+
   test("destroy() forgets remembered zoom states", async () => {
     init({ rememberZoom: true });
     const pz = {

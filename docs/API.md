@@ -34,6 +34,8 @@ Initialization runs synchronously in normal use, so you do not need to await it.
 
 Calling `init()` more than once without an intervening `destroy()` is a no-op (logs a warning).
 
+If a setup step throws, `init()` removes what it had set up so far, resets the options and throws the error again. DiagView is then not initialized, and a later `init()` starts from a clean page.
+
 ---
 
 ### `DiagView.destroy()`

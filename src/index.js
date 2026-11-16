@@ -143,14 +143,21 @@ function init(options = {}) {
   }
   lastSelector = null;
 
-  // Initialize components
-  injectStyles();
-  createModal();
-  syncBrandingVisibility();
-  setupKeyboardShortcuts();
-  setupThemeWatchers();
-  syncTheme(); // page buttons use the accent before the viewer first opens
-  observeDiagrams();
+  // Initialize components. A step that throws leaves nothing behind, so a
+  // later init() starts from a clean page.
+  try {
+    injectStyles();
+    createModal();
+    syncBrandingVisibility();
+    setupKeyboardShortcuts();
+    setupThemeWatchers();
+    syncTheme(); // page buttons use the accent before the viewer first opens
+    observeDiagrams();
+  } catch (e) {
+    removeEverything();
+    autoStarted = false;
+    throw e;
+  }
 
   state.isInitialized = true;
 
@@ -185,20 +192,32 @@ function destroy() {
   return pendingDestroy;
 }
 
+/** @param {*} e - Error a teardown step threw */
+const teardownFailed = (e) => console.error("DiagView: Error during teardown:", e);
+
 /**
  * Full teardown sequence. Only ever invoked through destroy().
  * @private
  */
 async function _teardown() {
   lastSelector = state.config.diagramSelector;
+
+  // 0. If modal is open, close it first to release scroll locks and global listeners
+  if (state.isModalOpen) await closeModal().catch(teardownFailed);
+
+  removeEverything();
+  autoStarted = false;
+}
+
+/**
+ * Remove everything init() sets up and reset the state. Used by destroy(),
+ * and by init() when one of its steps throws.
+ * @private
+ */
+function removeEverything() {
   // Each step runs on its own, so one that throws only logs and the rest
   // still run. The DOM we own is removed and the state is reset, so a later
   // init() is never refused with "Already initialized" after a failed step.
-  const failed = (e) => console.error("DiagView: Error during teardown:", e);
-
-  // 0. If modal is open, close it first to release scroll locks and global listeners
-  if (state.isModalOpen) await closeModal().catch(failed);
-
   [
     // Stop observers first so no new diagrams get initialised during teardown
     stopObserving,
@@ -271,10 +290,9 @@ async function _teardown() {
     try {
       step();
     } catch (e) {
-      failed(e);
+      teardownFailed(e);
     }
   });
-  autoStarted = false;
 }
 
 /**
