@@ -246,6 +246,14 @@ describe("sanitizeSVG decodes CSS before it checks it (strict)", () => {
     ["a \\u escape", ".a{background:url(\\u0068ttps://evil.com/x.png)}"],
     ["an escape past the last code point", ".a{background:url(\\110000https://evil.com/x.png)}"],
     ["an XML character reference", ".a{background:url(&#104;ttps://evil.com/x.png)}"],
+    [
+      "a backslash and a line break in a string",
+      '.a{background:url("ht\\&#10;tps://evil.com/x.png")}',
+    ],
+    [
+      "a backslash and a line break in image-set()",
+      ".a{background:image-set('\\&#13;&#10;//evil.com/x.png' 1x)}",
+    ],
   ])("finds a remote url() hidden by %s", (_label, css) => {
     const out = sanitizeToString(styleBlock(css));
     expect(out).toContain("<rect");

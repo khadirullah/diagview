@@ -523,6 +523,9 @@ function decodeCSSEscapes(str) {
   if (!str || !str.includes("\\")) return str;
   return (
     str
+      // A backslash before a line break in a quoted string joins the two
+      // lines, so "ht\<newline>tps:" reads as "https:"
+      .replace(/\\(?:\r\n|[\n\r\f])/g, "")
       .replace(/\\([0-9a-fA-F]{1,6})\s?/g, (_, hex) => {
         try {
           return String.fromCodePoint(parseInt(hex, 16));
