@@ -15,11 +15,14 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
       - name: Setup Node.js
+        # No npm cache. A release installs fresh from the lockfile rather than
+        # from a cache that other workflow runs can write.
         uses: actions/setup-node@v7
         with:
           node-version: "24"
-          cache: "npm"
       - name: Check Tag Matches Version
         # A release tagged v1.2.1 must publish 1.2.1, not whatever
         # package.json holds.
