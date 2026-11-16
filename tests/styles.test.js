@@ -249,6 +249,13 @@ describe("styles.css: menu footer", () => {
     expect(body).toContain("var(--dv-accent-fill)");
     expect(body).not.toMatch(/opacity\s*:/);
   });
+
+  test("the topbar branding link uses the muted colour instead of opacity too", () => {
+    expect(css).not.toMatch(/\.diagview-branding[^{]*\{[^}]*opacity\s*:/);
+    expect(ruleBody("\n.diagview-branding {")).toContain(
+      "color: var(--dv-muted-text, var(--dv-text-color))",
+    );
+  });
 });
 
 describe("styles.css: menu dividers", () => {
@@ -620,7 +627,6 @@ describe("styles.css: keyboard focus ring", () => {
     expect(block).toContain(".diagview-search-wrapper:focus-within {");
     expect(ruleBody(".diagview-search-wrapper:focus-within {", at)).toMatch(/offset:\s*-2px/);
     expect(ruleBody(".diagview-search-input:focus-visible {", at)).toMatch(/outline:\s*none/);
-    expect(ruleBody(".diagview-branding:focus-visible {", at)).toMatch(/opacity:\s*1/);
     // The menu panel is not a control and gets no ring here either
     expect(ruleBody(".diagview-modal .diagview-menu:focus-visible {", at)).toMatch(
       /outline:\s*none !important/,

@@ -660,7 +660,7 @@ Screen readers read each notice from a hidden live region with the id `diagview-
 
 DiagView checks that the viewer's text colour reaches at least 4.5:1 against the canvas. When it falls short, DiagView logs a console warning and changes the colour. It turns black (`#000000`) or white (`#ffffff`), whichever has more contrast. This applies to its built-in colour, which can fall short on a mid-grey canvas, and to a `textColor` or `--diagram-text` you set. For example, `textColor: "#475569"` reaches 3.6:1 on a `#b3b3b3` canvas, so the viewer uses black at 10:1. The toolbar on the page gets the same check against the page background, without a warning. This check covers DiagView's own text colour, not the text inside your diagram.
 
-The menu headings and the search placeholder use a lighter shade of the same colour, stored in `--dv-muted-text` on `<html>`. DiagView fades the text colour toward the canvas by up to 30% and stops before it drops under 4.5:1, on the canvas and on the search box's grey wash. On a canvas where the text only just passes, they stay at full strength.
+The menu headings, the search placeholder and the DiagView name in the viewer's top bar use a lighter shade of the same colour, stored in `--dv-muted-text` on `<html>`. DiagView fades the text colour toward the canvas by up to 30% and stops before it drops under 4.5:1, on the canvas and on the search box's grey wash. On a canvas where the text only just passes, they stay at full strength.
 
 ### Canvas theme
 
