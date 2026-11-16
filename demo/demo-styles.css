@@ -169,9 +169,12 @@ body {
   overflow-x: clip;
 }
 
-/* Transitions only after first paint, set by demo-runtime.js */
+/* Transitions only after first paint, set by demo-runtime.js. The rule
+   for the elements inside the body has no specificity, so any element
+   with a transition of its own, such as DiagView's toolbar, minimap and
+   menu, keeps it. */
 body.ready,
-body.ready * {
+:where(body.ready *) {
   transition-property: background-color, border-color, color;
   transition-duration: 0.2s;
   transition-timing-function: ease;
