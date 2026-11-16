@@ -55,6 +55,36 @@ describe("History State Management", () => {
   });
 });
 
+describe("The page's own history state", () => {
+  let pushSpy;
+
+  beforeEach(() => {
+    resetViewportState();
+    pushSpy = jest.spyOn(history, "pushState").mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    pushSpy.mockRestore();
+    history.replaceState(null, "");
+    resetViewportState();
+  });
+
+  test("the viewer's entry keeps what a router stored there", () => {
+    history.replaceState({ route: "/docs", scroll: { y: 120 } }, "");
+    pushModalHistoryState(jest.fn());
+    expect(pushSpy).toHaveBeenCalledWith(
+      { route: "/docs", scroll: { y: 120 }, diagviewModal: true },
+      "",
+    );
+  });
+
+  test.each([null, "page-2", 7])("a page state of %p, which is no object, is left out", (value) => {
+    history.replaceState(value, "");
+    pushModalHistoryState(jest.fn());
+    expect(pushSpy).toHaveBeenCalledWith({ diagviewModal: true }, "");
+  });
+});
+
 describe("History state across a quick close and reopen", () => {
   const popstate = () => new Promise((r) => window.addEventListener("popstate", r, { once: true }));
 

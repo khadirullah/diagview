@@ -1012,6 +1012,8 @@ Live example: [React 18 + StrictMode demo](https://diagview.khadirullah.com/fram
 > **React StrictMode / hot reload:** the development-only destroy-then-init sequence is handled by `init()` itself, which queues behind an in-flight `destroy()`. You do not need to await either call in an effect.
 >
 > **Unmount vs detach:** unmounting a component removes its DOM, diagram included, in every layout; DiagView is not deleting anything, its toolbar just goes with the diagram. Call `destroy()` in the cleanup so handlers are released. To remove only the viewer and keep the diagram on the page, leave the component mounted and call `destroy()`; the diagram is returned to where your framework rendered it, and `init()` enhances it again.
+>
+> **Routers and Back:** opening the viewer adds one history entry, so Back closes the viewer instead of leaving the page. That entry copies the object your router keeps in `history.state` and adds `diagviewModal: true` to it, so the router still finds its own data there. A `history.state` that is not a plain object is not copied.
 
 ### React with cleanup
 

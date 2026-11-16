@@ -14,6 +14,7 @@
 
 import { state } from "../core/config.js";
 import { TIMING } from "../core/constants.js";
+import { isPlainObject } from "../core/state-utils.js";
 
 // ==========================================
 // History State (Mobile Back Button)
@@ -36,7 +37,13 @@ export function pushModalHistoryState(onBackButton) {
     return;
   }
 
-  history.pushState({ diagviewModal: true }, "");
+  // A router keeps its own data in history.state and reads it back on
+  // popstate, so the viewer's entry carries that data along with its flag.
+  const pageState = history.state;
+  history.pushState(
+    isPlainObject(pageState) ? { ...pageState, diagviewModal: true } : { diagviewModal: true },
+    "",
+  );
   _historyStatePushed = true;
 
   _popstateHandler = () => {
