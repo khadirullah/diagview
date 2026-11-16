@@ -820,9 +820,10 @@ function sanitize(input, mode, options, own) {
       return false;
     }
 
-    // SMART BLOCK: allow <foreignObject> ONLY if it has no src/data/href
-    // pointing to external content (the actual XSS vector).
-    // This restores Mermaid subgraph labels in strict mode.
+    // Strict keeps <foreignObject>, as Mermaid puts its HTML labels in it,
+    // and cleans what it holds like any other element. Browsers load
+    // nothing from src or data on a <foreignObject>, so removing one that
+    // names an http(s) URL there is a precaution. It does not stop script.
     if (isStrict && tagName === "foreignobject") {
       const src = el.getAttribute("src") || el.getAttribute("data") || "";
       if (/^https?:\/\//.test(src)) {
