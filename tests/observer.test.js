@@ -246,6 +246,29 @@ describe("Observer Module", () => {
     expect(initializeDiagram).toHaveBeenCalledWith(later, 1);
   });
 
+  test("every diagram keeps the number of its place on the page as diagrams come and go", async () => {
+    document.body.innerHTML =
+      '<div class="diagram" id="a"><svg></svg></div><div class="diagram" id="b"><svg></svg></div>';
+    observeDiagrams();
+    const number = () =>
+      [...document.querySelectorAll(".diagram")].map((d) => `${d.id}=${d.dataset.diagviewIndex}`);
+    expect(number()).toEqual(["a=0", "b=1"]);
+
+    // A diagram added above the others moves them down a place
+    const c = document.createElement("div");
+    c.className = "diagram";
+    c.id = "c";
+    c.innerHTML = "<svg></svg>";
+    document.body.prepend(c);
+    await wait(200);
+    expect(number()).toEqual(["c=0", "a=1", "b=2"]);
+
+    // One that leaves moves the ones after it up
+    document.getElementById("a").remove();
+    await wait(200);
+    expect(number()).toEqual(["c=0", "b=1"]);
+  });
+
   test("an svg the selector matches is set up itself", () => {
     document.body.innerHTML =
       '<svg class="diagram" id="bare" xmlns="http://www.w3.org/2000/svg"><rect width="1" height="1"/></svg>';

@@ -32,6 +32,8 @@ let openTimer = 0;
 
 /** Whether the page removed an element since the last run */
 let removedAny = false;
+/** Whether a numbered diagram left the page since the last run */
+let removedDiagram = false;
 
 /**
  * DiagView's own viewer and minimap. The viewer's copy of an <svg> the
@@ -220,15 +222,17 @@ export function processDiagrams(root = document) {
 /**
  * Give each diagram its index and set up the ones that are ready
  * @param {Element[]} diagrams - Matches to process
+ * @param {boolean} [renumber=false] - Number the page again with nothing to
+ *   process, after a diagram left it
  */
-function setUpDiagrams(diagrams) {
+function setUpDiagrams(diagrams, renumber = false) {
   // Ensure modal exists
   if (!document.getElementById("diagview-modal")) {
     createModal();
   }
 
   // Nothing to index, so the page is not scanned
-  if (diagrams.length === 0) return;
+  if (diagrams.length === 0 && !renumber) return;
 
   const selector = state.config.diagramSelector;
 
@@ -238,6 +242,17 @@ function setUpDiagrams(diagrams) {
   // index instead of -1 and share links can find them again.
   const allDiagrams = collectAllDiagrams();
   const indexMap = new Map(allDiagrams.map((d, i) => [d, i]));
+
+  // A diagram added or removed above others moves them. Share links are
+  // written from the stored number and opened by live position, so every
+  // numbered diagram takes its new place.
+  indexMap.forEach((index, diagram) => {
+    const stored = diagram.dataset.diagviewIndex;
+    if (stored !== undefined && stored !== String(index)) {
+      diagram.dataset.diagviewIndex = String(index);
+    }
+  });
+
   const skipped = skipNestedDiagrams(diagrams, selector);
 
   diagrams.forEach((diagram) => {
@@ -306,8 +321,10 @@ export function observeDiagrams() {
       removedAny = false;
       releaseDetachedDiagrams();
     }
+    const renumber = removedDiagram;
+    removedDiagram = false;
 
-    if (state.nodesToProcess.size === 0) return;
+    if (state.nodesToProcess.size === 0 && !renumber) return;
 
     // Gather the diagrams in or around every added node first, so the page
     // is scanned for the index once per run, and not at all when a script
@@ -322,7 +339,7 @@ export function observeDiagrams() {
     });
     state.nodesToProcess.clear();
 
-    setUpDiagrams([...found]);
+    setUpDiagrams([...found], renumber);
 
     // Check for share link (Deep linking) - Always check globally. A link
     // waiting for its diagram or that diagram's SVG can only resolve when
@@ -343,10 +360,15 @@ export function observeDiagrams() {
       // Styles and scripts in <head> never hold a diagram
       if (mutation.target === document.head) continue;
 
-      if (!removedAny) {
+      if (!removedDiagram) {
         for (const node of mutation.removedNodes) {
-          if (node.nodeType === 1) {
-            removedAny = true;
+          if (node.nodeType !== 1) continue;
+          removedAny = true;
+          // A diagram that left, rather than moved, moves the ones after it
+          // up a place
+          const numbered = "[data-diagview-index]";
+          if (!node.isConnected && (node.matches(numbered) || node.querySelector(numbered))) {
+            removedDiagram = true;
             break;
           }
         }
@@ -422,7 +444,7 @@ export function stopObserving() {
     state.debouncedProcess = null;
   }
   state.nodesToProcess.clear();
-  removedAny = false;
+  removedAny = removedDiagram = false;
   state.isInitialProcessDone = false;
 }
 

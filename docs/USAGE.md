@@ -515,6 +515,8 @@ Share the exact zoom level and pan position with anyone. The generated URL is th
 https://example.com/docs?dv-idx=2&dv-z=2.500&dv-cx=450.3&dv-cy=299.8&dv-r=90&dv-t=custom&dv-c=0b0f19&dv-q=auth
 ```
 
+`dv-idx` counts every diagram on the page at the moment the link is made. When a script adds a diagram above the others or removes one, DiagView numbers the rest again, so a new link opens the diagram it was made from.
+
 ### Activation
 
 - **Keyboard:** Press `L` in fullscreen
