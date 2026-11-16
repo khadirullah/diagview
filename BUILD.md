@@ -217,7 +217,9 @@ The `prepublishOnly` script runs automatically before `npm publish`:
 npm run lint && npm test && npm run build && npm run typecheck && npm run test:entries && npm run size
 ```
 
-`publish.yml` relies on it for these checks, so a local publish and the workflow run the same ones. The workflow first stops when the release tag without its leading `v` differs from the version in `package.json`.
+`publish.yml` runs the same checks as separate steps, so a local publish and the workflow run the same ones. Keep the two lists in step. The workflow first stops when the release tag without its leading `v` differs from the version in `package.json`.
+
+`publish.yml` has two jobs. The `build` job installs the dev dependencies, runs the checks and packs the package with `npm pack`. It has no `id-token` permission. The `publish` job holds `id-token: write`, downloads that tarball and runs `npm publish --ignore-scripts --provenance` on it. No dev dependency runs in the job that can sign in to npm.
 
 ---
 
