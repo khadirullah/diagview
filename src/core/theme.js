@@ -754,7 +754,8 @@ export function setupThemeWatchers() {
     attributeFilter: ["class", "data-theme", "style"],
   });
 
-  // Watch system theme preference
+  // Watch system theme preference, where the browser can report it
+  if (!window.matchMedia) return;
   const mql = window.matchMedia("(prefers-color-scheme: dark)");
 
   state.themeChangeHandler = () => {

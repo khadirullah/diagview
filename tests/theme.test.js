@@ -1006,3 +1006,23 @@ describe("Theme Module: the style attribute on <html> after teardown", () => {
     expect(root.hasAttribute("style")).toBe(false);
   });
 });
+
+describe("Theme Module: theme watchers", () => {
+  const originalMatchMedia = window.matchMedia;
+
+  beforeEach(() => {
+    resetConfig();
+    teardownThemeWatchers();
+  });
+
+  afterEach(() => {
+    teardownThemeWatchers();
+    window.matchMedia = originalMatchMedia;
+  });
+
+  test("they start in a browser without matchMedia", () => {
+    window.matchMedia = undefined;
+    expect(() => setupThemeWatchers()).not.toThrow();
+    expect(() => teardownThemeWatchers()).not.toThrow();
+  });
+});
