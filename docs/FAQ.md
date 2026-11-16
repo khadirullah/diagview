@@ -419,7 +419,7 @@ A: No. DiagView uses an `IntersectionObserver` to initialize each diagram lazily
 A: No. DiagView looks at the nodes the page added once the page has been quiet for 100 ms, or every 500 ms while it keeps changing. When none of them is or holds a diagram, it does nothing more. When some do, it scans the page once to number the diagrams, however many nodes came in.
 
 **Q: Search is slow on a large diagram.**  
-A: Search pre-warms its candidate cache during browser idle time. On very large diagrams (5,000+ nodes), the first search may take a moment. Subsequent searches use the cache and are O(n) string comparisons with no DOM reads.
+A: Search pre-warms its candidate cache during browser idle time. On very large diagrams (5,000+ nodes), the first search may take a moment. Later searches compare the query with the cached label text, so they do not walk the diagram again. DiagView then measures only the labels that match, to find one in view or pan to the nearest.
 
 ---
 
