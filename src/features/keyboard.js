@@ -16,6 +16,17 @@ import { closeMenuHint } from "../ui/toast.js";
 export let keysUsed = false;
 
 /**
+ * Keep a key the viewer acted on from the browser and from the page behind
+ * the viewer, so a page shortcut on the same key does not run as well.
+ * @param {KeyboardEvent} e - The key press
+ */
+function consume(e) {
+  e.preventDefault();
+  e.stopPropagation();
+  e.stopImmediatePropagation();
+}
+
+/**
  * Handle keyboard shortcuts
  */
 function handleKeyboardShortcut(e) {
@@ -56,6 +67,7 @@ function handleKeyboardShortcut(e) {
       // Stage 2: empty query — exit search mode; the next Escape closes the
       // modal. Move focus off the (now hidden) input, or this branch would
       // capture every subsequent Escape too.
+      consume(e);
       document.getElementById("diagview-search-back")?.click();
       searchInput.blur();
       document.getElementById("diagview-modal")?.focus();
@@ -65,12 +77,15 @@ function handleKeyboardShortcut(e) {
     // An open ☰ menu closes first and hands focus back to its button
     const fab = document.querySelector("#dv-toggle.open");
     if (fab) {
+      consume(e);
       fab.click();
       fab.focus();
       return;
     }
 
-    // Otherwise close the main modal
+    // Otherwise close the main modal. With the viewer closed, Escape
+    // belongs to the page.
+    if (state.isModalOpen) consume(e);
     closeModal();
     return;
   }
@@ -86,7 +101,7 @@ function handleKeyboardShortcut(e) {
   // search box (or any other input / contenteditable inside the modal).
   if (e.key === "?" && state.isModalOpen) {
     if (isInputFocused()) return;
-    e.preventDefault();
+    consume(e);
     toggleKeyboardHelp();
     return;
   }
@@ -111,16 +126,16 @@ function handleKeyboardShortcut(e) {
     switch (e.key) {
       case "+":
       case "=":
-        e.preventDefault();
+        consume(e);
         state.activePanzoom.zoomIn();
         break;
       case "-":
       case "_":
-        e.preventDefault();
+        consume(e);
         state.activePanzoom.zoomOut();
         break;
       case "0":
-        e.preventDefault();
+        consume(e);
         state.activePanzoom.reset({ animate: true });
         break;
       case " ": {
@@ -135,12 +150,11 @@ function handleKeyboardShortcut(e) {
           target && target.closest ? target.closest("input, textarea, select") : false;
 
         if (linkTarget) {
-          e.preventDefault();
-          e.stopPropagation();
+          consume(e);
           // SVG links have no click() method, so send the event itself
           linkTarget.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true }));
         } else if (!isButton && !isInput) {
-          e.preventDefault();
+          consume(e);
           state.activePanzoom.reset({ animate: true });
         }
         break;
@@ -156,7 +170,7 @@ function handleKeyboardShortcut(e) {
   if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.key)) {
     // In the open ☰ menu and on its button the arrows belong to the menu
     if (e.target.closest?.(".diagview-menu.active, #dv-toggle.open")) return;
-    e.preventDefault();
+    consume(e);
     closeMenuHint();
 
     let dx = 0;
@@ -183,7 +197,7 @@ function handleKeyboardShortcut(e) {
   switch (e.key) {
     case "m":
     case "M":
-      e.preventDefault();
+      consume(e);
       loadChunk("meeting mode", () => import("./lazy/meeting-mode.js"))
         .then((m) => m.toggleMeetingMode())
         .catch((err) => console.error("DiagView: Failed to load Meeting Mode", err));
@@ -191,7 +205,7 @@ function handleKeyboardShortcut(e) {
 
     case "l":
     case "L":
-      e.preventDefault();
+      consume(e);
       import("./lazy/share.js")
         .then((m) => m.shareLink(state.currentDiagramIndex))
         .catch((err) => console.error("DiagView: Failed to load Share Link", err));
@@ -199,7 +213,7 @@ function handleKeyboardShortcut(e) {
 
     case "r":
     case "R":
-      e.preventDefault();
+      consume(e);
       {
         // The viewer this key press belongs to. A new open makes a new
         // panzoom, so a close, or a close and a new open, while the chunk
@@ -215,7 +229,7 @@ function handleKeyboardShortcut(e) {
 
     case "f":
     case "F":
-      e.preventDefault();
+      consume(e);
       {
         // Focus search — on mobile open the search bar first
         const topbar = document.querySelector(".diagview-topbar");
@@ -230,7 +244,7 @@ function handleKeyboardShortcut(e) {
 
     case "t":
     case "T":
-      e.preventDefault();
+      consume(e);
       state.events.emit("dv:toggle-text-select");
       break;
   }

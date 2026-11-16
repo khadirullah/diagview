@@ -390,3 +390,79 @@ describe("Shortcuts while a control has focus", () => {
     state.events.off("dv:toggle-text-select", toggles);
   });
 });
+
+describe("The page behind the viewer", () => {
+  let pageKeys;
+  const onPage = (e) => pageKeys.push(e.key);
+
+  const press = (target, key, init = {}) => {
+    const e = new KeyboardEvent("keydown", { key, bubbles: true, cancelable: true, ...init });
+    target.dispatchEvent(e);
+    return e;
+  };
+
+  beforeEach(() => {
+    resetConfig();
+    state.activePanzoom = {
+      zoomIn: jest.fn(),
+      zoomOut: jest.fn(),
+      reset: jest.fn(),
+      pan: jest.fn(),
+    };
+    state.isModalOpen = true;
+    document.body.innerHTML = "";
+    pageKeys = [];
+    setupKeyboardShortcuts();
+    document.addEventListener("keydown", onPage);
+    window.addEventListener("keydown", onPage);
+    // Added after DiagView's own listener, as a page script usually is
+    window.addEventListener("keydown", onPage, true);
+  });
+
+  afterEach(() => {
+    teardownKeyboardShortcuts();
+    document.removeEventListener("keydown", onPage);
+    window.removeEventListener("keydown", onPage);
+    window.removeEventListener("keydown", onPage, true);
+    state.isModalOpen = false;
+  });
+
+  test.each(["+", "-", "0", " ", "ArrowLeft", "t", "Escape"])(
+    "%p acts on the viewer only, not on the page",
+    (key) => {
+      const e = press(document.body, key);
+      expect(e.defaultPrevented).toBe(true);
+      expect(pageKeys).toEqual([]);
+    },
+  );
+
+  test("Escape with the menu open closes the menu only, not a page dialog", () => {
+    document.body.innerHTML = '<button id="dv-toggle" class="open"></button>';
+    press(document.body, "Escape");
+    expect(pageKeys).toEqual([]);
+  });
+
+  test("browser shortcuts with Ctrl, Cmd or Alt still reach the page", () => {
+    press(document.body, "r", { ctrlKey: true });
+    press(document.body, "f", { metaKey: true });
+    press(document.body, "ArrowLeft", { altKey: true });
+    // Each key reaches all three page listeners
+    expect(pageKeys).toEqual(["r", "r", "r", "f", "f", "f", "ArrowLeft", "ArrowLeft", "ArrowLeft"]);
+  });
+
+  test("typing in a text field still reaches the page", () => {
+    document.body.innerHTML = '<input type="text">';
+    const input = document.querySelector("input");
+    input.focus();
+    press(input, "t");
+    press(input, "0");
+    expect(pageKeys).toEqual(["t", "t", "t", "0", "0", "0"]);
+  });
+
+  test("with the viewer closed every key reaches the page, Escape too", () => {
+    state.isModalOpen = false;
+    press(document.body, "Escape");
+    press(document.body, "+");
+    expect(pageKeys).toEqual(["Escape", "Escape", "Escape", "+", "+", "+"]);
+  });
+});
