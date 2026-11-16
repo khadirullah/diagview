@@ -40,6 +40,18 @@ function letterKey(e) {
 }
 
 /**
+ * Remember the viewer a key press belongs to. A lazy chunk can finish
+ * loading after that viewer closed, or after a new one opened, and a new
+ * open makes a new panzoom. The returned check says whether the same viewer
+ * is still open, so a late chunk leaves a newer viewer alone.
+ * @returns {() => boolean} True while the viewer of the key press is open
+ */
+function sameViewerCheck() {
+  const panzoom = state.activePanzoom;
+  return () => state.isModalOpen && state.activePanzoom === panzoom;
+}
+
+/**
  * Handle keyboard shortcuts
  */
 function handleKeyboardShortcut(e) {
@@ -211,30 +223,37 @@ function handleKeyboardShortcut(e) {
     case "m":
     case "M":
       consume(e);
-      loadChunk("meeting mode", () => import("./lazy/meeting-mode.js"))
-        .then((m) => m.toggleMeetingMode())
-        .catch((err) => console.error("DiagView: Failed to load Meeting Mode", err));
+      {
+        const stillOpen = sameViewerCheck();
+        loadChunk("meeting mode", () => import("./lazy/meeting-mode.js"))
+          .then((m) => {
+            if (stillOpen()) m.toggleMeetingMode();
+          })
+          .catch((err) => console.error("DiagView: Failed to load Meeting Mode", err));
+      }
       break;
 
     case "l":
     case "L":
       consume(e);
-      import("./lazy/share.js")
-        .then((m) => m.shareLink(state.currentDiagramIndex))
-        .catch((err) => console.error("DiagView: Failed to load Share Link", err));
+      {
+        const stillOpen = sameViewerCheck();
+        import("./lazy/share.js")
+          .then((m) => {
+            if (stillOpen()) m.shareLink(state.currentDiagramIndex);
+          })
+          .catch((err) => console.error("DiagView: Failed to load Share Link", err));
+      }
       break;
 
     case "r":
     case "R":
       consume(e);
       {
-        // The viewer this key press belongs to. A new open makes a new
-        // panzoom, so a close, or a close and a new open, while the chunk
-        // loads leaves nothing to turn.
-        const pz = state.activePanzoom;
+        const stillOpen = sameViewerCheck();
         loadChunk("rotate", () => import("./lazy/rotate.js"))
           .then((m) => {
-            if (state.isModalOpen && state.activePanzoom === pz) m.rotateDiagram();
+            if (stillOpen()) m.rotateDiagram();
           })
           .catch((err) => console.error("DiagView: Failed to load Rotate", err));
       }
