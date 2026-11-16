@@ -1092,16 +1092,6 @@ kbd {
   white-space: nowrap;
 }
 
-/* Hand-written SVGs that draw lines in mid grey picked for a white page */
-.dark .diagram [stroke="#64748b"],
-.dark .diagram [stroke="#4a5568"] {
-  stroke: var(--muted);
-}
-.dark .diagram [fill="#64748b"],
-.dark .diagram [fill="#4a5568"] {
-  fill: var(--muted);
-}
-
 /* The 2,500 node grid follows the page accent */
 #stress-node-layer rect {
   fill: var(--accent);
