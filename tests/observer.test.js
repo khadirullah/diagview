@@ -31,7 +31,7 @@ const { observeDiagrams, stopObserving, refreshDiagrams, resetShareLinkCheck } =
   await import("../src/core/observer.js");
 const { initializeDiagram, deinitializeDiagram, recheckDiagram, releaseDetachedDiagrams } =
   await import("../src/features/diagram-init.js");
-const { openFullscreen } = await import("../src/ui/modal.js");
+const { openFullscreen, createModal } = await import("../src/ui/modal.js");
 
 describe("Observer Module", () => {
   beforeEach(() => {
@@ -219,6 +219,31 @@ describe("Observer Module", () => {
     document.querySelector("main").remove();
     await wait(200);
     expect(releaseDetachedDiagrams).toHaveBeenCalledTimes(1);
+  });
+
+  test("a router that replaces the whole body has its new diagrams set up", async () => {
+    document.body.innerHTML = '<div class="diagram"><svg></svg></div>';
+    observeDiagrams();
+    jest.clearAllMocks();
+
+    // What Turbo Drive does on a navigation
+    const next = document.createElement("body");
+    next.innerHTML = '<div class="diagram" id="next"><svg></svg></div>';
+    document.documentElement.replaceChild(next, document.body);
+    await wait(200);
+
+    expect(releaseDetachedDiagrams).toHaveBeenCalledTimes(1);
+    expect(initializeDiagram).toHaveBeenCalledWith(document.getElementById("next"), 0);
+    // The viewer left with the old body, so it is built again
+    expect(createModal).toHaveBeenCalled();
+
+    // The new body is watched too
+    const later = document.createElement("div");
+    later.className = "diagram";
+    later.innerHTML = "<svg></svg>";
+    document.body.appendChild(later);
+    await wait(200);
+    expect(initializeDiagram).toHaveBeenCalledWith(later, 1);
   });
 
   test("an svg the selector matches is set up itself", () => {

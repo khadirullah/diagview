@@ -316,7 +316,7 @@ export function observeDiagrams() {
     const found = new Set();
     state.nodesToProcess.forEach((node) => {
       // Check if node is still in the document
-      if (node && document.body.contains(node)) {
+      if (node?.isConnected) {
         findDiagrams(node, selector).forEach((diagram) => found.add(diagram));
       }
     });
@@ -340,6 +340,8 @@ export function observeDiagrams() {
 
     for (const mutation of mutations) {
       if (mutation.type !== "childList" || ours(mutation.target)) continue;
+      // Styles and scripts in <head> never hold a diagram
+      if (mutation.target === document.head) continue;
 
       if (!removedAny) {
         for (const node of mutation.removedNodes) {
@@ -384,7 +386,9 @@ export function observeDiagrams() {
     }
   });
 
-  state.observer.observe(document.body, {
+  // Watch <html>, not <body>. A router such as Turbo replaces the whole
+  // <body> when it navigates, and the new one must be watched as well.
+  state.observer.observe(document.documentElement, {
     childList: true,
     subtree: true,
   });
