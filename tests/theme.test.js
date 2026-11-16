@@ -1020,6 +1020,21 @@ describe("Theme Module: theme watchers", () => {
     window.matchMedia = originalMatchMedia;
   });
 
+  test("a sync that changes nothing leaves the style attribute on <html> alone", () => {
+    const warn = jest.spyOn(console, "warn").mockImplementation(() => {});
+    // A faint accent also sets the edge variables
+    updateConfig({ accentColor: "#f8fafc" });
+    syncTheme();
+    const writes = new MutationObserver(() => {});
+    writes.observe(document.documentElement, { attributes: true, attributeFilter: ["style"] });
+    clearThemeCache();
+    syncTheme();
+    const records = writes.takeRecords();
+    writes.disconnect();
+    warn.mockRestore();
+    expect(records).toHaveLength(0);
+  });
+
   test("they start in a browser without matchMedia", () => {
     window.matchMedia = undefined;
     expect(() => setupThemeWatchers()).not.toThrow();

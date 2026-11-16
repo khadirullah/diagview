@@ -615,9 +615,23 @@ const BUILT_IN_ACCENTS = [COLORS.ACCENT_LIGHT, COLORS.ACCENT_DARK];
  */
 function accentEdge(root, name, accent, bg, text) {
   const faint = !!parseColor(accent) && getContrastRatio(accent, bg) < 3;
-  if (faint) root.style.setProperty(name, text);
-  else root.style.removeProperty(name);
+  setVar(root, name, faint ? text : null);
   return faint;
+}
+
+/**
+ * Set or remove a CSS variable on <html>, only when that changes it. The
+ * theme observer watches the style attribute, so a write of the same value
+ * would start another sync.
+ * @private
+ * @param {HTMLElement} root - The <html> element
+ * @param {string} name - Variable name
+ * @param {string|null} value - New value, null to remove it
+ */
+function setVar(root, name, value) {
+  if (root.style.getPropertyValue(name) === (value ?? "")) return;
+  if (value === null) root.style.removeProperty(name);
+  else root.style.setProperty(name, value);
 }
 
 /**
@@ -668,7 +682,7 @@ export function syncTheme() {
     theme.accent, // --dv-accent
     theme.onAccent, // --dv-on-accent
     accentFill(theme.accent), // --dv-accent-fill
-  ].forEach((value, i) => root.style.setProperty(THEME_VARS[i], value));
+  ].forEach((value, i) => setVar(root, THEME_VARS[i], value));
 
   // An accent under 3:1 against what it sits on hides the selected
   // buttons, the focus ring and the menu button. The colour stays, and
@@ -691,12 +705,11 @@ export function syncTheme() {
     parseColor(theme.bg) && colorAlpha(theme.bg) >= 1
       ? getContrastRatio(ringDark, theme.bg) > getContrastRatio(ringLight, theme.bg)
       : theme.isDark;
-  root.style.setProperty("--dv-search-ring", darkCanvas ? ringDark : ringLight);
+  setVar(root, "--dv-search-ring", darkCanvas ? ringDark : ringLight);
 
   // The menu toggle track is a faint white wash that only shows on dark
   // canvases. Light canvases get a solid grey so the switch stays visible.
-  if (darkCanvas) root.style.removeProperty("--dv-toggle-track");
-  else root.style.setProperty("--dv-toggle-track", COLORS.TOGGLE_TRACK_LIGHT);
+  setVar(root, "--dv-toggle-track", darkCanvas ? null : COLORS.TOGGLE_TRACK_LIGHT);
 
   // Update modal if exists
   const modal = document.getElementById("diagview-modal");
