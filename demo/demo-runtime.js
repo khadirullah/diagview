@@ -406,6 +406,9 @@
             root.classList.toggle('dark', dark);
             paintInlineSvgs(colours);
             swap();
+            // Saved only now, so a switch that failed is not restored on the
+            // next visit or passed to the other tabs
+            try { localStorage.setItem('dv-theme', dark ? 'dark' : 'light'); } catch (e) {}
             var dv = window.DiagView;
             if (dv && dv.state && dv.state.isInitialized) dv.configure({});
             getComputedStyle(root).color;
@@ -413,6 +416,13 @@
                 requestAnimationFrame(function () { root.classList.remove('dv-theme-switching'); });
             });
         });
+    }
+
+    // After a failed switch the page still shows the old theme, so the
+    // next click switches away from that one
+    function themeSwitchFailed(e) {
+        console.warn('Demo: theme switch failed', e);
+        wantDark = document.documentElement.classList.contains('dark');
     }
 
     function rerenderMermaid() {
@@ -431,19 +441,14 @@
         bakeInlineSvgs();
         window.toggleTheme = function () {
             wantDark = !wantDark;
-            try { localStorage.setItem('dv-theme', wantDark ? 'dark' : 'light'); } catch (e) {}
-            rerenderQueue = rerenderQueue.then(switchTheme).catch(function (e) {
-                console.warn('Demo: theme switch failed', e);
-            });
+            rerenderQueue = rerenderQueue.then(switchTheme).catch(themeSwitchFailed);
         };
 
         // Cross-tab sync via storage events
         window.addEventListener('storage', function (e) {
             if (e.key === 'dv-theme') {
                 wantDark = e.newValue === 'dark';
-                rerenderQueue = rerenderQueue.then(switchTheme).catch(function (err) {
-                    console.warn('Demo: theme switch failed', err);
-                });
+                rerenderQueue = rerenderQueue.then(switchTheme).catch(themeSwitchFailed);
             }
             if (e.key === 'dv-accent') {
                 applyAccent(e.newValue);
