@@ -47,6 +47,13 @@ const DEFAULT_STYLE_PROPS = [
 ];
 
 /**
+ * Properties where zero is the same as the initial value, so an export can
+ * leave out a zero value. A zero elsewhere is a real value, such as
+ * stroke-width: 0, which hides a stroke that is 1px by default.
+ */
+const ZERO_BY_DEFAULT = new Set(["letter-spacing", "word-spacing", "stroke-dashoffset"]);
+
+/**
  * Maximum number of nodes whose computed styles are captured for export.
  * @private
  */
@@ -400,7 +407,8 @@ export function cloneSVGForExportAsync(svg, paint = null) {
           const val = normalizeUrlInStyle(cs.getPropertyValue(prop));
           // Filter defaults but keep "none" for explicit fills
           if (!val) continue;
-          if (val === "normal" || val === "auto" || val === "0px") continue;
+          if (val === "normal" || val === "auto") continue;
+          if (val === "0px" && ZERO_BY_DEFAULT.has(prop)) continue;
           // Keep "none" for fills if explicitly set (prevents white → transparent)
           styles[prop] = val;
         }

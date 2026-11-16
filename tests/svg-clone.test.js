@@ -290,6 +290,20 @@ describe("SVG Cloning Utilities", () => {
     expect(clone.getAttribute("xmlns:xlink")).toBe("http://www.w3.org/1999/xlink");
   });
 
+  test("cloneSVGForExportAsync keeps a zero that differs from the initial value", async () => {
+    window.getComputedStyle = jest.fn().mockReturnValue({
+      getPropertyValue: (prop) =>
+        ({ "stroke-width": "0px", "font-size": "0px", "word-spacing": "0px" })[prop] || "",
+    });
+    const clonedRect = (await cloneSVGForExportAsync(svg)).querySelector(".test-rect");
+
+    // stroke-width is 1px and font-size medium by default, so 0 hides them
+    expect(clonedRect.style.getPropertyValue("stroke-width")).toBe("0px");
+    expect(clonedRect.style.getPropertyValue("font-size")).toBe("0px");
+    // word-spacing is 0 by default, so writing it changes nothing
+    expect(clonedRect.style.getPropertyValue("word-spacing")).toBe("");
+  });
+
   test("text preservation adds textLength for consistent rendering", () => {
     // Mock getBBox for text element
     const textEl = svg.querySelector("text");
