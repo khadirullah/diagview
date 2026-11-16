@@ -205,6 +205,25 @@ describe("Observer Module", () => {
     }
   });
 
+  test("a page that never stops changing still has its new diagrams set up", async () => {
+    document.body.innerHTML = '<p id="clock"></p>';
+    observeDiagrams();
+    const div = document.createElement("div");
+    div.className = "diagram";
+    div.innerHTML = "<svg></svg>";
+    document.body.appendChild(div);
+
+    // A ticker that adds a node faster than the observer's quiet time
+    const clock = document.getElementById("clock");
+    const ticker = setInterval(() => clock.appendChild(document.createElement("span")), 20);
+    try {
+      await wait(900);
+      expect(initializeDiagram).toHaveBeenCalledWith(div, 0);
+    } finally {
+      clearInterval(ticker);
+    }
+  });
+
   test("a removed element has the diagrams that left the page released", async () => {
     document.body.innerHTML = '<main><div class="diagram"><svg></svg></div></main><p id="p"></p>';
     observeDiagrams();

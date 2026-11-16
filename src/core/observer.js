@@ -26,6 +26,8 @@ import { restoreViewFromURL } from "../features/share-state.js";
 
 /** Milliseconds a share link waits for its diagram before it is removed */
 const SHARE_LINK_WAIT = 3000;
+/** Longest wait for a run on a page that changes without a pause */
+const MAX_RUN_WAIT = 500;
 let stripTimer = 0;
 /** Pending open of the diagram a share link points to */
 let openTimer = 0;
@@ -311,41 +313,45 @@ export function observeDiagrams() {
   }
 
   // Define debounced processor (stored at module level for cancellation)
-  state.debouncedProcess = debounce(() => {
-    // Let go of diagrams that left the page, so a single-page app that
-    // swaps routes without destroy() does not keep the old ones in memory.
-    // Only checked after the page removed something. A node the page moves,
-    // or takes out and puts back before this runs, is on the page again by
-    // now and keeps its toolbar. One put back later is set up again.
-    if (removedAny) {
-      removedAny = false;
-      releaseDetachedDiagrams();
-    }
-    const renumber = removedDiagram;
-    removedDiagram = false;
-
-    if (state.nodesToProcess.size === 0 && !renumber) return;
-
-    // Gather the diagrams in or around every added node first, so the page
-    // is scanned for the index once per run, and not at all when a script
-    // only added text, list items or other plain markup
-    const selector = state.config.diagramSelector;
-    const found = new Set();
-    state.nodesToProcess.forEach((node) => {
-      // Check if node is still in the document
-      if (node?.isConnected) {
-        findDiagrams(node, selector).forEach((diagram) => found.add(diagram));
+  state.debouncedProcess = debounce(
+    () => {
+      // Let go of diagrams that left the page, so a single-page app that
+      // swaps routes without destroy() does not keep the old ones in memory.
+      // Only checked after the page removed something. A node the page moves,
+      // or takes out and puts back before this runs, is on the page again by
+      // now and keeps its toolbar. One put back later is set up again.
+      if (removedAny) {
+        removedAny = false;
+        releaseDetachedDiagrams();
       }
-    });
-    state.nodesToProcess.clear();
+      const renumber = removedDiagram;
+      removedDiagram = false;
 
-    setUpDiagrams([...found], renumber);
+      if (state.nodesToProcess.size === 0 && !renumber) return;
 
-    // Check for share link (Deep linking) - Always check globally. A link
-    // waiting for its diagram or that diagram's SVG can only resolve when
-    // one of them arrives.
-    if (found.size > 0) checkShareLink();
-  }, TIMING.OBSERVER_DEBOUNCE);
+      // Gather the diagrams in or around every added node first, so the page
+      // is scanned for the index once per run, and not at all when a script
+      // only added text, list items or other plain markup
+      const selector = state.config.diagramSelector;
+      const found = new Set();
+      state.nodesToProcess.forEach((node) => {
+        // Check if node is still in the document
+        if (node?.isConnected) {
+          findDiagrams(node, selector).forEach((diagram) => found.add(diagram));
+        }
+      });
+      state.nodesToProcess.clear();
+
+      setUpDiagrams([...found], renumber);
+
+      // Check for share link (Deep linking) - Always check globally. A link
+      // waiting for its diagram or that diagram's SVG can only resolve when
+      // one of them arrives.
+      if (found.size > 0) checkShareLink();
+    },
+    TIMING.OBSERVER_DEBOUNCE,
+    MAX_RUN_WAIT,
+  );
 
   state.observer = new MutationObserver((mutations) => {
     let addedAny = false;

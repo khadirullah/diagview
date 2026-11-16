@@ -109,17 +109,23 @@ export function downloadFile(url, filename) {
  * Debounce function execution
  * @param {Function} func - Function to debounce
  * @param {number} wait - Wait time in milliseconds
+ * @param {number} [maxWait=Infinity] - Longest time in milliseconds a call
+ *   waits while new calls keep pushing it back
  * @returns {Function} Debounced function
  */
-export function debounce(func, wait) {
+export function debounce(func, wait, maxWait = Infinity) {
   let timeout;
+  // When the first call still waiting came in
+  let firstCall = 0;
   const executedFunction = function (...args) {
     const later = () => {
       timeout = null;
       func.apply(this, args);
     };
+    const now = Date.now();
+    if (!timeout) firstCall = now;
     clearTimeout(timeout);
-    timeout = setTimeout(later, wait);
+    timeout = setTimeout(later, Math.max(0, Math.min(wait, firstCall + maxWait - now)));
   };
   executedFunction.cancel = function () {
     clearTimeout(timeout);

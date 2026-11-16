@@ -932,7 +932,7 @@ When content is added to the DOM dynamically (e.g. after an API call), call `ref
 DiagView.refresh();
 ```
 
-> **Note:** DiagView also uses a `MutationObserver` to detect and initialize newly added diagrams automatically (with a 100 ms debounce). `refresh()` skips that debounce. Either way, DiagView initializes each diagram once it comes within 200 px of the viewport.
+> **Note:** DiagView also uses a `MutationObserver` to detect and initialize newly added diagrams automatically (with a 100 ms debounce). On a page that never stops changing for 100 ms, such as one with a ticking clock, it still looks at least every 500 ms. `refresh()` skips that debounce. Either way, DiagView initializes each diagram once it comes within 200 px of the viewport.
 
 `refresh()` also checks again every diagram that is already set up. A diagram in the error placeholder whose SVG is now valid gets its toolbar. The `MutationObserver` does the same on its own when a new SVG arrives in a diagram, so a page that draws a diagram again in the same element needs no `refresh()` (see [Drawing a diagram again](#drawing-a-diagram-again)).
 
