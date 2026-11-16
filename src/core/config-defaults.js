@@ -206,7 +206,7 @@ export const INITIAL_CONFIG = {
     mode: "strict",
     // Allow data-diagview-sanitize attribute to override this mode per-diagram
     allowOverrides: true,
-    // Allow external resources (e.g. Google Fonts, remote CSS) in strict/permissive mode
+    // Allow external resources (e.g. Google Fonts, remote CSS) in strict mode. Permissive and off always keep them
     allowRemoteResources: false,
     // 'same' - Exports and copies use each diagram's own mode
     // 'strict' - Every export and copy is cleaned in strict mode
