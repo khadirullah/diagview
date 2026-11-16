@@ -521,3 +521,38 @@ describe("close and clear-search buttons are wired once", () => {
     expect(clicks("diagview-search-clear")).toBe(1);
   });
 });
+
+// ---------------------------------------------------------------------------
+// The loading cover shows on every open, not only the first
+// ---------------------------------------------------------------------------
+describe("the loading cover on each open", () => {
+  beforeEach(() => {
+    resetConfig();
+    document.body.innerHTML = "";
+    clearAllZoomStates();
+    installFakePanzoom();
+    updateConfig({ showFirstTimeThemeHint: false, animateOpen: false });
+    createModal();
+  });
+
+  afterEach(async () => {
+    if (state.isModalOpen) await closeModal();
+    await settle();
+    delete window.Panzoom;
+  });
+
+  test("covers the diagram while a second open loads, then hides", async () => {
+    const el = makeDiagram("d-cover");
+    const loading = document.getElementById("diagview-loading");
+    await openFullscreen(el);
+    await settle();
+    expect(loading.classList.contains("hide")).toBe(true);
+    await closeModal();
+
+    const opening = openFullscreen(el);
+    expect(loading.classList.contains("hide")).toBe(false);
+    await opening;
+    await settle();
+    expect(loading.classList.contains("hide")).toBe(true);
+  });
+});

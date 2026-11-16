@@ -476,6 +476,11 @@ export async function openFullscreen(element, options = {}) {
       return;
     }
 
+    // Cover the diagram while the lazy features load, on every open. The
+    // closed modal is not displayed, so the cover shows at once, not faded in.
+    const loading = document.getElementById("diagview-loading");
+    if (loading) loading.classList.remove("hide");
+
     // Phase 2: UI Activation
     _activateModalUI(modal, viewport);
 
@@ -510,9 +515,6 @@ export async function openFullscreen(element, options = {}) {
     }
 
     // Completion UI
-    const loading = document.getElementById("diagview-loading");
-    if (loading) loading.classList.remove("hide");
-
     requestAnimationFrame(() => {
       if (loading) loading.classList.add("hide");
     });
