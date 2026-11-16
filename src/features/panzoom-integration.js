@@ -366,6 +366,15 @@ export function restoreZoomState(diagramId, panzoom) {
 }
 
 /**
+ * Forget the zoom state of one diagram. Its id is never used again once the
+ * diagram is released, so the entry could only take up memory.
+ * @param {string} diagramId - The diagram's data-diagview-id
+ */
+export function forgetZoomState(diagramId) {
+  zoomStates.delete(diagramId);
+}
+
+/**
  * Clear all zoom states
  */
 export function clearAllZoomStates() {

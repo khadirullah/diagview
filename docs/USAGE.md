@@ -846,7 +846,7 @@ DiagView.init({ rememberZoom: true });
 
 - State is keyed per `data-diagview-id`. DiagView sets this unique ID when it sets up the diagram, or when the viewer first opens it if that comes sooner. A diagram opened with `openFullscreen()` before it scrolls into view is remembered too, and keeps the same ID when it gets its toolbar
 - State is kept in memory until the page reloads or `DiagView.destroy()` runs. Nothing is written to `sessionStorage` or `localStorage`
-- A diagram that leaves the page for more than about 100 ms, as on a route change, is released, so it starts at the default view when it comes back. See [Teardown and reinitialize](#teardown-and-reinitialize)
+- A diagram that leaves the page for more than about 100 ms, as on a route change, is released and its saved state is dropped, so it starts at the default view when it comes back. See [Teardown and reinitialize](#teardown-and-reinitialize)
 - It also works in private windows, where browser storage can be blocked
 
 ---

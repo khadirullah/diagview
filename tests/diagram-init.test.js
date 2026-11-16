@@ -534,6 +534,41 @@ describe("Diagram Init: Interaction Handlers", () => {
   });
 });
 
+describe("Diagram Init: remembered zoom of a released diagram", () => {
+  let saveZoomState, restoreZoomState, state, resetConfig, updateConfig;
+
+  beforeAll(async () => {
+    ({ saveZoomState, restoreZoomState } = await import("../src/features/panzoom-integration.js"));
+    ({ state, resetConfig, updateConfig } = await import("../src/core/config.js"));
+  });
+
+  afterEach(() => {
+    state.isModalOpen = false;
+    resetConfig();
+  });
+
+  test("goes with the diagram, so a page that swaps diagrams does not pile them up", () => {
+    resetConfig();
+    updateConfig({ rememberZoom: true });
+    document.body.innerHTML =
+      '<div class="diagram"><svg viewBox="0 0 10 10"><rect width="5" height="5"/></svg></div>';
+    const el = document.querySelector(".diagram");
+    initializeDiagram(el);
+    const id = el.dataset.diagviewId;
+    const panzoom = {
+      getScale: () => 2,
+      getPan: () => ({ x: 5, y: 5 }),
+      zoom: jest.fn(),
+      pan: jest.fn(),
+    };
+    saveZoomState(id, panzoom);
+    expect(restoreZoomState(id, panzoom)).toBe(true);
+
+    deinitializeDiagram(el);
+    expect(restoreZoomState(id, panzoom)).toBe(false);
+  });
+});
+
 describe("Diagram Init: clicks the diagram leaves to the page", () => {
   const NODES =
     '<svg viewBox="0 0 10 10">' +

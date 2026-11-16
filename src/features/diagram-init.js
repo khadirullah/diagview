@@ -21,6 +21,7 @@ import { resolveElementSecurity, settingHolders, readSetting } from "../core/svg
 import { ICONS } from "../ui/icons.js";
 import { LAYOUTS, BUTTON_STYLES, OFF_HINTS } from "../core/constants.js";
 import { createButtonGroup } from "../ui/button-factory.js";
+import { forgetZoomState } from "./panzoom-integration.js";
 
 // Map to store per-diagram cleanup functions (for SPA-safe teardown)
 const cleanupMap = new WeakMap();
@@ -622,6 +623,8 @@ export function deinitializeDiagram(element) {
   trackedElements.delete(element);
 
   delete element.dataset.diagviewInit;
+  // A diagram set up again gets a new id, so its remembered zoom is no use
+  forgetZoomState(element.dataset.diagviewId);
   delete element.dataset.diagviewId;
   delete element.dataset.diagviewIndex;
   delete element.dataset.diagviewError;
