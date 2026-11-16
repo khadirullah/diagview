@@ -508,6 +508,15 @@ import type { DiagViewOptions, ExportMode } from "diagview";
 
 `DiagViewOptions` is `DiagViewConfig` with every key optional, nested groups included. Unknown keys still compile, because DiagView only warns about them at runtime.
 
+A CommonJS project gets `dist/index.d.cts`, which describes what `require("diagview")` returns. With `"module": "node16"` or `"nodenext"`, write the import as below. The four types sit on the same name. This file needs TypeScript 5.3 or later.
+
+```typescript
+import DiagView = require("diagview");
+
+const options: DiagView.DiagViewOptions = { layout: "floating" };
+DiagView.init(options);
+```
+
 The declarations describe the package import. The `DiagView` global that the script-tag build creates has no type declaration.
 
 ---

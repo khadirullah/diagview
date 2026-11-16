@@ -151,7 +151,7 @@ npm run build
 npm run typecheck
 ```
 
-`tests/types/api.ts` calls the public API through the built `dist/index.d.ts`. It fails when a documented option or call stops compiling, or when a wrong value starts to compile. Add a line there when you add an option.
+`tests/types/api.ts` calls the public API through the built `dist/index.d.ts`. It fails when a documented option or call stops compiling, or when a wrong value starts to compile. Add a line there when you add an option. `tests/types/cjs/api.cts` does the same for `require("diagview")` through `dist/index.d.cts`, which the build copies from `src/index.d.cts`.
 
 ### Package entry points
 

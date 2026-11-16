@@ -50,7 +50,7 @@ This runs five steps internally:
 2. `npm run clean` removes `dist/` and `tsconfig.tsbuildinfo`
 3. `npm run build:lib` runs Rollup to produce all bundles
 4. `npm run build:css` copies `src/ui/styles.css` to `dist/diagview.css`
-5. `npm run build:types` generates `.d.ts` files via `tsc`
+5. `npm run build:types` generates `.d.ts` files via `tsc` and copies `src/index.d.cts` to `dist/`
 
 ### Build outputs
 
@@ -63,6 +63,7 @@ This runs five steps internally:
 | `dist/esm/*-<hash>.js`         | ESM chunks   | Lazy-loaded features and shared code for the ESM build         |
 | `dist/diagview.css`            | CSS          | Optional stylesheet (`diagview/style`)                         |
 | `dist/index.d.ts`              | TypeScript   | Type definitions, per-module `.d.ts` files in matching folders |
+| `dist/index.d.cts`             | TypeScript   | Type definitions for `require("diagview")`                     |
 | `dist/diagview.umd.min.js.map` | Source map   | For the minified UMD bundle                                    |
 
 ### Clean only
@@ -94,7 +95,8 @@ npm test -- --watch
 ### Type check
 
 `npm run typecheck` compiles `tests/types/api.ts` against the built
-declarations. Run it after `npm run build`.
+declarations, and `tests/types/cjs/api.cts` against the CommonJS ones.
+Run it after `npm run build`.
 
 ### E2E geometry suites (Chromium, Firefox, WebKit)
 

@@ -10,9 +10,14 @@
   "types": "dist/index.d.ts",
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/esm/index.js",
-      "require": "./dist/diagview.umd.cjs"
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/esm/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/diagview.umd.cjs"
+      }
     },
     "./style": "./dist/diagview.css",
     "./package.json": "./package.json"
@@ -32,11 +37,11 @@
     "build:lib": "rollup -c",
     "build:css": "cp src/ui/styles.css dist/diagview.css",
     "build:analyze": "npm run clean && ANALYZE=1 rollup -c && npm run build:types",
-    "build:types": "tsc --declaration --emitDeclarationOnly --outDir dist",
+    "build:types": "tsc --declaration --emitDeclarationOnly --outDir dist && cp src/index.d.cts dist/index.d.cts",
     "version:sync": "node scripts/sync-version.js",
     "format": "prettier --write \"src/**/*.js\" \"tests/**/*.{js,mjs}\" \"scripts/**/*.{js,cjs}\" \"*.js\"",
     "format:check": "prettier --check \"src/**/*.js\" \"tests/**/*.{js,mjs}\" \"scripts/**/*.{js,cjs}\" \"*.js\"",
-    "typecheck": "tsc -p tests/types/tsconfig.json",
+    "typecheck": "tsc -p tests/types/tsconfig.json && tsc -p tests/types/cjs/tsconfig.json",
     "lint": "eslint \"src/**/*.js\" \"tests/**/*.{js,mjs}\" \"scripts/**/*.{js,cjs}\" \"*.js\"",
     "lint:fix": "eslint \"src/**/*.js\" \"tests/**/*.{js,mjs}\" \"scripts/**/*.{js,cjs}\" \"*.js\" --fix",
     "size": "size-limit",

@@ -20,5 +20,5 @@
     "types": ["node"]
   },
   "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist", "tests", "**/*.test.js", "src/umd.js"]
+  "exclude": ["node_modules", "dist", "tests", "**/*.test.js", "src/umd.js", "src/index.d.cts"]
 }
