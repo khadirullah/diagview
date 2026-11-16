@@ -485,11 +485,16 @@
             // instead of Mermaid's default, which is a black box on dark pages
             mermaid.initialize(demoMermaidConfig());
 
-            // 1. Fetch PlantUML and inline it
+            // 1. Fetch PlantUML and inline it. The other diagrams wait for it
+            // at most 5 seconds, so a slow or broken server cannot hold them up.
+            const container = document.getElementById('plantuml-container');
+            const stopFetch = new AbortController();
+            const fetchTimer = setTimeout(() => stopFetch.abort(), 5000);
             try {
-                const response = await fetch('https://www.plantuml.com/plantuml/svg/SoWkIImgAStDuNBAJrBGjLDmpCbCJbMmKiX8pSd9vt98pKi1IW80');
+                const response = await fetch('https://www.plantuml.com/plantuml/svg/SoWkIImgAStDuNBAJrBGjLDmpCbCJbMmKiX8pSd9vt98pKi1IW80',
+                    { signal: stopFetch.signal });
+                if (!response.ok) throw new Error('PlantUML server answered ' + response.status);
                 const svgText = await response.text();
-                const container = document.getElementById('plantuml-container');
                 if (container) {
                     // The SVG comes from another server, so it goes through
                     // the sanitizer before it reaches the page
@@ -498,6 +503,9 @@
                 }
             } catch (e) {
                 console.error("Failed to fetch PlantUML", e);
+                if (container) container.textContent = 'PlantUML could not be loaded. Reload the page to try again.';
+            } finally {
+                clearTimeout(fetchTimer);
             }
 
             try { await document.fonts.ready; } catch (e) { }
