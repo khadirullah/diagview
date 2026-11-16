@@ -1035,6 +1035,26 @@ describe("Theme Module: theme watchers", () => {
     expect(records).toHaveLength(0);
   });
 
+  test("they follow a <body> that replaced the first one", async () => {
+    const root = document.documentElement;
+    const firstBody = document.body;
+    const nextBody = document.createElement("body");
+    // Sync first, so the watchers see no change of their own
+    syncTheme();
+    setupThemeWatchers();
+    expect(root.style.getPropertyValue("--dv-bg")).toBe(COLORS.BG_LIGHT);
+    try {
+      // What Turbo Drive does on navigation
+      root.replaceChild(nextBody, firstBody);
+      await new Promise((r) => setTimeout(r, 0));
+      nextBody.classList.add("dark");
+      await new Promise((r) => setTimeout(r, 150));
+      expect(root.style.getPropertyValue("--dv-bg")).toBe(COLORS.BG_DARK);
+    } finally {
+      root.replaceChild(firstBody, nextBody);
+    }
+  });
+
   test("they start in a browser without matchMedia", () => {
     window.matchMedia = undefined;
     expect(() => setupThemeWatchers()).not.toThrow();

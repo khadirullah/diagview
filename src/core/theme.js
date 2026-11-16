@@ -757,18 +757,34 @@ export function setupThemeWatchers() {
     lastBg = bg;
   }, TIMING.THEME_SYNC_DEBOUNCE);
 
-  // Watch DOM changes
-  state.themeObserver = new MutationObserver(debouncedSync);
+  // Watch DOM changes. Turbo and similar routers replace the whole <body>,
+  // so the children of <html> are watched too, and a new <body> is watched
+  // in place of the old one.
+  let watchedBody = null;
+  const watch = () => {
+    const observer = /** @type {MutationObserver} */ (state.themeObserver);
+    observer.disconnect();
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["class", "data-theme", "data-bs-theme", "style"],
+      childList: true,
+    });
+    watchedBody = document.body;
+    if (watchedBody) {
+      observer.observe(watchedBody, {
+        attributes: true,
+        attributeFilter: ["class", "data-theme", "style"],
+      });
+    }
+  };
 
-  state.themeObserver.observe(document.documentElement, {
-    attributes: true,
-    attributeFilter: ["class", "data-theme", "data-bs-theme", "style"],
+  state.themeObserver = new MutationObserver((records) => {
+    const newBody = document.body !== watchedBody;
+    if (newBody) watch();
+    // Other children of <html> coming and going say nothing about the theme
+    if (newBody || records.some((r) => r.type === "attributes")) debouncedSync();
   });
-
-  state.themeObserver.observe(document.body, {
-    attributes: true,
-    attributeFilter: ["class", "data-theme", "style"],
-  });
+  watch();
 
   // Watch system theme preference, where the browser can report it
   if (!window.matchMedia) return;
