@@ -190,6 +190,24 @@ describe("Share System", () => {
     expect(state.rotationAngle).toBe(180);
   });
 
+  test("a close and a new open while the rotate chunk loads leave the new viewer alone", async () => {
+    const diagram = { id: "diag1" };
+    window.location = new URL("http://localhost/test?dv-idx=0&dv-z=2.5&dv-r=180");
+    restoreViewFromURL([diagram]);
+
+    state.isModalOpen = true;
+    const oldPanzoom = state.activePanzoom;
+    applyRestoredViewState(diagram, oldPanzoom);
+    // A new object, as a new open makes a new panzoom
+    state.activePanzoom = { ...oldPanzoom, zoom: jest.fn() };
+
+    await new Promise((resolve) => setTimeout(resolve, 20));
+
+    expect(oldPanzoom.zoom).not.toHaveBeenCalled();
+    expect(state.activePanzoom.zoom).not.toHaveBeenCalled();
+    expect(state.rotationAngle).toBe(0);
+  });
+
   // The corrective pan is deferred one macrotask + one frame so it runs after
   // Panzoom's forced init pan(startX, startY) timer (which otherwise resets it).
   const flushRestoreTiming = () =>

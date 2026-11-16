@@ -222,7 +222,12 @@ export function applyRestoredViewState(diagram, panzoom) {
 
   if (themeMode) setCanvasTheme(themeMode, customColor);
 
+  // A close, or a close and a new open, while the rotate chunk loads leaves
+  // nothing of this view to restore
+  const isSameViewer = () => state.isModalOpen && state.activePanzoom === panzoom;
+
   const applyZoomAndPan = () => {
+    if (!isSameViewer()) return;
     if (scale !== null) panzoom.zoom(scale, { animate: false });
     schedulePanRestore();
   };
@@ -236,7 +241,7 @@ export function applyRestoredViewState(diagram, panzoom) {
   if (rotation !== null && rotation !== 0) {
     loadChunk("rotate", () => import("./rotate.js"))
       .then((m) => {
-        if (state.isModalOpen) m.applyRotationAngle(rotation);
+        if (isSameViewer()) m.applyRotationAngle(rotation);
       })
       .catch(() => {})
       .then(applyZoomAndPan);
