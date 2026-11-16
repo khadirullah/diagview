@@ -433,6 +433,19 @@ describe("styles.css: hover on touch screens", () => {
 });
 
 describe("styles.css: dead and contradicting rules", () => {
+  test("wide screens do not repeat what the base topbar and branding rules already set", () => {
+    const wide = css.indexOf("@media (min-width: 640px) {\n  .diagview-topbar {");
+    expect(ruleBody(".diagview-topbar {", wide)).not.toMatch(/overflow\s*:/);
+    expect(ruleBody("\n.diagview-topbar {")).toMatch(/overflow:\s*visible/);
+    const branding = css.indexOf("@media (min-width: 640px) {\n  .diagview-branding {");
+    expect(ruleBody(".diagview-branding {", branding)).not.toMatch(/display\s*:/);
+  });
+
+  test("the menu footer links neither set nor animate opacity, since nothing fades them", () => {
+    expect(ruleBody(".dv-menu-footer a {")).not.toMatch(/opacity/);
+    expect(ruleBody(".dv-menu-footer a:hover {")).not.toMatch(/opacity/);
+  });
+
   test("never-emitted helper classes are gone", () => {
     expect(css).not.toContain(".dv-selection-allowed");
     expect(css).not.toContain(".dv-exp-trans-hint");
