@@ -2552,6 +2552,18 @@ describe("generateFilename", () => {
     ).toBe("order_flow");
   });
 
+  test("a long title keeps its first 50 characters", () => {
+    const long = name(
+      `<div data-diagview-index="0" data-title="${"word ".repeat(40)}"><svg ${NS}></svg></div>`,
+    );
+    expect(long).toBe("word_".repeat(10));
+    // Characters outside the BMP are not cut in half
+    const astral = name(
+      `<div data-diagview-index="0" data-title="${"𝔸".repeat(60)}"><svg ${NS}></svg></div>`,
+    );
+    expect(Array.from(astral)).toEqual(Array(50).fill("𝔸"));
+  });
+
   test("a title wrapped over lines gives one name", () => {
     expect(
       name(`<div data-diagview-index="0"><svg ${NS}><title>

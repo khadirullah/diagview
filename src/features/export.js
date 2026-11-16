@@ -51,6 +51,9 @@ import {
  * @property {SVGSVGElement|null} [modalClone] - Fullscreen clone to export instead of the original SVG
  */
 
+/** Most characters of the title an export file name keeps */
+const MAX_TITLE_IN_FILENAME = 50;
+
 /**
  * Build the export file name from the diagram's title and a timestamp
  * @param {Element} svg - The diagram's SVG on the page
@@ -66,7 +69,12 @@ export function generateFilename(svg, element) {
   // The same title the header shows
   const rawTitle = getDiagramTitle(svg, owner) || "diagram";
 
-  const cleanTitle = sanitizeFilename(rawTitle, "diagram");
+  // A long title, such as a whole sentence in an accTitle, keeps its first
+  // 50 characters. Most disks allow 255 bytes in a file name, and a
+  // character can take 4 of them.
+  const cleanTitle = Array.from(sanitizeFilename(rawTitle, "diagram"))
+    .slice(0, MAX_TITLE_IN_FILENAME)
+    .join("");
   const finalName = cleanTitle === "diagram" ? "diagram_export" : cleanTitle;
   return `${finalName}_${getTimestamp()}`;
 }

@@ -190,7 +190,7 @@ DiagView.init({ layout: "header" });
 
 The diagram type, such as "flowchart" in Mermaid's `aria-roledescription`, is not used as a title. DiagView does not pick up the drawn title of other Mermaid diagrams, such as sequence, journey, timeline or C4 diagrams, so give those a `data-title` or an `accTitle`.
 
-Export file names use the same order, with `diagram_export` as the fallback. A timestamp follows, as in `checkout_sequence_2026-09-28_011554.png`.
+Export file names use the same order, with `diagram_export` as the fallback, and keep the first 50 characters of a longer title. A timestamp follows, as in `checkout_sequence_2026-09-28_011554.png`.
 
 Screen readers get the title as well. In every layout, an `<svg>` with no name of its own gets an `aria-label` with the title, so a screen reader names the drawing on the page and its copy in the viewer. DiagView sets no `role`. An SVG that already has a `<title>`, an `aria-label` or an `aria-labelledby`, as Mermaid writes for `accTitle`, keeps its own name. So does an SVG marked `aria-hidden="true"`, `role="none"` or `role="presentation"`. A diagram without a title gets no label, and `destroy()` removes the label again.
 
