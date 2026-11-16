@@ -1041,3 +1041,11 @@ describe("Theme Module: theme watchers", () => {
     expect(() => teardownThemeWatchers()).not.toThrow();
   });
 });
+
+describe("Theme Module: rgb() channels out of range", () => {
+  test("a negative channel counts as 0 and a large one as 255", () => {
+    expect(getContrastRatio("rgb(-50, -50, -50)", "#000")).toBe(1);
+    expect(getContrastRatio("rgb(300, 300, 300)", "#fff")).toBe(1);
+    expect(getContrastRatio("rgba(-10, 300, -0.5, 1)", "rgb(0, 255, 0)")).toBe(1);
+  });
+});

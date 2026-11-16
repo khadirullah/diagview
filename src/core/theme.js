@@ -38,8 +38,11 @@ const RGB_FN_RE = /^rgba?\(/;
  */
 function parseRgbString(value) {
   if (!value || !RGB_FN_RE.test(value) || value.includes("%")) return null;
-  const match = value.match(/\d+(?:\.\d+)?/g);
-  return match && match.length >= 3 ? match.slice(0, 3).map((n) => Math.round(Number(n))) : null;
+  // Keep the sign and clamp to 0..255, as the browser does with rgb(-10, 300, 0)
+  const match = value.match(/-?\d*\.?\d+/g);
+  return match && match.length >= 3
+    ? match.slice(0, 3).map((n) => Math.min(255, Math.max(0, Math.round(Number(n)))))
+    : null;
 }
 
 /**
