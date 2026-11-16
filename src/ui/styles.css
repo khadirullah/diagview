@@ -566,6 +566,10 @@
   min-height: var(--dv-header-h);
   flex-shrink: 0;
   overflow: visible; /* allow tooltip overflow */
+  /* The blur below makes the bar a layer of its own, so its tooltips are
+     only as high as the bar. Without this the diagram area, which comes
+     later in the page, is drawn over them. */
+  z-index: 1;
   background: var(--dv-header-bg);
   border-bottom: 1px solid var(--dv-border-color);
   backdrop-filter: blur(12px);

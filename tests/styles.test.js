@@ -291,6 +291,14 @@ describe("styles.css: desktop tooltip", () => {
     expect(body).not.toMatch(/bottom:\s*calc/);
   });
 
+  test("the topbar is lifted above the diagram area, which would cover the tooltip", () => {
+    // backdrop-filter makes the topbar a stacking context, so the tooltip's
+    // own z-index only counts inside it
+    const body = ruleBody("\n.diagview-topbar {");
+    expect(body).toMatch(/backdrop-filter:/);
+    expect(body).toMatch(/z-index:\s*1;/);
+  });
+
   test("styles only the viewer topbar, not a page element with its own data-tooltip", () => {
     const selectors = css.match(/[^{};/]*\[data-tooltip\][^{]*\{/g);
     expect(selectors).toHaveLength(3);
