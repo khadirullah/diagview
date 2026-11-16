@@ -16,6 +16,7 @@ const { createModal, openFullscreen } = await import("../src/ui/modal.js");
 const { closeModal } = await import("../src/ui/modal-controls.js");
 const { saveZoomState, clearAllZoomStates } =
   await import("../src/features/panzoom-integration.js");
+const { shareStates } = await import("../src/features/share-state.js");
 
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 const settle = async () => {
@@ -136,5 +137,32 @@ describe("the share chunk fails to load", () => {
 
     expect(state.activePanzoom.zoom).toHaveBeenCalledWith(2.5, { animate: false });
     expect(document.getElementById("diagview-search").value).toBe("Node A");
+  });
+
+  test("a share link open warns, restores the remembered view and keeps the search", async () => {
+    saveZoomState("d-chunk", { getScale: () => 2.5, getPan: () => ({ x: 0, y: 0 }) });
+    const diagram = makeDiagram();
+    shareStates.set(diagram, { scale: 3, cx: 10, cy: 10, query: "Node B" });
+    const warnings = [];
+    console.warn = (...args) => warnings.push(args);
+
+    await openFullscreen(diagram, { searchQuery: "Node A" });
+    await settle();
+
+    expect(warnings.map(([msg]) => msg)).toContain(
+      "DiagView: Could not load the share link feature, so it does not work",
+    );
+    expect(state.activePanzoom.zoom).toHaveBeenCalledWith(2.5, { animate: false });
+    expect(document.getElementById("diagview-search").value).toBe("Node A");
+  });
+
+  test("the search from a share link survives a failed share chunk", async () => {
+    const diagram = makeDiagram();
+    shareStates.set(diagram, { scale: 3, cx: 10, cy: 10, query: "Node B" });
+
+    await openFullscreen(diagram);
+    await settle();
+
+    expect(document.getElementById("diagview-search").value).toBe("Node B");
   });
 });

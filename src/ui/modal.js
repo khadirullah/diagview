@@ -262,10 +262,13 @@ async function _initCoreInteractions(element, clone, viewport, options, session)
     let searchSetUp = false;
     try {
       // Only a share link's view needs the share chunk, so other opens do
-      // not wait for it
+      // not wait for it. A share chunk that fails to load leaves the
+      // remembered view and the search to work as if there were no link.
       const pending = getPendingShareState(element);
       const [shareMod, searchMod] = await Promise.all([
-        pending ? import("../features/lazy/share.js") : null,
+        pending
+          ? loadChunk("share link", () => import("../features/lazy/share.js")).catch(() => null)
+          : null,
         loadChunk("search", () => import("../features/lazy/search.js")),
       ]);
 
@@ -276,7 +279,7 @@ async function _initCoreInteractions(element, clone, viewport, options, session)
 
       // If we have a share link, apply it. Otherwise fallback to remembered zoom.
       // (Only apply if explicit zoom was NOT provided)
-      if (pending && !options.zoom) {
+      if (shareMod && !options.zoom) {
         shareMod.applyRestoredViewState(element, panzoom);
       } else if (!options.zoom) {
         let restored = false;
