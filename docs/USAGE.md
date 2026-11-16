@@ -727,7 +727,7 @@ DiagView.init({ security: { mode: "off", exportMode: "strict" } });
 
 | Removed from the copy                                                                                                                                                      | `strict` | `permissive` | `off` |
 | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- | ------------ | ----- |
-| `<script>`, `<iframe>`, `<object>`, `<applet>`, `<embed>`, `<form>`, `<link>`, `<base>`, `<meta>`                                                                          | Yes      | Yes          | No    |
+| `<script>`, `<iframe>`, `<object>`, `<applet>`, `<embed>`, `<form>`, `<link>`, `<base>`, `<meta>`, `<template>`                                                            | Yes      | Yes          | No    |
 | `on*` event handler attributes such as `onclick`, `onload` and `onerror`                                                                                                   | Yes      | Yes          | No    |
 | `javascript:`, `vbscript:` and `data:` URLs in `href`, `xlink:href`, `src`, `action` and `formaction`. Base64 images of the `allowedImageTypes` stay                       | Yes      | Yes          | No    |
 | Comments and processing instructions. CDATA sections become plain text with the same content, so labels and CSS in them stay                                               | Yes      | Yes          | No    |

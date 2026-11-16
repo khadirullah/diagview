@@ -19,7 +19,7 @@ DiagView processes untrusted SVG content from the DOM. The built-in sanitizer (`
 
 Removes all known SVG XSS vectors using a DOM-walking approach (not regex):
 
-- **Blocked tags:** `<script>`, `<iframe>`, `<object>`, `<applet>`, `<embed>`, `<form>`, `<link>`, `<base>`, `<meta>`, `<math>`, `<feimage>`, `<animate>`, `<animateColor>`, `<animateMotion>`, `<animateTransform>`, `<set>`, `<discard>`, `<mpath>`, `<tref>`
+- **Blocked tags:** `<script>`, `<iframe>`, `<object>`, `<applet>`, `<embed>`, `<form>`, `<link>`, `<base>`, `<meta>`, `<template>`, `<math>`, `<feimage>`, `<animate>`, `<animateColor>`, `<animateMotion>`, `<animateTransform>`, `<set>`, `<discard>`, `<mpath>`, `<tref>`
 - **`<foreignObject>`:** Kept, so Mermaid HTML labels still render. It is removed when its `src` or `data` points at an `http(s)://` URL. Its contents go through the same checks.
 - **Blocked attributes:** All `on*` event handlers on any element, and the `form` attribute, which ties a button or field in the diagram to a form on the page
 - **Blocked URIs:** `javascript:`, `vbscript:` and `data:` URLs in `href`, `xlink:href`, `src`, `action` and `formaction`. Base64 images of the `allowedImageTypes` stay, which are PNG, JPEG, WebP and GIF by default
@@ -31,7 +31,7 @@ Removes all known SVG XSS vectors using a DOM-walking approach (not regex):
 
 Blocks only the most critical vectors (legacy behavior):
 
-- `<script>`, `<iframe>`, `<object>`, `<applet>`, `<embed>`, `<form>`, `<link>`, `<base>`, `<meta>`
+- `<script>`, `<iframe>`, `<object>`, `<applet>`, `<embed>`, `<form>`, `<link>`, `<base>`, `<meta>`, `<template>`
 - SMIL animation elements that target `href` or an `on*` attribute
 - All `on*` event attributes
 - `javascript:`, `vbscript:` and `data:` URLs in `href`, `xlink:href`, `src`, `action` and `formaction`, with the same `allowedImageTypes` exception as `strict`

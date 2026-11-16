@@ -200,7 +200,7 @@ export const INITIAL_CONFIG = {
   security: {
     // 'strict' (Default) - Blocks animation, feImage, remote foreignObject, style injection, etc.
     // 'permissive' - Blocks scripts, iframes, objects, applets, embeds, forms,
-    //                link/base/meta, on* attributes, dangerous URLs and SMIL
+    //                templates, link/base/meta, on* attributes, dangerous URLs and SMIL
     //                that writes href or on*
     // 'off' - Skips sanitization (for trusted diagrams only)
     mode: "strict",

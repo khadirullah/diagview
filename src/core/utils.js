@@ -400,7 +400,9 @@ export function loadScript(url, integrity = null, globalName) {
  * This matches the legacy (v0.x) sanitization behavior, plus the HTML
  * head elements (<link>, <base>, <meta>) that can load stylesheets,
  * rebase relative URLs or trigger redirects from inside <foreignObject>.
- * They are never legitimate inside an SVG diagram.
+ * They are never legitimate inside an SVG diagram. An HTML <template>
+ * keeps its markup outside its child nodes, where the walk below never
+ * looks, and the string returned would carry that markup to the page.
  * @private
  */
 const PERMISSIVE_BLOCKED_TAGS = new Set([
@@ -413,6 +415,7 @@ const PERMISSIVE_BLOCKED_TAGS = new Set([
   "link",
   "base",
   "meta",
+  "template",
 ]);
 
 /**
@@ -610,7 +613,7 @@ export function inertDocument() {
  * - 'strict'     (default) — Blocks dangerous tags, animation vectors,
  *                            style injection, and external <use> hrefs.
  * - 'permissive'           — Blocks script, iframe, object, applet, embed,
- *                            form, link, base and meta, on* attributes,
+ *                            form, link, base, meta and template, on* attributes,
  *                            dangerous URLs, and SMIL that writes href or on*.
  * - 'off'                  — Returns input unchanged. Use ONLY for SVGs
  *                            from a fully trusted, developer-controlled source.

@@ -584,6 +584,22 @@ describe("sanitizeSVG comments, processing instructions and CDATA", () => {
     }
   });
 
+  test.each(["strict", "permissive"])("%s drops a <template> and the markup it holds", (mode) => {
+    const out = sanitizeSVG(
+      `<svg ${SVG}><template ${HTML}>${IMG}<a href="javascript:alert(2)">x</a></template><rect width="1" height="1"/></svg>`,
+      mode,
+    );
+    expect(out).toBe(`<svg ${SVG}><rect width="1" height="1"/></svg>`);
+    expect(runsInPage(out)).toBe(false);
+  });
+
+  test("a <template> inside a label is dropped too", () => {
+    const out = sanitizeSVG(inLabel(`<template>${IMG}</template>Label`));
+    expect(out).not.toContain("template");
+    expect(out).toContain("Label");
+    expect(runsInPage(out)).toBe(false);
+  });
+
   test("CDATA in a label keeps its text", () => {
     const out = sanitizeSVG(`<svg ${SVG}><text><![CDATA[a < b & c]]></text></svg>`);
     expect(out).toBe(`<svg ${SVG}><text>a &lt; b &amp; c</text></svg>`);
