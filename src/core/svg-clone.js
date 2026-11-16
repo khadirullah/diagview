@@ -415,18 +415,22 @@ export function cloneSVGForExportAsync(svg, paint = null) {
 
     // ─── PHASE 2: Clone ──────────────────────────────────────────────────
     // cloneSVG applies performance.criticalFileLimit as its size guard.
-    const { mode, allowRemoteResources, warn } = exportSecurity(svg);
-    const clone = cloneSVG(svg, {
-      preserveText: true,
-      securityMode: mode,
-      allowRemoteResources,
-      skipIdFix: true,
-      warnRemoved: warn,
-    });
-
-    // Remove match-ids from ORIGINAL immediately (before any awaits)
-    for (let i = 0; i < nodeCount; i++) {
-      originalNodes[i].removeAttribute("data-dv-match-id");
+    let clone;
+    try {
+      const { mode, allowRemoteResources, warn } = exportSecurity(svg);
+      clone = cloneSVG(svg, {
+        preserveText: true,
+        securityMode: mode,
+        allowRemoteResources,
+        skipIdFix: true,
+        warnRemoved: warn,
+      });
+    } finally {
+      // Remove match-ids from ORIGINAL immediately (before any awaits), and
+      // also when the copy failed, so the page's SVG is left as it was
+      for (let i = 0; i < nodeCount; i++) {
+        originalNodes[i].removeAttribute("data-dv-match-id");
+      }
     }
 
     if (!clone) {

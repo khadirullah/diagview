@@ -739,3 +739,24 @@ describe("cloneSVG copies the SVG once", () => {
     },
   );
 });
+
+describe("export copy that fails", () => {
+  afterEach(() => {
+    document.body.innerHTML = "";
+  });
+
+  test("leaves no match ids on the page's SVG", async () => {
+    document.body.innerHTML =
+      '<svg xmlns="http://www.w3.org/2000/svg"><g class="node"><rect width="5" height="5"/></g></svg>';
+    const svg = document.querySelector("svg");
+    const importNode = jest.spyOn(Document.prototype, "importNode").mockImplementation(() => {
+      throw new Error("copy failed");
+    });
+    try {
+      await expect(cloneSVGForExportAsync(svg)).rejects.toThrow("copy failed");
+    } finally {
+      importNode.mockRestore();
+    }
+    expect(svg.querySelectorAll("[data-dv-match-id]")).toHaveLength(0);
+  });
+});
