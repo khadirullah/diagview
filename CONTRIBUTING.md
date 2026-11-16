@@ -81,7 +81,7 @@ diagview/
 
 ### Key design principles
 
-- **Lazy loading:** In the ESM build, search, minimap, meeting mode, rotate and Text Colours are separate chunks that load through dynamic `import()`. `init()` pre-loads search in the background. Share stays in the main bundle because the diagram scan imports it to restore share links from the URL. The PDF library loads from a script tag on the first PDF export. The UMD bundles inline every feature.
+- **Lazy loading:** In the ESM build, search, minimap, share, meeting mode, rotate and Text Colours are separate chunks that load through dynamic `import()`. `init()` pre-loads search and share in the background. Only the share link parser in `features/share-state.js` stays in the main bundle, because the diagram scan uses it to read a share link from the URL. The PDF library loads from a script tag on the first PDF export. The UMD bundles inline every feature.
 - **No innerHTML sinks:** All DOM mutation uses `createElement`, `createElementNS`, `DOMParser`, or `setSVGContent()`, never `innerHTML`. The only `insertAdjacentHTML` calls insert the library's own icon markup.
 - **Cleanup discipline:** Every listener added during a modal session has a matching removal, usually through `addManagedListener` or `addModalListener`.
 - **No circular dependencies:** Modules are structured to minimize circular imports.
