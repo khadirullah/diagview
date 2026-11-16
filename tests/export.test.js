@@ -197,6 +197,47 @@ describe("Export Functionality", () => {
       await expect(renderToCanvas(container)).rejects.toThrow("SVG may be too large");
       expect(global.URL.revokeObjectURL).toHaveBeenCalledWith("blob:mock-url");
     });
+
+    test("frees the blob: URL and the canvas when drawing fails", async () => {
+      global.Image = imageFailing(false);
+      const failing = {
+        fillRect() {},
+        drawImage() {
+          throw new Error("Out of memory");
+        },
+      };
+      const canvas = await withContext(failing, () =>
+        expect(renderToCanvas(container)).rejects.toThrow("Out of memory"),
+      );
+      expect(global.URL.revokeObjectURL).toHaveBeenCalledWith("blob:mock-url");
+      expect([canvas.width, canvas.height]).toEqual([0, 0]);
+    });
+  });
+
+  /**
+   * Run fn while every canvas gives this 2D context. Resolves to the last
+   * canvas asked for one.
+   */
+  async function withContext(context, fn) {
+    const { getContext } = HTMLCanvasElement.prototype;
+    let canvas;
+    HTMLCanvasElement.prototype.getContext = function () {
+      canvas = this;
+      return context;
+    };
+    try {
+      await fn();
+    } finally {
+      HTMLCanvasElement.prototype.getContext = getContext;
+    }
+    return canvas;
+  }
+
+  test("renderToCanvas says so when the browser gives no canvas", async () => {
+    const canvas = await withContext(null, () =>
+      expect(renderToCanvas(container)).rejects.toThrow("no canvas to draw on"),
+    );
+    expect([canvas.width, canvas.height]).toEqual([0, 0]);
   });
 
   test("visibility guard warns when exporting hidden elements", async () => {

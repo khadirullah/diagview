@@ -642,53 +642,67 @@ export async function renderToCanvas(
   const canvas = document.createElement("canvas");
   canvas.width = Math.round(width * scale);
   canvas.height = Math.round(height * scale);
-  const ctx = canvas.getContext("2d");
-
-  const svgStr = await serializeSVGAsync(finalSvg);
-
-  // A data: URL first. Chrome taints the canvas when it draws a blob: SVG
-  // that contains <foreignObject>, and Mermaid puts every label in one.
-  // Some Firefox versions refuse data: URLs over 32 MB, so if the data: URL
-  // fails to load, try a blob: URL before giving up.
-  const img = new Image();
-  img.crossOrigin = "anonymous";
-
-  // Set explicit dimensions on the img element to guarantee correct natural size
-  img.width = width;
-  img.height = height;
-
-  const load = (src) =>
-    new Promise((resolve, reject) => {
-      img.onload = () => resolve();
-      img.onerror = () => reject(new Error("Image load failed"));
-      img.src = src;
-    });
 
   let blobUrl = null;
   try {
-    await load("data:image/svg+xml;charset=utf-8," + encodeURIComponent(svgStr));
-  } catch (_e) {
-    blobUrl = URL.createObjectURL(new Blob([svgStr], { type: "image/svg+xml;charset=utf-8" }));
-    try {
-      await load(blobUrl);
-    } catch (_e2) {
-      URL.revokeObjectURL(blobUrl);
-      throw new Error("Image load failed. SVG may be too large or contain invalid data.");
+    // A browser that is out of canvas memory gives no 2D context
+    const ctx = canvas.getContext("2d");
+    if (!ctx) {
+      throw new Error(
+        "The browser has no canvas to draw on. The diagram may be too large, so try SVG export.",
+      );
     }
-  }
 
-  if (!transparent) {
-    // JPEG and PDF drop the alpha, so a see-through colour such as
-    // "transparent" would come out black. They get the colour the viewer
-    // shows, the page under the canvas colour.
-    ctx.fillStyle = (opaque ? detectTheme().seenBg : bg) || COLORS.BG_LIGHT;
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-  }
+    const svgStr = await serializeSVGAsync(finalSvg);
 
-  ctx.imageSmoothingEnabled = true;
-  ctx.imageSmoothingQuality = "high";
-  ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-  if (blobUrl) URL.revokeObjectURL(blobUrl);
+    // A data: URL first. Chrome taints the canvas when it draws a blob: SVG
+    // that contains <foreignObject>, and Mermaid puts every label in one.
+    // Some Firefox versions refuse data: URLs over 32 MB, so if the data: URL
+    // fails to load, try a blob: URL before giving up.
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+
+    // Set explicit dimensions on the img element to guarantee correct natural size
+    img.width = width;
+    img.height = height;
+
+    const load = (src) =>
+      new Promise((resolve, reject) => {
+        img.onload = () => resolve();
+        img.onerror = () => reject(new Error("Image load failed"));
+        img.src = src;
+      });
+
+    try {
+      await load("data:image/svg+xml;charset=utf-8," + encodeURIComponent(svgStr));
+    } catch (_e) {
+      blobUrl = URL.createObjectURL(new Blob([svgStr], { type: "image/svg+xml;charset=utf-8" }));
+      try {
+        await load(blobUrl);
+      } catch (_e2) {
+        throw new Error("Image load failed. SVG may be too large or contain invalid data.");
+      }
+    }
+
+    if (!transparent) {
+      // JPEG and PDF drop the alpha, so a see-through colour such as
+      // "transparent" would come out black. They get the colour the viewer
+      // shows, the page under the canvas colour.
+      ctx.fillStyle = (opaque ? detectTheme().seenBg : bg) || COLORS.BG_LIGHT;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+    }
+
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = "high";
+    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+  } catch (err) {
+    // Free the canvas memory now, as the caller never gets the canvas
+    canvas.width = 0;
+    canvas.height = 0;
+    throw err;
+  } finally {
+    if (blobUrl) URL.revokeObjectURL(blobUrl);
+  }
 
   return {
     canvas,
