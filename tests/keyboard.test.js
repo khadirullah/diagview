@@ -466,3 +466,66 @@ describe("The page behind the viewer", () => {
     expect(pageKeys).toEqual(["Escape", "Escape", "Escape", "+", "+", "+"]);
   });
 });
+
+describe("Letter shortcuts on other keyboard layouts", () => {
+  let toggles;
+
+  const press = (key, code) => {
+    const e = new KeyboardEvent("keydown", { key, code, bubbles: true, cancelable: true });
+    document.body.dispatchEvent(e);
+    return e;
+  };
+
+  beforeEach(() => {
+    resetConfig();
+    state.activePanzoom = {
+      zoomIn: jest.fn(),
+      zoomOut: jest.fn(),
+      reset: jest.fn(),
+      pan: jest.fn(),
+    };
+    state.isModalOpen = true;
+    document.body.innerHTML = "";
+    toggles = jest.fn();
+    state.events.on("dv:toggle-text-select", toggles);
+    setupKeyboardShortcuts();
+  });
+
+  afterEach(() => {
+    teardownKeyboardShortcuts();
+    state.events.off("dv:toggle-text-select", toggles);
+    state.isModalOpen = false;
+  });
+
+  test.each([
+    ["е", "Russian"],
+    ["Е", "Russian with Shift"],
+    ["τ", "Greek"],
+  ])("%s on the T key works as T (%s)", (key) => {
+    expect(press(key, "KeyT").defaultPrevented).toBe(true);
+    expect(toggles).toHaveBeenCalledTimes(1);
+  });
+
+  test("F on a Russian layout opens search", () => {
+    document.body.innerHTML =
+      '<div class="diagview-topbar"><button id="dv-search-icon-btn"></button></div>';
+    const opens = jest.fn();
+    document.getElementById("dv-search-icon-btn").addEventListener("click", opens);
+    press("а", "KeyF");
+    expect(opens).toHaveBeenCalledTimes(1);
+  });
+
+  test("a Latin layout keeps its own letters", () => {
+    // Dvorak has T where a US keyboard has K
+    press("t", "KeyK");
+    expect(toggles).toHaveBeenCalledTimes(1);
+    // The key where Dvorak has K is no shortcut
+    press("k", "KeyT");
+    expect(toggles).toHaveBeenCalledTimes(1);
+  });
+
+  test("a mark on a letter key is no letter shortcut", () => {
+    // French AZERTY has the comma where a US keyboard has M
+    expect(press(",", "KeyM").defaultPrevented).toBe(false);
+  });
+});

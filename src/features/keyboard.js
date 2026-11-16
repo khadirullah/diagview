@@ -27,6 +27,19 @@ function consume(e) {
 }
 
 /**
+ * The key the letter shortcuts read. A layout with no Latin letters, such
+ * as Russian or Greek, puts its own letter in e.key. Then the key's place
+ * on the keyboard picks the shortcut, so the key where a US keyboard has M
+ * still starts meeting mode. Any other key is read as typed.
+ * @param {KeyboardEvent} e - The key press
+ * @returns {string} e.key, or the US letter for a key of another script
+ */
+function letterKey(e) {
+  const otherScript = /^\p{L}$/u.test(e.key) && !/^[a-z]$/i.test(e.key);
+  return otherScript && /^Key[A-Z]$/.test(e.code) ? e.code.slice(3) : e.key;
+}
+
+/**
  * Handle keyboard shortcuts
  */
 function handleKeyboardShortcut(e) {
@@ -194,7 +207,7 @@ function handleKeyboardShortcut(e) {
     return;
   }
 
-  switch (e.key) {
+  switch (letterKey(e)) {
     case "m":
     case "M":
       consume(e);
