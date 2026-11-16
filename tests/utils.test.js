@@ -6,6 +6,7 @@ import {
   getClientCTM,
   loadScript,
   checkPanzoomDependency,
+  getRobustDimensions,
   getDiagramSvg,
   hasDrawnContent,
   getDiagramTitle,
@@ -504,6 +505,24 @@ describe("loadScript with a <script> the page already has", () => {
     expect(tags).toHaveLength(2);
     tags[1].dispatchEvent(new Event("load"));
     await expect(second).resolves.toBeUndefined();
+  });
+});
+
+describe("getRobustDimensions", () => {
+  test.each([
+    ["spaces", "0 0 10 20"],
+    ["commas", "0,0,10,20"],
+    ["commas and spaces", "0, 0, 10, 20"],
+    ["spaces around it", "  0 0 10 20 "],
+  ])("reads a viewBox written with %s", (_label, viewBox) => {
+    document.body.innerHTML = `<svg id="a" viewBox="${viewBox}"></svg>`;
+    expect(getRobustDimensions(document.getElementById("a"))).toEqual({
+      x: 0,
+      y: 0,
+      w: 10,
+      h: 20,
+      src: "viewBox",
+    });
   });
 });
 

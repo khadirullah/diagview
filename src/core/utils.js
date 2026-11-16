@@ -1241,7 +1241,11 @@ export function getRobustDimensions(svg) {
 
   // 2. Try viewBox
   if (svg.hasAttribute("viewBox")) {
-    const vb = (svg.getAttribute("viewBox") || "").split(/\s+|,/).map(parseFloat);
+    // Numbers may be split by spaces, commas or both, as in "0, 0, 10, 10"
+    const vb = (svg.getAttribute("viewBox") || "")
+      .trim()
+      .split(/[\s,]+/)
+      .map(parseFloat);
     if (vb.length === 4 && vb[2] > 0 && vb[3] > 0) {
       return { x: vb[0], y: vb[1], w: vb[2], h: vb[3], src: "viewBox" };
     }
