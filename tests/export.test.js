@@ -2277,6 +2277,23 @@ describe("onExport fires and exportDiagram resolves to true only after a success
     expect(clickSpy.mock.contexts[0].download).toBe("ok.png");
   });
 
+  test("a second image export of a diagram does nothing while the first draws", async () => {
+    const first = exportDiagram(container, "download", { filename: "ok" });
+    expect(await exportDiagram(container, "copy", { filename: "ok" })).toBe(false);
+    // An SVG export draws nothing, so it still runs
+    expect(await exportDiagram(container, "svg", { filename: "ok" })).toBe(true);
+    expect(await first).toBe(true);
+    expect(global.Image).toHaveBeenCalledTimes(1);
+    expect(onExport.mock.calls).toEqual([
+      ["svg", "ok"],
+      ["png", "ok"],
+    ]);
+
+    // Once the first has finished, the next one runs
+    expect(await exportDiagram(container, "download", { filename: "ok" })).toBe(true);
+    expect(global.Image).toHaveBeenCalledTimes(2);
+  });
+
   test("Copy Image that downloads the PNG instead still fires it", async () => {
     Object.defineProperty(navigator, "clipboard", { value: undefined, configurable: true });
     expect(await exportDiagram(container, "copy", { filename: "ok" })).toBe(true);

@@ -1151,6 +1151,9 @@ async function savePDF(sourceElement, filename, { transparent, modalClone, silen
   }
 }
 
+/** Page SVGs with an image or PDF export still drawing */
+const drawing = new WeakSet();
+
 /**
  * Main Export Handler
  * @param {HTMLElement|SVGSVGElement} sourceElement - Diagram element, or the diagram's <svg>
@@ -1161,7 +1164,9 @@ async function savePDF(sourceElement, filename, { transparent, modalClone, silen
  *   SVG element here is the old third argument and works as modalClone.
  * @returns {Promise<boolean>} Resolves to true once the file is saved or copied, or downloaded
  *   because the clipboard was unavailable, after the onExport callback. Resolves to false
- *   when the export failed or was blocked, or a PDF fell back to PNG.
+ *   when the export failed or was blocked, or a PDF fell back to PNG. Resolves to false
+ *   at once for a PNG, JPEG, WebP, PDF or Copy Image export while another of these runs
+ *   for the same diagram.
  */
 export async function exportDiagram(sourceElement, mode, options = {}) {
   // A null third argument means no options
@@ -1201,41 +1206,53 @@ export async function exportDiagram(sourceElement, mode, options = {}) {
   let ok;
   // What onExport reports. Image exports replace it with the format of the file made.
   let format = mode;
-  switch (mode) {
-    case "svg":
-      ok = await saveSVG(svg, filename, opts);
-      break;
-    case "copy-svg":
-      ok = await copySVGCode(sourceElement, { filename, modalClone });
-      break;
-    case "copy":
-      ok = await processImageExport(
-        sourceElement,
-        filename,
-        "png",
-        false, // transparent
-        true, // copy
-        modalClone,
-        silent,
-      );
-      break;
-    case "pdf":
-      ok = await savePDF(sourceElement, filename, opts);
-      break;
-    default: {
-      // Unknown modes export an opaque PNG
-      const known = /^(png|jpeg|webp)$/.test(mode);
-      format = await processImageExport(
-        sourceElement,
-        filename,
-        known ? mode : "png",
-        known && isTransparent, // transparent
-        false, // copy
-        modalClone,
-        silent,
-      );
-      ok = !!format;
+  // Drawing an image takes a lot of memory, so while one export of this
+  // diagram draws, another one that draws, such as a second click, does
+  // nothing. SVG and Copy SVG draw nothing and always run.
+  const draws = mode !== "svg" && mode !== "copy-svg";
+  if (draws) {
+    if (drawing.has(svg)) return false;
+    drawing.add(svg);
+  }
+  try {
+    switch (mode) {
+      case "svg":
+        ok = await saveSVG(svg, filename, opts);
+        break;
+      case "copy-svg":
+        ok = await copySVGCode(sourceElement, { filename, modalClone });
+        break;
+      case "copy":
+        ok = await processImageExport(
+          sourceElement,
+          filename,
+          "png",
+          false, // transparent
+          true, // copy
+          modalClone,
+          silent,
+        );
+        break;
+      case "pdf":
+        ok = await savePDF(sourceElement, filename, opts);
+        break;
+      default: {
+        // Unknown modes export an opaque PNG
+        const known = /^(png|jpeg|webp)$/.test(mode);
+        format = await processImageExport(
+          sourceElement,
+          filename,
+          known ? mode : "png",
+          known && isTransparent, // transparent
+          false, // copy
+          modalClone,
+          silent,
+        );
+        ok = !!format;
+      }
     }
+  } finally {
+    if (draws) drawing.delete(svg);
   }
 
   // Fire onExport only when the user got the file (matches onOpen/onClose pattern)
