@@ -544,12 +544,42 @@ function decodeCSSEscapes(str) {
 }
 
 /**
- * Remove CSS comments from a string.
+ * A CSS comment. One without an end runs to the end of the text.
+ * @private
+ */
+const CSS_COMMENT_RE = /\/\*[\s\S]*?(?:\*\/|$)/g;
+
+/**
+ * The parts of CSS a comment cannot start in, and the comments themselves.
+ * In order: an escaped character, a quoted string, the inside of brackets
+ * up to a quote or the closing bracket, and a comment.
+ * @private
+ */
+const CSS_PARTS_RE =
+  /\\[\s\S]|"(?:\\[\s\S]|[^"\\\n])*"?|'(?:\\[\s\S]|[^'\\\n])*'?|\((?:\\[\s\S]|[^)"'\\])*\)?|\/\*[\s\S]*?(?:\*\/|$)/g;
+
+/**
+ * Remove CSS comments from a string. A "/*" inside a quoted string is
+ * text, so a comment never runs across a string. In an unquoted url() it
+ * is part of the URL, so a comment inside brackets ends at the bracket.
  * @private
  */
 function stripCSSComments(str) {
   if (!str || !str.includes("/*")) return str;
-  return str.replace(/\/\*[\s\S]*?\*\//g, "");
+  return str.replace(CSS_PARTS_RE, (part) => {
+    if (part.startsWith("/*")) return "";
+    if (part.startsWith("(")) return part.replace(CSS_COMMENT_RE, "");
+    return part;
+  });
+}
+
+/**
+ * CSS the way the checks below read it. Comments go first, because an
+ * escape such as \2f\2a makes the text "/*" but never starts a comment.
+ * @private
+ */
+function readableCSS(css) {
+  return decodeCSSEscapes(stripCSSComments(css));
 }
 
 /**
@@ -796,8 +826,7 @@ function sanitize(input, mode, options, own) {
 
       // Strict only: sanitize inline style attribute for CSS-based injection.
       if (isStrict && name === "style") {
-        const decodedValue = decodeCSSEscapes(value);
-        const cleanValue = stripCSSComments(decodedValue);
+        const cleanValue = readableCSS(value);
         const isDangerous =
           INTERNAL_DANGER_RE.test(cleanValue) ||
           (!allowRemote && REMOTE_RESOURCE_RE.test(cleanValue));
@@ -811,8 +840,7 @@ function sanitize(input, mode, options, own) {
     // Strict only: sanitize <style> block textContent for CSS-based injection.
     if (isStrict && tagName === "style") {
       const content = el.textContent || "";
-      const decodedContent = decodeCSSEscapes(content);
-      const cleanContent = stripCSSComments(decodedContent);
+      const cleanContent = readableCSS(content);
       const isDangerous =
         INTERNAL_DANGER_RE.test(cleanContent) ||
         (!allowRemote && REMOTE_RESOURCE_RE.test(cleanContent));

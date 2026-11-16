@@ -252,6 +252,23 @@ describe("sanitizeSVG decodes CSS before it checks it (strict)", () => {
     expect(kept(out)).toEqual([false, false]);
   });
 
+  const remote = ".b{background:url(https://evil.com/x.png)}";
+  test.each([
+    ["/* and */ in double quoted strings", `.a{content:"/*"} ${remote} .c{content:"*/"}`],
+    ["/* and */ in single quoted strings", `.a{content:'/*'} ${remote} .c{content:'*/'}`],
+    ["/* and */ in unquoted url()", `.a{background:url(/*)} ${remote} .c{background:url(*/)}`],
+    ["/* after an escaped bracket in url()", `.a{background:url(\\)/*)} ${remote} .c{x:url(*/)}`],
+    ["/* and */ written as escapes", `.a{x:\\2f\\2a} ${remote} .c{x:\\2a\\2f}`],
+    [
+      "a /* string before image-set()",
+      '.a{content:"/*"} .b{background:image-set(/**/"https://evil.com/x.png" 1x)}',
+    ],
+  ])("finds a remote url() after %s", (_label, css) => {
+    const out = sanitizeToString(styleBlock(css));
+    expect(out).toContain("<rect");
+    expect(kept(out)).toEqual([false, false]);
+  });
+
   test.each([
     ["javascript: in hex escapes", ".a{background:url(\\6a avascript:alert(1))}"],
     ["expression() with an escaped first letter", ".a{width:\\65xpression(alert(1))}"],
