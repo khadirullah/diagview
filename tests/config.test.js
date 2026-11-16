@@ -94,6 +94,25 @@ describe("Core Config", () => {
     expect(state.config.pdfLibraryIntegrity).not.toBeNull();
   });
 
+  test("passing the custom PDF URL in use again keeps its hash", () => {
+    const pdf = {
+      pdfLibraryUrl: "https://cdn.example/jspdf.js",
+      pdfLibraryIntegrity: "sha384-abc",
+    };
+    updateConfig(pdf);
+    updateConfig({ pdfLibraryUrl: pdf.pdfLibraryUrl });
+    expect(state.config.pdfLibraryIntegrity).toBe("sha384-abc");
+
+    // A null hash still turns the check off on purpose
+    updateConfig({ pdfLibraryUrl: pdf.pdfLibraryUrl, pdfLibraryIntegrity: null });
+    expect(state.config.pdfLibraryIntegrity).toBeNull();
+
+    // Another URL without its own hash still gets none
+    updateConfig(pdf);
+    updateConfig({ pdfLibraryUrl: "https://cdn.example/other.js" });
+    expect(state.config.pdfLibraryIntegrity).toBeNull();
+  });
+
   test("modal cleanup functions work", () => {
     const fn = jest.fn();
     addModalCleanupFunction(fn);

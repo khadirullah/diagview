@@ -212,11 +212,13 @@ export function updateConfig(options = {}) {
     }
   }
 
-  // Security: Prevent overriding PDF URL without integrity unless explicit
-  if (sanitized["pdfLibraryUrl"]) {
-    if (sanitized["pdfLibraryUrl"] === INITIAL_CONFIG.pdfLibraryUrl) {
+  // Security: Prevent overriding PDF URL without integrity unless explicit.
+  // The URL already in use keeps its hash.
+  const url = sanitized["pdfLibraryUrl"];
+  if (url) {
+    if (url === INITIAL_CONFIG.pdfLibraryUrl) {
       sanitized["pdfLibraryIntegrity"] = INITIAL_CONFIG.pdfLibraryIntegrity;
-    } else if (!sanitized["pdfLibraryIntegrity"]) {
+    } else if (!sanitized["pdfLibraryIntegrity"] && url !== state.config.pdfLibraryUrl) {
       sanitized["pdfLibraryIntegrity"] = null;
     }
   }

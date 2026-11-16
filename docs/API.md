@@ -459,7 +459,7 @@ interface DiagViewConfig {
 
   // PDF
   pdfLibraryUrl: string; // default: 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js'
-  pdfLibraryIntegrity: string | null; // default: the 'sha512-...' SRI hash of that file; null skips the check. A new pdfLibraryUrl without its own hash sets it to null, and the default URL gets the default hash back
+  pdfLibraryIntegrity: string | null; // default: the 'sha512-...' SRI hash of that file; null skips the check. A new pdfLibraryUrl without its own hash sets it to null, the URL already in use keeps its hash, and the default URL gets the default hash back
 
   // Callbacks
   onOpen: (() => void) | null; // default: null
