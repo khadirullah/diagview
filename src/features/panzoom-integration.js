@@ -74,10 +74,18 @@ export function initializePanzoom(element, options = {}) {
     // cloned element) is created on every modal open, so a destroy-scoped
     // listener would pin each discarded clone in memory until destroy().
     if (state.config.onZoomChange) {
+      // Panzoom fires panzoomchange for every pan frame too. The callback
+      // hears the scale the viewer opens at, then each new one.
+      let lastScale;
       addModalListener(element, "panzoomchange", (e) => {
         // A turn changes no zoom. Panzoom's own event reports any new scale.
-        if (e.detail?.isRotation) return;
-        state.config.onZoomChange(e.detail.scale);
+        if (e.detail?.isRotation || e.detail.scale === lastScale) return;
+        lastScale = e.detail.scale;
+        try {
+          state.config.onZoomChange(lastScale);
+        } catch (err) {
+          console.error("DiagView: onZoomChange callback error:", err);
+        }
       });
     }
 

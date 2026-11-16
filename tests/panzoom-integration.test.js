@@ -447,6 +447,49 @@ describe("zoomAnimationDuration", () => {
   });
 });
 
+describe("onZoomChange", () => {
+  let element, onZoomChange;
+
+  const change = (scale, x = 0) =>
+    element.dispatchEvent(new CustomEvent("panzoomchange", { detail: { scale, x, y: 0 } }));
+
+  beforeEach(() => {
+    resetConfig();
+    window.Panzoom = jest.fn(() => ({}));
+    element = document.createElement("div");
+    onZoomChange = jest.fn();
+    state.config = { ...state.config, onZoomChange };
+    initializePanzoom(element);
+  });
+
+  afterEach(() => {
+    for (const fn of Array.from(state.modalCleanupFunctions)) fn();
+    state.modalCleanupFunctions.clear();
+    delete window.Panzoom;
+    resetConfig();
+  });
+
+  test("hears the opening scale, then only new ones, not each pan frame", () => {
+    change(1);
+    change(1, 10);
+    change(1, 20);
+    change(2, 20);
+    change(2, 40);
+    change(1, 0);
+    expect(onZoomChange.mock.calls).toEqual([[1], [2], [1]]);
+  });
+
+  test("a callback that throws is reported and the viewer keeps going", () => {
+    const error = jest.spyOn(console, "error").mockImplementation(() => {});
+    onZoomChange.mockImplementation(() => {
+      throw new Error("page bug");
+    });
+    expect(() => change(2)).not.toThrow();
+    expect(error).toHaveBeenCalledWith("DiagView: onZoomChange callback error:", expect.any(Error));
+    error.mockRestore();
+  });
+});
+
 describe("double click and double tap reset with zoomAnimationDuration", () => {
   let viewport, element, resets;
 
