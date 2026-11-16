@@ -492,7 +492,9 @@
             nodes.forEach(([id, label, x, y, w, h]) => {
                 const g = document.createElementNS(NS, 'g');
                 g.setAttribute('class', 'node');
-                g.setAttribute('id', id);
+                // The same three diagrams sit on one page, so each node id
+                // names its diagram too
+                g.setAttribute('id', palette + '-' + id);
 
                 const rect = document.createElementNS(NS, 'rect');
                 rect.setAttribute('x', x); rect.setAttribute('y', y);
