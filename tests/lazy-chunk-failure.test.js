@@ -7,10 +7,15 @@ import { jest } from "@jest/globals";
 jest.unstable_mockModule("../src/features/lazy/minimap.js", () => {
   throw new TypeError("Failed to fetch dynamically imported module");
 });
+jest.unstable_mockModule("../src/features/lazy/share.js", () => {
+  throw new TypeError("Failed to fetch dynamically imported module");
+});
 
 const { state, resetConfig, updateConfig } = await import("../src/core/config.js");
 const { createModal, openFullscreen } = await import("../src/ui/modal.js");
 const { closeModal } = await import("../src/ui/modal-controls.js");
+const { saveZoomState, clearAllZoomStates } =
+  await import("../src/features/panzoom-integration.js");
 
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 const settle = async () => {
@@ -95,5 +100,41 @@ describe("the minimap chunk fails to load", () => {
     const named = warnings.filter(([msg]) => String(msg).includes("minimap feature"));
     expect(named).toHaveLength(1);
     expect(named[0][0]).toBe("DiagView: Could not load the minimap feature, so it does not work");
+  });
+});
+
+describe("the share chunk fails to load", () => {
+  const warn = console.warn;
+  beforeAll(() => {
+    console.warn = () => {};
+  });
+  afterAll(() => {
+    console.warn = warn;
+  });
+
+  beforeEach(() => {
+    resetConfig();
+    document.body.innerHTML = "";
+    clearAllZoomStates();
+    fakePanzoom();
+    window.scrollTo = jest.fn();
+    updateConfig({ showFirstTimeThemeHint: false, animateOpen: false, rememberZoom: true });
+    createModal();
+  });
+
+  afterEach(async () => {
+    if (state.isModalOpen) await closeModal();
+    await settle();
+    delete window.Panzoom;
+  });
+
+  test("an open without a share link still restores the view and the search", async () => {
+    saveZoomState("d-chunk", { getScale: () => 2.5, getPan: () => ({ x: 0, y: 0 }) });
+
+    await openFullscreen(makeDiagram(), { searchQuery: "Node A" });
+    await settle();
+
+    expect(state.activePanzoom.zoom).toHaveBeenCalledWith(2.5, { animate: false });
+    expect(document.getElementById("diagview-search").value).toBe("Node A");
   });
 });

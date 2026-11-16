@@ -30,6 +30,7 @@ import { createFloatingMenu } from "./floating-menu.js";
 import { pushModalHistoryState, startVisualViewportSync } from "./viewport.js";
 import { showMenuHint, showToast } from "./toast.js";
 import { keysUsed } from "../features/keyboard.js";
+import { getPendingShareState } from "../features/share-state.js";
 import { syncCanvasGrid, updateCanvasGrid } from "./canvas-grid.js";
 
 /** Debounce for persisting zoom state on high-frequency panzoomchange (ms) */
@@ -260,15 +261,17 @@ async function _initCoreInteractions(element, clone, viewport, options, session)
   if (panzoom) {
     let searchSetUp = false;
     try {
+      // Only a share link's view needs the share chunk, so other opens do
+      // not wait for it
+      const pending = getPendingShareState(element);
       const [shareMod, searchMod] = await Promise.all([
-        import("../features/lazy/share.js"),
+        pending ? import("../features/lazy/share.js") : null,
         loadChunk("search", () => import("../features/lazy/search.js")),
       ]);
 
       // Guard: If the user closed the modal while we were loading, bail out
       if (!_isSessionLive(session)) return { panzoom, diagramId };
 
-      const pending = shareMod.getPendingShareState(element);
       const query = options.searchQuery ?? pending?.query ?? "";
 
       // If we have a share link, apply it. Otherwise fallback to remembered zoom.

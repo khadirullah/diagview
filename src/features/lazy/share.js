@@ -24,10 +24,6 @@ import { getClientCTM, copyText } from "../../core/utils.js";
 import { setCanvasTheme } from "../../core/theme.js";
 import { shareStates } from "../share-state.js";
 
-// The page load reads share links before this chunk loads, so the parsing
-// lives in share-state.js
-export { getPendingShareState } from "../share-state.js";
-
 /**
  * Creates a standard SVG Point object used for matrix transformation math.
  * @param {SVGSVGElement} svg - The context SVG element.

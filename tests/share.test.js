@@ -10,9 +10,9 @@ jest.unstable_mockModule("../src/ui/toast.js", () => ({
 }));
 
 const { showSuccessToast, showErrorToast } = await import("../src/ui/toast.js");
-const { generateShareLink, shareLink, applyRestoredViewState, getPendingShareState } =
+const { generateShareLink, shareLink, applyRestoredViewState } =
   await import("../src/features/lazy/share.js");
-const { restoreViewFromURL } = await import("../src/features/share-state.js");
+const { restoreViewFromURL, getPendingShareState } = await import("../src/features/share-state.js");
 
 describe("Share System", () => {
   let viewport, svg;
