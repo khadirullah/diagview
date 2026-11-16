@@ -534,10 +534,15 @@ The declarations describe the package import. The `DiagView` global that the scr
 
 Internet Explorer is not supported.
 
-The custom colour swatch in the ☰ menu shows its keyboard focus ring through `:has()`. Chrome before 105, Firefox before 121 and Safari before 15.4 lack `:has()`, so there the swatch shows no ring. The picker still works from the keyboard.
+Three style rules use `:has()`, which Chrome before 105, Firefox before 121 and Safari before 15.4 lack. In those browsers:
+
+- The custom colour swatch in the ☰ menu shows no keyboard focus ring. The picker still works from the keyboard.
+- The search box in the viewer shows its accent border on focus, but not the soft ring around it.
+- The line above the ☰ menu footer sits a little lower under the tool rows.
 
 A few details need newer versions. Without them everything still works, and only these change:
 
 - `color-mix()` needs Chrome 111, Firefox 113 and Safari 16.2. Before that, `canvasGrid: "dots"` draws no dots, the accent buttons get the plain grey border and the theme buttons get no hover tint.
+- The `scale` property needs Chrome and Edge 104. Before that, the buttons on each diagram do not shrink a little while pressed.
 - `:focus-visible` needs Safari 15.4. Older Safari shows its own focus ring in place of DiagView's.
 - Copy Image needs `ClipboardItem`, which Firefox has from 127. Older Firefox downloads the PNG instead.
