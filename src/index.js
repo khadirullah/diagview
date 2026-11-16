@@ -385,8 +385,9 @@ const DiagView = {
   version,
 };
 
-// Auto-bootstrap (optional)
-if (typeof window !== "undefined") {
+// Auto-bootstrap (optional). Some runtimes, such as Deno, define window
+// without a document, so both are checked before the page is read.
+if (isBrowser()) {
   // Defensive global assignment to prevent overwriting existing versions
   window.DiagView = window.DiagView || DiagView;
 

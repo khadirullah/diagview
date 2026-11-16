@@ -965,3 +965,17 @@ describe("config from untrusted JSON", () => {
     expect(config.watermark.position).toBe(DEFAULT_CONFIG.watermark.position);
   });
 });
+
+describe("loading in a runtime with window and no document", () => {
+  test("the import does not throw and does not start DiagView", async () => {
+    const own = Object.getOwnPropertyDescriptor(globalThis, "document");
+    Object.defineProperty(globalThis, "document", { configurable: true, value: undefined });
+    try {
+      const fresh = await import("../src/index.js?window-without-document");
+      expect(typeof fresh.default.init).toBe("function");
+    } finally {
+      Object.defineProperty(globalThis, "document", own);
+    }
+    expect(state.isInitialized).toBe(false);
+  });
+});
