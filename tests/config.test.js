@@ -328,6 +328,63 @@ describe("Core Config: validateConfig gaps", () => {
     expect(state.config.maxZoomScale).toBe(1);
   });
 
+  test("a switch given as a string keeps the previous value", () => {
+    updateConfig({ showMinimap: false, security: { allowRemoteResources: false } });
+    expect(warn).not.toHaveBeenCalled();
+
+    updateConfig({
+      showMinimap: "true",
+      animateOpen: 0,
+      security: { allowRemoteResources: "false" },
+      watermark: { enabled: "yes" },
+    });
+    expect(warn).toHaveBeenCalledWith("DiagView: showMinimap must be true or false, keeping false");
+    expect(warn).toHaveBeenCalledWith("DiagView: animateOpen must be true or false, keeping true");
+    expect(warn).toHaveBeenCalledWith(
+      "DiagView: security.allowRemoteResources must be true or false, keeping false",
+    );
+    expect(warn).toHaveBeenCalledWith(
+      "DiagView: watermark.enabled must be true or false, keeping false",
+    );
+    expect(state.config.showMinimap).toBe(false);
+    expect(state.config.animateOpen).toBe(true);
+    expect(state.config.security.allowRemoteResources).toBe(false);
+    expect(state.config.watermark.enabled).toBe(false);
+  });
+
+  test("a callback that is not a function or null keeps the previous one", () => {
+    const onOpen = () => {};
+    updateConfig({ onOpen });
+    updateConfig({ onOpen: "openHandler", onZoomChange: {} });
+    expect(warn).toHaveBeenCalledWith(
+      "DiagView: onOpen must be a function or null, keeping the previous one",
+    );
+    expect(warn).toHaveBeenCalledWith(
+      "DiagView: onZoomChange must be a function or null, keeping the previous one",
+    );
+    expect(state.config.onOpen).toBe(onOpen);
+    expect(state.config.onZoomChange).toBeNull();
+
+    warn.mockClear();
+    updateConfig({ onOpen: null });
+    expect(warn).not.toHaveBeenCalled();
+    expect(state.config.onOpen).toBeNull();
+  });
+
+  test.each([["50MB"], [NaN], [0], [null]])(
+    "performance.criticalFileLimit rejects %p and keeps the previous limit",
+    (value) => {
+      updateConfig({ performance: { criticalFileLimit: 1000 } });
+      expect(warn).not.toHaveBeenCalled();
+
+      updateConfig({ performance: { criticalFileLimit: value } });
+      expect(warn).toHaveBeenCalledWith(
+        "DiagView: performance.criticalFileLimit must be a number of 1 or more, keeping 1000",
+      );
+      expect(state.config.performance.criticalFileLimit).toBe(1000);
+    },
+  );
+
   test("allowedImageTypes must be an array of strings", () => {
     updateConfig({ allowedImageTypes: "png" });
     expect(warn).toHaveBeenCalledWith(expect.stringContaining("allowedImageTypes"));

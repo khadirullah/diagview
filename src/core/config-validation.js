@@ -119,6 +119,54 @@ export function validateConfig(config, previous = DEFAULT_CONFIG) {
     }
   });
 
+  // A switch given as the string "false" would count as on
+  [
+    "exportSearchHighlight",
+    "showKeyboardHelp",
+    "naturalPanning",
+    "rotateKeepsView",
+    "showMinimap",
+    "rememberZoom",
+    "animateOpen",
+    "showBranding",
+    "showFirstTimeThemeHint",
+  ].forEach((key) => {
+    if (typeof config[key] !== "boolean") {
+      console.warn(`DiagView: ${key} must be true or false, keeping ${fallback(key)}`);
+      config[key] = fallback(key);
+    }
+  });
+  [
+    ["security", "allowOverrides"],
+    ["security", "allowRemoteResources"],
+    ["watermark", "enabled"],
+  ].forEach(([group, key]) => {
+    if (typeof config[group][key] !== "boolean") {
+      const keep = fallback(group)?.[key] ?? defaults[group][key];
+      console.warn(`DiagView: ${group}.${key} must be true or false, keeping ${keep}`);
+      config[group][key] = keep;
+    }
+  });
+
+  // DiagView calls these, so anything else would throw when it does
+  ["onExport", "onError", "onZoomChange", "onOpen", "onClose"].forEach((key) => {
+    if (config[key] !== null && typeof config[key] !== "function") {
+      console.warn(`DiagView: ${key} must be a function or null, keeping the previous one`);
+      config[key] = fallback(key);
+    }
+  });
+
+  // A limit that is not a number, such as "50MB", would turn the size check off
+  const limit = config["performance"].criticalFileLimit;
+  if (typeof limit !== "number" || !Number.isFinite(limit) || limit < 1) {
+    const keep =
+      fallback("performance")?.criticalFileLimit ?? defaults["performance"].criticalFileLimit;
+    console.warn(
+      `DiagView: performance.criticalFileLimit must be a number of 1 or more, keeping ${keep}`,
+    );
+    config["performance"].criticalFileLimit = keep;
+  }
+
   // An unknown button style would leave the toolbar buttons unstyled
   const { buttons } = config["ui"];
   const style = buttons?.style;
