@@ -27,7 +27,7 @@ jobs:
       - name: Run Linter
         run: npm run lint
       - name: Run Tests
-        run: npm run test
+        run: npm run test:coverage
       - name: Verify Build
         run: npm run build
       - name: Check Package Entry Points

@@ -109,7 +109,7 @@ npx playwright install --with-deps   # once
 npm run test:e2e
 ```
 
-`npm run test:coverage` enforces coverage thresholds and fails if coverage drops below:
+`npm run test:coverage` measures every `.js` file in `src/`, including files no test imports. CI and `prepublishOnly` run it, and it fails if coverage drops below:
 
 | Metric     | Threshold |
 | ---------- | --------- |
@@ -214,7 +214,7 @@ This will:
 The `prepublishOnly` script runs automatically before `npm publish`:
 
 ```bash
-npm run lint && npm test && npm run build && npm run typecheck && npm run test:entries && npm run size
+npm run lint && npm run test:coverage && npm run build && npm run typecheck && npm run test:entries && npm run size
 ```
 
 `publish.yml` runs the same checks as separate steps, so a local publish and the workflow run the same ones. Keep the two lists in step. The workflow first stops when the release tag without its leading `v` differs from the version in `package.json`.
