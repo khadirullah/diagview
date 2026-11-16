@@ -17,6 +17,9 @@ jest.unstable_mockModule("../src/features/lazy/share.js", () => ({
 jest.unstable_mockModule("../src/features/lazy/rotate.js", () => ({
   rotateDiagram: jest.fn(),
 }));
+jest.unstable_mockModule("../src/features/lazy/meeting-mode.js", () => ({
+  toggleMeetingMode: jest.fn(),
+}));
 jest.unstable_mockModule("../src/ui/modal.js", () => ({
   openFullscreen: jest.fn(),
   closeModal: jest.fn(),
@@ -27,6 +30,7 @@ const { createFloatingMenu } = await import("../src/ui/floating-menu.js");
 const { exportDiagram } = await import("../src/features/export.js");
 const { shareLink } = await import("../src/features/lazy/share.js");
 const { rotateDiagram } = await import("../src/features/lazy/rotate.js");
+const { toggleMeetingMode } = await import("../src/features/lazy/meeting-mode.js");
 const { setupViewportInteractions } = await import("../src/features/panzoom-integration.js");
 
 describe("Floating Menu UI", () => {
@@ -250,6 +254,7 @@ describe("Floating Menu UI", () => {
   });
 
   test("Interaction: Share button calls shareLink", async () => {
+    state.isModalOpen = true;
     createFloatingMenu(sourceElement, clonedSvg);
     const shareBtn = document.getElementById("dv-share");
     shareBtn.click();
@@ -290,6 +295,47 @@ describe("Floating Menu UI", () => {
     expect(rotateDiagram).not.toHaveBeenCalled();
     state.activePanzoom = null;
   });
+
+  test("Meeting Mode button turns meeting mode on", async () => {
+    state.isModalOpen = true;
+    createFloatingMenu(sourceElement, clonedSvg);
+    document.getElementById("dv-meeting").click();
+
+    await new Promise((r) => setTimeout(r, 10));
+    expect(toggleMeetingMode).toHaveBeenCalled();
+  });
+
+  test.each([
+    ["dv-meeting", () => toggleMeetingMode],
+    ["dv-share", () => shareLink],
+  ])("a close while the chunk loads leaves %s with nothing to do", async (id, action) => {
+    state.isModalOpen = true;
+    createFloatingMenu(sourceElement, clonedSvg);
+    document.getElementById(id).click();
+    state.isModalOpen = false;
+
+    await new Promise((r) => setTimeout(r, 10));
+    expect(action()).not.toHaveBeenCalled();
+  });
+
+  test.each([
+    ["dv-meeting", () => toggleMeetingMode],
+    ["dv-share", () => shareLink],
+  ])(
+    "a close and a new open while the chunk loads leave %s with nothing to do",
+    async (id, action) => {
+      state.isModalOpen = true;
+      state.activePanzoom = {};
+      createFloatingMenu(sourceElement, clonedSvg);
+      document.getElementById(id).click();
+      // A new object, as a new open makes a new panzoom
+      state.activePanzoom = {};
+
+      await new Promise((r) => setTimeout(r, 10));
+      expect(action()).not.toHaveBeenCalled();
+      state.activePanzoom = null;
+    },
+  );
 
   test("Interaction: Export buttons call exportDiagram", async () => {
     createFloatingMenu(sourceElement, clonedSvg);

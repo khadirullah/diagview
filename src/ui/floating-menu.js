@@ -490,12 +490,13 @@ function _setupMenuController(elements, sourceElement, clonedSvg) {
           else if (def.feat === "meeting-mode")
             mod = await loadChunk("meeting mode", () => import("../features/lazy/meeting-mode.js"));
 
-          if (def.feat === "share") mod.shareLink(state.currentDiagramIndex);
-          else if (def.feat === "rotate") {
-            // A close, or a close and a new open, while the chunk loaded
-            // leaves nothing to turn
-            if (state.isModalOpen && state.activePanzoom === pz) mod.rotateDiagram();
-          } else if (def.feat === "meeting-mode") mod.toggleMeetingMode();
+          // A close, or a close and a new open, while the chunk loaded
+          // leaves nothing to share, turn or point at
+          if (state.isModalOpen && state.activePanzoom === pz) {
+            if (def.feat === "share") mod.shareLink(state.currentDiagramIndex);
+            else if (def.feat === "rotate") mod.rotateDiagram();
+            else if (def.feat === "meeting-mode") mod.toggleMeetingMode();
+          }
           toggleMenu(null, false);
         } catch (err) {
           console.error(`DiagView: Failed to load ${def.label}`, err);
