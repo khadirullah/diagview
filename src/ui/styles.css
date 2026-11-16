@@ -43,10 +43,20 @@
   }
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --dv-border-color: rgba(255, 255, 255, 0.15);
-    --dv-header-bg: rgba(255, 255, 255, 0.05);
+/* Lines and the header wash take the text colour DiagView picked for the
+   page or the canvas, so a dark OS does not draw white lines on a white
+   page. Text mixed with a little white gives the grey line of a light page
+   and the faint white line of a dark one. Each element works the mix out
+   from its own text colour, so the page toolbar follows the page and the
+   viewer follows the canvas. Browsers without color-mix() keep the grey
+   lines above, which show on both. */
+@supports (color: color-mix(in srgb, red, blue)) {
+  :root,
+  .diagview-wrapper,
+  .diagview-error,
+  .diagview-off-hint {
+    --dv-border-color: color-mix(in srgb, var(--dv-text-color, currentColor) 12%, white 3%);
+    --dv-header-bg: color-mix(in srgb, var(--dv-text-color, currentColor) 3%, white 2%);
   }
 }
 
@@ -397,6 +407,8 @@
   box-sizing: border-box;
   margin: 0;
   pointer-events: none;
+  /* The badge border mixes this, so it follows the page too */
+  --dv-text-color: var(--dv-page-text);
   color: var(--dv-page-text, currentColor);
   font-family: var(--dv-hint-font, inherit);
   font-size: 12px;

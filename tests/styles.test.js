@@ -27,6 +27,27 @@ describe("styles.css: page toolbar colours", () => {
     expect(body).toMatch(/--dv-muted-text:\s*var\(--dv-page-muted\)/);
   });
 
+  test("lines and the header wash follow the detected text colour, not the OS dark mode", () => {
+    expect(css).not.toContain("prefers-color-scheme");
+    // Browsers without color-mix() keep a grey that shows on light and dark
+    const root = ruleBody(":root {");
+    expect(root).toContain("--dv-border-color: rgba(128, 128, 128, 0.2)");
+    expect(root).toContain("--dv-header-bg: rgba(128, 128, 128, 0.05)");
+    // Each element mixes its own text colour, so the page toolbar follows the page
+    const supports = css.indexOf("@supports (color: color-mix(");
+    expect(supports).toBeGreaterThan(-1);
+    const body = ruleBody(
+      ":root,\n  .diagview-wrapper,\n  .diagview-error,\n  .diagview-off-hint {",
+      supports,
+    );
+    expect(body).toMatch(
+      /--dv-border-color:\s*color-mix\(in srgb, var\(--dv-text-color, currentColor\)/,
+    );
+    expect(body).toMatch(
+      /--dv-header-bg:\s*color-mix\(in srgb, var\(--dv-text-color, currentColor\)/,
+    );
+  });
+
   test("the header title and error message use the muted colour instead of opacity", () => {
     for (const sel of [
       "\n.diagview-label {",
@@ -812,6 +833,8 @@ describe("styles.css: off hint", () => {
     expect(body).toContain("background: var(--dv-page-bg");
     expect(body).toContain("opacity: 0");
     expect(ruleBody("\n.diagview-off-hint {")).toContain("color: var(--dv-page-text");
+    // The border colour mixes --dv-text-color, so it follows the page too
+    expect(ruleBody("\n.diagview-off-hint {")).toContain("--dv-text-color: var(--dv-page-text)");
     // The page font DiagView reads from <body>, so a <pre> host does not
     // turn the words monospace
     expect(ruleBody("\n.diagview-off-hint {")).toContain(
