@@ -69,6 +69,26 @@ describe("sanitizeSVG URL scheme checks", () => {
     expect(out).not.toContain("evil.example");
   });
 
+  test.each([
+    ["two backslashes", "\\\\evil.example/x.svg#p"],
+    ["a slash and a backslash", "/\\evil.example/x.svg#p"],
+    ["backslashes after the scheme", "https:\\\\evil.example/x.svg#p"],
+  ])("strict mode blocks <use> references to another host written with %s", (_label, href) => {
+    const out = sanitizeToString(
+      `<svg xmlns="http://www.w3.org/2000/svg"><use href="${href}"/></svg>`,
+    );
+    expect(out).not.toContain("evil.example");
+  });
+
+  test("strict mode keeps <use> references to the page's own origin", () => {
+    const sprite = `${location.origin}/sprites.svg#box`;
+    const out = sanitizeToString(
+      `<svg xmlns="http://www.w3.org/2000/svg"><use href="${sprite}"/><use href="/sprites.svg#box"/></svg>`,
+    );
+    expect(out).toContain(`href="${sprite}"`);
+    expect(out).toContain('href="/sprites.svg#box"');
+  });
+
   test("strict mode keeps internal #fragment <use> references", () => {
     const out = sanitizeToString(
       `<svg xmlns="http://www.w3.org/2000/svg"><defs><g id="node"/></defs><use href="#node"/></svg>`,
@@ -206,6 +226,9 @@ describe("sanitizeSVG CSS escape and syntax variants (strict, remote blocked)", 
       ".a{background-image:-webkit-image-set('a.png' 1x, 'https://evil.com/x.png' 2x)}",
     ],
     ["a protocol-relative URL in image-set()", '.a{background:image-set( "//evil.com/x.png" 1x)}'],
+    ["a slash and an escaped backslash", ".a{background:url(/\\\\evil.com/x.png)}"],
+    ["two escaped backslashes", ".a{background:url(\\\\\\\\evil.com/x.png)}"],
+    ["escaped backslashes after the scheme", ".a{background:url('https:\\\\\\\\evil.com/x.png')}"],
   ])("removes remote resource written as %s", (_label, css) => {
     const out = sanitizeToString(styleBlock(css));
     expect(out).toContain("<rect"); // parsed fine, not rejected wholesale
@@ -220,6 +243,13 @@ describe("sanitizeSVG CSS escape and syntax variants (strict, remote blocked)", 
     expect(out.match(/<style>/g)).toHaveLength(1);
     expect(out).toContain("<rect style=");
     expect(out).toContain('content:"https://example.com"');
+  });
+
+  test("url() on the page's own origin survives", () => {
+    const css = `.a{background:url(${location.origin}/img/a.png)} .b{background:url(/img/b.png)}`;
+    const out = sanitizeToString(styleBlock(css));
+    expect(out.match(/<style>/g)).toHaveLength(1);
+    expect(out).toContain("<rect style=");
   });
 
   test("local url(#grad) and raster data: URIs still survive", () => {

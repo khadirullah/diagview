@@ -736,9 +736,11 @@ DiagView.init({ security: { mode: "off", exportMode: "strict" } });
 | `<discard>`, `<mpath>`, `<tref>`, `<math>`, `<feImage>`                                                                                                                    | Yes      | No           | No    |
 | `<foreignObject>` whose `src` or `data` is an `http(s)` URL. Other `<foreignObject>` elements stay, since Mermaid and draw.io put their labels in them                     | Yes      | No           | No    |
 | The `form` attribute, which ties a button or field in the diagram to a form on the page                                                                                    | Yes      | No           | No    |
-| `href` on a `<use>` that points to another site (`https://`, `http://` or `//`)                                                                                            | Yes      | No           | No    |
+| `href` on a `<use>` that points to another origin                                                                                                                          | Yes      | No           | No    |
 | A `style` attribute with `expression()`, `javascript:` or `vbscript:`, also when hidden by CSS escapes or comments, or with `@import` or a remote `url()` or `image-set()` | Yes      | No           | No    |
 | A `<style>` block with the same patterns. The whole block goes                                                                                                             | Yes      | No           | No    |
+
+A URL is remote when the browser would load it from another origin than the page. `https://`, `http://` and `//` links to another host count, and so do backslash forms such as `/\host` or `\\host`, which the browser reads as `//host`. Relative paths, `#id` references, `data:` URLs and links to the page's own origin do not.
 
 With `allowRemoteResources: true`, `@import`, remote `url()` and remote `image-set()` stay in `strict` too. See [Allowing remote resources](#allowing-remote-resources).
 

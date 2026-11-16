@@ -25,6 +25,7 @@ Removes all known SVG XSS vectors using a DOM-walking approach (not regex):
 - **Blocked URIs:** `javascript:`, `vbscript:` and `data:` URLs in `href`, `xlink:href`, `src`, `action` and `formaction`. Base64 images of the `allowedImageTypes` stay, which are PNG, JPEG, WebP and GIF by default
 - **External `<use>` references:** Blocked (`https://evil.com/...#payload`)
 - **Inline styles:** Stripped if containing `expression()`, `javascript:`, `vbscript:`, `@import`, or remote `url()` references (decoded before matching to catch hex/unicode bypasses). `@import` and remote `url()` are allowed when `security.allowRemoteResources` is `true`.
+- **Remote URLs:** A URL is remote when the browser would load it from another origin than the page, so `//host` and backslash forms such as `/\host` count. Relative paths, `#id` references and `data:` URLs are not remote.
 - **`<style>` blocks:** Stripped if containing the same patterns
 
 ### `permissive`

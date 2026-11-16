@@ -515,35 +515,36 @@ const INTERNAL_DANGER_RE =
   /(?:javascript:|vbscript:|expression\s*\(|url\s*\(\s*['"]?javascript:|@import\s+['"]?javascript:|(?:\\[0-9a-f]{1,6}\s?)+|\\u[0-9a-f]{4})/i;
 
 /**
+ * One CSS escape, in order: a backslash before a line break, hex digits
+ * with an optional space after them, \u and four hex digits, or any other
+ * single character.
+ * @private
+ */
+const CSS_ESCAPE_RE = /\\(?:\r\n|[\n\r\f]|([0-9a-fA-F]{1,6})\s?|[uU]([0-9a-fA-F]{4})|([\s\S]))/g;
+
+/**
  * Decode CSS hex/unicode escapes before pattern-matching.
  * Handles \6a, \000061, \6a  (with trailing space) and \u0041 forms.
+ * Each escape is decoded once, left to right, so "\\" is one backslash
+ * and the "e" after it in "\\evil" stays a letter.
  * @private
  */
 function decodeCSSEscapes(str) {
   if (!str || !str.includes("\\")) return str;
-  return (
-    str
-      // A backslash before a line break in a quoted string joins the two
-      // lines, so "ht\<newline>tps:" reads as "https:"
-      .replace(/\\(?:\r\n|[\n\r\f])/g, "")
-      .replace(/\\([0-9a-fA-F]{1,6})\s?/g, (_, hex) => {
-        try {
-          return String.fromCodePoint(parseInt(hex, 16));
-        } catch (e) {
-          return "";
-        }
-      })
-      .replace(/\\u([0-9a-fA-F]{4})/gi, (_, hex) => {
-        try {
-          return String.fromCodePoint(parseInt(hex, 16));
-        } catch (e) {
-          return "";
-        }
-      })
-      // Single-character escapes (\/ -> "/", \i -> "i") are the literal
-      // character in CSS and would otherwise split "//" or "@import".
-      .replace(/\\([^0-9a-fA-F\r\n])/g, "$1")
-  );
+  return str.replace(CSS_ESCAPE_RE, (_, hex, unicode, char) => {
+    // Single-character escapes (\/ -> "/", \i -> "i") are the literal
+    // character in CSS and would otherwise split "//" or "@import".
+    if (char !== undefined) return char;
+    // A backslash before a line break in a quoted string joins the two
+    // lines, so "ht\<newline>tps:" reads as "https:"
+    const code = hex ?? unicode;
+    if (code === undefined) return "";
+    try {
+      return String.fromCodePoint(parseInt(code, 16));
+    } catch (e) {
+      return "";
+    }
+  });
 }
 
 /**
@@ -586,11 +587,44 @@ function readableCSS(css) {
 }
 
 /**
- * Patterns that represent remote resource loading in CSS: @import, url()
- * and a quoted URL right after "(" or ",", as image-set() takes one.
+ * A URL in CSS: the value of url(), or a quoted string right after "(" or
+ * ",", as image-set() takes one. Group 1 or 2 holds a quoted value, group
+ * 3 one without quotes.
  * @private
  */
-const REMOTE_RESOURCE_RE = /@import\b|(?:url\s*\(|[(,]\s*['"])\s*['"]?\s*(?:https?:|\/\/)/i;
+const CSS_URL_RE = /(?:url\s*\(|[(,](?=\s*['"]))\s*(?:"([^"]*)|'([^']*)|([^)\s]*))/gi;
+
+/**
+ * Whether a URL loads from another origin than the page. The browser's URL
+ * parser reads it, so "//host", "/\host" and "\\host" all name another
+ * host. Relative paths, "#id" and data: URLs stay on the page. A URL that
+ * does not parse counts as remote.
+ * @param {string} url - The URL as written
+ * @returns {boolean} True when it names another origin
+ * @private
+ */
+function isRemoteUrl(url) {
+  try {
+    const base = new URL(document.baseURI);
+    const { origin } = new URL(url, base);
+    return origin !== "null" && origin !== base.origin;
+  } catch (e) {
+    return true;
+  }
+}
+
+/**
+ * Whether CSS from readableCSS() loads anything from another origin: an
+ * @import, or a url() or image-set() URL that isRemoteUrl() finds remote.
+ * @private
+ */
+function loadsRemoteCSS(css) {
+  if (/@import\b/i.test(css)) return true;
+  for (const match of css.matchAll(CSS_URL_RE)) {
+    if (isRemoteUrl(match[1] ?? match[2] ?? match[3])) return true;
+  }
+  return false;
+}
 
 /**
  * Lower-cased local name of an element or attribute with any namespace
@@ -820,8 +854,7 @@ function sanitize(input, mode, options, own) {
         // Strict only: block external URL references on <use> elements.
         // <use xlink:href="https://evil.com/xss.svg#payload"> is a
         // cross-origin SVG injection vector that bypasses same-origin policy.
-        // Protocol-relative "//host/..." resolves to an external origin too.
-        if (isStrict && tagName === "use" && /^(?:https?:)?\/\//i.test(normalizedValue)) {
+        if (isStrict && tagName === "use" && isRemoteUrl(normalizedValue)) {
           el.removeAttribute(attr.name);
           continue;
         }
@@ -831,8 +864,7 @@ function sanitize(input, mode, options, own) {
       if (isStrict && name === "style") {
         const cleanValue = readableCSS(value);
         const isDangerous =
-          INTERNAL_DANGER_RE.test(cleanValue) ||
-          (!allowRemote && REMOTE_RESOURCE_RE.test(cleanValue));
+          INTERNAL_DANGER_RE.test(cleanValue) || (!allowRemote && loadsRemoteCSS(cleanValue));
         if (isDangerous) {
           el.removeAttribute(attr.name);
           continue;
@@ -845,8 +877,7 @@ function sanitize(input, mode, options, own) {
       const content = el.textContent || "";
       const cleanContent = readableCSS(content);
       const isDangerous =
-        INTERNAL_DANGER_RE.test(cleanContent) ||
-        (!allowRemote && REMOTE_RESOURCE_RE.test(cleanContent));
+        INTERNAL_DANGER_RE.test(cleanContent) || (!allowRemote && loadsRemoteCSS(cleanContent));
       if (isDangerous) {
         el.remove();
         return false;
