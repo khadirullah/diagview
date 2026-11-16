@@ -1081,14 +1081,16 @@ async function savePDF(sourceElement, filename, { transparent, modalClone, silen
   try {
     showProgressToast("Generating PDF...");
     const pdfUrl = state.config.pdfLibraryUrl;
-    if (!window.jspdf) {
+    // An element with id="jspdf" also shows up as window.jspdf, so look
+    // for the jsPDF class itself
+    if (typeof window.jspdf?.jsPDF !== "function") {
       await loadScript(pdfUrl, state.config.pdfLibraryIntegrity, "jspdf").catch(() => {
         // Silently handle load failure, the check below will trigger the fallback UI
       });
     }
 
     // Fallback: If no jsPDF, save as PNG
-    if (!window.jspdf) {
+    if (typeof window.jspdf?.jsPDF !== "function") {
       showWarningToast("PDF engine unavailable, falling back to PNG...");
       await exportToPNG(sourceElement, { filename, modalClone, silent: true });
       return;

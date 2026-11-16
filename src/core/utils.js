@@ -299,6 +299,18 @@ const SCRIPT_PROMISES = new Map();
 const FAILED_SCRIPTS = new WeakSet();
 
 /**
+ * Whether a script has defined the global `name`. The browser also puts an
+ * element with id="name" on window, so an element does not count.
+ * @param {string} name - Global name, such as "jspdf"
+ * @returns {boolean} True when a script defined it
+ * @private
+ */
+function hasScriptGlobal(name) {
+  const value = window[name];
+  return value !== undefined && !(value instanceof Element || value instanceof HTMLCollection);
+}
+
+/**
  * Lazy load script with synchronization to prevent thundering herd race conditions.
  *
  * @param {string} url - Script URL
@@ -337,7 +349,7 @@ export function loadScript(url, integrity = null, globalName) {
     );
     // The global alone shows the tag has run, as a page that calls
     // performance.clearResourceTimings() leaves no timing entry.
-    if (script && globalName && globalName in window) {
+    if (script && globalName && hasScriptGlobal(globalName)) {
       resolve();
       return;
     }
@@ -920,7 +932,8 @@ function sanitize(input, mode, options, own) {
  * Check for required dependencies
  */
 export function checkPanzoomDependency() {
-  return typeof window.Panzoom !== "undefined";
+  // An element with id="Panzoom" also shows up as window.Panzoom
+  return typeof window.Panzoom === "function";
 }
 
 /**

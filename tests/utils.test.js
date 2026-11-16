@@ -5,6 +5,7 @@ import {
   sanitizeFilename,
   getClientCTM,
   loadScript,
+  checkPanzoomDependency,
   getDiagramSvg,
   hasDrawnContent,
   getDiagramTitle,
@@ -472,6 +473,24 @@ describe("loadScript with a <script> the page already has", () => {
     }
   });
 
+  test("an element with the global's name as its id is not the global", async () => {
+    timing([]);
+    const decoy = document.createElement("div");
+    decoy.id = "dvTestGlobal";
+    document.body.appendChild(decoy);
+    try {
+      expect(window.dvTestGlobal).toBe(decoy);
+      let settled = false;
+      const result = loadScript(url, null, "dvTestGlobal").finally(() => (settled = true));
+      await Promise.resolve();
+      expect(settled).toBe(false);
+      script.dispatchEvent(new Event("load"));
+      await expect(result).resolves.toBeUndefined();
+    } finally {
+      decoy.remove();
+    }
+  });
+
   test("one that failed while waited for stays, and the next call adds its own", async () => {
     timing([]);
     const first = loadScript(url);
@@ -485,6 +504,24 @@ describe("loadScript with a <script> the page already has", () => {
     expect(tags).toHaveLength(2);
     tags[1].dispatchEvent(new Event("load"));
     await expect(second).resolves.toBeUndefined();
+  });
+});
+
+describe("checkPanzoomDependency", () => {
+  afterEach(() => {
+    delete window.Panzoom;
+    document.body.innerHTML = "";
+  });
+
+  test("is true once the Panzoom function is loaded", () => {
+    window.Panzoom = () => {};
+    expect(checkPanzoomDependency()).toBe(true);
+  });
+
+  test('is false when only an element with id="Panzoom" is on the page', () => {
+    document.body.innerHTML = '<svg id="Panzoom"></svg>';
+    expect(window.Panzoom).toBeDefined();
+    expect(checkPanzoomDependency()).toBe(false);
   });
 });
 
