@@ -191,15 +191,14 @@ export async function copySVGCode(sourceElement, options = {}) {
 async function exportImage(sourceElement, options, format, copy) {
   const svg = resolveSourceSvg(sourceElement);
   if (!svg) return;
-  await processImageExport(
-    sourceElement,
-    options.filename || generateFilename(svg, sourceElement),
+  await processImageExport(sourceElement, {
+    filename: options.filename || generateFilename(svg, sourceElement),
     format,
-    !copy && !!options.transparent, // transparent
-    !!copy, // copy
-    options.modalClone,
-    !!options.silent, // silent
-  );
+    transparent: !copy && !!options.transparent,
+    copy: !!copy,
+    modalClone: options.modalClone,
+    silent: !!options.silent,
+  });
 }
 
 /**
@@ -329,15 +328,14 @@ export async function exportDiagram(sourceElement, mode, options = {}) {
         ok = await copySVGCode(sourceElement, { filename, modalClone });
         break;
       case "copy":
-        ok = await processImageExport(
-          sourceElement,
+        ok = await processImageExport(sourceElement, {
           filename,
-          "png",
-          false, // transparent
-          true, // copy
+          format: "png",
+          transparent: false,
+          copy: true,
           modalClone,
           silent,
-        );
+        });
         break;
       case "pdf":
         ok = await savePDF(sourceElement, filename, opts);
@@ -345,15 +343,14 @@ export async function exportDiagram(sourceElement, mode, options = {}) {
       default: {
         // Unknown modes export an opaque PNG
         const known = /^(png|jpeg|webp)$/.test(mode);
-        format = await processImageExport(
-          sourceElement,
+        format = await processImageExport(sourceElement, {
           filename,
-          known ? mode : "png",
-          known && isTransparent, // transparent
-          false, // copy
+          format: known ? mode : "png",
+          transparent: known && isTransparent,
+          copy: false,
           modalClone,
           silent,
-        );
+        });
         ok = !!format;
       }
     }

@@ -32,7 +32,14 @@ export async function savePDF(sourceElement, filename, { transparent, modalClone
       // The same PNG export exportToPNG() makes. Importing that from
       // export.js would make a circular import.
       if (getDiagramSvg(sourceElement)) {
-        await processImageExport(sourceElement, filename, "png", false, false, modalClone, true);
+        await processImageExport(sourceElement, {
+          filename,
+          format: "png",
+          transparent: false,
+          copy: false,
+          modalClone,
+          silent: true,
+        });
       } else {
         showErrorToast("No diagram found");
       }

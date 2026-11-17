@@ -170,15 +170,18 @@ export async function renderToCanvas(
  * Internal Image Export Processor. Resolves to the extension of the file
  * made ("png", "jpeg" or "webp") once the image is saved, copied, or
  * downloaded because the clipboard was unavailable.
+ * @param {HTMLElement|SVGSVGElement} sourceElement - Diagram element, or the diagram's <svg>
+ * @param {object} options - What to make
+ * @param {string} options.filename - File name without extension
+ * @param {"png"|"jpeg"|"webp"} options.format - Image format
+ * @param {boolean} [options.transparent] - Skip the background fill
+ * @param {boolean} [options.copy] - Copy to the clipboard instead of saving
+ * @param {SVGSVGElement|null} [options.modalClone] - Fullscreen clone to draw from
+ * @param {boolean} [options.silent=false] - Skip the notices and warnings
  */
 export async function processImageExport(
   sourceElement,
-  filename,
-  format,
-  transparent,
-  copy,
-  modalClone,
-  silent = false,
+  { filename, format, transparent, copy, modalClone, silent = false },
 ) {
   // Set once the copy is drawn, for the notice if reading it back fails
   let foreign = false;
