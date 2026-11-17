@@ -63,7 +63,14 @@ diagview/
 │   ├── index.js          # Public API, entry for the ESM build
 │   ├── umd.js            # Entry for the UMD and CommonJS builds
 │   ├── core/             # State, config, events, lifecycle, theme, colour maths, utils
+│   │   ├── utils.js      # Small helpers, and re-exports the modules below
+│   │   ├── env.js        # Browser checks, viewport watch, clipboard, downloads, script loading
+│   │   ├── sanitize.js   # SVG sanitizer
+│   │   ├── svg-ids.js    # Unique id prefix for a copied SVG
+│   │   ├── svg-geometry.js # SVG size, centring and screen matrices
+│   │   └── timing.js     # debounce and throttle
 │   ├── features/         # Diagram init and validation, export, keyboard, pan/zoom
+│   │   ├── export/       # Parts of export.js: watermark, notices, SVG copy, canvas, clipboard, PDF
 │   │   └── lazy/         # Search, minimap, share, rotate, meeting mode, readable text
 │   └── ui/               # Modal open sequence, DOM and section links, floating menu, toast, focus manager
 ├── tests/
