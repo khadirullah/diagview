@@ -995,13 +995,18 @@ describe("Theme Module: the style attribute on <html> after teardown", () => {
   });
 
   test("a theme sync still waiting does not write the variables back", async () => {
-    setupThemeWatchers();
-    syncTheme();
-    root.classList.add("dv-test-dark"); // starts the debounced sync
-    await new Promise((r) => setTimeout(r, 0));
-    teardownThemeWatchers();
+    jest.useFakeTimers();
+    try {
+      setupThemeWatchers();
+      syncTheme();
+      root.classList.add("dv-test-dark"); // starts the debounced sync
+      await jest.advanceTimersByTimeAsync(0);
+      teardownThemeWatchers();
 
-    await new Promise((r) => setTimeout(r, 150));
+      await jest.advanceTimersByTimeAsync(150);
+    } finally {
+      jest.useRealTimers();
+    }
     root.classList.remove("dv-test-dark");
     expect(root.hasAttribute("style")).toBe(false);
   });
@@ -1043,14 +1048,16 @@ describe("Theme Module: theme watchers", () => {
     syncTheme();
     setupThemeWatchers();
     expect(root.style.getPropertyValue("--dv-bg")).toBe(COLORS.BG_LIGHT);
+    jest.useFakeTimers();
     try {
       // What Turbo Drive does on navigation
       root.replaceChild(nextBody, firstBody);
-      await new Promise((r) => setTimeout(r, 0));
+      await jest.advanceTimersByTimeAsync(0);
       nextBody.classList.add("dark");
-      await new Promise((r) => setTimeout(r, 150));
+      await jest.advanceTimersByTimeAsync(150);
       expect(root.style.getPropertyValue("--dv-bg")).toBe(COLORS.BG_DARK);
     } finally {
+      jest.useRealTimers();
       root.replaceChild(firstBody, nextBody);
     }
   });

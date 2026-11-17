@@ -41,13 +41,16 @@ describe("Observer Module", () => {
     state.observer = null;
     updateConfig({ diagramSelector: ".diagram" });
     jest.clearAllMocks();
+    jest.useFakeTimers();
   });
 
   afterEach(() => {
     stopObserving();
+    jest.useRealTimers();
   });
 
-  const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+  // Runs the observer's callbacks and moves the fake clock on
+  const wait = (ms) => jest.advanceTimersByTimeAsync(ms);
 
   test("observeDiagrams initializes existing diagrams immediately", () => {
     const div = document.createElement("div");
@@ -489,7 +492,8 @@ describe("Observer Module", () => {
 describe("Observer Module: matches inside other matches", () => {
   const SVG = "<svg></svg>";
   const $ = (id) => document.getElementById(id);
-  const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+  // Runs the observer's callbacks and moves the fake clock on
+  const wait = (ms) => jest.advanceTimersByTimeAsync(ms);
 
   beforeEach(() => {
     document.body.innerHTML = "";
@@ -498,11 +502,13 @@ describe("Observer Module: matches inside other matches", () => {
     updateConfig({ diagramSelector: ".mermaid, .diagram" });
     jest.clearAllMocks();
     deinitializeDiagram.mockImplementation((el) => delete el.dataset.diagviewInit);
+    jest.useFakeTimers();
   });
 
   afterEach(() => {
     stopObserving();
     deinitializeDiagram.mockReset();
+    jest.useRealTimers();
   });
 
   const setUp = () => initializeDiagram.mock.calls.map(([el]) => el.id);

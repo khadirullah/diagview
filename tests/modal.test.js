@@ -228,10 +228,15 @@ describe("Modal System", () => {
     window.innerWidth = 100;
     window.innerHeight = 100;
 
-    callback();
+    jest.useFakeTimers();
+    try {
+      callback();
 
-    // It's throttled and uses rAF, so wait
-    await new Promise((r) => setTimeout(r, 400));
+      // It's throttled and uses rAF, so move the clock past both
+      await jest.advanceTimersByTimeAsync(400);
+    } finally {
+      jest.useRealTimers();
+    }
     // No duration of its own, so Panzoom uses zoomAnimationDuration
     expect(panzoomMock.reset).toHaveBeenCalledWith({ animate: true });
   });
@@ -301,17 +306,19 @@ describe("Modal System", () => {
     history.replaceState({ diagviewModal: true }, "");
     const add = jest.spyOn(window, "addEventListener");
     const remove = jest.spyOn(window, "removeEventListener");
+    jest.useFakeTimers();
     try {
       viewport
         .querySelector("a")
         .dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true }));
       // No popstate comes, so the time limit ends the wait
-      await new Promise((resolve) => setTimeout(resolve, 600));
+      await jest.advanceTimersByTimeAsync(600);
 
       const listener = add.mock.calls.find(([type]) => type === "popstate")[1];
       expect(remove).toHaveBeenCalledWith("popstate", listener);
       expect(location.hash).toBe("#details");
     } finally {
+      jest.useRealTimers();
       add.mockRestore();
       remove.mockRestore();
       history.replaceState(null, "");
