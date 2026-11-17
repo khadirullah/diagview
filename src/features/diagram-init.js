@@ -170,144 +170,84 @@ function createOffHint(cfg, after) {
 }
 
 /**
- * Initialize diagram with enhanced UI
+ * Set up a diagram with layout "off". The diagram itself opens the viewer
+ * on a click, or on Enter or Space once Tab reaches it, and shows the
+ * offHint. Its cleanup goes into the record.
  * @param {HTMLElement} element - Diagram container
- * @param {number} [precalculatedIndex=-1] - Optional index to avoid global DOM query
+ * @param {SVGSVGElement} svg - The element's SVG
+ * @param {object} record - The element's entry in cleanupMap
+ * @param {object} elementConfig - The element's config
+ * @param {string} title - The diagram title
  */
-export function initializeDiagram(element, precalculatedIndex = -1) {
-  const svg = getDiagramSvg(element);
-  if (element.dataset.diagviewInit) return;
-
-  element.dataset.diagviewInit = "1";
-
-  // Record everything we are about to change on the element and its SVG so
-  // deinitializeDiagram() can put it all back exactly as it was.
-  const record = {
-    fn: null,
-    wrapper: null,
-    errorDiv: null,
-    hint: null,
-    svg,
-    // DiagView named the SVG
-    svgLabel: false,
-    prev: {
-      display: svg ? svg.style.display : "",
-      transition: svg ? svg.style.transition : "",
-      color: svg ? svg.style.color : "",
-      // Emptied attributes are removed on teardown unless they were here
-      style: element.hasAttribute("style"),
-      svgStyle: svg?.hasAttribute("style"),
-      svgClass: svg?.hasAttribute("class"),
-    },
+function setupOffLayout(element, svg, record, elementConfig, title) {
+  const openHandler = () => openFullscreen(element);
+  const clickHandler = (e) => {
+    if (clickOpensViewer(e, element)) openHandler();
   };
-  cleanupMap.set(element, record);
-  trackedElements.add(element);
-
-  // Resolve config for this element: global config + any data-diagview-* overrides (A1)
-  const elementConfig = readElementOverrides(element, svg);
-
-  // Error boundary: Check for valid SVG
-  if (!svg || !isValidSvg(svg)) {
-    record.errorDiv = showErrorBoundary(element, svg);
-    return;
-  }
-
-  // Generate a unique ID, or keep the one the viewer gave a diagram that was
-  // opened by code before it scrolled into view
-  if (!element.dataset.diagviewId) element.dataset.diagviewId = generateUniqueId();
-
-  // MAJ-7: Cache the index to avoid expensive global DOM queries on modal open
-  if (precalculatedIndex >= 0) {
-    element.dataset.diagviewIndex = precalculatedIndex;
-  } else {
-    const allDiagrams = document.querySelectorAll(state.config.diagramSelector);
-    element.dataset.diagviewIndex = Array.prototype.indexOf.call(allDiagrams, element);
-  }
-
-  // MAJ-1: We no longer mutate the original SVG's IDs to avoid "Double Prefixing"
-  // and architectural fragility. IDs are now isolated only during cloning (Modal/Export).
-
-  // Get layout configuration from element-local config
-  const layout = elementConfig.layout;
-  const isOff = layout === LAYOUTS.OFF;
-  const isFloating = layout === LAYOUTS.FLOATING;
-  const title = getDiagramTitle(svg, element);
-
-  // An SVG with no name of its own takes the title, so screen readers name
-  // the drawing on the page and its copy in the viewer. A <title>, a name
-  // Mermaid or the page set, and a decorative SVG stay as they are. An
-  // <svg> with layout "off" already gets the name "Open ... in fullscreen".
-  record.svgLabel =
-    !!title &&
-    !(isOff && svg === element) &&
-    !svg.matches(
-      '[aria-label],[aria-labelledby],[aria-hidden="true"],[role~="none"],[role~="presentation"]',
-    ) &&
-    !svg.querySelector(":scope > title");
-  if (record.svgLabel) svg.setAttribute("aria-label", title);
-
-  // If layout is "off", the diagram itself opens fullscreen on a click, or
-  // on Enter or Space once Tab reaches it. styles.css gives it the zoom-in
-  // cursor a card has.
-  if (isOff) {
-    const openHandler = () => openFullscreen(element);
-    const clickHandler = (e) => {
-      if (clickOpensViewer(e, element)) openHandler();
-    };
-    // Only a key on the diagram itself. Enter on a link inside follows it.
-    const keyHandler = (e) => {
-      if (e.target === element && (e.key === "Enter" || e.key === " ")) {
-        e.preventDefault();
-        openHandler();
-      }
-    };
-    element.addEventListener("click", clickHandler);
-    element.addEventListener("keydown", keyHandler);
-
-    // A button must not hold links, so a diagram with its own links is a
-    // group, and Tab still reaches them. Attributes the page set stay.
-    const group = element.querySelector("a[*|href],button,input,select,textarea,[tabindex]");
-    const added = Object.entries({
-      tabindex: 0,
-      role: group ? "group" : "button",
-      "aria-label": group
-        ? `${title || "Diagram"}, press Enter to open fullscreen`
-        : `Open ${title || "diagram"} in fullscreen`,
-    }).filter(([name]) => !element.hasAttribute(name));
-    added.forEach(([name, value]) => element.setAttribute(name, value));
-
-    // The hint goes inside the element, last. An <svg> cannot hold it, so
-    // it goes right after one, in the flow, and the svg gets no host class.
-    const after = svg === element;
-    const hint = createOffHint(elementConfig, after);
-    // Icon and label sit in the corner, so the element must be positioned
-    const host = hint && !after && elementConfig.offHint !== "below";
-    const hadClass = element.hasAttribute("class");
-    if (host) element.classList.add("diagview-off-host");
-    if (hint && after) element.after(hint);
-    else if (hint) element.appendChild(hint);
-    record.hint = hint;
-
-    // Store cleanup for this specific element (no wrapper in 'off' layout)
-    record.fn = () => {
-      element.removeEventListener("click", clickHandler);
-      element.removeEventListener("keydown", keyHandler);
-      added.forEach(([name]) => element.removeAttribute(name));
-      hint?.remove();
-      if (host) {
-        element.classList.remove("diagview-off-host");
-        removeEmptyAttr(element, "class", hadClass);
-      }
-    };
-
-    // Apply minimal SVG styling
-    if (svg) {
-      svg.style.transition = "filter 0.3s ease";
-      svg.classList.add("dv-svg-content");
+  // Only a key on the diagram itself. Enter on a link inside follows it.
+  const keyHandler = (e) => {
+    if (e.target === element && (e.key === "Enter" || e.key === " ")) {
+      e.preventDefault();
+      openHandler();
     }
-    return;
-  }
+  };
+  element.addEventListener("click", clickHandler);
+  element.addEventListener("keydown", keyHandler);
 
+  // A button must not hold links, so a diagram with its own links is a
+  // group, and Tab still reaches them. Attributes the page set stay.
+  const group = element.querySelector("a[*|href],button,input,select,textarea,[tabindex]");
+  const added = Object.entries({
+    tabindex: 0,
+    role: group ? "group" : "button",
+    "aria-label": group
+      ? `${title || "Diagram"}, press Enter to open fullscreen`
+      : `Open ${title || "diagram"} in fullscreen`,
+  }).filter(([name]) => !element.hasAttribute(name));
+  added.forEach(([name, value]) => element.setAttribute(name, value));
+
+  // The hint goes inside the element, last. An <svg> cannot hold it, so
+  // it goes right after one, in the flow, and the svg gets no host class.
+  const after = svg === element;
+  const hint = createOffHint(elementConfig, after);
+  // Icon and label sit in the corner, so the element must be positioned
+  const host = hint && !after && elementConfig.offHint !== "below";
+  const hadClass = element.hasAttribute("class");
+  if (host) element.classList.add("diagview-off-host");
+  if (hint && after) element.after(hint);
+  else if (hint) element.appendChild(hint);
+  record.hint = hint;
+
+  // Store cleanup for this specific element (no wrapper in 'off' layout)
+  record.fn = () => {
+    element.removeEventListener("click", clickHandler);
+    element.removeEventListener("keydown", keyHandler);
+    added.forEach(([name]) => element.removeAttribute(name));
+    hint?.remove();
+    if (host) {
+      element.classList.remove("diagview-off-host");
+      removeEmptyAttr(element, "class", hadClass);
+    }
+  };
+
+  // Apply minimal SVG styling
+  if (svg) {
+    svg.style.transition = "filter 0.3s ease";
+    svg.classList.add("dv-svg-content");
+  }
+}
+
+/**
+ * Wrap a diagram in its card, with the toolbar for layout "header" or
+ * "floating", and open the viewer on a click in the card. The wrapper and
+ * its cleanup go into the record.
+ * @param {HTMLElement} element - Diagram container
+ * @param {SVGSVGElement} svg - The element's SVG
+ * @param {object} record - The element's entry in cleanupMap
+ * @param {string} title - The diagram title
+ * @param {boolean} isFloating - Layout "floating" instead of "header"
+ */
+function buildCard(element, svg, record, title, isFloating) {
   const styleClass = getButtonStyleClass();
 
   // Create wrapper structure
@@ -400,6 +340,94 @@ export function initializeDiagram(element, precalculatedIndex = -1) {
     svg.classList.add("dv-svg-content");
     svg.style.color = "inherit";
   }
+}
+
+/**
+ * Initialize diagram with enhanced UI
+ * @param {HTMLElement} element - Diagram container
+ * @param {number} [precalculatedIndex=-1] - Optional index to avoid global DOM query
+ */
+export function initializeDiagram(element, precalculatedIndex = -1) {
+  const svg = getDiagramSvg(element);
+  if (element.dataset.diagviewInit) return;
+
+  element.dataset.diagviewInit = "1";
+
+  // Record everything we are about to change on the element and its SVG so
+  // deinitializeDiagram() can put it all back exactly as it was.
+  const record = {
+    fn: null,
+    wrapper: null,
+    errorDiv: null,
+    hint: null,
+    svg,
+    // DiagView named the SVG
+    svgLabel: false,
+    prev: {
+      display: svg ? svg.style.display : "",
+      transition: svg ? svg.style.transition : "",
+      color: svg ? svg.style.color : "",
+      // Emptied attributes are removed on teardown unless they were here
+      style: element.hasAttribute("style"),
+      svgStyle: svg?.hasAttribute("style"),
+      svgClass: svg?.hasAttribute("class"),
+    },
+  };
+  cleanupMap.set(element, record);
+  trackedElements.add(element);
+
+  // Resolve config for this element: global config + any data-diagview-* overrides (A1)
+  const elementConfig = readElementOverrides(element, svg);
+
+  // Error boundary: Check for valid SVG
+  if (!svg || !isValidSvg(svg)) {
+    record.errorDiv = showErrorBoundary(element, svg);
+    return;
+  }
+
+  // Generate a unique ID, or keep the one the viewer gave a diagram that was
+  // opened by code before it scrolled into view
+  if (!element.dataset.diagviewId) element.dataset.diagviewId = generateUniqueId();
+
+  // MAJ-7: Cache the index to avoid expensive global DOM queries on modal open
+  if (precalculatedIndex >= 0) {
+    element.dataset.diagviewIndex = precalculatedIndex;
+  } else {
+    const allDiagrams = document.querySelectorAll(state.config.diagramSelector);
+    element.dataset.diagviewIndex = Array.prototype.indexOf.call(allDiagrams, element);
+  }
+
+  // MAJ-1: We no longer mutate the original SVG's IDs to avoid "Double Prefixing"
+  // and architectural fragility. IDs are now isolated only during cloning (Modal/Export).
+
+  // Get layout configuration from element-local config
+  const layout = elementConfig.layout;
+  const isOff = layout === LAYOUTS.OFF;
+  const isFloating = layout === LAYOUTS.FLOATING;
+  const title = getDiagramTitle(svg, element);
+
+  // An SVG with no name of its own takes the title, so screen readers name
+  // the drawing on the page and its copy in the viewer. A <title>, a name
+  // Mermaid or the page set, and a decorative SVG stay as they are. An
+  // <svg> with layout "off" already gets the name "Open ... in fullscreen".
+  record.svgLabel =
+    !!title &&
+    !(isOff && svg === element) &&
+    !svg.matches(
+      '[aria-label],[aria-labelledby],[aria-hidden="true"],[role~="none"],[role~="presentation"]',
+    ) &&
+    !svg.querySelector(":scope > title");
+  if (record.svgLabel) svg.setAttribute("aria-label", title);
+
+  // If layout is "off", the diagram itself opens fullscreen on a click, or
+  // on Enter or Space once Tab reaches it. styles.css gives it the zoom-in
+  // cursor a card has.
+  if (isOff) {
+    setupOffLayout(element, svg, record, elementConfig, title);
+    return;
+  }
+
+  buildCard(element, svg, record, title, isFloating);
 }
 
 /**
