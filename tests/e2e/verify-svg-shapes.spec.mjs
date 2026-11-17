@@ -1,8 +1,9 @@
 // An SVG drawn only with an <ellipse>, an <image>, a <use> of a page sprite
 // or a <foreignObject> is a diagram like any other. It gets its card and
-// toolbar, opens in the viewer and exports as SVG and PNG. An empty SVG, a
-// zero-sized viewBox and an error message with no shapes, as <text> or as
-// HTML, still show the error box.
+// toolbar, opens in the viewer and exports as SVG and PNG, with the
+// sprite's symbol copied into the file. An empty SVG, a zero-sized viewBox
+// and an error message with no shapes, as <text> or as HTML, still show the
+// error box.
 //
 // Runs offline on a file:// fixture. DV_DIST=/path/to/diagview.umd.js tests
 // another build.
@@ -86,6 +87,28 @@ test("it opens in the viewer with its drawing", async () => {
   }
 });
 
+/** Share of a PNG's pixels in the sprite's orange, #f97316 */
+const orangeShare = (png) =>
+  page.evaluate(async (b64) => {
+    const img = new Image();
+    img.src = `data:image/png;base64,${b64}`;
+    await img.decode();
+    const c = document.createElement("canvas");
+    c.width = img.naturalWidth;
+    c.height = img.naturalHeight;
+    const ctx = c.getContext("2d");
+    ctx.drawImage(img, 0, 0);
+    const { data } = ctx.getImageData(0, 0, c.width, c.height);
+    let count = 0;
+    for (let i = 0; i < data.length; i += 4) {
+      const [r, g, b] = data.subarray(i, i + 3);
+      if (Math.abs(r - 0xf9) + Math.abs(g - 0x73) + Math.abs(b - 0x16) < 30) count++;
+    }
+    return count / (data.length / 4);
+  }, png.toString("base64"));
+
+// Every download happens in this one test. The page made in beforeAll
+// reports no more downloads once the first test that downloads has ended.
 test("it exports as SVG with its drawing and as PNG", async () => {
   for (const [id, tag] of DRAWN) {
     const svgFile = page.waitForEvent("download", { timeout: 30000 });
@@ -104,6 +127,14 @@ test("it exports as SVG with its drawing and as PNG", async () => {
     );
     expect(pngDone, id).toBe(true);
     expect((await pngFile).suggestedFilename(), id).toMatch(/\.png$/);
+
+    // The sprite sits outside the diagram, so the export copies its symbol
+    // in. The symbol is an orange square across half the drawing.
+    if (id === "use") {
+      expect(saved).toMatch(/<defs><symbol id="sprite-box"[^>]*><rect [^>]*fill="#f97316"/);
+      const png = fs.readFileSync(await (await pngFile).path());
+      expect(await orangeShare(png)).toBeGreaterThan(0.2);
+    }
   }
 });
 
