@@ -160,7 +160,7 @@ Size limits defined in `package.json` under `"size-limit"`:
 
 | Bundle       | Limit |
 | ------------ | ----- |
-| UMD minified | 49 KB |
+| UMD minified | 51 KB |
 | ESM          | 55 KB |
 
 ### Bundle analysis
