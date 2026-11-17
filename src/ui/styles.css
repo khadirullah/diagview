@@ -64,9 +64,16 @@
 .diagview-wrapper *,
 .diagview-modal *,
 .diagview-menu * {
-  text-decoration: none !important;
   box-sizing: border-box;
   -webkit-tap-highlight-color: transparent;
+}
+
+/* Controls drop any underline the page gives them. A diagram keeps its
+   own, such as the underline of a static member in a class diagram. */
+.diagview-wrapper :not(svg, svg *),
+.diagview-modal :not(svg, svg *),
+.diagview-menu * {
+  text-decoration: none !important;
 }
 
 /* Controls take the page font. A diagram keeps the fonts it sets, and

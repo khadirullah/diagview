@@ -960,3 +960,14 @@ describe("styles.css: print", () => {
     expect(body).toContain("display: none !important");
   });
 });
+
+describe("styles.css: underline reset", () => {
+  test("covers the controls and leaves a diagram's own underline alone", () => {
+    const body = ruleBody(".diagview-wrapper :not(svg, svg *),\n.diagview-modal :not(svg, svg *),");
+    expect(body).toMatch(/text-decoration:\s*none !important;/);
+    // No rule may reach inside the diagram, where Mermaid underlines a
+    // static class member with an inline style
+    const reset = css.match(/[^{}]*\{[^}]*text-decoration:\s*none !important;/g);
+    for (const rule of reset) expect(rule.split("{")[0]).not.toMatch(/(wrapper|modal|viewport) \*/);
+  });
+});
