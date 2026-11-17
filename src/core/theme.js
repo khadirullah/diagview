@@ -16,6 +16,9 @@ import {
   getContrastRatio,
   onAccentColor,
   accentFill,
+  colorAlpha,
+  overPage,
+  mutedText,
 } from "./color.js";
 
 export { parseColor, getContrastRatio, onAccentColor, noticeColors } from "./color.js";
@@ -135,45 +138,6 @@ function validConfigColor(key, check = parseColor) {
     console.warn(`DiagView: ${key} "${value}" is not a valid colour, ignoring.`);
   }
   return null;
-}
-
-/**
- * Read the alpha channel of a colour string.
- * @private
- * @returns {number} Alpha from 0 to 1, and 1 when the colour has none
- */
-function colorAlpha(value) {
-  const v = value.trim().toLowerCase();
-  if (v === "transparent") return 0;
-  if (v.startsWith("#")) {
-    const hex = v.slice(1);
-    if (hex.length === 4) return parseInt(hex[3] + hex[3], 16) / 255;
-    if (hex.length === 8) return parseInt(hex.slice(6), 16) / 255;
-    return 1;
-  }
-  if (!v.endsWith(")")) return 1;
-  // Alpha is after the slash in space syntax, or the fourth comma argument
-  const args = v.slice(v.indexOf("(") + 1, -1);
-  const alpha = args.includes("/") ? args.split("/").pop() : args.split(",")[3];
-  const n = parseFloat(alpha ?? "");
-  if (Number.isNaN(n)) return 1;
-  return Math.min(Math.max(alpha.trim().endsWith("%") ? n / 100 : n, 0), 1);
-}
-
-/**
- * The colour a see-through canvas shows, which is the canvas colour laid
- * over the page. An opaque colour comes back unchanged.
- * @private
- * @param {string} color - Canvas colour
- * @param {string} page - Page colour behind the viewer, which must parse
- * @returns {string} The colour text is actually drawn on
- */
-function overPage(color, page) {
-  const a = colorAlpha(color);
-  if (a >= 1) return color;
-  const fg = parseColor(color) || [0, 0, 0];
-  const under = /** @type {number[]} */ (parseColor(page));
-  return `rgb(${[0, 1, 2].map((i) => Math.round(fg[i] * a + under[i] * (1 - a))).join(", ")})`;
 }
 
 /**
@@ -363,30 +327,6 @@ export function syncReadable(bg) {
       .then((m) => m.syncReadableText(bg))
       .catch(() => {});
   }
-}
-
-/**
- * The text colour faded toward the canvas, as far as 30%, while it still
- * reaches 4.5:1. For secondary text such as the menu headings, the
- * search placeholder and the header title on the page. The search box and
- * the header bar lay a faint grey wash over the background, so the colour
- * must pass on that too. On a canvas where the text only just passes it
- * stays at full strength.
- * @param {string} text - Text colour
- * @param {string} bg - Opaque canvas colour
- * @returns {string} The muted colour
- */
-function mutedText(text, bg) {
-  const t = parseColor(text);
-  const b = parseColor(bg);
-  if (!t || !b) return text;
-  const rgb = (c) => `rgb(${c.map(Math.round).join(", ")})`;
-  const box = rgb(b.map((c) => c + (128 - c) * 0.12));
-  for (let step = 6; step > 0; step--) {
-    const mix = rgb(t.map((c, i) => c + (b[i] - c) * step * 0.05));
-    if (getContrastRatio(mix, bg) >= 4.5 && getContrastRatio(mix, box) >= 4.5) return mix;
-  }
-  return text;
 }
 
 const BUILT_IN_ACCENTS = [COLORS.ACCENT_LIGHT, COLORS.ACCENT_DARK];
