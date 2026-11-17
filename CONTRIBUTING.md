@@ -63,7 +63,7 @@ diagview/
 │   ├── index.js          # Public API, entry for the ESM build
 │   ├── umd.js            # Entry for the UMD and CommonJS builds
 │   ├── core/             # State, config, events, lifecycle, utils
-│   ├── features/         # Diagram init, export, keyboard, pan/zoom
+│   ├── features/         # Diagram init and validation, export, keyboard, pan/zoom
 │   │   └── lazy/         # Search, minimap, share, rotate, meeting mode, readable text
 │   └── ui/               # Modal, floating menu, toast, focus manager
 ├── tests/
