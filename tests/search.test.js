@@ -87,7 +87,9 @@ describe("Search: performSearch", () => {
     performSearch(svg, "auth");
     flushRaf();
 
-    expect(state.searchMatches.length).toBeGreaterThanOrEqual(1);
+    // Only "Authentication Service" holds the text
+    expect(state.searchMatches).toHaveLength(1);
+    expect(state.searchMatches[0]).toBe(svg.querySelectorAll(".node")[0]);
     // All matches are shown simultaneously — no index-based navigation
     state.searchMatches.forEach((m) => {
       expect(m.classList.contains("dv-search-match")).toBe(true);
@@ -115,7 +117,9 @@ describe("Search: performSearch", () => {
     performSearch(svg, "DATABASE");
     flushRaf();
 
-    expect(state.searchMatches.length).toBeGreaterThanOrEqual(1);
+    // "Database Handler"
+    expect(state.searchMatches).toHaveLength(1);
+    expect(state.searchMatches[0]).toBe(svg.querySelectorAll(".node")[1]);
   });
 
   test("adds dv-searching class to clone during search", () => {

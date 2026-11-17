@@ -52,10 +52,15 @@ describe("Robust ID and Attribute Restoration", () => {
     const clonedRect = clone.querySelector("rect");
     const clonedStyle = clone.querySelector("style");
 
-    expect(clone.id).not.toBe("mysvg");
-    expect(clonedRect.id).not.toBe("myrect");
-    expect(clonedRect.getAttribute("fill")).not.toBe("url(#grad1)");
-    expect(clonedStyle.textContent).not.toContain("#myrect");
+    // Every id gets the same "dv-<time>-<random>-" prefix
+    expect(clone.id).toMatch(/^dv-[a-z0-9]+-[a-z0-9]+-mysvg$/);
+    const prefix = clone.id.slice(0, -"mysvg".length);
+    expect(clonedRect.id).toBe(`${prefix}myrect`);
+    expect(clone.querySelector("linearGradient").id).toBe(`${prefix}grad1`);
+    expect(clonedRect.getAttribute("fill")).toBe(`url(#${prefix}grad1)`);
+    expect(clonedStyle.textContent).toContain(`#${prefix}myrect { stroke: red; }`);
+    expect(clonedStyle.textContent).toContain(`.some-url { fill: url(#${prefix}grad1); }`);
+    expect(clonedStyle.textContent).not.toMatch(/#myrect|#grad1/);
 
     // Deinitialize
     deinitializeDiagram(target);
