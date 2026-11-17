@@ -138,10 +138,9 @@
       "/node_modules/",
       "/tests/e2e/"
     ],
-    "moduleNameMapper": {
-      "\\.css$": "<rootDir>/tests/mocks/styleMock.js"
+    "transform": {
+      "\\.css$": "<rootDir>/tests/mocks/cssTransform.cjs"
     },
-    "transform": {},
     "collectCoverageFrom": [
       "src/**/*.js"
     ],

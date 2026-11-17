@@ -6,6 +6,7 @@
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
+import { injectStyles, removeStyles } from "../src/ui/styles.js";
 
 const cssPath = path.join(path.dirname(fileURLToPath(import.meta.url)), "../src/ui/styles.css");
 const css = readFileSync(cssPath, "utf8");
@@ -969,5 +970,18 @@ describe("styles.css: underline reset", () => {
     // static class member with an inline style
     const reset = css.match(/[^{}]*\{[^}]*text-decoration:\s*none !important;/g);
     for (const rule of reset) expect(rule.split("{")[0]).not.toMatch(/(wrapper|modal|viewport) \*/);
+  });
+});
+
+describe("styles.css: injected into the page", () => {
+  afterEach(() => removeStyles());
+
+  test("injectStyles puts the stylesheet's own rules in a <style> tag", () => {
+    injectStyles();
+    const style = document.getElementById("diagview-styles");
+    expect(style).not.toBeNull();
+    expect(style.textContent).toBe(css);
+    expect(style.textContent).toContain(".diagview-wrapper");
+    expect(style.textContent).not.toContain("[object Object]");
   });
 });

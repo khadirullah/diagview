@@ -77,7 +77,7 @@ diagview/
 │   ├── *.test.js         # Jest unit tests (one file per module)
 │   ├── e2e/              # Real-browser checks (npm run test:e2e)
 │   ├── types/            # Type check of the published declarations
-│   └── mocks/            # JSDOM mocks (styleMock.js)
+│   └── mocks/            # Jest helpers (cssTransform.cjs)
 ├── demo/                 # Static demo pages (load diagview from unpkg)
 ├── docs/                 # Documentation (Markdown)
 ├── scripts/              # Build helpers (sync-version.js, check-entries.cjs)
@@ -149,7 +149,7 @@ npm test -- tests/search.test.js
 npm test -- --watch
 ```
 
-Tests use JSDOM. Tests that need canvas import `jest-canvas-mock` themselves, as `tests/export.test.js` does. CSS imports are mocked via `tests/mocks/styleMock.js`.
+Tests use JSDOM. Tests that need canvas import `jest-canvas-mock` themselves, as `tests/export.test.js` does. `tests/mocks/cssTransform.cjs` loads CSS imports as the file's text, so injected styles hold the real rules.
 
 ### Type check
 
