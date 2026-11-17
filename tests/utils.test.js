@@ -7,6 +7,7 @@ import {
   loadScript,
   checkPanzoomDependency,
   getRobustDimensions,
+  centerSVGViewBox,
   getDiagramSvg,
   hasDrawnContent,
   getDiagramTitle,
@@ -523,6 +524,34 @@ describe("getRobustDimensions", () => {
       h: 20,
       src: "viewBox",
     });
+  });
+
+  // jsdom has no getBBox, so each test gives the SVG one, as a browser would
+  const svgWithBBox = (bbox) => {
+    document.body.innerHTML = '<svg id="a" viewBox="0 0 400 300"></svg>';
+    const svg = document.getElementById("a");
+    svg.getBBox = () => bbox;
+    return svg;
+  };
+
+  test("prefers the drawn box over the viewBox", () => {
+    const svg = svgWithBBox({ x: 8, y: -4, width: 200, height: 100 });
+    expect(getRobustDimensions(svg)).toEqual({ x: 8, y: -4, w: 200, h: 100, src: "bbox" });
+  });
+
+  test("falls back to the viewBox when the drawn box is empty", () => {
+    const svg = svgWithBBox({ x: 0, y: 0, width: 0, height: 0 });
+    expect(getRobustDimensions(svg)).toEqual({ x: 0, y: 0, w: 400, h: 300, src: "viewBox" });
+  });
+
+  test("centerSVGViewBox fits the viewBox to the drawn box with 5% padding", () => {
+    const svg = svgWithBBox({ x: 8, y: -4, width: 200, height: 100 });
+    centerSVGViewBox(svg);
+    // Padding is 5% of the longer side, 10 here
+    expect(svg.getAttribute("viewBox")).toBe("-2 -14 220 120");
+    expect(svg.getAttribute("preserveAspectRatio")).toBe("xMidYMid meet");
+    expect(svg.style.width).toBe("100%");
+    expect(svg.style.height).toBe("100%");
   });
 });
 
