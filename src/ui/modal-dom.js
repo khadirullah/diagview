@@ -6,11 +6,12 @@
 import { state, addCleanupFunction } from "../core/config.js";
 import { setSVGContent } from "../core/utils.js";
 import { loadChunk } from "../core/lifecycle.js";
-import { BRANDING, TIMING } from "../core/constants.js";
+import { BRANDING } from "../core/constants.js";
 import { ICONS } from "./icons.js";
 import { closeModal } from "./modal-controls.js";
 import { showToast } from "./toast.js";
 import { keysUsed } from "../features/keyboard.js";
+import { wireSectionLinks } from "./section-links.js";
 
 /**
  * Create modal structure
@@ -360,44 +361,6 @@ function _wireModalEvents(elements, viewport) {
   // Modal Close
   closeBtn.addEventListener("click", () => closeModal());
 
-  // A link to a part of this page closes the viewer, then goes there as a
-  // click on the page would. Left to the browser, the jump counted as Back.
-  viewport.addEventListener("click", async (e) => {
-    const link = e.target.closest?.("a[*|href]");
-    const hash = link?.getAttribute("href") ?? link?.getAttribute("xlink:href");
-    if (!hash?.startsWith("#") || hash === "#" || link.hasAttribute("target")) return;
-    if (e.defaultPrevented || e.ctrlKey || e.metaKey || e.shiftKey) return;
-    e.preventDefault();
-    // The viewer's copy prefixes its ids, so a link to a part of the
-    // diagram goes to that part of the page's own diagram
-    let id = hash.slice(1);
-    if (viewport.contains(document.getElementById(id))) id = id.replace(/^dv-[^-]+-[^-]+-/, "");
-    await closeModal();
-    // Closing steps back over the viewer's history entry. Jump only once
-    // that step has landed and the browser has restored its scroll position,
-    // or the step undoes the jump.
-    if (history.state?.diagviewModal) {
-      let landed;
-      await new Promise((resolve) => {
-        landed = resolve;
-        window.addEventListener("popstate", resolve, { once: true });
-        setTimeout(resolve, TIMING.CLEANUP_DELAY);
-      });
-      window.removeEventListener("popstate", landed);
-      await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
-    }
-    // Setting the hash the address already has does not scroll
-    const target = document.getElementById(id);
-    if (location.hash === "#" + id) target?.scrollIntoView();
-    else location.hash = id;
-    // For a part inside an SVG, Firefox scrolls to the top of the SVG, which
-    // leaves the part off screen in a diagram taller than the window
-    if (target?.ownerSVGElement) {
-      const box = target.getBoundingClientRect();
-      if (box.top < 0 || box.bottom > window.innerHeight) {
-        const pad = parseFloat(getComputedStyle(document.documentElement).scrollPaddingTop) || 0;
-        window.scrollBy(0, box.top - pad);
-      }
-    }
-  });
+  // A link to a part of this page closes the viewer, then goes there
+  wireSectionLinks(viewport);
 }
