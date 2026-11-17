@@ -65,7 +65,7 @@ diagview/
 │   ├── core/             # State, config, events, lifecycle, utils
 │   ├── features/         # Diagram init and validation, export, keyboard, pan/zoom
 │   │   └── lazy/         # Search, minimap, share, rotate, meeting mode, readable text
-│   └── ui/               # Modal, floating menu, toast, focus manager
+│   └── ui/               # Modal open sequence and DOM, floating menu, toast, focus manager
 ├── tests/
 │   ├── *.test.js         # Jest unit tests (one file per module)
 │   ├── e2e/              # Real-browser checks (npm run test:e2e)
