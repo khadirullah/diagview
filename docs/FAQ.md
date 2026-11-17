@@ -205,6 +205,21 @@ A font stylesheet from another origin pulled in with `@import url(...)` stays hi
 **Q: An image in my diagram is missing from the PNG or PDF. Why?**  
 A: The image is linked, such as `<image href="logo.png">`, and not embedded. DiagView draws the SVG as an image to make PNG, JPEG, WebP, PDF and Copy Image files, and the browser loads nothing an SVG drawn that way links to. The notice after the export says how many linked images were left out. When some labels are also hard to read, the same warning says so. The SVG export keeps the link. Embed the image as a base64 `data:` URL to keep it in every format. See [Linked images](USAGE.md#linked-images).
 
+**Q: Font Awesome icons in my Mermaid labels are missing from the export. Why?**  
+A: Without an icon pack, Mermaid writes `fa:fa-car` as an empty `<i class="fa fa-car">`, and the Font Awesome stylesheet draws the icon with a CSS `::before` rule. The export does not copy `::before` content, so these icons are missing from SVG, PNG, JPEG, WebP, PDF and Copy Image files. The card and the viewer still show them. Register a Font Awesome icon pack before Mermaid renders, and Mermaid draws each icon as SVG paths, which export:
+
+```javascript
+mermaid.registerIconPacks([
+  {
+    name: "fa",
+    loader: () =>
+      fetch("https://unpkg.com/@iconify-json/fa6-solid@1/icons.json").then((res) => res.json()),
+  },
+]);
+```
+
+From Mermaid 11.7.0 the usual `fa:fa-car` labels then draw SVG icons. From Mermaid 11.3.0 icon shapes such as `A@{ icon: "fa:car", label: "Car" }` do too. The shape takes the icon's Iconify name, so it is `car`, not `fa-car`.
+
 **Q: I'm hitting the export size limit. How do I increase it?**
 
 ```javascript
