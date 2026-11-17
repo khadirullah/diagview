@@ -6,8 +6,7 @@
 import { jest } from "@jest/globals";
 import { createButton, createMenuItem } from "../src/ui/button-factory.js";
 import { TIMING } from "../src/core/constants.js";
-
-const flush = () => new Promise((r) => setTimeout(r, 0));
+import { flush } from "./helpers/timers.js";
 
 describe("success tick after a click", () => {
   let errorSpy;

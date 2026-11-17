@@ -15,6 +15,7 @@ import {
 } from "../src/features/lazy/readable-text.js";
 import { createFloatingMenu } from "../src/ui/floating-menu.js";
 import { configure, destroy, init } from "../src/index.js";
+import { flush } from "./helpers/timers.js";
 
 const NS = "http://www.w3.org/2000/svg";
 const DARK = "#0b0f19";
@@ -82,8 +83,6 @@ function hueOf(value) {
   else h = (r - g) / d + 4;
   return h * 60;
 }
-
-const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
 
 let svg;
 

@@ -77,7 +77,8 @@ diagview/
 │   ├── *.test.js         # Jest unit tests (one file per module)
 │   ├── e2e/              # Real-browser checks (npm run test:e2e)
 │   ├── types/            # Type check of the published declarations
-│   └── mocks/            # Jest helpers (cssTransform.cjs)
+│   ├── helpers/          # Shared test helpers (wait, flush, flushRaf)
+│   └── mocks/            # Jest transform for CSS imports (cssTransform.cjs)
 ├── demo/                 # Static demo pages (load diagview from unpkg)
 ├── docs/                 # Documentation (Markdown)
 ├── scripts/              # Build helpers (sync-version.js, check-entries.cjs)

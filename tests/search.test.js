@@ -11,6 +11,7 @@ import {
   setupSearch,
 } from "../src/features/lazy/search.js";
 import { state, resetConfig, runModalCleanupFunctions } from "../src/core/config.js";
+import { flushRaf } from "./helpers/timers.js";
 
 // Mock SVG with searchable nodes
 function createMockSvg() {
@@ -77,15 +78,9 @@ describe("Search: performSearch", () => {
     jest.restoreAllMocks();
   });
 
-  function flushRaf() {
-    const cbs = [...rafCallbacks];
-    rafCallbacks = [];
-    cbs.forEach((cb) => cb());
-  }
-
   test("finds matching nodes by text content", () => {
     performSearch(svg, "auth");
-    flushRaf();
+    flushRaf(rafCallbacks);
 
     // Only "Authentication Service" holds the text
     expect(state.searchMatches).toHaveLength(1);
@@ -115,7 +110,7 @@ describe("Search: performSearch", () => {
 
   test("case-insensitive matching", () => {
     performSearch(svg, "DATABASE");
-    flushRaf();
+    flushRaf(rafCallbacks);
 
     // "Database Handler"
     expect(state.searchMatches).toHaveLength(1);
@@ -124,7 +119,7 @@ describe("Search: performSearch", () => {
 
   test("adds dv-searching class to clone during search", () => {
     performSearch(svg, "api");
-    flushRaf();
+    flushRaf(rafCallbacks);
 
     expect(svg.classList.contains("dv-searching")).toBe(true);
   });
@@ -139,14 +134,14 @@ describe("Search: performSearch", () => {
 
   test("returns no matches for non-existent query", () => {
     performSearch(svg, "zzz_nonexistent_zzz");
-    flushRaf();
+    flushRaf(rafCallbacks);
 
     expect(state.searchMatches.length).toBe(0);
   });
 
   test("all matches get dv-search-match class (simultaneous highlight)", () => {
     performSearch(svg, "auth");
-    flushRaf();
+    flushRaf(rafCallbacks);
 
     expect(state.searchMatches.length).toBeGreaterThanOrEqual(1);
     // Every match must be highlighted — no single "current" concept
@@ -172,7 +167,7 @@ describe("Search: performSearch", () => {
     document.body.appendChild(status);
 
     performSearch(svg, "deploy");
-    flushRaf();
+    flushRaf(rafCallbacks);
 
     expect(state.searchMatches).toEqual([node]);
     expect(node.classList.contains("dv-search-match")).toBe(true);
@@ -193,7 +188,7 @@ describe("Search: performSearch", () => {
 
     for (const query of ["first release", "First    release ", "release of"]) {
       performSearch(svg, query);
-      flushRaf();
+      flushRaf(rafCallbacks);
       expect(state.searchMatches).toEqual([node]);
     }
   });
@@ -204,11 +199,11 @@ describe("Search: performSearch", () => {
     status.textContent = "3 matches found";
     document.body.appendChild(status);
     performSearch(svg, "auth");
-    flushRaf();
+    flushRaf(rafCallbacks);
     expect(svg.querySelectorAll(".dv-search-match").length).toBe(1);
 
     performSearch(svg, "   ");
-    flushRaf();
+    flushRaf(rafCallbacks);
 
     expect(state.searchMatches).toEqual([]);
     expect(svg.querySelectorAll(".dv-search-match").length).toBe(0);
@@ -218,12 +213,12 @@ describe("Search: performSearch", () => {
 
   test("clearing removes dv-search-match classes from previous matches", () => {
     performSearch(svg, "auth");
-    flushRaf();
+    flushRaf(rafCallbacks);
     const matched = svg.querySelectorAll(".dv-search-match");
     expect(matched.length).toBe(1);
 
     performSearch(svg, "");
-    flushRaf();
+    flushRaf(rafCallbacks);
 
     expect(svg.querySelectorAll(".dv-search-match").length).toBe(0);
     expect(state.searchMatches).toEqual([]);
@@ -258,7 +253,7 @@ describe("Search: phrases across line breaks", () => {
 
   function search(query) {
     performSearch(svg, query);
-    rafCallbacks.splice(0).forEach((cb) => cb());
+    flushRaf(rafCallbacks);
     return status.textContent;
   }
 
@@ -471,12 +466,6 @@ describe("Search: shapes behind plain SVG text", () => {
     return el;
   }
 
-  function flushRaf() {
-    const cbs = [...rafCallbacks];
-    rafCallbacks = [];
-    cbs.forEach((cb) => cb());
-  }
-
   const marked = () => [...svg.querySelectorAll(".dv-search-match")];
 
   beforeEach(() => {
@@ -530,7 +519,7 @@ describe("Search: shapes behind plain SVG text", () => {
     const { backdrop, panel, box, edge, label } = drawPlainDiagram();
 
     performSearch(svg, "auth");
-    flushRaf();
+    flushRaf(rafCallbacks);
 
     expect(label.classList.contains("dv-search-match")).toBe(true);
     expect(box.classList.contains("dv-search-match")).toBe(true);
@@ -543,7 +532,7 @@ describe("Search: shapes behind plain SVG text", () => {
     const { box, label } = drawPlainDiagram();
 
     performSearch(svg, "auth");
-    flushRaf();
+    flushRaf(rafCallbacks);
 
     expect(state.searchMatches).toEqual([label]);
     expect(marked()).toEqual([box, label]);
@@ -554,9 +543,9 @@ describe("Search: shapes behind plain SVG text", () => {
     const { box, label, otherBox, otherLabel } = drawPlainDiagram();
 
     performSearch(svg, "auth");
-    flushRaf();
+    flushRaf(rafCallbacks);
     performSearch(svg, "billing");
-    flushRaf();
+    flushRaf(rafCallbacks);
 
     expect(box.classList.contains("dv-search-match")).toBe(false);
     expect(label.classList.contains("dv-search-match")).toBe(false);
@@ -566,7 +555,7 @@ describe("Search: shapes behind plain SVG text", () => {
     expect(marked()).toEqual([]);
 
     performSearch(svg, "auth");
-    flushRaf();
+    flushRaf(rafCallbacks);
     document.body.innerHTML = `
       <input id="diagview-search" value="auth" />
       <div id="diagview-modal-viewport"></div>
@@ -580,12 +569,12 @@ describe("Search: shapes behind plain SVG text", () => {
     const { box, label, otherBox, otherLabel } = drawPlainDiagram();
 
     performSearch(svg, "auth");
-    flushRaf();
+    flushRaf(rafCallbacks);
     expect(marked()).toEqual([box, label]);
 
     view = { x: -300, y: 120, scale: 2.5, angle: 0 };
     performSearch(svg, "billing");
-    flushRaf();
+    flushRaf(rafCallbacks);
 
     expect(marked()).toEqual([otherBox, otherLabel]);
   });
@@ -594,13 +583,13 @@ describe("Search: shapes behind plain SVG text", () => {
     const { box, label, otherBox, otherLabel } = drawPlainDiagram();
 
     performSearch(svg, "auth");
-    flushRaf();
+    flushRaf(rafCallbacks);
     expect(marked()).toEqual([box, label]);
 
     view.angle = 90;
     state.rotationAngle = 90;
     performSearch(svg, "billing");
-    flushRaf();
+    flushRaf(rafCallbacks);
 
     expect(marked()).toEqual([otherBox, otherLabel]);
   });
@@ -628,7 +617,7 @@ describe("Search: shapes behind plain SVG text", () => {
     const { edgeLabel } = drawWideDiagram();
 
     performSearch(svg, "lookup");
-    flushRaf();
+    flushRaf(rafCallbacks);
 
     expect(marked()).toEqual([edgeLabel]);
   });
@@ -637,14 +626,14 @@ describe("Search: shapes behind plain SVG text", () => {
     const { box, label } = drawWideDiagram();
 
     performSearch(svg, "authservice");
-    flushRaf();
+    flushRaf(rafCallbacks);
     expect(marked()).toEqual([box, label]);
 
     view = { x: -300, y: 120, scale: 2.5, angle: 0 };
     performSearch(svg, "lookup");
-    flushRaf();
+    flushRaf(rafCallbacks);
     performSearch(svg, "authservice");
-    flushRaf();
+    flushRaf(rafCallbacks);
     expect(marked()).toEqual([box, label]);
   });
 
@@ -657,7 +646,7 @@ describe("Search: shapes behind plain SVG text", () => {
     text.textContent = "Deploy";
 
     performSearch(svg, "deploy");
-    flushRaf();
+    flushRaf(rafCallbacks);
 
     expect(state.searchMatches).toEqual([node]);
     expect(marked()).toEqual([node]);
@@ -697,7 +686,7 @@ describe("Search: shapes behind plain SVG text", () => {
     const before = svg.outerHTML;
 
     performSearch(svg, "queue");
-    flushRaf();
+    flushRaf(rafCallbacks);
 
     expect(state.searchMatches).toEqual([queue.fo]);
     expect(marked()).toEqual([box, queue.fo]);
@@ -713,7 +702,7 @@ describe("Search: shapes behind plain SVG text", () => {
     const { html, fo } = drawDrawioLabel(130, 123, "Queue", "label");
 
     performSearch(svg, "queue");
-    flushRaf();
+    flushRaf(rafCallbacks);
 
     expect(state.searchMatches).toEqual([html]);
     expect(fo.classList.contains("dv-search-match")).toBe(false);
@@ -739,7 +728,7 @@ describe("Search: shapes behind plain SVG text", () => {
     const inner = place(add("rect", { class: "inner", fill: "#fff" }, group), 100, 130, 400, 270);
 
     performSearch(svg, "running");
-    flushRaf();
+    flushRaf(rafCallbacks);
 
     expect(state.searchMatches).toEqual([title]);
     expect(marked()).toEqual([outer, title]);
@@ -756,7 +745,7 @@ describe("Search: shapes behind plain SVG text", () => {
     const drawn = svg.outerHTML;
 
     performSearch(svg, "placed");
-    flushRaf();
+    flushRaf(rafCallbacks);
 
     expect(state.searchMatches).toEqual([fo]);
     expect(marked()).toEqual([box, fo]);
@@ -772,7 +761,7 @@ describe("Search: shapes behind plain SVG text", () => {
     const fo = addHtmlLabel(node, 150, 128, "Deploy");
 
     performSearch(svg, "deploy");
-    flushRaf();
+    flushRaf(rafCallbacks);
 
     expect(state.searchMatches).toEqual([node]);
     expect(fo.classList.contains("dv-search-match")).toBe(false);
@@ -785,7 +774,7 @@ describe("Search: shapes behind plain SVG text", () => {
     span.textContent = "Deploy";
 
     performSearch(svg, "deploy");
-    flushRaf();
+    flushRaf(rafCallbacks);
 
     expect(state.searchMatches).toEqual([span]);
     expect(fo.classList.contains("dv-search-match")).toBe(false);
@@ -806,10 +795,10 @@ describe("Search: shapes behind plain SVG text", () => {
     const before = svg.outerHTML;
 
     performSearch(svg, "auth");
-    flushRaf();
+    flushRaf(rafCallbacks);
     expect(marked().length).toBe(3);
     performSearch(svg, "billing");
-    flushRaf();
+    flushRaf(rafCallbacks);
     performSearch(svg, "");
 
     expect(svg.outerHTML).toBe(before);
@@ -822,7 +811,7 @@ describe("Search: shapes behind plain SVG text", () => {
     const before = svg.outerHTML;
 
     performSearch(svg, "a");
-    flushRaf();
+    flushRaf(rafCallbacks);
     clearSearch();
 
     expect(svg.outerHTML).toBe(before);
@@ -871,7 +860,7 @@ describe("Search: shapes behind plain SVG text", () => {
     const log = logReadsAndWrites();
 
     performSearch(svg, "auth");
-    flushRaf();
+    flushRaf(rafCallbacks);
 
     expect(marked().length).toBe(3);
     expect(log).toContain("read");
@@ -881,13 +870,13 @@ describe("Search: shapes behind plain SVG text", () => {
   test("a search after a turn measures before it changes the marks", () => {
     drawMixedDiagram();
     performSearch(svg, "auth");
-    flushRaf();
+    flushRaf(rafCallbacks);
     view.angle = 90;
     state.rotationAngle = 90;
     const log = logReadsAndWrites();
 
     performSearch(svg, "billing");
-    flushRaf();
+    flushRaf(rafCallbacks);
 
     expect(marked().length).toBe(2);
     expect(log).toContain("read");
@@ -918,19 +907,20 @@ describe("Search: bringing a match into view", () => {
     return t;
   }
 
-  function flushRaf() {
+  // Runs frames until none are left, also the ones a frame queues
+  function drainRaf() {
     while (rafCallbacks.length) rafCallbacks.shift()();
   }
 
   function type(q) {
     input.value = q;
     input.dispatchEvent(new Event("input"));
-    flushRaf();
+    drainRaf();
   }
 
   function press(key, shiftKey = false) {
     input.dispatchEvent(new KeyboardEvent("keydown", { key, shiftKey }));
-    flushRaf();
+    drainRaf();
   }
 
   const current = () => [...svg.querySelectorAll(".dv-search-current")].map((e) => e.textContent);
@@ -1042,7 +1032,7 @@ describe("Search: bringing a match into view", () => {
   test("a query given on open keeps the view it opened with", () => {
     label("Gateway east", 3000, 2000);
     setupSearch(svg, "gateway");
-    flushRaf();
+    drainRaf();
 
     expect(status.textContent).toBe("1 match found");
     expect(pz.pan).not.toHaveBeenCalled();
@@ -1115,7 +1105,7 @@ describe("Search: bringing a match into view", () => {
       // The viewer closes and lets go of the throttle and this clone
       runModalCleanupFunctions();
       jest.runAllTimers();
-      flushRaf();
+      drainRaf();
 
       expect(status.textContent).toBe("2 matches found");
     } finally {

@@ -8,11 +8,11 @@ import { state, resetConfig, updateConfig } from "../src/core/config.js";
 import { createModal, openFullscreen } from "../src/ui/modal.js";
 import { closeModal } from "../src/ui/modal-controls.js";
 import { clearAllZoomStates, restoreZoomState } from "../src/features/panzoom-integration.js";
+import { wait } from "./helpers/timers.js";
 
 // ---------------------------------------------------------------------------
 // Shared harness: drive the REAL modal with a fake Panzoom implementation
 // ---------------------------------------------------------------------------
-const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 
 function installFakePanzoom() {
   const instances = [];

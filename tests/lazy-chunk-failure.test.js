@@ -3,6 +3,7 @@
  * when a CDN errors. The minimap import rejects here.
  */
 import { jest } from "@jest/globals";
+import { wait } from "./helpers/timers.js";
 
 jest.unstable_mockModule("../src/features/lazy/minimap.js", () => {
   throw new TypeError("Failed to fetch dynamically imported module");
@@ -18,7 +19,6 @@ const { saveZoomState, clearAllZoomStates } =
   await import("../src/features/panzoom-integration.js");
 const { shareStates } = await import("../src/features/share-state.js");
 
-const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 const settle = async () => {
   for (let i = 0; i < 4; i++) await wait(20);
 };
