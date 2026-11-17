@@ -6,6 +6,7 @@ import {
   inertDocument,
   getDiagramSvg,
 } from "./utils.js";
+import { URL_REF_RE } from "./svg-ids.js";
 import { showErrorToast } from "../ui/toast.js";
 import { SECURITY_MODES, EXPORT } from "./constants.js";
 
@@ -362,6 +363,66 @@ function nextFrame(fn) {
 }
 
 /**
+ * The ids an element and everything in it point at with href="#id" or
+ * url(#id), in attributes and in style attributes. Links on <a> go to a
+ * place on the page, so they are left out.
+ * @private
+ * @param {Element} el - Element to read
+ * @returns {string[]} The ids, without the "#"
+ */
+function localRefs(el) {
+  const ids = [];
+  for (const node of [el, ...el.querySelectorAll("*")]) {
+    if (node.localName === "a") continue;
+    for (const { name, localName, value } of node.attributes) {
+      const href = localName === "href" || name === "xlink:href";
+      if (href && value.startsWith("#")) ids.push(value.slice(1));
+      else if (value.includes("#")) {
+        for (const m of value.matchAll(URL_REF_RE)) ids.push(m[3].trim());
+      }
+    }
+  }
+  return ids;
+}
+
+/**
+ * Copy into the export what the SVG uses from elsewhere on the page, such
+ * as a <symbol> an icon sprite holds or a gradient in a shared <defs>. The
+ * file has no page around it, so these would be missing. Each element is
+ * copied once into a new <defs> at the top, sanitized like the rest of the
+ * export, and what it uses in turn is copied too. A copy that needs
+ * nothing from outside is left as it is.
+ * @private
+ * @param {Element} clone - The export copy
+ * @param {SVGElement} svg - The SVG it was copied from
+ * @param {string} mode - Security mode of the export
+ * @param {import("./utils.js").SanitizeOptions} options - Sanitizer options
+ */
+function copyOutsideRefs(clone, svg, mode, options) {
+  const root = svg.getRootNode();
+  const seen = new Set(Array.from(clone.querySelectorAll("[id]"), (el) => el.id));
+  const todo = localRefs(clone);
+  let defs = null;
+  // todo grows as copies add their own references
+  for (const id of todo) {
+    if (seen.has(id)) continue;
+    seen.add(id);
+    const found = root.getElementById?.(id);
+    // Only SVG content from outside this SVG, never the SVG or what holds it
+    if (!(found instanceof SVGElement) || found.contains(svg) || svg.contains(found)) continue;
+    const copy = sanitizeInPlace(inertDocument().importNode(found, true), mode, options);
+    if (!copy) continue;
+    if (!defs) {
+      defs = clone.ownerDocument.createElementNS(found.namespaceURI, "defs");
+      clone.prepend(defs);
+    }
+    defs.append(copy);
+    for (const el of copy.querySelectorAll("[id]")) seen.add(el.id);
+    todo.push(...localRefs(copy));
+  }
+}
+
+/**
  * Clone SVG specifically for export (Asynchronous)
  * Bakes all computed styles for standalone use without locking the main thread.
  */
@@ -383,7 +444,7 @@ function nextFrame(fn) {
  * @returns {Promise<SVGElement>} The cloned SVG element
  */
 export function cloneSVGForExportAsync(svg, paint = null) {
-  return new Promise((resolve) => {
+  return new Promise((resolve, reject) => {
     const originalNodes = Array.from(svg.querySelectorAll("*"));
     // Safety cap on the number of nodes whose computed styles are read
     const nodeCount = Math.min(originalNodes.length, MAX_EXPORT_STYLED_NODES);
@@ -441,8 +502,10 @@ export function cloneSVGForExportAsync(svg, paint = null) {
     // ─── PHASE 2: Clone ──────────────────────────────────────────────────
     // cloneSVG applies performance.criticalFileLimit as its size guard.
     let clone;
+    let mode, allowRemoteResources;
     try {
-      const { mode, allowRemoteResources, warn } = exportSecurity(svg);
+      let warn;
+      ({ mode, allowRemoteResources, warn } = exportSecurity(svg));
       clone = cloneSVG(svg, {
         preserveText: true,
         securityMode: mode,
@@ -487,8 +550,18 @@ export function cloneSVGForExportAsync(svg, paint = null) {
       }
       if (wi < clonedNodes.length) {
         nextFrame(applyChunk);
-      } else {
+        return;
+      }
+      // After the styles, as a page rule such as fill: url(#grad) only
+      // shows up in the copy once its computed style is written there
+      try {
+        copyOutsideRefs(clone, svg, mode, {
+          allowRemoteResources,
+          allowedImageTypes: state.config.allowedImageTypes,
+        });
         resolve(clone);
+      } catch (e) {
+        reject(e);
       }
     }
 

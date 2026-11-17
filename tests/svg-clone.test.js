@@ -806,3 +806,129 @@ describe("export copy that fails", () => {
     expect(svg.querySelectorAll("[data-dv-match-id]")).toHaveLength(0);
   });
 });
+
+describe("export of an SVG that uses elements from elsewhere on the page", () => {
+  const SPRITE =
+    '<svg id="sprite" width="0" height="0" aria-hidden="true">' +
+    '<symbol id="icon-db" viewBox="0 0 24 24"><path d="M3 5h18" stroke="#1d4ed8"/></symbol>' +
+    '<symbol id="icon-app" viewBox="0 0 24 24"><rect width="20" height="20" fill="url(#shade)"/></symbol>' +
+    "</svg>" +
+    '<svg width="0" height="0"><defs>' +
+    '<linearGradient id="base"><stop offset="0" stop-color="#bfdbfe"/></linearGradient>' +
+    '<linearGradient id="shade" href="#base"/>' +
+    '<linearGradient id="glow"><stop offset="1" stop-color="#15803d"/></linearGradient>' +
+    "</defs></svg>";
+
+  /** The page's sprite and shared defs, then a diagram holding body */
+  const page = (body, root = document.body) => {
+    const host = document.createElement("div");
+    host.innerHTML = `${SPRITE}<div class="diagram"><svg viewBox="0 0 100 100">${body}</svg></div>`;
+    root.appendChild(host);
+    return host.querySelector(".diagram svg");
+  };
+  /** Ids of the elements in the export's own <defs>, in order */
+  const copied = (clone) =>
+    Array.from(clone.querySelectorAll(":scope > defs > [id]"), (el) => el.id);
+
+  // No page styles, so each copy keeps the attributes and styles it was given
+  beforeEach(() => {
+    jest.spyOn(window, "getComputedStyle").mockReturnValue({ getPropertyValue: () => "" });
+  });
+
+  afterEach(() => {
+    document.body.innerHTML = "";
+    jest.restoreAllMocks();
+    resetConfig();
+  });
+
+  test("copies a sprite symbol drawn with <use>", async () => {
+    const svg = page('<use href="#icon-db" width="60" height="60"/>');
+    const clone = await cloneSVGForExportAsync(svg);
+    expect(copied(clone)).toEqual(["icon-db"]);
+    expect(clone.firstChild.localName).toBe("defs");
+    expect(clone.querySelector("symbol#icon-db path").getAttribute("d")).toBe("M3 5h18");
+  });
+
+  test("copies a symbol named by xlink:href", async () => {
+    const svg = page("");
+    const use = document.createElementNS("http://www.w3.org/2000/svg", "use");
+    use.setAttribute("xlink:href", "#icon-db");
+    svg.appendChild(use);
+    const xlink = document.createElementNS("http://www.w3.org/2000/svg", "use");
+    xlink.setAttributeNS("http://www.w3.org/1999/xlink", "xlink:href", "#icon-app");
+    svg.appendChild(xlink);
+    const clone = await cloneSVGForExportAsync(svg);
+    expect(copied(clone)).toEqual(["icon-db", "icon-app", "shade", "base"]);
+  });
+
+  test("copies a gradient a fill or a style uses from a shared <defs>", async () => {
+    const svg = page(
+      '<rect fill="url(#glow)" width="5" height="5"/><circle style="stroke: url(\'#base\')" r="3"/>',
+    );
+    const clone = await cloneSVGForExportAsync(svg);
+    expect(copied(clone)).toEqual(["glow", "base"]);
+    expect(clone.querySelector("rect").getAttribute("fill")).toBe("url(#glow)");
+  });
+
+  test("copies a gradient a page rule paints with", async () => {
+    // The browser gives the computed fill as an absolute URL
+    const svg = page('<rect class="paint" width="5" height="5"/>');
+    jest.spyOn(window, "getComputedStyle").mockImplementation((el) => ({
+      getPropertyValue: (prop) =>
+        el.getAttribute("class") === "paint" && prop === "fill"
+          ? 'url("http://localhost/#glow")'
+          : "",
+    }));
+    expect(copied(await cloneSVGForExportAsync(svg))).toEqual(["glow"]);
+  });
+
+  test("copies what a copied element uses in turn", async () => {
+    // icon-app fills with shade, and shade takes its stops from base
+    const clone = await cloneSVGForExportAsync(page('<use href="#icon-app"/>'));
+    expect(copied(clone)).toEqual(["icon-app", "shade", "base"]);
+  });
+
+  test("copies each element once when two use each other", async () => {
+    document.body.innerHTML =
+      '<svg width="0" height="0"><pattern id="p1" fill="url(#p2)"/><pattern id="p2" href="#p1"/></svg>';
+    const svg = page('<rect fill="url(#p1)"/><rect fill="url(#p2)"/><use href="#icon-db"/>');
+    expect(copied(await cloneSVGForExportAsync(svg))).toEqual(["p1", "p2", "icon-db"]);
+  });
+
+  test("leaves a reference to nothing as it is and copies the rest", async () => {
+    const svg = page('<use href="#nowhere"/><rect fill="url(#none)"/><use href="#icon-db"/>');
+    const clone = await cloneSVGForExportAsync(svg);
+    expect(copied(clone)).toEqual(["icon-db"]);
+    expect(clone.querySelector("use").getAttribute("href")).toBe("#nowhere");
+    expect(clone.querySelector("rect").getAttribute("fill")).toBe("url(#none)");
+  });
+
+  test("changes nothing when the SVG uses only its own elements and links", async () => {
+    const own =
+      '<defs><linearGradient id="own"><stop offset="0"/></linearGradient>' +
+      '<symbol id="mark"><rect fill="url(#own)"/></symbol></defs>' +
+      '<use href="#mark"/><a href="#sprite"><text>Up</text></a><a href="#icon-db"><rect/></a>';
+    const withSprite = (await cloneSVGForExportAsync(page(own))).outerHTML;
+    document.body.innerHTML = `<div class="diagram"><svg viewBox="0 0 100 100">${own}</svg></div>`;
+    const alone = (await cloneSVGForExportAsync(document.querySelector("svg"))).outerHTML;
+    expect(withSprite).toBe(alone);
+    expect(withSprite).not.toContain('id="icon-db"');
+  });
+
+  test("sanitizes what it copies like the rest of the export", async () => {
+    document.body.innerHTML =
+      '<svg width="0" height="0"><symbol id="bad"><script>alert(1)</script>' +
+      '<rect onclick="alert(1)" width="5" height="5"/></symbol></svg>';
+    const clone = await cloneSVGForExportAsync(page('<use href="#bad"/>'));
+    expect(copied(clone)).toEqual(["bad"]);
+    expect(clone.querySelector("script")).toBeNull();
+    expect(clone.querySelector("#bad rect").hasAttribute("onclick")).toBe(false);
+  });
+
+  test("finds the elements in the shadow root the SVG sits in", async () => {
+    const host = document.createElement("div");
+    document.body.appendChild(host);
+    const svg = page('<use href="#icon-db"/>', host.attachShadow({ mode: "open" }));
+    expect(copied(await cloneSVGForExportAsync(svg))).toEqual(["icon-db"]);
+  });
+});

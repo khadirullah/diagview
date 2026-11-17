@@ -8,9 +8,8 @@
  * url(#id) reference in an attribute value: optional whitespace, optional
  * quote, the fragment, and the matching closing quote. Case-insensitive so
  * URL(#id) is rewritten as well.
- * @private
  */
-const URL_REF_RE = /(url\s*\(\s*(['"]?)\s*)#([^)'"]+)(\2\s*\))/gi;
+export const URL_REF_RE = /(url\s*\(\s*(['"]?)\s*)#([^)'"]+)(\2\s*\))/gi;
 
 /**
  * "#token" inside a <style> block. The token may contain "." and ":" as

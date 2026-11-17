@@ -412,6 +412,10 @@ PNG, JPEG, WebP, PDF and Copy Image leave linked images out. DiagView draws the 
 
 A browser can also refuse to let DiagView read back the image it drew, and then the export fails. For PNG, JPEG, WebP and Copy Image, the notice says "Export blocked by cross-origin image" only when the copy links an image, a `<use>`, a CSS `url()` or an `@import` on another origin. A `data:` URL, a relative link or a link to your own site does not count. Any other failure of these four shows "Export Failed" with the browser's message. A PDF that fails shows "PDF Failed" with the message. SVG export and Copy SVG do not draw an image. When they fail, they show "SVG Failed" or "Copy SVG Failed". A diagram over `performance.criticalFileLimit` shows "Diagram blocked" in every format.
 
+### Icons and shared definitions
+
+A diagram can use an element from another SVG on the page. An icon sprite is the usual case, with `<use href="#icon-db">` drawing a `<symbol>` kept in a hidden SVG. A gradient, pattern, marker, clip path, mask or filter in a shared `<defs>` works the same way, through `url(#id)` in an attribute or a `style`. The exported file has no page around it, so every export copies each such element into a `<defs>` at the top of the file, along with anything that element uses in turn. The copies go through the same sanitizer as the rest of the export. Only `#id` links within the page count. A diagram that uses nothing from outside exports as before.
+
 ### Programmatic export
 
 ```javascript
