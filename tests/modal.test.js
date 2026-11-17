@@ -225,6 +225,7 @@ describe("Modal System", () => {
     const callback = call[2];
 
     // Change window size significantly (>20%)
+    const { innerWidth, innerHeight } = window;
     window.innerWidth = 100;
     window.innerHeight = 100;
 
@@ -236,6 +237,8 @@ describe("Modal System", () => {
       await jest.advanceTimersByTimeAsync(400);
     } finally {
       jest.useRealTimers();
+      window.innerWidth = innerWidth;
+      window.innerHeight = innerHeight;
     }
     // No duration of its own, so Panzoom uses zoomAnimationDuration
     expect(panzoomMock.reset).toHaveBeenCalledWith({ animate: true });
