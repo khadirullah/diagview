@@ -939,6 +939,40 @@ describe("shadow DOM styles and indexing", () => {
     expect(shadowHasStyles(shadow)).toBe(false);
   });
 
+  test("a browser with constructable stylesheets gets one adopted sheet, which destroy removes", async () => {
+    // jsdom has neither replaceSync nor adoptedStyleSheets, so stand in for a browser
+    const adopted = new WeakMap();
+    const replaceSync = jest.fn();
+    CSSStyleSheet.prototype.replaceSync = replaceSync;
+    Object.defineProperty(ShadowRoot.prototype, "adoptedStyleSheets", {
+      configurable: true,
+      get() {
+        return adopted.get(this) ?? [];
+      },
+      set(sheets) {
+        adopted.set(this, sheets);
+      },
+    });
+
+    try {
+      DiagView.init({ layout: "header" });
+      DiagView.initShadowRoot(shadow);
+      DiagView.initShadowRoot(shadow);
+
+      expect(shadow.adoptedStyleSheets).toHaveLength(1);
+      expect(shadow.adoptedStyleSheets[0]).toBeInstanceOf(CSSStyleSheet);
+      expect(shadow.querySelector("style[data-diagview-styles]")).toBeNull();
+      expect(replaceSync).toHaveBeenCalledTimes(1);
+      expect(replaceSync.mock.calls[0][0]).toContain(".diagview-wrapper");
+
+      await DiagView.destroy();
+      expect(shadow.adoptedStyleSheets).toHaveLength(0);
+    } finally {
+      delete CSSStyleSheet.prototype.replaceSync;
+      delete ShadowRoot.prototype.adoptedStyleSheets;
+    }
+  });
+
   test("shadow diagrams get a stable index after the document diagrams", () => {
     DiagView.init({ layout: "header" });
     DiagView.initShadowRoot(shadow);
