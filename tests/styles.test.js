@@ -669,6 +669,8 @@ describe("styles.css: keyboard focus ring", () => {
       ".dv-icon-btn.active,\n  .dv-text-select-btn.active,\n  .dv-theme-btn.active,\n  .dv-menu-item.active {",
       at,
     );
+    // The browser's own block behind the text would cover the label
+    expect(selected).toMatch(/forced-color-adjust:\s*none/);
     expect(selected).toMatch(/background:\s*Highlight !important/);
     expect(selected).toMatch(/color:\s*HighlightText !important/);
     expect(selected).toMatch(/border-color:\s*Highlight !important/);

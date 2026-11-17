@@ -2402,11 +2402,14 @@
 
   /* The accent fill and glow of a selected button are dropped here. It
      takes the system highlight colours instead. Its edge turns the same
-     colour, so it still stands out where a browser drops the fill. */
+     colour, so it still stands out where a browser drops the fill.
+     Without forced-color-adjust the browser paints a block of the page
+     colour behind the label, and the label vanishes into it. */
   .dv-icon-btn.active,
   .dv-text-select-btn.active,
   .dv-theme-btn.active,
   .dv-menu-item.active {
+    forced-color-adjust: none;
     background: Highlight !important;
     color: HighlightText !important;
     border-color: Highlight !important;
